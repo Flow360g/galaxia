@@ -107,6 +107,12 @@ export class Engine {
   /** This encounter is a vector; the alien is the target. */
   private inVector = false;
   private vectorsFlown = 0;
+  /**
+   * Vectors in the whole round. The scout survives every hit but the last:
+   * earlier ones knock it about, the final one breaks it up. Killing it on
+   * the first would leave the second vector with nothing to shoot at.
+   */
+  private readonly vectorTotal: number;
   /** World X the aim line points down while the player drags. */
   private aimX = 0;
   /** Field density, current and target, so the belt thins smoothly. */
@@ -181,6 +187,7 @@ export class Engine {
 
     this.alien = new Alien(random);
     this.scene.add(this.alien.group);
+    this.vectorTotal = options.round.questions.filter((q) => q.type === "vector").length;
 
     this.beam = new Beam(0.35);
     this.returnBeam = new Beam(0.5);
@@ -384,15 +391,24 @@ export class Engine {
 
   private onVectorLock(outcome: Outcome, aimT: number, truthT: number): void {
     this.audio.strike();
-    this.alien.decloak(this.aimWorldX(truthT));
+    // The scout slides to the truth: that IS the answer being shown, and the
+    // shot is already on its way to where it will be.
+    const truthX = this.aimWorldX(truthT);
+    this.alien.reveal(truthX);
     this.aimLine.hide();
-    // Fire along the aim. The beam lands at the alien's depth whether or not
-    // it is on target; contact() decides what that meant.
-    this.alien.target(this.scratchB);
+
     this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
-    this.scratchB.x = this.aimWorldX(aimT);
-    this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds);
-    void outcome;
+    this.alien.target(this.scratchB);
+    if (outcome.correct) {
+      // On target: the beam ends on the hull, at the truth.
+      this.scratchB.x = truthX;
+    } else {
+      // Wide: the shot runs along the aim and carries on past the scout, so
+      // a miss reads as a miss rather than as a hit that did nothing.
+      this.scratchB.x = this.aimWorldX(aimT);
+      this.scratchB.sub(this.scratch).multiplyScalar(VECTOR.missOvershoot).add(this.scratch);
+    }
+    this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds, 1);
   }
 
   private onWaypoint(info: WaypointState): void {
@@ -442,7 +458,7 @@ export class Engine {
       // beam: the alien simply fires first.
       if (outcome.timedOut) {
         this.audio.strike();
-        this.alien.decloak(this.alien.group.position.x);
+        this.alien.reveal(this.alien.group.position.x);
       }
       return;
     }
@@ -531,21 +547,22 @@ export class Engine {
   private onVectorContact(outcome: Outcome): void {
     const kind = outcome.kind;
     this.alien.target(this.scratchB);
-    if (kind === "slingshot") {
-      this.alien.hit("direct");
-      this.debris.burst(this.scratchB, 1.4, COLOR.anomaly);
-      this.chase.burst(FX.pullback.slingshot, FX.fovKick.slingshot);
-      this.chase.shake(FX.vector.directShake);
-      this.ship.pulseExhaust(FX.exhaustPulse.slingshot);
-      this.streakSurge = FX.streakSurge;
-      this.scratch.copy(this.ship.group.position);
-      this.salvage.launch(this.scratchB, this.scratch);
-    } else if (kind === "thread") {
-      this.alien.hit("glance");
-      this.debris.burst(this.scratchB, 0.5, COLOR.anomaly);
-      this.chase.burst(FX.pullback.thread, FX.fovKick.thread);
-      this.chase.shake(FX.vector.glanceShake);
-      this.ship.pulseExhaust(FX.exhaustPulse.thread);
+    if (outcome.correct) {
+      // Anything on target hits the hull. On the last vector of the run that
+      // hit is the kill; before it the scout is knocked about and stays up.
+      const kill = this.vectorsFlown >= this.vectorTotal;
+      const heavy = kind === "slingshot";
+      const burst = heavy ? "slingshot" : "thread";
+      this.alien.hit(kill ? "direct" : "glance");
+      this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.anomaly);
+      this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
+      this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
+      this.ship.pulseExhaust(FX.exhaustPulse[burst]);
+      if (heavy) this.streakSurge = FX.streakSurge;
+      if (outcome.salvage) {
+        this.scratch.copy(this.ship.group.position);
+        this.salvage.launch(this.scratchB, this.scratch);
+      }
     } else {
       // Miss or timeout: the alien fires back.
       this.alien.returnFire();
@@ -632,8 +649,8 @@ export class Engine {
     // The aim line: from the nose to the alien's depth, only while aiming.
     if (this.inVector && phase === "approach") {
       this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
-      this.scratchB.set(this.aimX, ENCOUNTER.offsetY, this.alien.group.position.z);
-      this.aimLine.hold(this.scratch, this.scratchB, COLOR.cyan, 0.16);
+      this.scratchB.set(this.aimX, VECTOR.holdY, this.alien.group.position.z);
+      this.aimLine.hold(this.scratch, this.scratchB, COLOR.cyan, 0.3);
     } else if (phase !== "approach") {
       this.aimLine.hide();
     }

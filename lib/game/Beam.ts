@@ -29,7 +29,10 @@ export class Beam {
   private peak = 1;
 
   constructor(radius = 0.35) {
-    // Authored along +Y; rotated so +Y becomes -Z (forward) in the group.
+    // Authored along +Y; rotated so the axis runs along +Z. `lookAt` on a
+    // mesh points its +Z at the target (a camera is the odd one out, looking
+    // down -Z), so +Z is the direction the shot travels and the beam is laid
+    // out from the muzzle at 0 out to the target.
     this.geometry = new THREE.CylinderGeometry(radius, radius, 1, 8, 1, true);
     this.geometry.rotateX(Math.PI / 2);
     this.outerMaterial = new THREE.MeshBasicMaterial({
@@ -81,9 +84,9 @@ export class Beam {
     this.outerMaterial.opacity = opacity;
     this.coreMaterial.opacity = opacity * 0.5;
     this.outer.scale.set(1, 1, this.length);
-    this.outer.position.z = -this.length / 2;
+    this.outer.position.z = this.length / 2;
     this.core.scale.set(0.4, 0.4, this.length);
-    this.core.position.z = -this.length / 2;
+    this.core.position.z = this.length / 2;
     this.active = false;
     this.group.visible = opacity > 0.005;
   }
@@ -99,9 +102,9 @@ export class Beam {
       this.t = Math.min(this.t + dt / this.seconds, 1);
       const grown = this.length * this.t;
       this.outer.scale.set(1, 1, grown);
-      this.outer.position.z = -grown / 2;
+      this.outer.position.z = grown / 2;
       this.core.scale.set(0.4, 0.4, grown);
-      this.core.position.z = -grown / 2;
+      this.core.position.z = grown / 2;
       this.outerMaterial.opacity = this.peak;
       this.coreMaterial.opacity = this.peak;
       return;

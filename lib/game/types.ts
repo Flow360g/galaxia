@@ -229,6 +229,12 @@ export interface Outcome {
   guessValue?: number;
   /** Vector only: what a direct hit salvaged. */
   salvage?: "shield" | "nova";
+  /**
+   * How hard a wrong answer lands, 0..1. A vector miss scales it by HOW wrong
+   * the shot was, so grazing the tolerance costs a fraction of what a wild
+   * guess costs. Everything else is a flat 1.
+   */
+  severity?: number;
 }
 
 /** Live state the HUD reads each frame. Flat and primitive on purpose. */

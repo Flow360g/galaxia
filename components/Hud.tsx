@@ -598,6 +598,14 @@ function PulseOverlay({ pulse }: { pulse: Pulse }) {
   );
 }
 
+/**
+ * How wide a vector miss was, in tolerances. The number the damage is scaled
+ * by, so the player can see why a near miss cost less than a wild one.
+ */
+function formatError(error: number): string {
+  return error >= 10 ? String(Math.round(error)) : (Math.round(error * 10) / 10).toFixed(1);
+}
+
 function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | undefined }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
   const full = outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
@@ -628,6 +636,12 @@ function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | unde
         <span className={styles.toastAnswer}>
           Truth: <strong>{outcome.answerText}</strong>
           {!outcome.timedOut ? <> &middot; You aimed {outcome.guessText}</> : null}
+          {!outcome.correct && !outcome.timedOut && outcome.error !== undefined ? (
+            <>
+              {" "}
+              &middot; <strong data-testid="wide-by">wide by {formatError(outcome.error)}x</strong>
+            </>
+          ) : null}
           {outcome.salvage ? (
             <>
               {" "}

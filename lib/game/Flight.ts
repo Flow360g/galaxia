@@ -56,8 +56,18 @@ export class Flight {
    * `strength` (0..1) scales a correct outcome's impulse, so a partially
    * right anomaly answer earns a partial burst. `multiplier` scales it up:
    * a cluster burn passes the charge multiplier here.
+   *
+   * `severity` (0..1) scales a WRONG outcome the same way: at 1 the impact
+   * costs the full share of velocity, and below it the ship keeps more. A
+   * vector shot that only just missed is a graze, not a wreck.
    */
-  applyOutcome(kind: OutcomeKind, thrustLeft: number, strength = 1, multiplier = 1): number {
+  applyOutcome(
+    kind: OutcomeKind,
+    thrustLeft: number,
+    strength = 1,
+    multiplier = 1,
+    severity = 1,
+  ): number {
     switch (kind) {
       case "thread":
       case "slingshot":
@@ -72,11 +82,11 @@ export class Flight {
       case "collision":
       case "timeout":
         this.streak = 0;
-        this.velocity = Math.max(this.velocity * FLIGHT.collisionRetain, FLIGHT.minVelocity);
+        this.velocity = Math.max(this.velocity * retain(FLIGHT.collisionRetain, severity), FLIGHT.minVelocity);
         break;
       case "wreck":
         this.streak = 0;
-        this.velocity = Math.max(this.velocity * FLIGHT.wreckRetain, FLIGHT.minVelocity);
+        this.velocity = Math.max(this.velocity * retain(FLIGHT.wreckRetain, severity), FLIGHT.minVelocity);
         break;
     }
     this.peakVelocity = Math.max(this.peakVelocity, this.velocity);
@@ -97,6 +107,11 @@ export function outcomeKind(
   if (timedOut) return "timeout";
   if (correct) return boosted ? "slingshot" : "thread";
   return boosted || !shielded ? "wreck" : "collision";
+}
+
+/** The fraction of velocity a hit leaves behind, softened by a low severity. */
+function retain(full: number, severity: number): number {
+  return 1 - (1 - full) * clamp01(severity);
 }
 
 export function clamp01(value: number): number {

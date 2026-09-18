@@ -99,6 +99,11 @@ export class Run {
   elapsed = 0;
   private timer: number = ENCOUNTER.introSeconds;
   private thrustSeconds: number = ENCOUNTER.thrustSeconds;
+  /**
+   * Seconds the clock is held full at the top of an approach. A beat to read
+   * what just happened before the countdown starts costing anything.
+   */
+  private grace = 0;
   private pending: Outcome | null = null;
   private struck = false;
   private sampleTimer = 0;
@@ -224,6 +229,7 @@ export class Run {
    */
   private beginPick(lane: number, correct: boolean): void {
     this.pulse = null;
+    this.grace = 0;
     this.pendingPick = { lane, correct };
     this.phase = "collecting";
     this.timer = LANE.runSeconds;
@@ -280,6 +286,7 @@ export class Run {
 
     let kind: Outcome["kind"];
     let strength = 1;
+    let severity = 1;
     let salvage: Outcome["salvage"];
     if (error <= VECTOR.perfectBand) {
       kind = "slingshot";
@@ -290,6 +297,9 @@ export class Run {
       strength = 1 - across * (1 - VECTOR.glanceFloor);
     } else {
       kind = outcomeKind(false, false, false, this.shields > 0);
+      // How wrong, not just wrong: a shot that grazed the tolerance costs a
+      // fraction of what a wild one does.
+      severity = missSeverity(error);
       if (this.shields > 0) {
         this.shields -= 1;
         this.shieldLost = true;
@@ -319,6 +329,7 @@ export class Run {
       answerText: formatValue(question.answer, question.unit),
       error,
       guessValue: guess,
+      severity,
       ...(salvage ? { salvage } : {}),
     };
     this.lock(outcome);
@@ -415,6 +426,10 @@ export class Run {
         break;
 
       case "approach":
+        if (this.grace > 0) {
+          this.grace -= dt;
+          break;
+        }
         this.thrust -= dt / this.thrustSeconds;
         if (this.thrust <= 0) {
           this.thrust = 0;
@@ -534,7 +549,12 @@ export class Run {
         ? ENCOUNTER.anomalyThrustSeconds
         : question.type === "vector"
           ? VECTOR.thrustSeconds[vectorSlot]!
-          : ENCOUNTER.thrustSeconds;
+          : question.type === "cluster"
+            ? // Six options and a prompt to read before the first tap. Every
+              // pick after it drops back to the plain five.
+              ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds
+            : ENCOUNTER.thrustSeconds;
+    this.grace = 0;
 
     this.hooks.onEncounterStart(index, question);
     if (question.type === "vector") this.hooks.onAim(this.vectorT);
@@ -574,8 +594,11 @@ export class Run {
       this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
       this.hooks.onCollect(lane, cluster.charge);
       this.phase = "approach";
-      // A fresh five seconds for the next decision.
+      // A fresh five seconds for the next decision, after a beat to see what
+      // was banked. The prompt has been read by now, so no reading bonus.
       this.thrust = 1;
+      this.thrustSeconds = ENCOUNTER.thrustSeconds;
+      this.grace = CLUSTER.collectPauseSeconds;
       if (cluster.charge >= question.answers.length) {
         // Nothing left to find. FULL BURN, no decision needed.
         this.burn();
@@ -760,6 +783,7 @@ export class Run {
       outcome.thrustLeft,
       strength,
       multiplier,
+      outcome.severity ?? 1,
     );
     outcome.streakAfter = this.flight.streak;
 
@@ -847,6 +871,19 @@ export class Run {
       durationSeconds: this.elapsed,
     };
   }
+}
+
+/**
+ * How hard a vector miss lands, 0..1, from its normalised error.
+ *
+ * Error 1 is the edge of the tolerance: a shot that only just missed costs
+ * `severityFloor` of a full impact. It ramps to a full impact at
+ * `severityFullAt` and stays there, so a wild guess is the worst it gets.
+ */
+export function missSeverity(error: number): number {
+  const span = Math.max(VECTOR.severityFullAt - 1, 1e-6);
+  const across = clamp01((error - 1) / span);
+  return VECTOR.severityFloor + (1 - VECTOR.severityFloor) * across;
 }
 
 /** Stage rating from plasma banked. S also needs every shield still up. */

@@ -33,6 +33,9 @@ export async function loadLambertModel(
 
   model.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
+    // Not every GLB ships normals, and Lambert with no normals shades to
+    // pure black however much light is on it. Derive them from the geometry.
+    if (!object.geometry.getAttribute("normal")) object.geometry.computeVertexNormals();
     const source = object.material as THREE.MeshStandardMaterial;
     const material = new THREE.MeshLambertMaterial({
       map: source.map ?? null,
