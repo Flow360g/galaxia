@@ -7,7 +7,7 @@ import { buildRockGeometry } from "./AsteroidField";
  *
  * These are individual meshes rather than instances: there are only ever a
  * handful live, and each needs its own material state (accent wireframe when
- * active, neutral when dormant) plus a DOM label projected over it.
+ * active, resolved colour after commit) plus a DOM label projected over it.
  *
  * Labels are DOM, not canvas text or sprites. At this count the projection
  * cost is nil, and DOM gives sharp type at any DPR, the design system's
@@ -16,21 +16,8 @@ import { buildRockGeometry } from "./AsteroidField";
 
 const scratchVector = new THREE.Vector3();
 
-/** Depth at which a label reaches full opacity, and where it first appears. */
-const LABEL_FADE_START = 60;
-const LABEL_FADE_END = 190;
-
 function clamp01(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
-}
-
-export interface QuestionSlot {
-  /** Lane index this asteroid occupies, 0..laneCount-1. */
-  lane: number;
-  /** Text shown on the label. */
-  label: string;
-  /** Set by the scoring layer later; drives the resolved colour. */
-  proximity: number;
 }
 
 export class QuestionAsteroid {
@@ -39,6 +26,8 @@ export class QuestionAsteroid {
   lane = 0;
   label = "";
   active = false;
+  /** Set once the ship has flown into this rock; it collapses and retires. */
+  shattering = false;
 
   private readonly mesh: THREE.Mesh;
   private readonly wireframe: THREE.LineSegments;
@@ -48,6 +37,7 @@ export class QuestionAsteroid {
   private readonly wireGeometry: THREE.BufferGeometry;
 
   private spin = { x: 0.12, y: 0.18, z: 0.07 };
+  private shatterT = 0;
 
   constructor(random: () => number) {
     this.geometry = buildRockGeometry(random);
@@ -68,10 +58,7 @@ export class QuestionAsteroid {
       transparent: true,
       opacity: 0.9,
     });
-    this.wireframe = new THREE.LineSegments(
-      this.wireGeometry,
-      this.wireMaterial,
-    );
+    this.wireframe = new THREE.LineSegments(this.wireGeometry, this.wireMaterial);
     this.wireframe.scale.setScalar(QUESTION.radius * 1.02);
     this.group.add(this.wireframe);
 
@@ -89,41 +76,64 @@ export class QuestionAsteroid {
     this.lane = lane;
     this.label = label;
     this.active = true;
+    this.shattering = false;
+    this.shatterT = 0;
     this.group.visible = true;
+    this.group.scale.setScalar(1);
 
-    this.group.position.set(laneToX(lane), 0, -WORLD.spawnDistance);
+    this.group.position.set(
+      laneToX(lane),
+      lane % 2 === 0 ? QUESTION.laneOffsetY : -QUESTION.laneOffsetY,
+      -WORLD.spawnDistance - lane * QUESTION.laneStaggerZ,
+    );
     this.setResolved(null);
   }
 
   retire(): void {
     this.active = false;
+    this.shattering = false;
     this.group.visible = false;
+  }
+
+  /** Begin the collapse. The rock keeps flying while it shrinks. */
+  shatter(): void {
+    if (!this.active || this.shattering) return;
+    this.shattering = true;
+    this.shatterT = 0;
   }
 
   /**
    * Tint after an answer resolves. `null` restores the neutral pending state.
-   * The scoring layer will drive this once the mechanic is chosen.
+   * `chosen` is the rock in the lane the ship committed to.
    */
-  setResolved(proximity: number | null): void {
-    if (proximity === null) {
+  setResolved(accuracy: number | null, chosen = false): void {
+    if (accuracy === null) {
       this.material.color.setHex(COLOR.panelLabel);
       this.wireMaterial.color.setHex(COLOR.accent);
       this.wireMaterial.opacity = 0.9;
       return;
     }
 
+    if (!chosen) {
+      // The rocks not taken dim out of the way.
+      this.material.color.setHex(COLOR.body);
+      this.wireMaterial.color.setHex(COLOR.body);
+      this.wireMaterial.opacity = 0.4;
+      return;
+    }
+
     // Semantic colour only where meaning demands it.
-    if (proximity >= 0.999) {
+    if (accuracy >= 0.65) {
       this.material.color.setHex(COLOR.pos);
       this.wireMaterial.color.setHex(COLOR.pos);
-    } else if (proximity > 0) {
-      this.material.color.setHex(COLOR.body);
-      this.wireMaterial.color.setHex(COLOR.accent);
+    } else if (accuracy >= 0.35) {
+      this.material.color.setHex(COLOR.panelLabel);
+      this.wireMaterial.color.setHex(COLOR.white);
     } else {
       this.material.color.setHex(COLOR.neg);
       this.wireMaterial.color.setHex(COLOR.neg);
     }
-    this.wireMaterial.opacity = 0.7;
+    this.wireMaterial.opacity = 0.9;
   }
 
   update(dt: number, speed: number): void {
@@ -134,27 +144,41 @@ export class QuestionAsteroid {
     this.group.rotation.y += this.spin.y * dt;
     this.group.rotation.z += this.spin.z * dt;
 
+    if (this.shattering) {
+      this.shatterT += dt / QUESTION.shatterSeconds;
+      if (this.shatterT >= 1) {
+        this.retire();
+        return;
+      }
+      // Ease out: a fast initial collapse, then the last shards blink away.
+      const s = 1 - this.shatterT * this.shatterT;
+      this.group.scale.setScalar(s);
+      this.group.rotation.y += dt * 9;
+    }
+
     if (this.group.position.z > WORLD.recycleDistance) this.retire();
   }
 
   /**
-   * Project this asteroid to normalised screen space for the DOM label.
-   * Returns null when it is behind the camera or off screen.
+   * Project this asteroid's label anchor (just above the rock) to normalised
+   * screen space for the DOM label. Returns null when it is behind the camera
+   * or off screen.
    */
   projectToScreen(
     camera: THREE.Camera,
     width: number,
     height: number,
   ): { x: number; y: number; scale: number; opacity: number } | null {
-    if (!this.active) return null;
+    if (!this.active || this.shattering) return null;
 
     // At the spawn plane perspective squeezes all four lanes into a few
     // pixels, so their labels pile into one unreadable blob. Hold them back
     // until the set has spread out, then fade them in.
     const depth = -this.group.position.z;
-    if (depth > LABEL_FADE_END) return null;
+    if (depth > QUESTION.labelFadeFar) return null;
 
     scratchVector.copy(this.group.position);
+    scratchVector.y += QUESTION.radius * QUESTION.labelLift;
     scratchVector.project(camera);
 
     // z > 1 means behind the near plane; the projection wraps and the label
@@ -172,7 +196,8 @@ export class QuestionAsteroid {
     // still readable on a phone.
     const scale = Math.max(0.62, Math.min(1, 90 / Math.max(depth, 1)));
     const opacity = clamp01(
-      (LABEL_FADE_END - depth) / (LABEL_FADE_END - LABEL_FADE_START),
+      (QUESTION.labelFadeFar - depth) /
+        (QUESTION.labelFadeFar - QUESTION.labelFadeNear),
     );
 
     return { x, y, scale, opacity };

@@ -3,9 +3,10 @@
 A daily quiz flight. Questions come at you as asteroids; how close you get
 decides how far you travel.
 
-**Phase 1 (this branch): the world only.** Ship, camera, flight feel, asteroid
-motion, starfield, HUD and the mobile performance envelope. The quiz mechanic
-and the gradient-of-correctness scoring are deliberately not implemented yet.
+**Phase 2: a playable round.** The Quaternius spaceship with burning exhausts,
+a painted nebula backdrop, an arcade title screen, and a working quiz: steer
+into your answer, the rock you hit scores you, ten questions then a results
+grid.
 
 ## Running it
 
@@ -46,9 +47,25 @@ that scoring can own independently of the scene graph.
 
 **Lanes are the seam for scoring.** The corridor divides into N lanes (default
 4). The engine always exposes both a discrete `currentLane` and a continuous
-`lanePosition` (2.4 means 40% of the way from lane 2 toward lane 3). That one
-abstraction serves every candidate mechanic without a rewrite: continuous
-position for gate steering, discrete lane for proximity-ranked multiple choice.
+`lanePosition` (2.4 means 40% of the way from lane 2 toward lane 3).
+`lib/game/scoring.ts` reads the continuous position for numeric questions
+(flight path as answer: distance from the truth is the gradient) and the whole
+lane for multiple choice (the option's authored `proximity` is the gradient).
+
+**The round.** `lib/game/Quiz.ts` announces each question on the HUD, waits a
+preview so the player can read and pre-steer, then spawns four labelled rocks,
+one per lane. When the lead rock crosses the commit line the ship's X locks the
+answer in: the chosen rock turns green or red, the ship boosts or brakes, a
+miss costs hull, and the rock shatters as the ship flies through it. After the
+last question the engine freezes and the results panel shows the share grid.
+
+**The ship** is `public/models/spaceship.glb` (Quaternius, CC0), loaded with
+`GLTFLoader` and re-materialised as Lambert so the PBR ban holds. Nozzle
+positions and flame size live in `Tuning.SHIP.nozzles` and `Tuning.EXHAUST`.
+
+**The backdrop** is one textured plane parented to the camera, sized to cover
+the frustum at any aspect. Fog and clear colour are the image's dominant tone
+so distant rocks fade into it.
 
 **React owns the DOM, three.js owns the canvas.** The engine runs its own
 `requestAnimationFrame` loop and never touches the React scheduler. State flows
@@ -65,9 +82,11 @@ fresh canvas into a container div instead.
 
 ```
 app/                  routes: landing, /play, global styles
-components/           GameCanvas (mount boundary), Hud, DebugStats
-lib/game/             Engine, Ship, Camera, Input, AsteroidField,
-                      QuestionAsteroid, Starfield, quality, Tuning, scoring
+components/           GameCanvas (mount boundary), Hud, RoundEnd, DebugStats
+lib/game/             Engine, Quiz, scoring, Ship, Exhaust, Backdrop, Camera,
+                      Input, AsteroidField, QuestionAsteroid, Starfield,
+                      quality, Tuning
+public/               spaceship.glb, backdrop image
 lib/content/          round loader
 content/rounds/       one JSON file per daily round
 ```
@@ -85,16 +104,12 @@ a mid-range Android.
   post-processing. Glow is faked additively.
 - DPR capped at 2, never raw `devicePixelRatio`: a 3x phone would otherwise
   render 9x the pixels.
-- Budget: under 60 draw calls and 60k triangles. Currently ~18 and ~14k.
+- Budget: under 60 draw calls and 60k triangles. Currently ~26 and ~16k.
 - Quality tier is picked from device hints, then downgraded if measured frame
   time misses the budget.
 
 ## What is deliberately not done
 
-`lib/game/scoring.ts` is a documented stub. The gradient mechanic is still an
-open design decision between flight-path-as-answer, proximity-ranked multiple
-choice, a confidence wager, and a hybrid. `AnswerInput` already carries the
-union of what all four need, so choosing one means filling in a single
-function.
-
-Also not started: share cards, group leaderboards, sound, persistence.
+Share cards, group leaderboards, sound, persistence (the title screen's
+hi-score is a placeholder), and time-decay on scoring (`AnswerInput` still
+carries `elapsed` and `window` for it).

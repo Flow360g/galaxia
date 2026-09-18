@@ -2,8 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Engine, type LabelPlacement } from "@/lib/game/Engine";
-import type { DebugInfo, GameState, Round } from "@/lib/game/types";
+import type {
+  AnswerEvent,
+  DebugInfo,
+  GameState,
+  Round,
+  RoundSummary,
+} from "@/lib/game/types";
 import { Hud } from "./Hud";
+import { RoundEnd } from "./RoundEnd";
 import { DebugStats } from "./DebugStats";
 import styles from "./GameCanvas.module.css";
 
@@ -26,6 +33,8 @@ export function GameCanvas({ round, debug }: Props) {
   const [state, setState] = useState<GameState | null>(null);
   const [labels, setLabels] = useState<LabelPlacement[]>([]);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+  const [lastAnswer, setLastAnswer] = useState<AnswerEvent | null>(null);
+  const [summary, setSummary] = useState<RoundSummary | null>(null);
 
   // The engine emits state every frame. Re-rendering React at 60fps would
   // cost more than the scene does, so the HUD is sampled at ~10Hz instead.
@@ -54,8 +63,12 @@ export function GameCanvas({ round, debug }: Props) {
       round,
       onState: handleState,
       onLabels: handleLabels,
+      onAnswer: setLastAnswer,
+      onRoundEnd: setSummary,
       onDebug: debug ? setDebugInfo : undefined,
     });
+    setLastAnswer(null);
+    setSummary(null);
 
     engineRef.current = engine;
     engine.start();
@@ -89,7 +102,8 @@ export function GameCanvas({ round, debug }: Props) {
         ))}
       </div>
 
-      <Hud state={state} round={round} />
+      <Hud state={state} round={round} lastAnswer={lastAnswer} />
+      {summary ? <RoundEnd round={round} summary={summary} /> : null}
       {debug && debugInfo ? <DebugStats info={debugInfo} /> : null}
     </div>
   );

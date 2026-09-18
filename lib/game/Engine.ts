@@ -1,13 +1,22 @@
 import * as THREE from "three";
 import { AsteroidField } from "./AsteroidField";
+import { Backdrop } from "./Backdrop";
 import { ChaseCamera, speedRatio } from "./Camera";
 import { Input } from "./Input";
-import { QuestionAsteroid, laneToX } from "./QuestionAsteroid";
+import { QuestionAsteroid } from "./QuestionAsteroid";
+import { Quiz } from "./Quiz";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
 import { COLOR, PERF, QUESTION, SPEED, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
-import type { DebugInfo, GameState, QualityTier, Question, Round } from "./types";
+import type {
+  AnswerEvent,
+  DebugInfo,
+  GameState,
+  QualityTier,
+  Round,
+  RoundSummary,
+} from "./types";
 
 export interface EngineOptions {
   /**
@@ -21,6 +30,8 @@ export interface EngineOptions {
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onLabels?: (labels: LabelPlacement[]) => void;
+  onAnswer?: (event: AnswerEvent) => void;
+  onRoundEnd?: (summary: RoundSummary) => void;
 }
 
 export interface LabelPlacement {
@@ -49,6 +60,8 @@ export class Engine {
   private readonly field: AsteroidField;
   private readonly stars: Starfield;
   private readonly questions: QuestionAsteroid[] = [];
+  private readonly quiz: Quiz;
+  private readonly backdrop: Backdrop;
   private readonly governor: QualityGovernor;
 
   private readonly clock = new THREE.Clock();
@@ -66,8 +79,7 @@ export class Engine {
   private speed: number = SPEED.base;
   private speedMultiplier = 1;
   private targetMultiplier = 1;
-  private questionTimer = 0;
-  private questionIndex = -1;
+  private ended = false;
 
   private fpsAccumulator = 0;
   private fpsFrames = 0;
@@ -94,15 +106,20 @@ export class Engine {
       stencil: false,
       depth: true,
     });
-    this.renderer.setClearColor(COLOR.panel, 1);
+    this.renderer.setClearColor(COLOR.space, 1);
     this.renderer.setPixelRatio(dprForTier(this.tier));
 
-    this.scene.background = new THREE.Color(COLOR.panel);
-    // Fog in the background colour means recycled geometry fades in rather
-    // than popping at the spawn plane. It is the cheapest depth cue there is.
-    this.scene.fog = new THREE.Fog(COLOR.panel, WORLD.fogNear, WORLD.fogFar);
+    this.scene.background = new THREE.Color(COLOR.space);
+    // Fog in the backdrop's dominant tone means recycled geometry fades into
+    // the painted sky rather than popping at the spawn plane.
+    this.scene.fog = new THREE.Fog(COLOR.space, WORLD.fogNear, WORLD.fogFar);
 
     this.chase = new ChaseCamera(1, reducedMotion);
+    this.scene.add(this.chase.camera);
+
+    this.backdrop = new Backdrop();
+    this.chase.camera.add(this.backdrop.mesh);
+    void this.backdrop.load();
 
     // One directional key light and one hemisphere fill. No shadow maps:
     // shadows are the single most expensive thing a mobile GPU can be asked
@@ -116,8 +133,9 @@ export class Engine {
 
     const random = createRandom(options.round.seed);
 
-    this.ship = new Ship(reducedMotion);
+    this.ship = new Ship(reducedMotion, this.tier, random);
     this.scene.add(this.ship.group);
+    void this.ship.loadModel();
 
     this.stars = new Starfield(this.tier, random);
     this.scene.add(this.stars.group);
@@ -130,6 +148,16 @@ export class Engine {
       this.questions.push(asteroid);
       this.scene.add(asteroid.group);
     }
+
+    this.quiz = new Quiz(options.round, this.questions, {
+      lanePosition: () => this.ship.lanePosition,
+      lane: () => this.ship.currentLane,
+      setSpeedMultiplier: (multiplier) => this.setSpeedMultiplier(multiplier),
+      shake: (intensity) => this.shake(intensity),
+      pulseExhaust: (strength) => this.ship.pulseExhaust(strength),
+      onAnswer: (event) => options.onAnswer?.(event),
+      onRoundEnd: () => this.endRound(),
+    });
 
     this.input = new Input(this.canvas);
     this.observeResize();
@@ -163,6 +191,7 @@ export class Engine {
     this.ship.dispose();
     this.field.dispose();
     this.stars.dispose();
+    this.backdrop.dispose();
     this.questions.forEach((asteroid) => asteroid.dispose());
     this.questions.length = 0;
 
@@ -201,10 +230,27 @@ export class Engine {
       speed: this.speed,
       lanePosition: this.ship.lanePosition,
       currentLane: this.ship.currentLane,
-      hull: 1,
-      activeQuestion: this.questionIndex,
+      hull: this.quiz.hull,
+      score: this.quiz.score,
+      activeQuestion: this.quiz.activeQuestion,
+      answering: this.quiz.answering,
+      liveGuess: this.quiz.liveGuess(this.ship.lanePosition),
+      questionsAnswered: this.quiz.questionsAnswered,
       running: this.frameHandle !== null,
     };
+  }
+
+  private endRound(): void {
+    if (this.ended) return;
+    this.ended = true;
+    this.options.onRoundEnd?.({
+      score: this.quiz.score,
+      distance: this.distance,
+      hull: this.quiz.hull,
+      bands: [...this.quiz.bands],
+    });
+    // Freeze on the final frame; the results panel sits over it.
+    this.stop();
   }
 
   // ------------------------------------------------------------------ resize
@@ -227,13 +273,14 @@ export class Engine {
     this.height = height;
     this.renderer.setSize(width, height, false);
     this.chase.setAspect(width / height);
+    this.backdrop.setAspect(width / height);
   }
 
   private onVisibilityChange = (): void => {
     // Pause when backgrounded: rAF is throttled anyway, and resuming from a
     // stale clock would otherwise jump the world forward.
     if (document.hidden) this.stop();
-    else if (!this.disposed) this.start();
+    else if (!this.disposed && !this.ended) this.start();
   };
 
   // -------------------------------------------------------------- frame loop
@@ -264,8 +311,9 @@ export class Engine {
     this.chase.update(dt, this.ship, ratio);
     this.stars.update(dt, this.speed);
     this.field.update(dt, this.speed);
+    this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 
-    this.updateQuestions(dt);
+    this.quiz.update(dt, this.speed, this.distance, this.elapsed);
     this.emitLabels();
 
     this.options.onState?.(this.state);
@@ -282,46 +330,6 @@ export class Engine {
       (this.targetMultiplier - this.speedMultiplier) * lerp;
 
     this.speed = base * this.speedMultiplier;
-  }
-
-  /**
-   * Cycles question asteroids in and out. With scoring unimplemented this
-   * only drives presentation: it proves the content pipeline, the lane
-   * placement and the label projection all work end to end.
-   */
-  private updateQuestions(dt: number): void {
-    this.questions.forEach((asteroid) => asteroid.update(dt, this.speed));
-
-    // Spawn cadence shortens as speed rises, so the gap between question sets
-    // stays roughly constant in distance rather than in time.
-    const interval = QUESTION.intervalSeconds * (SPEED.base / this.speed);
-    this.questionTimer += dt;
-    if (this.questionTimer < interval) return;
-
-    this.questionTimer = 0;
-    this.spawnQuestionSet();
-  }
-
-  private spawnQuestionSet(): void {
-    const { questions } = this.options.round;
-    if (questions.length === 0) return;
-
-    this.questionIndex = (this.questionIndex + 1) % questions.length;
-    const question = questions[this.questionIndex]!;
-    const labels = labelsForQuestion(question, WORLD.laneCount);
-
-    for (let lane = 0; lane < WORLD.laneCount; lane += 1) {
-      const asteroid = this.questions[lane];
-      if (!asteroid) break;
-      asteroid.spawn(lane, labels[lane] ?? "");
-      // Stagger depth so the four do not arrive as a flat wall, and alternate
-      // height generously: lanes are only ~6 world units apart, which at
-      // mid-range projects to barely 60px and collides the labels. Vertical
-      // separation is free, because only X carries the answer.
-      asteroid.group.position.z -= lane * 7;
-      asteroid.group.position.x = laneToX(lane);
-      asteroid.group.position.y = lane % 2 === 0 ? 2.7 : -2.7;
-    }
   }
 
   private emitLabels(): void {
@@ -407,26 +415,4 @@ export function createRandom(seed: number): () => number {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-
-/**
- * Lane labels for a question. Placeholder presentation only: MCQ shows its
- * options, numeric shows evenly spaced gate values across the band.
- */
-export function labelsForQuestion(
-  question: Question,
-  laneCount: number,
-): string[] {
-  if (question.type === "mcq" && question.options) {
-    return question.options.slice(0, laneCount).map((option) => option.label);
-  }
-
-  const [min, max] = question.range ?? [0, 100];
-  const labels: string[] = [];
-  for (let lane = 0; lane < laneCount; lane += 1) {
-    const low = min + ((max - min) * lane) / laneCount;
-    const high = min + ((max - min) * (lane + 1)) / laneCount;
-    labels.push(`${Math.round(low)}–${Math.round(high)}`);
-  }
-  return labels;
 }

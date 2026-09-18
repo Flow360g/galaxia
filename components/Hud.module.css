@@ -1,5 +1,5 @@
 /* HUD sits over the scene. Hairlines and whitespace only, no cards, no fills
-   beyond the single dark panel the type needs to stay legible on rock. */
+   beyond the panels the type needs to stay legible on rock. */
 
 .hud {
   position: absolute;
@@ -10,7 +10,7 @@
   /* Top-weighted, not space-between: the ship sits low-centre and the lower
      half must stay clear so the player can read what is coming at them. */
   justify-content: flex-start;
-  gap: 24px;
+  gap: 20px;
   padding: 24px;
   /* Notches and home indicators. */
   padding-top: max(24px, env(safe-area-inset-top));
@@ -22,6 +22,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .readout,
@@ -39,22 +45,21 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 16px;
+  gap: 14px;
 }
 
 .figure {
-  font-size: 44px;
-  font-weight: 700;
+  font-size: 26px;
   line-height: 1;
-  color: #ffffff;
+  color: var(--arcade-yellow);
+  text-shadow: 0 0 12px rgba(255, 224, 61, 0.45);
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
 
 .figureSmall {
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 15px;
   line-height: 1;
   color: #ffffff;
   display: flex;
@@ -63,20 +68,45 @@
 }
 
 .unit {
-  font-size: 11px;
+  font-family: var(--mono);
+  font-size: 10px;
   letter-spacing: var(--track-label);
   color: var(--panel-label);
 }
 
-/* The one dark panel on the page, so it takes the 4-6px radius. */
+.hull {
+  display: flex;
+  gap: 4px;
+}
+
+.hull > span {
+  display: block;
+  width: 14px;
+  height: 10px;
+  border: 1px solid var(--arcade-cyan);
+}
+
+.hullOn {
+  background: var(--arcade-cyan);
+  box-shadow: 0 0 8px rgba(79, 241, 255, 0.55);
+}
+
+.hullOff {
+  background: transparent;
+  opacity: 0.45;
+}
+
+/* Question and toast sit low, under the ship, so the rocks arriving at the
+   horizon are never covered. The panels take the 4-6px radius. */
 .question {
+  margin-top: auto;
   align-self: center;
   width: 100%;
   max-width: 44ch;
-  background: rgba(13, 27, 46, 0.86);
+  background: rgba(7, 17, 34, 0.86);
   border: 1px solid var(--rule-dark);
   border-radius: 4px;
-  padding: 20px 24px;
+  padding: 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -89,6 +119,115 @@
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: #ffffff;
+}
+
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.lane {
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 7px 4px;
+  border: 1px solid var(--rule-dark);
+  color: var(--panel-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms;
+}
+
+.laneOn {
+  background: var(--arcade-yellow);
+  border-color: var(--arcade-yellow);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.guess {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--rule-dark);
+  padding-top: 12px;
+}
+
+.guessValue {
+  font-size: 18px;
+  color: var(--arcade-yellow);
+}
+
+.toast {
+  margin-top: auto;
+  align-self: center;
+  width: 100%;
+  max-width: 44ch;
+  background: rgba(7, 17, 34, 0.9);
+  border: 1px solid var(--rule-dark);
+  border-left: 4px solid var(--panel-label);
+  border-radius: 4px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: toastIn 240ms ease-out;
+}
+
+.toast_pinpoint {
+  border-left-color: var(--arcade-yellow);
+}
+
+.toast_close {
+  border-left-color: #4fd27a;
+}
+
+.toast_off {
+  border-left-color: var(--panel-label);
+}
+
+.toast_miss {
+  border-left-color: var(--neg);
+}
+
+.toastBand {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.toast_pinpoint .toastBand {
+  color: var(--arcade-yellow);
+}
+
+.toast_miss .toastBand {
+  color: #ff6b5c;
+}
+
+.toastAnswer {
+  font-size: 15px;
+  color: #ffffff;
+}
+
+.toastFact {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--panel-label);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hint {
@@ -105,18 +244,23 @@
   }
 
   .figure {
-    font-size: 34px;
+    font-size: 20px;
   }
 
   .figureSmall {
-    font-size: 18px;
+    font-size: 12px;
   }
 
-  .question {
-    padding: 16px;
+  .question,
+  .toast {
+    padding: 14px 16px;
   }
 
   .prompt {
-    font-size: 17px;
+    font-size: 16px;
+  }
+
+  .toastBand {
+    font-size: 13px;
   }
 }

@@ -10,7 +10,7 @@ export interface QuestionOption {
   label: string;
   /**
    * How close this option is to correct, 0..1. 1 is the right answer.
-   * Present for `mcq`; the gradient mechanic will consume it.
+   * Present for `mcq`; the gradient mechanic consumes it.
    */
   proximity: number;
 }
@@ -39,6 +39,8 @@ export interface Round {
   questions: Question[];
 }
 
+export type Band = "pinpoint" | "close" | "off" | "miss";
+
 /** Live state the HUD reads each frame. Kept flat and primitive on purpose. */
 export interface GameState {
   /** Total distance travelled this round, world units. */
@@ -49,14 +51,22 @@ export interface GameState {
   lanePosition: number;
   /** Nearest whole lane the ship currently occupies. */
   currentLane: number;
-  /** Hull integrity 0..1. Scoring will drive this; engine only reads it. */
+  /** Hull integrity 0..1. */
   hull: number;
+  /** Points accumulated this round. */
+  score: number;
   /** Index of the question currently approaching, or -1 between sets. */
   activeQuestion: number;
+  /** Whether the approaching set is still steerable (not yet committed). */
+  answering: boolean;
+  /** Value the ship's current X maps to for a numeric question, else null. */
+  liveGuess: number | null;
+  /** Questions resolved so far. */
+  questionsAnswered: number;
   running: boolean;
 }
 
-/** What the engine hands the (not yet written) scoring layer. */
+/** What the engine hands the scoring layer. */
 export interface AnswerInput {
   question: Question;
   /** Continuous lane position at the moment of commit. */
@@ -72,14 +82,33 @@ export interface AnswerInput {
 export interface AnswerResult {
   /** 0..1. How right the answer was. The gradient. */
   accuracy: number;
-  /** Distance awarded. */
+  /** Points awarded. */
   points: number;
   /** Speed multiplier to apply as a consequence. 1 = no change. */
   speedMultiplier: number;
   /** Hull delta, negative for damage. */
   hullDelta: number;
   /** Bucket for the share grid. */
-  band: "pinpoint" | "close" | "off" | "miss";
+  band: Band;
+  /** What the player effectively answered, formatted for the HUD. */
+  guessText: string;
+  /** The correct answer, formatted for the HUD. */
+  answerText: string;
+}
+
+/** Emitted when a question resolves. */
+export interface AnswerEvent {
+  questionIndex: number;
+  question: Question;
+  result: AnswerResult;
+}
+
+/** Emitted once every question in the round has resolved. */
+export interface RoundSummary {
+  score: number;
+  distance: number;
+  hull: number;
+  bands: Band[];
 }
 
 /** Debug counters surfaced by ?debug=1. */

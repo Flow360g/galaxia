@@ -1,7 +1,7 @@
 .shell {
   position: fixed;
   inset: 0;
-  background: var(--panel);
+  background: var(--space);
   overflow: hidden;
 }
 
@@ -33,13 +33,13 @@
   position: absolute;
   top: 0;
   left: 0;
-  font-size: 13px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  letter-spacing: 0.06em;
   color: #ffffff;
-  background: rgba(13, 27, 46, 0.88);
+  background: rgba(7, 17, 34, 0.88);
   border: 1px solid var(--rule-dark);
-  padding: 6px 10px;
+  padding: 4px 7px;
   white-space: nowrap;
   will-change: transform;
 }

@@ -12,3 +12,4 @@ npm-debug.log*
 next-env.d.ts
 /test-results/
 /playwright-report/
+/.scratch/

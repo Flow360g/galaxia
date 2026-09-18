@@ -20,3 +20,8 @@ export function formatSpeed(speed: number): string {
 export function formatRoundNumber(round: number): string {
   return `${round}`.padStart(3, "0");
 }
+
+/** Score as a six-digit arcade counter, e.g. 004250. */
+export function formatScore(score: number): string {
+  return `${Math.max(0, Math.round(score))}`.padStart(6, "0");
+}

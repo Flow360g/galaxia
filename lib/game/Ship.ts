@@ -1,13 +1,16 @@
 import * as THREE from "three";
-import { COLOR, SHIP, WORLD } from "./Tuning";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { Exhaust } from "./Exhaust";
+import { COLOR, EXHAUST, SHIP, WORLD } from "./Tuning";
 import type { Input } from "./Input";
+import type { QualityTier } from "./types";
 
 /**
- * The player ship: a procedural, flat-shaded delta with two nacelles.
+ * The player ship.
  *
- * Built from a handful of primitives merged at construction so the whole hull
- * is one draw call. Deliberately hard-edged and near-monochrome, per the
- * design system: white facets, ink panel lines, accent only on the engines.
+ * Starts as a procedural flat-shaded delta so the first frame has a hull,
+ * then swaps in the Quaternius GLB once it loads. Two exhausts burn off the
+ * back and stretch with speed.
  *
  * The ship never moves on Z. It steers on X and Y inside the corridor while
  * the world is translated past it.
@@ -19,104 +22,111 @@ export class Ship {
   velocityX = 0;
   velocityY = 0;
 
-  private hull!: THREE.Mesh;
-  private readonly trails: THREE.Mesh[] = [];
-  private trailMaterial!: THREE.MeshBasicMaterial;
+  /** Everything that bobs: hull and exhausts together. */
+  private readonly body = new THREE.Group();
+  private hull!: THREE.Object3D;
+  private readonly exhausts: Exhaust[] = [];
   private roll = 0;
   private pitch = 0;
   private bobPhase = 0;
   private elapsed = 0;
+  private disposed = false;
 
-  private readonly disposables: Array<{ dispose(): void }> = [];
+  private disposables: Array<{ dispose(): void }> = [];
 
-  constructor(private readonly reducedMotion: boolean) {
-    this.buildHull();
-    this.buildTrail();
+  constructor(
+    private readonly reducedMotion: boolean,
+    tier: QualityTier,
+    random: () => number,
+  ) {
+    this.group.add(this.body);
+    this.buildPlaceholder();
+    this.buildExhausts(tier, random);
     this.group.position.set(0, 0, SHIP.z);
   }
 
-  private buildHull(): void {
-    const parts: THREE.BufferGeometry[] = [];
-
-    // Delta body, built from an explicit triangle list rather than a lathed
-    // primitive. A cone viewed from behind presents its flat base to the
-    // camera and reads as a slab; an authored arrowhead keeps a sharp
-    // silhouette from the one angle the player actually sees.
-    parts.push(buildDelta());
-
-    // Cockpit blister, proud of the spine.
-    const cockpit = new THREE.OctahedronGeometry(0.42, 0);
-    cockpit.scale(0.8, 0.5, 1.6);
-    cockpit.translate(0, 0.38, -0.35);
-    parts.push(cockpit);
-
-    // Nacelles out on the wings. Boxes, not cylinders: flat facets catch the
-    // directional light and hold the hard edges the rest of the ship has.
-    for (const side of [-1, 1]) {
-      const nacelle = new THREE.BoxGeometry(0.44, 0.4, 2.1);
-      nacelle.translate(side * 1.62, -0.06, 0.45);
-      parts.push(nacelle);
-
-      const pylon = new THREE.BoxGeometry(1.0, 0.12, 0.7);
-      pylon.translate(side * 1.12, -0.06, 0.6);
-      parts.push(pylon);
-    }
-
-    const merged = mergeGeometries(parts);
-    parts.forEach((part) => part.dispose());
-
-    // Flat shading is both the look and the cheap option: no normal
-    // interpolation, and it owns the low polygon count rather than hiding it.
+  private buildPlaceholder(): void {
+    const geometry = buildDelta();
     const material = new THREE.MeshLambertMaterial({
       color: COLOR.white,
       flatShading: true,
     });
-
-    this.hull = new THREE.Mesh(merged, material);
-    this.group.add(this.hull);
-    this.disposables.push(merged, material);
-
-    // Hairline edge overlay in ink: the 3D read of a 1px rule.
-    const edges = new THREE.EdgesGeometry(merged, 24);
-    const edgeMaterial = new THREE.LineBasicMaterial({
-      color: COLOR.ink,
-      transparent: true,
-      opacity: 0.6,
-    });
-    this.hull.add(new THREE.LineSegments(edges, edgeMaterial));
-    this.disposables.push(edges, edgeMaterial);
+    this.hull = new THREE.Mesh(geometry, material);
+    this.body.add(this.hull);
+    this.disposables.push(geometry, material);
   }
 
-  private buildTrail(): void {
-    // One additive quad per nacelle, lying in the XZ plane behind the
-    // exhaust. Two small streaks read as engines; one big plane read as a
-    // sheet of blue hanging off the back of the ship.
-    const geometry = new THREE.PlaneGeometry(1, 1);
-    const material = new THREE.MeshBasicMaterial({
-      color: COLOR.accent,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    this.disposables.push(geometry, material);
-
-    for (const side of [-1, 1]) {
-      const trail = new THREE.Mesh(geometry, material);
-      trail.rotation.x = -Math.PI / 2;
-      trail.position.set(side * 1.62, -0.06, 1.6);
-      this.group.add(trail);
-      this.trails.push(trail);
+  private buildExhausts(tier: QualityTier, random: () => number): void {
+    for (const nozzle of SHIP.nozzles) {
+      const exhaust = new Exhaust(tier, random);
+      exhaust.group.position.set(nozzle.x, nozzle.y, nozzle.z);
+      exhaust.group.rotation.x = EXHAUST.tilt;
+      this.body.add(exhaust.group);
+      this.exhausts.push(exhaust);
     }
+  }
 
-    this.trailMaterial = material;
+  /**
+   * Load the GLB hull and swap it for the placeholder. Resolves either way;
+   * a failed fetch leaves the delta in place rather than an empty scene.
+   */
+  async loadModel(url: string = SHIP.modelUrl): Promise<void> {
+    let gltf: Awaited<ReturnType<GLTFLoader["loadAsync"]>>;
+    try {
+      gltf = await new GLTFLoader().loadAsync(url);
+    } catch {
+      return;
+    }
+    if (this.disposed) return;
+
+    const model = gltf.scene;
+    const next: Array<{ dispose(): void }> = [];
+
+    model.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      // The README bans PBR on mobile. Lambert with the same atlas keeps the
+      // authored colours at a fraction of the shader cost.
+      const source = object.material as THREE.MeshStandardMaterial;
+      const material = new THREE.MeshLambertMaterial({
+        map: source.map ?? null,
+        color: source.color,
+      });
+      object.material = material;
+      next.push(object.geometry, material);
+      if (source.map) next.push(source.map);
+      source.dispose();
+    });
+
+    // Normalise: centre on the bounding box, scale to a known length, and
+    // turn the nose down -Z.
+    const bounds = new THREE.Box3().setFromObject(model);
+    const size = bounds.getSize(new THREE.Vector3());
+    const centre = bounds.getCenter(new THREE.Vector3());
+    const longest = Math.max(size.x, size.y, size.z, 1e-6);
+    const scale = SHIP.modelLength / longest;
+
+    const wrapper = new THREE.Group();
+    model.position.copy(centre).multiplyScalar(-1);
+    wrapper.add(model);
+    wrapper.scale.setScalar(scale);
+    wrapper.rotation.y = SHIP.modelYaw;
+
+    this.body.remove(this.hull);
+    this.disposables.forEach((item) => item.dispose());
+    this.disposables = next;
+    this.hull = wrapper;
+    this.body.add(wrapper);
+  }
+
+  /** Spike the exhaust, e.g. on a correct-answer boost. */
+  pulseExhaust(strength = 1): void {
+    for (const exhaust of this.exhausts) exhaust.pulse(strength);
   }
 
   /**
    * @param dt          clamped frame delta, seconds
    * @param input       steering axes
-   * @param speedRatio  0..1 across the speed band, drives trail length
+   * @param speedRatio  0..1 across the speed band, drives exhaust length
    */
   update(dt: number, input: Input, speedRatio: number): void {
     this.elapsed += dt;
@@ -166,17 +176,12 @@ export class Ship {
     // players who asked for reduced motion.
     if (!this.reducedMotion) {
       this.bobPhase += dt * SHIP.bobRate;
-      this.hull.position.y = Math.sin(this.bobPhase) * SHIP.bobAmplitude;
+      this.body.position.y = Math.sin(this.bobPhase) * SHIP.bobAmplitude;
     }
 
-    // Trails stretch with speed. This is most of what sells acceleration at
-    // a glance, since the world itself is just moving faster.
-    const trailLength = 1.2 + speedRatio * 3.2;
-    for (const trail of this.trails) {
-      trail.scale.set(0.34, trailLength, 1);
-      trail.position.z = 1.5 + trailLength * 0.5;
+    for (const exhaust of this.exhausts) {
+      exhaust.update(dt, this.elapsed, speedRatio);
     }
-    this.trailMaterial.opacity = 0.4 + speedRatio * 0.45;
   }
 
   /** Continuous lane position, e.g. 2.4 = 40% from lane 2 toward lane 3. */
@@ -192,53 +197,19 @@ export class Ship {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.disposables.forEach((item) => item.dispose());
     this.disposables.length = 0;
+    this.exhausts.forEach((exhaust) => exhaust.dispose());
+    this.exhausts.length = 0;
+    this.body.clear();
     this.group.clear();
   }
 }
 
 /**
- * Minimal geometry merge. three's BufferGeometryUtils lives in the examples
- * bundle; we only ever merge non-indexed position/normal geometries, so this
- * avoids pulling that in.
- */
-function mergeGeometries(geometries: THREE.BufferGeometry[]): THREE.BufferGeometry {
-  const positions: number[] = [];
-  const normals: number[] = [];
-
-  for (const geometry of geometries) {
-    const source = geometry.index ? geometry.toNonIndexed() : geometry;
-    const position = source.getAttribute("position");
-    const normal = source.getAttribute("normal");
-
-    for (let i = 0; i < position.count; i += 1) {
-      positions.push(position.getX(i), position.getY(i), position.getZ(i));
-      if (normal) {
-        normals.push(normal.getX(i), normal.getY(i), normal.getZ(i));
-      }
-    }
-
-    // toNonIndexed() allocates a new geometry; free it, but never free the
-    // caller's own geometry here (they dispose those themselves).
-    if (source !== geometry) source.dispose();
-  }
-
-  const merged = new THREE.BufferGeometry();
-  merged.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(positions, 3),
-  );
-  if (normals.length === positions.length) {
-    merged.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-  } else {
-    merged.computeVertexNormals();
-  }
-  return merged;
-}
-
-/**
- * The hull proper: a six-triangle arrowhead with a raised spine and a keel.
+ * Placeholder hull: a six-triangle arrowhead with a raised spine and a keel.
+ * Shown only until the GLB arrives.
  *
  * Winding is ordered so every face normal points outward, which flat shading
  * depends on entirely: a reversed triangle renders black and reads as a hole.
@@ -266,10 +237,7 @@ function buildDelta(): THREE.BufferGeometry {
   }
 
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(positions, 3),
-  );
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.computeVertexNormals();
   return geometry;
 }
