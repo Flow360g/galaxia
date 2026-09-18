@@ -1,0 +1,45 @@
+.shell {
+  position: fixed;
+  inset: 0;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* Styles the canvas the engine appends into .stage. */
+.stage > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Without this the browser claims the drag for scroll/pull-to-refresh and
+     steering dies the moment the thumb moves more than a few pixels. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+  color: #ffffff;
+  background: rgba(13, 27, 46, 0.88);
+  border: 1px solid var(--rule-dark);
+  padding: 6px 10px;
+  white-space: nowrap;
+  will-change: transform;
+}

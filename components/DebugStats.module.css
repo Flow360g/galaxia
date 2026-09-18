@@ -1,0 +1,36 @@
+.stats {
+  position: absolute;
+  left: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(13, 27, 46, 0.9);
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  min-width: 150px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.key {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+  color: var(--panel-label);
+}
+
+/* Figures right-aligned in their column. */
+.value {
+  font-size: 13px;
+  color: #ffffff;
+  text-align: right;
+}
