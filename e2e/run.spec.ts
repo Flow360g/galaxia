@@ -178,7 +178,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   expect(await page.evaluate(() => localStorage.getItem("galaxia:flown"))).toBe("1");
 });
 
-test("a full burn: all three lanes, keyboard, warp", async ({ page }) => {
+test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
   await page.goto("/play?replay=1");
   const toast = page.getByTestId("toast");
 
@@ -190,16 +190,19 @@ test("a full burn: all three lanes, keyboard, warp", async ({ page }) => {
       timeout: 5_000,
     });
   }
-  // Third correct pick auto-burns: the panel gives way to the toast, no BURN tap needed.
+  // Third correct pick auto-burns: the panel gives way to the toast, no BANK tap needed.
   await page.keyboard.press(String(lanes[lanes.length - 1]! + 1));
   await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
   await expect(toast).toHaveAttribute("data-charge", "3");
-  await expect(toast).toContainText("FULL BURN");
+  await expect(toast).toContainText("MAXIMUM THRUST");
+  // The full-screen treatment only a full reactor gets: hazard placard, speed
+  // lines, and the shell shaking under both.
+  await expect(page.getByTestId("max-thrust")).toBeVisible();
   await expect(page.getByTestId("warp")).toBeAttached();
   // Full charge at x1: the whole 100 for the encounter.
   await expect(page.getByTestId("toast-points")).toHaveText(/\+100/);
   await expect(page.getByTestId("score")).toContainText("100");
-  await shot(page, "09-full-burn");
+  await shot(page, "09-max-thrust");
   expect(await readVelocity(page)).toBeGreaterThan(6000);
   await expect(page.getByTestId("streak")).toHaveText("STREAK x1");
 });

@@ -623,17 +623,24 @@ export class Run {
     if (question.type === "cluster" && cluster) {
       cluster.picked.push(lane);
       cluster.charge += 1;
-      this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      const full = cluster.charge >= question.answers.length;
+      // The last plasma gets no banner of its own: MAXIMUM THRUST is arriving
+      // a beat later and the two would land on top of each other.
+      if (!full) {
+        this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      }
       this.hooks.onCollect(lane, cluster.charge);
       this.phase = "approach";
       // A fresh five seconds for the next decision, after a beat to see what
       // was banked. The prompt has been read by now, so no reading bonus.
       this.thrust = 1;
       this.thrustSeconds = ENCOUNTER.thrustSeconds;
-      this.grace = CLUSTER.collectPauseSeconds;
-      if (cluster.charge >= question.answers.length) {
-        // Nothing left to find. FULL BURN, no decision needed.
+      if (full) {
+        // Nothing left to find: the whole reactor goes in, no decision needed.
+        // No breather either, since MAXIMUM THRUST is already on its way.
         this.burn();
+      } else {
+        this.grace = CLUSTER.collectPauseSeconds;
       }
       return;
     }

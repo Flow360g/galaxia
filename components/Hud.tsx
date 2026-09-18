@@ -20,7 +20,8 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
 import {
   formatDelta,
@@ -70,7 +71,6 @@ const NOVA_LABEL = {
   narrow: "NOVA: TWO MOST PLAUSIBLE",
 } as const;
 
-const FULL_CHARGE = CLUSTER.chargeMultiplier.length - 1;
 /** Slider step for a nudge button or an arrow key. */
 const NUDGE = 0.01;
 
@@ -141,9 +141,9 @@ export function Hud({
     onNova,
     onConfirm,
   });
-  // The overlay's CSS animation ends invisible, so it can simply live as long
-  // as the full-burn outcome is current; no timer needed.
-  const warp = outcome?.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
+  // The overlay's CSS animations end invisible, so they can simply live as
+  // long as the MAXIMUM THRUST outcome is current; no timer needed.
+  const maxThrust = isMaxThrust(outcome);
 
   const thrust = state?.thrust ?? 1;
   const seconds = Math.max(Math.ceil(thrust * (state?.clockSeconds ?? ENCOUNTER.thrustSeconds)), 0);
@@ -153,7 +153,7 @@ export function Hud({
 
   return (
     <div className={styles.hud}>
-      {warp ? <div className={styles.warp} data-testid="warp" aria-hidden="true" /> : null}
+      {maxThrust ? <MaxThrust /> : null}
       {state?.pulse ? <PulseOverlay key={state.pulse.id} pulse={state.pulse} /> : null}
 
       {/* Tap anywhere to move past a verdict. It covers the whole screen, which
@@ -385,6 +385,36 @@ export function Hud({
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * MAXIMUM THRUST: every lane of a cluster found, and the whole reactor dumped
+ * into the engines at once.
+ *
+ * The only outcome with a full-screen treatment of its own. Radial speed
+ * lines, and a hazard placard that reads as a warning light coming on rather
+ * than a score: the ship is doing something it was not built to do, which is
+ * the point. The shake lives on the shell so the scene and the HUD move
+ * together; see GameCanvas.
+ */
+function MaxThrust() {
+  return (
+    <>
+      <div className={styles.warp} data-testid="warp" aria-hidden="true" />
+      <div className={styles.maxThrust} data-testid="max-thrust" aria-live="assertive">
+        <div className={styles.hazard}>
+          <span className={styles.hazardSign} aria-hidden="true">
+            &#9888;
+          </span>
+          <span className={`${styles.hazardText} arcade`}>MAXIMUM THRUST</span>
+          <span className={styles.hazardSign} aria-hidden="true">
+            &#9888;
+          </span>
+        </div>
+        <span className={`${styles.hazardSub} arcade`}>REACTOR DUMPED &middot; HOLD ON</span>
+      </div>
+    </>
   );
 }
 
@@ -682,10 +712,10 @@ function OutcomeToast({
 }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
   const points = outcome.points ?? 0;
-  const full = outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
+  const full = isMaxThrust(outcome);
   const vector = outcome.error !== undefined;
   const label = full
-    ? "FULL BURN!"
+    ? "MAXIMUM THRUST"
     : vector
       ? outcome.kind === "slingshot"
         ? "DIRECT HIT!"

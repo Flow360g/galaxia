@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Engine } from "@/lib/game/Engine";
+import { isMaxThrust } from "@/lib/game/Flight";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
 import {
   clearRun,
@@ -162,9 +163,13 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   }, [round.date]);
 
   const shown = summary ?? stored ?? null;
+  // MAXIMUM THRUST shakes the whole surface, canvas and HUD together, so the
+  // screen reads as struggling rather than the scene sliding under a steady
+  // overlay. The camera rumbles underneath it; see ChaseCamera.rumble.
+  const maxThrust = isMaxThrust(state?.outcome);
 
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${maxThrust ? styles.shellShake : ""}`}>
       {/* The engine creates and owns the canvas inside this container; see
           EngineOptions.container for why React must not supply it. */}
       <div ref={containerRef} className={styles.stage} />

@@ -349,6 +349,34 @@ export const FX = {
   },
   /** The waypoint: rating stamp shake and the alien warp flash. */
   waypoint: { ratingShake: 0.6, warpFlash: 1.2 },
+  /**
+   * MAXIMUM THRUST: all three lanes, the whole reactor dumped into the
+   * engines at once. Raw plasma in the burn, more of it than the ship was
+   * built for, and a rumble that reads as the hull not much liking it.
+   *
+   * This is the only outcome in the game that gets its own treatment, and it
+   * is deliberately over the top; two plasma is a good burn, three is an
+   * event.
+   */
+  overdrive: {
+    /** Seconds the whole thing lasts. */
+    seconds: 2.8,
+    /** Fraction of that spent at full intensity before it eases off. */
+    hold: 0.55,
+    /** Plume length and width at the peak, as multipliers. */
+    flameLength: 1.75,
+    flameRadius: 1.5,
+    /**
+     * How far the flame's colour is dragged toward plasma at the peak, 0..1.
+     * Deliberately short of 1: the fire should read as contaminated with
+     * plasma, orange at the nozzle bleeding to pink and violet down the tail,
+     * not as a plain magenta jet.
+     */
+    flameTint: 0.9,
+    /** Sustained camera shake, and the slow roll that sells losing the line. */
+    rumble: 0.75,
+    rumbleRoll: 0.05,
+  },
   /** Collecting a plasma pod on a correct lane. */
   collect: { shake: 0.15, exhaustPulse: 1.4, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
   /** Ship tumble on a collision: full rolls and the seconds they take. */
@@ -789,6 +817,12 @@ export const COLOR = {
   shield: 0x6fd6ff,
   /** Boost / slingshot heat. */
   boost: 0xff8a1f,
+  /**
+   * Raw plasma, as it looks coming out of the engines rather than sitting in
+   * the reactor: hot pink at the nozzle, cooling through violet.
+   */
+  plasma: 0xff4fd8,
+  plasmaDeep: 0x8a3cff,
 } as const;
 
 export const PERF = {
