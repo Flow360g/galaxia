@@ -11,7 +11,7 @@
 
 export const WORLD = {
   /** Half-width of the corridor on X. The autopilot swerves within this. */
-  corridorHalfWidth: 13,
+  corridorHalfWidth: 26,
   /** Half-height of the corridor on Y. */
   corridorHalfHeight: 5.5,
   /** Where world objects are born, on -Z. */
@@ -69,19 +69,28 @@ export const FLIGHT = {
 export const ENCOUNTER = {
   /** Engines lighting before the first asteroid is called. */
   introSeconds: 1.6,
-  /** Seconds of thrust per normal encounter. Thrust is the answer timer. */
-  thrustSeconds: 14,
+  /**
+   * Seconds on the clock for a single pick. Thrust IS the timer, and it
+   * refills for every pick, so a six-lane cluster is six five-second
+   * decisions rather than one long one.
+   */
+  thrustSeconds: 5,
   /** The anomaly needs typing time. */
   anomalyThrustSeconds: 40,
   /** Asteroid Z at full thrust and at empty thrust. It looms as you think. */
   holdFar: -170,
   holdNear: -48,
-  /** Seconds from lock to contact. */
+  /** Seconds from lock to contact when something is coming at the ship. */
   strikeSeconds: 0.7,
+  /**
+   * Seconds from lock to contact when the lane was clean. There is nothing
+   * left to hit, so the impulse lands almost at once and the run moves on.
+   */
+  clearSeconds: 0.18,
   /** Seconds the outcome animation owns the screen after contact. */
   resolveSeconds: 1.0,
   /** Seconds the outcome toast holds before the next asteroid is called. */
-  aftermathSeconds: 2.8,
+  aftermathSeconds: 2.4,
   aftermathSecondsAnomaly: 3.8,
   /** Radius of an encounter asteroid, and of the anomaly. */
   radius: 4.6,
@@ -96,32 +105,58 @@ export const ENCOUNTER = {
 } as const;
 
 export const CLUSTER = {
-  /** Thrust budget for a cluster. Six squares and a bank decision need room. */
-  thrustSeconds: 26,
-  /** Seconds a pick is in flight: ship steers, rock strikes, verdict lands. */
-  collectSeconds: 0.6,
   laneCount: 6,
-  /** Lanes span this fraction of the corridor half-width, edge to edge. */
-  laneSpan: 0.86,
-  /** Radius of a cluster rock; smaller than the lone encounter rock. */
-  rockRadius: 2.6,
-  /**
-   * Cluster rocks hold nearer than the lone rock so six lanes read as six
-   * lanes on a phone rather than a huddle at the vanishing point.
-   */
-  holdFar: -110,
-  holdNear: -40,
-  /**
-   * Rocks fan out with distance so six lanes read as six on a phone: at the
-   * far hold a lane sits this many times further from centre than the ship
-   * will steer to. A picked rock converges on the true lane as it comes in.
-   */
-  farSpread: 2.6,
   /**
    * Impulse multiplier by PLASMA banked. Index = charge. One plasma is a
    * plain thread; the full charge is the biggest burst in the game.
    */
   chargeMultiplier: [0, 1, 1.7, 2.6],
+} as const;
+
+/**
+ * Lanes: the bridge between the answer squares at the top of the screen and
+ * the corridor the ship flies in.
+ *
+ * The HUD measures where its squares actually sit and hands the engine a
+ * horizontal screen fraction per lane; the engine unprojects that fraction
+ * onto the ship's plane to get a world X. So the ship veers to a point that
+ * is genuinely under the square the player tapped, at any aspect ratio,
+ * rather than to a lane guessed from a fixed corridor width.
+ */
+export const LANE = {
+  /** Seconds the picked lane's pod or boulder takes to reach the ship. */
+  runSeconds: 1.05,
+  /** Z the incoming object is born at. */
+  spawnZ: -210,
+  /**
+   * A boulder pulls up this short of the ship and hangs for a beat before the
+   * final strike, so the hit reads as a hit rather than a pop.
+   */
+  menaceZ: -19,
+  /** Radius of the boulder that punishes a wrong lane, and of a plasma pod. */
+  rockRadius: 5.2,
+  podRadius: 1.9,
+  /** Objects are born fanned out and converge on the true lane as they come in. */
+  farSpread: 1.25,
+  /**
+   * How far toward its square the ship actually flies, as a fraction of the
+   * distance from centre. At 1 the hull would sit dead under the outermost
+   * square and hang half off the side of a phone, so it stops a little short:
+   * the veer still reads as "that lane, over there", and the whole ship stays
+   * in frame.
+   */
+  reach: 0.72,
+  /**
+   * How long the camera stops tracking the ship laterally after a pick. With
+   * the camera held still the ship slides across the frame and lands under
+   * the square that was tapped; if the camera followed, it never would.
+   */
+  lockSeconds: 3.2,
+} as const;
+
+/** The run's shields. Each wrong lane costs one; at zero, a miss is a wreck. */
+export const SHIELDS = {
+  perRun: 3,
 } as const;
 
 export const VECTOR = {
@@ -149,7 +184,7 @@ export const WAYPOINT = {
   enteringAt: 2.8,
   /** Ambient field density during and after the waypoint, 0..1. */
   fieldDensity: 0.3,
-  /** Plasma thresholds for a rating, checked from the top. S also needs the shield. */
+  /** Plasma thresholds for a rating, checked from the top. S also needs every shield. */
   ratings: { S: 6, A: 4, B: 2 },
 } as const;
 
@@ -229,8 +264,8 @@ export const FX = {
   },
   /** The waypoint: rating stamp shake and the alien warp flash. */
   waypoint: { ratingShake: 0.6, warpFlash: 1.2 },
-  /** Collecting a plasma pod on a correct cluster pick. */
-  collect: { shake: 0.15, exhaustPulse: 0.8, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
+  /** Collecting a plasma pod on a correct lane. */
+  collect: { shake: 0.15, exhaustPulse: 1.4, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
   /** Ship tumble on a collision: full rolls and the seconds they take. */
   tumble: { collision: { rolls: 1, seconds: 1.1 }, wreck: { rolls: 2, seconds: 1.5 } },
   /** Shield flash hold time. */
@@ -245,6 +280,130 @@ export const FX = {
   streakSurge: 0.9,
 } as const;
 
+/**
+ * Sound. Everything is synthesised at runtime through the Web Audio API:
+ * no audio files ship, so nothing to download, decode or keep in sync with
+ * the visuals, and every cue can be tuned by a number here like the rest of
+ * the feel. Gains are linear, frequencies hertz, times seconds.
+ */
+export const AUDIO = {
+  /** Bus levels. Master is what the mute toggle rides. */
+  master: 0.8,
+  musicBus: 0.38,
+  sfxBus: 0.9,
+  engineBus: 0.5,
+  /** Seconds the master fades over on mute, pause and resume. */
+  fadeSeconds: 0.25,
+
+  /**
+   * The room. A convolution tail is the single thing that separates a game
+   * that sounds built from one that sounds like a browser playing beeps: dry
+   * one-shots read as cheap however well they are synthesised. Every cue
+   * sends a little of itself here, impacts most of all.
+   */
+  reverb: {
+    seconds: 1.9,
+    /** Decay exponent. Higher empties the tail faster. */
+    decay: 2.4,
+    /** Silence before the tail starts, seconds. Distance, in one number. */
+    preDelay: 0.014,
+    /** Level of the whole wet path. */
+    wet: 0.85,
+  },
+
+  /**
+   * Sidechain. A big hit dips the music and the engine for a moment so it
+   * lands in a hole of its own rather than fighting the bed.
+   */
+  duck: { impact: 0.32, burn: 0.55, attack: 0.04, release: 0.6 },
+
+  engine: {
+    /** Drone pitch at cruise and at the top of the visual band. */
+    baseHz: 44,
+    maxHz: 108,
+    /** Second oscillator, detuned in cents, so the drone beats slightly. */
+    detuneCents: 9,
+    /** Lowpass on the drone, opening with speed. */
+    filterHz: [220, 1500],
+    /** Rushing-air layer: bandpass over noise, also opening with speed. */
+    airHz: [320, 2100],
+    airGain: [0.05, 0.22],
+    /** Drone gain at cruise and at max speed. */
+    gain: [0.1, 0.26],
+    /** Seconds the drone takes to follow a change in speed. */
+    glide: 0.28,
+  },
+
+  music: {
+    /** Beats per minute at cruise and at max speed. */
+    bpm: [88, 116],
+    /** Scheduler lookahead and tick, seconds. */
+    lookahead: 0.15,
+    tickSeconds: 0.025,
+    /** Root note of each bar, as a frequency in hertz. A minor, four bars. */
+    roots: [55, 43.65, 65.41, 49],
+    /** Minor pentatonic, semitone offsets from the root. */
+    scale: [0, 3, 5, 7, 10, 12, 15],
+    steps: 8,
+    bassGain: 0.26,
+    padGain: 0.055,
+    arpGain: [0.03, 0.07],
+    hatGain: [0.01, 0.035],
+    /** How much of the music goes to the tail. */
+    send: 0.22,
+  },
+
+  /**
+   * A collision, in four layers, because that is what a crash is: the crack
+   * of contact, the body of the mass behind it, the hull ringing, and the
+   * debris coming off. A wreck is the same event scaled by `wreck`.
+   */
+  impact: {
+    /** Contact. Bright, and over before you can think about it. */
+    crack: { seconds: 0.085, gain: 0.5, from: 3200, to: 800 },
+    /** The mass: a noise slam collapsing into a sub thump, both driven. */
+    body: { seconds: 0.7, gain: 0.55, from: 1800, to: 70, subFrom: 155, subTo: 33, subGain: 0.6 },
+    /**
+     * The hull. Inharmonic ratios, not a chord: harmonic partials read as a
+     * note being played, these read as metal being struck.
+     */
+    metal: { ratios: [1, 1.71, 2.43, 3.17, 4.41], baseHz: 152, seconds: 1.3, gain: 0.075 },
+    /** Debris skittering off, scattered so no two hits are the same. */
+    rubble: { count: 13, spread: 1.1, gain: 0.13, hz: [700, 5400], seconds: 0.09 },
+    /** Wreck multipliers: louder, longer, lower, more debris. */
+    wreck: { gain: 1.3, seconds: 1.55, pitch: 0.74, rubble: 1.5 },
+    send: 0.5,
+  },
+
+  /**
+   * A pass: the Doppler of something going by. The filter rises to `peak` as
+   * it approaches and falls away behind, and the pan crosses with it.
+   */
+  whoosh: { q: 5.5, peakBias: 0.42, bodyGain: 0.5, send: 0.35 },
+
+  /** Boost, slingshot and the burn: thrust you can hear winding up. */
+  boost: {
+    /** Seconds the soar takes at its smallest and at a FULL BURN. */
+    seconds: [0.8, 1.9],
+    /** Resonant sweep of the soar layer. */
+    sweepHz: [180, 2600],
+    q: 7,
+    /** Sub under it. */
+    subHz: [48, 150],
+    subGain: 0.34,
+    /** Detune of the two saws that make the body, in cents. */
+    detuneCents: 14,
+    gain: 0.3,
+    send: 0.45,
+  },
+
+  /** FM bell, used for plasma and for anything that should ring, not beep. */
+  bell: { ratio: 2.01, index: 340, seconds: 0.85, gain: 0.22, send: 0.4 },
+
+  /** Thrust running out: a tick that quickens as the tank empties. */
+  warning: { from: 0.34, minInterval: 0.3, maxInterval: 1.0, gain: 0.14, hz: 860 },
+} as const;
+
 export const SHARE = {
   width: 1080,
   height: 1350,
@@ -256,9 +415,9 @@ export const SHIP = {
   /** Peak vertical speed on Y. */
   verticalSpeed: 16,
   /** How sharply the ship reaches its target lateral velocity. */
-  steerResponse: 7.5,
+  steerResponse: 9,
   /** How quickly the autopilot converges on its target X/Y. */
-  autopilotResponse: 3.2,
+  autopilotResponse: 4.6,
   /** Slow weave while cruising, so the ship never flies a ruler line. */
   weaveAmplitudeX: 1.8,
   weaveAmplitudeY: 0.7,
@@ -281,7 +440,7 @@ export const SHIP = {
   /** URL of the hull model. Served from /public. */
   modelUrl: "/models/spaceship.glb",
   /** The loaded model is scaled so its longest axis measures this. */
-  modelLength: 5.6,
+  modelLength: 4.4,
   /**
    * Extra Y rotation applied to the model so its nose faces -Z (the direction
    * of travel). The Quaternius ship is authored nose toward +Z.
@@ -334,13 +493,19 @@ export const CAMERA = {
   far: 520,
   /** Chase offset from the ship: behind on +Z, above on +Y. */
   offsetY: 5.0,
-  offsetZ: 17.5,
+  offsetZ: 20.5,
   /** How much the camera drifts toward the ship's X. <1 lets the ship lead. */
   lateralFollow: 0.72,
   /** Positional damping. Higher = tighter, stiffer chase. */
   positionDamping: 4.2,
   /** How far ahead (on -Z) the camera aims. Makes steering read as intent. */
   lookAheadZ: 30,
+  /**
+   * How far above the ship the camera aims. Tilting the view up drops the
+   * ship into the lower third of the frame, which is where it has to sit if
+   * the question and its six squares are to own the top of the screen.
+   */
+  lookLift: 4.2,
   /** How much the look target leans into the ship's lateral velocity. */
   lookLateralLead: 0.22,
   /** Near-miss shake: peak offset and how fast it decays. */

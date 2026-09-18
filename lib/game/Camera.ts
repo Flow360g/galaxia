@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CAMERA, FX } from "./Tuning";
+import { CAMERA, FX, SHIP } from "./Tuning";
 import type { Ship } from "./Ship";
 
 /**
@@ -16,6 +16,7 @@ import type { Ship } from "./Ship";
 
 const scratchTarget = new THREE.Vector3();
 const scratchLook = new THREE.Vector3();
+const scratchRay = new THREE.Vector3();
 
 export class ChaseCamera {
   readonly camera: THREE.PerspectiveCamera;
@@ -26,6 +27,15 @@ export class ChaseCamera {
   /** Burst pull-back and FOV kick, both decaying together. */
   private pullback = 0;
   private fovKick = 0;
+  /**
+   * Seconds left of a lane lock. While it runs the camera holds its X, so a
+   * veer moves the ship across the frame instead of dragging the frame along
+   * with it. Without this the ship never actually arrives under the answer
+   * square the player tapped.
+   */
+  private laneLock = 0;
+  /** A neutral copy of the rig, used to map screen fractions onto lanes. */
+  private readonly probe: THREE.PerspectiveCamera;
 
   constructor(
     aspect: number,
@@ -38,7 +48,42 @@ export class ChaseCamera {
       CAMERA.far,
     );
     this.camera.position.set(0, CAMERA.offsetY, CAMERA.offsetZ);
-    this.camera.lookAt(0, 0, -CAMERA.lookAheadZ);
+    this.camera.lookAt(0, CAMERA.lookLift, -CAMERA.lookAheadZ);
+    this.probe = this.camera.clone();
+  }
+
+  /** Hold the camera still laterally for `seconds` while the ship changes lane. */
+  lockLane(seconds: number): void {
+    this.laneLock = seconds;
+  }
+
+  releaseLane(): void {
+    this.laneLock = 0;
+  }
+
+  /**
+   * The world X on the ship's plane that lands at horizontal screen fraction
+   * `fraction` (0 = left edge, 1 = right edge).
+   *
+   * Measured through a neutral copy of the rig rather than the live camera:
+   * lanes must not move when the camera shakes or leans, and a lane is only
+   * ever asked for while the ship is centred and the lock is about to hold
+   * the frame still.
+   */
+  laneX(fraction: number): number {
+    this.probe.fov = this.camera.fov;
+    this.probe.aspect = this.camera.aspect;
+    this.probe.updateProjectionMatrix();
+    this.probe.position.set(0, CAMERA.offsetY, CAMERA.offsetZ);
+    this.probe.lookAt(0, CAMERA.lookLift, -CAMERA.lookAheadZ);
+    this.probe.updateMatrixWorld(true);
+
+    scratchRay.set(fraction * 2 - 1, 0, 0.5).unproject(this.probe).sub(this.probe.position);
+    // Walk the ray to the ship's Z plane. A near-horizontal ray would never
+    // reach it, so guard the divide and fall back to dead centre.
+    if (Math.abs(scratchRay.z) < 1e-4) return 0;
+    const t = (SHIP.z - this.probe.position.z) / scratchRay.z;
+    return this.probe.position.x + scratchRay.x * t;
   }
 
   setAspect(aspect: number): void {
@@ -71,12 +116,17 @@ export class ChaseCamera {
     const decay = Math.exp(-FX.pullbackDecay * dt);
     this.pullback *= decay;
     this.fovKick *= decay;
+    if (this.laneLock > 0) this.laneLock -= dt;
 
     // Only partially follow the ship's X. At lateralFollow < 1 the ship slides
     // toward the edge of frame as it steers, which is what makes a hard turn
     // feel committed instead of the world merely sliding underneath.
+    // A lane lock pins the rig to the centreline: position and aim both stop
+    // tracking X, so the ship's screen position is purely its world X.
+    const locked = this.laneLock > 0;
+    const follow = locked ? 0 : CAMERA.lateralFollow;
     scratchTarget.set(
-      ship.group.position.x * CAMERA.lateralFollow,
+      ship.group.position.x * follow,
       ship.group.position.y * 0.55 + CAMERA.offsetY + this.pullback * 0.3,
       CAMERA.offsetZ + this.pullback,
     );
@@ -89,10 +139,11 @@ export class ChaseCamera {
     this.camera.position.x += this.shakeX;
     this.camera.position.y += this.shakeY;
 
-    // Aim ahead, leaning into the turn.
+    // Aim ahead, leaning into the turn, and above the ship so it flies in the
+    // lower third of the frame with the question owning the top.
     scratchLook.set(
-      ship.group.position.x + ship.velocityX * CAMERA.lookLateralLead,
-      ship.group.position.y * 0.6,
+      locked ? 0 : ship.group.position.x + ship.velocityX * CAMERA.lookLateralLead,
+      ship.group.position.y * 0.6 + CAMERA.lookLift,
       -CAMERA.lookAheadZ,
     );
     this.camera.lookAt(scratchLook);

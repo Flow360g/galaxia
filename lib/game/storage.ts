@@ -10,6 +10,7 @@ import type { RunSummary } from "./types";
 
 const RUN_PREFIX = "galaxia:run:";
 const BEST_KEY = "galaxia:best";
+const MUTED_KEY = "galaxia:muted";
 
 export interface BestRecord {
   distance: number;
@@ -72,6 +73,15 @@ export function loadBest(): BestRecord | null {
     typeof best.date === "string"
     ? best
     : null;
+}
+
+/** Sound on or off, remembered between runs. Sound is on by default. */
+export function loadMuted(): boolean {
+  return read<boolean>(MUTED_KEY) === true;
+}
+
+export function saveMuted(muted: boolean): void {
+  write(MUTED_KEY, muted);
 }
 
 export function clearRun(date: string): void {

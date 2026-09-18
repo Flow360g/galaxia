@@ -2,19 +2,20 @@ import * as THREE from "three";
 import { requestAnomalyScore } from "./anomaly";
 import { Alien } from "./Alien";
 import { AsteroidField } from "./AsteroidField";
-import { Beam } from "./Beam";
+import { AudioEngine } from "./Audio";
 import { Backdrop } from "./Backdrop";
+import { Beam } from "./Beam";
 import { ChaseCamera } from "./Camera";
-import { ClusterField } from "./ClusterField";
 import { Debris } from "./Debris";
 import { EncounterAsteroid } from "./EncounterAsteroid";
+import { Incoming } from "./Incoming";
 import { Landmark } from "./Landmark";
 import { Run } from "./Run";
 import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
-import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
+import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import type {
   DebugInfo,
@@ -36,6 +37,8 @@ export interface EngineOptions {
    */
   container: HTMLElement;
   round: Round;
+  /** Start muted. The player's last choice, read from storage by the shell. */
+  muted?: boolean;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onOutcome?: (outcome: Outcome, index: number) => void;
@@ -51,8 +54,8 @@ export interface EngineOptions {
  * recycled pool, and leaves distance as a plain scalar the run owns.
  *
  * The engine is the glue between the pure `Run` and everything that moves:
- * it spawns the rock when a question is called, plays the strike when the
- * answer locks, and fires the burst or the impact on contact.
+ * it veers the ship into the lane that was picked, launches the pod or the
+ * boulder down it, and fires the burst or the impact on contact.
  */
 export class Engine {
   private readonly renderer: THREE.WebGLRenderer;
@@ -62,7 +65,7 @@ export class Engine {
   private readonly field: AsteroidField;
   private readonly stars: Starfield;
   private readonly rock: EncounterAsteroid;
-  private readonly cluster: ClusterField;
+  private readonly incoming: Incoming;
   private readonly alien: Alien;
   private readonly beam: Beam;
   private readonly returnBeam: Beam;
@@ -74,6 +77,7 @@ export class Engine {
   private readonly backdrop: Backdrop;
   private readonly governor: QualityGovernor;
   private readonly run: Run;
+  private readonly audio: AudioEngine;
 
   private readonly clock = new THREE.Clock();
   private frameHandle: number | null = null;
@@ -92,12 +96,18 @@ export class Engine {
   private streakSurge = 0;
   /** Seconds the surge holds before it decays. A FULL BURN sets this. */
   private surgeHold = 0;
-  /** The current encounter is a cluster; the lone rock stays idle. */
-  private inCluster = false;
-  /** The current encounter is a vector; the alien is the target. */
+  /**
+   * Horizontal screen fractions of the answer squares, measured by the HUD.
+   * Lane i's world X is whatever projects to `laneFractions[i]`, so the ship
+   * lands under the square that was tapped.
+   */
+  private laneFractions: number[] = [];
+  /** This encounter is answered by tapping lanes, not by typing or aiming. */
+  private laneEncounter = false;
+  /** This encounter is a vector; the alien is the target. */
   private inVector = false;
   private vectorsFlown = 0;
-  /** Where the aim line points while the player drags. */
+  /** World X the aim line points down while the player drags. */
   private aimX = 0;
   /** Field density, current and target, so the belt thins smoothly. */
   private density = 1;
@@ -166,8 +176,8 @@ export class Engine {
     this.rock = new EncounterAsteroid(random);
     this.scene.add(this.rock.group);
 
-    this.cluster = new ClusterField(random);
-    this.scene.add(this.cluster.group);
+    this.incoming = new Incoming(random);
+    this.scene.add(this.incoming.group);
 
     this.alien = new Alien(random);
     this.scene.add(this.alien.group);
@@ -186,14 +196,24 @@ export class Engine {
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
 
+    // Sound is built now but stays silent until `start()`, and silent after
+    // that until the browser hands the context a gesture to unlock on.
+    this.audio = new AudioEngine(options.muted ?? false);
+    this.audio.init();
+    // Under ?debug=1 the cues are reachable from the console, which is the
+    // only practical way to audition one without playing to it.
+    if (options.onDebug) {
+      (window as Window & { galaxiaAudio?: AudioEngine }).galaxiaAudio = this.audio;
+    }
+
     this.run = new Run(
       options.round,
       {
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
         onPick: (lane, correct) => this.onPick(lane, correct),
         onCollect: (lane, charge) => this.onCollect(lane, charge),
-        onAim: (x) => this.onAim(x),
-        onVectorLock: (outcome, aimX, truthX) => this.onVectorLock(outcome, aimX, truthX),
+        onAim: (t) => this.onAim(t),
+        onVectorLock: (outcome, aimT, truthT) => this.onVectorLock(outcome, aimT, truthT),
         onWaypoint: (info) => this.onWaypoint(info),
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
@@ -211,6 +231,7 @@ export class Engine {
   start(): void {
     if (this.frameHandle !== null || this.disposed) return;
     this.clock.start();
+    this.audio.setRunning(true);
     this.loop();
   }
 
@@ -219,6 +240,7 @@ export class Engine {
     cancelAnimationFrame(this.frameHandle);
     this.frameHandle = null;
     this.clock.stop();
+    this.audio.setRunning(false);
   }
 
   dispose(): void {
@@ -236,7 +258,7 @@ export class Engine {
     this.stars.dispose();
     this.backdrop.dispose();
     this.rock.dispose();
-    this.cluster.dispose();
+    this.incoming.dispose();
     this.alien.dispose();
     this.beam.dispose();
     this.returnBeam.dispose();
@@ -244,6 +266,7 @@ export class Engine {
     this.landmark.dispose();
     this.salvage.dispose();
     this.debris.dispose();
+    this.audio.dispose();
 
     this.scene.traverse((object) => {
       if (object instanceof THREE.Light) object.dispose?.();
@@ -274,6 +297,15 @@ export class Engine {
     this.run.pick(lane);
   }
 
+  /**
+   * The HUD reports where its answer squares actually sit, as fractions of
+   * viewport width. Called on mount, on resize and whenever the question
+   * changes; the engine never guesses the layout.
+   */
+  setLaneFractions(fractions: number[]): void {
+    this.laneFractions = fractions;
+  }
+
   /** Cluster: bank the reactor charge. */
   burn(): void {
     this.run.burn();
@@ -290,7 +322,13 @@ export class Engine {
   }
 
   useNova(): void {
+    if (this.run.canNova) this.audio.nova();
     this.run.useNova();
+  }
+
+  /** Mute or unmute everything. The engine owns the sound, the shell the UI. */
+  setMuted(muted: boolean): void {
+    this.audio.setMuted(muted);
   }
 
   submitAnomaly(text: string): void {
@@ -307,44 +345,52 @@ export class Engine {
 
   private onEncounterStart(index: number, question: Question): void {
     this.side = index % 2 === 0 ? 1 : -1;
-    this.inCluster = question.type === "cluster";
+    this.laneEncounter = question.type === "mcq" || question.type === "cluster";
     const wasVector = this.inVector;
     this.inVector = question.type === "vector";
     this.waypoint = null;
-
-    if (this.inCluster) {
-      this.cluster.spawn();
-    } else if (this.inVector) {
+    // A lane question opens on an empty sky: the ambient field and nothing
+    // else. A vector opens on the cloaked alien. Only the anomaly still rides
+    // in on its own rock.
+    if (question.type === "anomaly") this.rock.spawn(true);
+    if (this.inVector) {
       const slot = Math.min(this.vectorsFlown, VECTOR.holdFar.length - 1);
       this.vectorsFlown += 1;
       this.alien.station(VECTOR.holdFar[slot]!);
-    } else {
-      this.rock.spawn(question.type === "anomaly");
     }
-
-    // Leaving Stage 2: the alien leaves and the landmark sinks away.
+    // Leaving the alien stage: the scout leaves and the landmark sinks away.
     if (wasVector && !this.inVector) {
       this.alien.warpOut();
       this.landmark.sink();
       this.densityTarget = 1;
     }
     this.aimLine.hide();
+    this.incoming.retire();
+    this.chase.releaseLane();
     this.ship.recentre();
+    this.audio.encounter(question);
   }
 
-  private onAim(x: number): void {
-    this.aimX = x;
-    this.ship.holdLane(x);
+  /** Slider position to world X: the same projection the answer squares use. */
+  private aimWorldX(t: number): number {
+    return this.chase.laneX(0.5 + (t - 0.5) * LANE.reach);
   }
 
-  private onVectorLock(outcome: Outcome, aimX: number, truthX: number): void {
-    this.alien.decloak(truthX);
+  private onAim(t: number): void {
+    this.aimX = this.aimWorldX(t);
+    this.chase.lockLane(LANE.lockSeconds);
+    this.ship.holdLane(this.aimX);
+  }
+
+  private onVectorLock(outcome: Outcome, aimT: number, truthT: number): void {
+    this.audio.strike();
+    this.alien.decloak(this.aimWorldX(truthT));
     this.aimLine.hide();
     // Fire along the aim. The beam lands at the alien's depth whether or not
     // it is on target; contact() decides what that meant.
     this.alien.target(this.scratchB);
     this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
-    this.scratchB.x = aimX;
+    this.scratchB.x = this.aimWorldX(aimT);
     this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds);
     void outcome;
   }
@@ -355,36 +401,62 @@ export class Engine {
     this.densityTarget = WAYPOINT.fieldDensity;
     const stage = this.options.round.stages?.find((s) => s.name === info.stage);
     this.landmark.rise(stage?.landmark ?? "moon", 1);
+    this.incoming.retire();
+    this.chase.releaseLane();
     this.ship.recentre();
   }
 
   private onPick(lane: number, correct: boolean): void {
-    this.ship.holdLane(ClusterField.laneX(lane));
-    this.cluster.pick(lane, correct, CLUSTER.collectSeconds);
+    this.audio.pick();
+    const x = this.worldXForLane(lane);
+    this.ship.holdLane(x);
+    this.chase.lockLane(LANE.lockSeconds);
+    this.incoming.launch(correct ? "pod" : "rock", x, LANE.runSeconds);
   }
 
   private onCollect(lane: number, charge: number): void {
-    this.cluster.collect(lane);
+    this.incoming.collect();
+    this.audio.collect(charge);
     this.shield.flash(FX.collect.shieldFlash, COLOR.cyan);
     this.ship.pulseExhaust(FX.collect.exhaustPulse + FX.collect.exhaustPulsePerCharge * charge);
     this.chase.shake(FX.collect.shake);
+    // Back to the centreline for the next decision.
+    this.chase.releaseLane();
+    this.ship.recentre();
+  }
+
+  /**
+   * World X for a lane, from the square the HUD drew. Falls back to an even
+   * spread across the corridor if the HUD has not measured yet.
+   */
+  private worldXForLane(lane: number): number {
+    const count = Math.max(this.laneFractions.length, CLUSTER.laneCount);
+    const fraction = this.laneFractions[lane] ?? (lane + 0.5) / count;
+    // Stop a little short of the square so the hull never hangs off the side.
+    return this.chase.laneX(0.5 + (fraction - 0.5) * LANE.reach);
   }
 
   private onLock(outcome: Outcome): void {
     if (this.inVector) {
       // The beam is already in flight from onVectorLock. A timeout has no
       // beam: the alien simply fires first.
-      if (outcome.timedOut) this.alien.decloak(this.alien.group.position.x);
+      if (outcome.timedOut) {
+        this.audio.strike();
+        this.alien.decloak(this.alien.group.position.x);
+      }
       return;
     }
-    if (this.inCluster) {
-      if (outcome.kind === "burn") {
-        this.cluster.stream();
-        this.ship.manoeuvre("burn", this.side);
+    this.audio.strike();
+    if (this.laneEncounter) {
+      if (outcome.correct) {
+        // The lane was clean and the pod is already collected. Let the rig go
+        // and fly the burst out.
+        this.chase.releaseLane();
+        this.ship.manoeuvre(outcome.kind, this.side);
       } else {
-        // A miss: the red rock in the picked lane makes its final run. A
-        // timeout has no rock to hit; the rest just stream past.
-        this.cluster.strike(outcome.chosen, ENCOUNTER.strikeSeconds);
+        // The boulder in the picked lane makes its final run. A timeout never
+        // picked a lane, so there is nothing to hit.
+        this.incoming.strike(ENCOUNTER.strikeSeconds);
       }
       return;
     }
@@ -397,6 +469,7 @@ export class Engine {
     this.chase.shake(FX.shake[kind]);
 
     if (this.inVector) {
+      this.audio.contact(kind);
       this.onVectorContact(outcome);
       this.options.onOutcome?.(outcome, index);
       return;
@@ -404,6 +477,7 @@ export class Engine {
 
     if (kind === "burn") {
       const full = (outcome.charge ?? 0) >= CLUSTER.chargeMultiplier.length - 1;
+      this.audio.contact(kind, outcome.charge ?? 0, full);
       if (full) {
         this.chase.burst(FX.warp.pullback, FX.warp.fovKick);
         this.chase.shake(FX.warp.shake);
@@ -419,7 +493,8 @@ export class Engine {
       }
       this.ship.pulseExhaust(FX.exhaustPulse.burn);
     } else if (outcome.correct) {
-      this.rock.contact(false);
+      this.audio.contact(kind);
+      if (!this.laneEncounter) this.rock.contact(false);
       const burst = kind === "slingshot" ? "slingshot" : "thread";
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.ship.pulseExhaust(FX.exhaustPulse[burst]);
@@ -428,13 +503,15 @@ export class Engine {
         this.streakSurge = FX.streakSurge;
       }
     } else {
+      this.audio.contact(kind);
       const strength = kind === "wreck" ? 1.6 : 1;
-      if (this.inCluster) {
+      if (this.laneEncounter) {
         if (outcome.chosen !== null) {
-          this.cluster.positionOf(outcome.chosen, this.scratch);
-          this.cluster.shatter(outcome.chosen);
+          this.incoming.position(this.scratch);
+          this.incoming.shatter();
           this.debris.burst(this.scratch, strength, COLOR.panelLabel);
         }
+        this.chase.releaseLane();
       } else {
         this.rock.contact(true);
         this.scratch.copy(this.rock.group.position);
@@ -478,11 +555,13 @@ export class Engine {
       this.shield.flash(kind === "wreck" ? 1.4 : 1, COLOR.neg);
       this.ship.impact(kind, this.side);
     }
+    this.chase.releaseLane();
   }
 
   private endRun(): void {
     if (this.ended) return;
     this.ended = true;
+    this.audio.finish();
     this.options.onRunEnd?.(this.run.summary());
     // Keep flying under the share card: the ship coasting on is the story's
     // last frame. State updates stop mattering, the loop just renders.
@@ -546,10 +625,9 @@ export class Engine {
 
     const phase = this.run.phase;
     const open = phase === "approach" || phase === "collecting";
-    if (open) {
-      if (this.inCluster) this.cluster.setLoom(1 - this.run.thrust);
-      else if (!this.inVector) this.rock.setLoom(1 - this.run.thrust);
-    }
+    // Only the anomaly still has a rock hanging ahead of the ship to loom as
+    // the clock drains. Lane questions keep the sky clear.
+    if (open && !this.laneEncounter && !this.inVector) this.rock.setLoom(1 - this.run.thrust);
 
     // The aim line: from the nose to the alien's depth, only while aiming.
     if (this.inVector && phase === "approach") {
@@ -584,13 +662,14 @@ export class Engine {
     this.landmark.update(dt);
     if (this.salvage.update(dt)) this.shield.flash(0.9, COLOR.cyan);
 
+    this.audio.update(dt, ratio, this.run.thrust, open);
     this.ship.update(dt, ratio, open ? this.run.thrust : 1);
     this.shield.update(dt);
     this.chase.update(dt, this.ship, ratio);
     this.stars.update(dt, speed, streakIntensity(ratio) + this.streakSurge);
     this.field.update(dt, speed);
     this.rock.update(dt, speed);
-    this.cluster.update(dt, speed);
+    this.incoming.update(dt, speed);
     this.debris.update(dt, speed);
     this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 

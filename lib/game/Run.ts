@@ -1,7 +1,7 @@
 import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
 import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
-import { CLUSTER, ENCOUNTER, NOVA, VECTOR, WAYPOINT } from "./Tuning";
+import { CLUSTER, ENCOUNTER, LANE, NOVA, SHIELDS, VECTOR, WAYPOINT } from "./Tuning";
 import type {
   AnomalyQuestion,
   AnomalyVerdict,
@@ -12,6 +12,7 @@ import type {
   NovaResult,
   Outcome,
   Phase,
+  Pulse,
   Question,
   Rating,
   Round,
@@ -26,30 +27,39 @@ import type {
  *
  *   intro -> approach -> (scanning | collecting) -> resolving -> aftermath -> approach ...
  *
- * Pure game logic. The engine subscribes through `RunHooks` to spawn rocks,
- * play the strike and light the fireworks; the HUD reads `state`. Nothing in
- * here knows about three.js or React, so the whole run can be stepped in a
- * test with a fake clock.
+ * Pure game logic. The engine subscribes through `RunHooks` to fly the ship,
+ * launch what comes down the lane and light the fireworks; the HUD reads
+ * `state`. Nothing in here knows about three.js or React, so the whole run
+ * can be stepped in a test with a fake clock.
  *
- * A Cluster loops inside one encounter: approach -> collecting -> approach
- * for each correct pick, until the player burns (lock as "burn"), misses
- * (lock as a collision), or thrust runs out (lock as a timeout).
+ * Every picked answer is a LANE. Tapping a square commits the ship to that
+ * lane and the verdict rides in on it: a plasma pod on a right answer, a
+ * boulder on a wrong one. Nothing is in the sky until a lane is picked, so
+ * the scene never gives the answer away.
+ *
+ * The clock is per pick, not per question: thrust refills for every decision
+ * and runs out in `ENCOUNTER.thrustSeconds`. A Cluster is therefore several
+ * short decisions, looping approach -> collecting -> approach until the
+ * player burns, misses, or lets the clock run out.
  */
 
 export interface RunHooks {
-  /** A new asteroid is called. Spawn it at the far hold. */
+  /** A new question is called. Nothing is in the sky yet. */
   onEncounterStart(index: number, question: Question): void;
-  /** Cluster: a lane was picked. Steer into it; that rock strikes. */
+  /** A lane was picked. Veer into it and launch the pod or the boulder. */
   onPick(lane: number, correct: boolean): void;
-  /** Cluster: the pick was right. The pod is collected; `charge` is the new total. */
+  /**
+   * The lane was clean: the pod is collected. `charge` is the reactor total
+   * after it, or 0 on a question with no reactor.
+   */
   onCollect(lane: number, charge: number): void;
-  /** Vector: the aim moved. `x` is corridor X for the ship to hold. */
-  onAim(x: number): void;
-  /** Vector: locked. The alien decloaks at `truthX`; the beam fires along the aim. */
-  onVectorLock(outcome: Outcome, aimX: number, truthX: number): void;
+  /** Vector: the aim moved. `t` is the slider position, 0..1 left to right. */
+  onAim(t: number): void;
+  /** Vector: locked. The alien decloaks at `truthT`; the beam fires along `aimT`. */
+  onVectorLock(outcome: Outcome, aimT: number, truthT: number): void;
   /** A stage ended. Play the card; the next encounter starts after `WAYPOINT.seconds`. */
   onWaypoint(info: WaypointState): void;
-  /** The answer locked. The rock strikes; the ship reacts to `outcome.kind`. */
+  /** The answer locked. Whatever is in the lane strikes; the ship reacts. */
   onLock(index: number, outcome: Outcome): void;
   /** Contact. Velocity has just changed; play the burst or the impact. */
   onContact(index: number, outcome: Outcome): void;
@@ -79,10 +89,12 @@ export class Run {
   boostArmed = false;
   novaLeft: number = NOVA.perRun;
   nova: NovaResult | null = null;
-  /** The run's one shield. A Cluster miss takes it; after that, misses are wrecks. */
-  shield = true;
+  /** Shields left. Every wrong lane costs one; at zero, a miss is a wreck. */
+  shields: number = SHIELDS.perRun;
   /** The last resolved outcome, kept through its aftermath. */
   outcome: Outcome | null = null;
+  /** The last collect or hit, for the HUD to flash over the scene. */
+  pulse: Pulse | null = null;
 
   elapsed = 0;
   private timer: number = ENCOUNTER.introSeconds;
@@ -92,15 +104,16 @@ export class Run {
   private sampleTimer = 0;
   private novasUsed = 0;
   private shieldLost = false;
+  private pulseId = 0;
   private cluster: ClusterProgress | null = null;
   private pendingPick: { lane: number; correct: boolean } | null = null;
   /** Vector aim in slider space, and the window a NOVA scan left open. */
   private vectorT = 0.5;
   private vectorWindow: [number, number] = [0, 1];
   private vectorsFlown = 0;
-  private waypoint: WaypointState | null = null;
   /** Strength of the pending vector lock's burst (glancing hits are partial). */
   private vectorStrength = 1;
+  private waypoint: WaypointState | null = null;
   private readonly ratings: Rating[] = [];
   /** Bumped on every lock so a late scan result cannot land on a later rock. */
   private scanToken = 0;
@@ -121,6 +134,13 @@ export class Run {
     return this.phase === "approach";
   }
 
+  /** Whether a NOVA scan would land right now. The HUD and the sound ask. */
+  get canNova(): boolean {
+    const question = this.question;
+    if (!this.answering || !question || question.type === "anomaly") return false;
+    return this.novaLeft > 0 && !this.nova;
+  }
+
   get state(): GameState {
     return {
       phase: this.phase,
@@ -137,7 +157,10 @@ export class Run {
       cluster: this.clusterState(),
       vector: this.vectorState(),
       waypoint: this.phase === "waypoint" ? this.waypoint : null,
-      shield: this.shield,
+      clockSeconds: this.thrustSeconds,
+      shields: this.shields,
+      maxShields: SHIELDS.perRun,
+      pulse: this.pulse,
       outcome: this.phase === "aftermath" || this.phase === "finished" ? this.outcome : null,
       running: true,
     };
@@ -165,11 +188,6 @@ export class Run {
     };
   }
 
-  /** Corridor X for a slider position: left edge to right edge. */
-  static aimX(t: number): number {
-    return -CORRIDOR_AIM + 2 * CORRIDOR_AIM * (t < 0 ? 0 : t > 1 ? 1 : t);
-  }
-
   /** km/h a burn at `charge` would add with the thrust left right now. */
   private burnImpulse(charge: number): number {
     const multiplier = CLUSTER.chargeMultiplier[charge] ?? 0;
@@ -178,31 +196,17 @@ export class Run {
 
   // ---------------------------------------------------------------- input
 
-  /** Lock an MCQ option. Ignored unless an answer is open. */
+  /** Pick an MCQ lane. Ignored unless an answer is open. */
   answer(option: number): void {
     const question = this.question;
     if (!this.answering || !question || question.type !== "mcq") return;
     if (option < 0 || option >= question.options.length) return;
     if (this.nova?.eliminated.includes(option)) return;
 
-    const correct = option === question.answer;
-    this.lock({
-      kind: outcomeKind(correct, this.boostArmed, false, this.shield),
-      correct,
-      boosted: this.boostArmed,
-      timedOut: false,
-      thrustLeft: this.thrust,
-      velocityBefore: this.flight.velocity,
-      velocityAfter: this.flight.velocity,
-      streakBefore: this.flight.streak,
-      streakAfter: this.flight.streak,
-      chosen: option,
-      guessText: question.options[option] ?? "",
-      answerText: question.options[question.answer] ?? "",
-    });
+    this.beginPick(option, option === question.answer);
   }
 
-  /** Cluster: pick a lane. The verdict lands after `collectSeconds`. */
+  /** Cluster: pick a lane. The verdict rides in on it. */
   pick(lane: number): void {
     const question = this.question;
     const cluster = this.cluster;
@@ -210,10 +214,19 @@ export class Run {
     if (lane < 0 || lane >= question.options.length) return;
     if (cluster.picked.includes(lane) || cluster.eliminated.includes(lane)) return;
 
-    const correct = question.answers.includes(lane);
+    this.beginPick(lane, question.answers.includes(lane));
+  }
+
+  /**
+   * Commit to a lane. The ship veers, the pod or the boulder is launched, and
+   * the verdict lands when the run-in finishes. Input is shut for the whole
+   * of it, and the clock is frozen: the flight time is not the player's.
+   */
+  private beginPick(lane: number, correct: boolean): void {
+    this.pulse = null;
     this.pendingPick = { lane, correct };
     this.phase = "collecting";
-    this.timer = CLUSTER.collectSeconds;
+    this.timer = LANE.runSeconds;
     this.hooks.onPick(lane, correct);
   }
 
@@ -248,7 +261,7 @@ export class Run {
     if (!this.answering || !question || question.type !== "vector") return;
     const [lo, hi] = this.vectorWindow;
     this.vectorT = Math.min(hi, Math.max(lo, Number.isFinite(t) ? t : this.vectorT));
-    this.hooks.onAim(Run.aimX(this.vectorT));
+    this.hooks.onAim(this.vectorT);
   }
 
   /** Vector: fire on the current aim. */
@@ -270,15 +283,27 @@ export class Run {
     let salvage: Outcome["salvage"];
     if (error <= VECTOR.perfectBand) {
       kind = "slingshot";
-      salvage = this.shield ? "nova" : "shield";
+      salvage = this.shields < SHIELDS.perRun ? "shield" : "nova";
     } else if (error <= 1) {
       kind = "thread";
       const across = (error - VECTOR.perfectBand) / (1 - VECTOR.perfectBand);
       strength = 1 - across * (1 - VECTOR.glanceFloor);
     } else {
-      kind = outcomeKind(false, false, false, this.shield);
+      kind = outcomeKind(false, false, false, this.shields > 0);
+      if (this.shields > 0) {
+        this.shields -= 1;
+        this.shieldLost = true;
+        this.flash(
+          "shield",
+          "SHIELD DOWN",
+          this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
+        );
+      } else {
+        this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
+      }
     }
 
+    this.vectorStrength = strength;
     const outcome: Outcome = {
       kind,
       correct: error <= 1,
@@ -296,9 +321,8 @@ export class Run {
       guessValue: guess,
       ...(salvage ? { salvage } : {}),
     };
-    this.vectorStrength = strength;
     this.lock(outcome);
-    this.hooks.onVectorLock(outcome, Run.aimX(this.vectorT), Run.aimX(truthT));
+    this.hooks.onVectorLock(outcome, this.vectorT, truthT);
   }
 
   toggleBoost(): void {
@@ -311,8 +335,7 @@ export class Run {
   /** Spend a NOVA scan on the current question. */
   useNova(): void {
     const question = this.question;
-    if (!this.answering || !question || question.type === "anomaly") return;
-    if (this.novaLeft <= 0 || this.nova) return;
+    if (!this.canNova || !question || question.type === "anomaly") return;
 
     this.novaLeft -= 1;
     this.novasUsed += 1;
@@ -350,7 +373,7 @@ export class Run {
       const score = clamp01(verdict.score);
       const correct = anomalyCorrect(score);
       this.lock({
-        kind: outcomeKind(correct, boosted, false, this.shield),
+        kind: outcomeKind(correct, boosted, false, this.shields > 0),
         correct,
         boosted,
         timedOut: false,
@@ -463,7 +486,7 @@ export class Run {
     if (!stage || !next || !this.round.questions[this.index + 1]) return false;
 
     const plasma = this.outcomes.reduce((sum, o) => sum + (o.kind === "burn" ? (o.charge ?? 0) : 0), 0);
-    const rating = rateStage(plasma, this.shield);
+    const rating = rateStage(plasma, this.shields);
     this.ratings.push(rating);
     const closing = this.events[this.events.length - 1];
     if (closing) closing.rating = rating;
@@ -472,10 +495,11 @@ export class Run {
       next: next.name,
       rating,
       plasma,
-      shield: this.shield,
+      shields: this.shields,
       peakVelocity: this.flight.peakVelocity,
       t: 0,
     };
+    this.pulse = null;
     this.phase = "waypoint";
     this.timer = WAYPOINT.seconds;
     this.hooks.onWaypoint(this.waypoint);
@@ -494,6 +518,7 @@ export class Run {
     this.thrust = 1;
     this.boostArmed = false;
     this.nova = null;
+    this.pulse = null;
     this.pending = null;
     this.pendingPick = null;
     this.struck = false;
@@ -507,69 +532,160 @@ export class Run {
     this.thrustSeconds =
       question.type === "anomaly"
         ? ENCOUNTER.anomalyThrustSeconds
-        : question.type === "cluster"
-          ? CLUSTER.thrustSeconds
-          : question.type === "vector"
-            ? VECTOR.thrustSeconds[vectorSlot]!
-            : ENCOUNTER.thrustSeconds;
+        : question.type === "vector"
+          ? VECTOR.thrustSeconds[vectorSlot]!
+          : ENCOUNTER.thrustSeconds;
 
     this.hooks.onEncounterStart(index, question);
-    if (question.type === "vector") this.hooks.onAim(Run.aimX(this.vectorT));
+    if (question.type === "vector") this.hooks.onAim(this.vectorT);
   }
 
-  /** Cluster: the pick's verdict lands. Collect the pod, or hit the rock. */
+  /**
+   * The pick's verdict lands: fly through the pod, or take the boulder.
+   *
+   * A right lane on a Cluster charges the reactor and hands the clock back,
+   * fresh, for the next decision. A right lane on an MCQ is the answer, so it
+   * locks straight away, with a near-zero strike: the lane is clear and there
+   * is nothing left to wait for.
+   */
   private resolvePick(): void {
     const question = this.question;
-    const cluster = this.cluster;
     const pick = this.pendingPick;
     this.pendingPick = null;
-    if (!question || question.type !== "cluster" || !cluster || !pick) {
+    if (!question || !pick) {
       this.phase = "approach";
       return;
     }
 
-    cluster.picked.push(pick.lane);
-
     if (pick.correct) {
+      this.resolveHit(question, pick.lane);
+      return;
+    }
+    this.resolveMiss(question, pick.lane);
+  }
+
+  /** A clean lane. */
+  private resolveHit(question: Question, lane: number): void {
+    const cluster = this.cluster;
+
+    if (question.type === "cluster" && cluster) {
+      cluster.picked.push(lane);
       cluster.charge += 1;
-      this.hooks.onCollect(pick.lane, cluster.charge);
+      this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      this.hooks.onCollect(lane, cluster.charge);
+      this.phase = "approach";
+      // A fresh five seconds for the next decision.
+      this.thrust = 1;
       if (cluster.charge >= question.answers.length) {
         // Nothing left to find. FULL BURN, no decision needed.
-        this.phase = "approach";
         this.burn();
-      } else {
-        this.phase = "approach";
       }
       return;
     }
 
-    const shielded = this.shield;
-    if (shielded) {
-      this.shield = false;
-      this.shieldLost = true;
+    if (question.type !== "mcq") {
+      this.phase = "approach";
+      return;
     }
+
+    this.flash("plasma", "BOOSTER COLLECTED", "LANE CLEAR");
+    this.hooks.onCollect(lane, 0);
+    this.phase = "approach";
+    this.lock(
+      {
+        kind: outcomeKind(true, this.boostArmed, false, this.shields > 0),
+        correct: true,
+        boosted: this.boostArmed,
+        timedOut: false,
+        thrustLeft: this.thrust,
+        velocityBefore: this.flight.velocity,
+        velocityAfter: this.flight.velocity,
+        streakBefore: this.flight.streak,
+        streakAfter: this.flight.streak,
+        chosen: lane,
+        guessText: question.options[lane] ?? "",
+        answerText: question.options[question.answer] ?? "",
+      },
+      ENCOUNTER.clearSeconds,
+    );
+  }
+
+  /** A boulder in the lane. It costs a shield, and everything in the reactor. */
+  private resolveMiss(question: Question, lane: number): void {
+    const cluster = this.cluster;
+    const shielded = this.shields > 0;
+    if (shielded) {
+      this.shields -= 1;
+      this.shieldLost = true;
+      this.flash(
+        "shield",
+        "SHIELD DOWN",
+        this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
+      );
+    } else {
+      this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
+    }
+
+    if (question.type === "cluster" && cluster) {
+      cluster.picked.push(lane);
+      this.phase = "approach";
+      this.lock({
+        kind: outcomeKind(false, false, false, shielded),
+        correct: false,
+        boosted: false,
+        timedOut: false,
+        thrustLeft: this.thrust,
+        velocityBefore: this.flight.velocity,
+        velocityAfter: this.flight.velocity,
+        streakBefore: this.flight.streak,
+        streakAfter: this.flight.streak,
+        chosen: lane,
+        guessText: question.options[lane] ?? "",
+        answerText: clusterAnswerText(question),
+        charge: 0,
+        picks: [...cluster.picked],
+      });
+      return;
+    }
+
+    if (question.type !== "mcq") {
+      this.phase = "approach";
+      return;
+    }
+
     this.phase = "approach";
     this.lock({
-      kind: outcomeKind(false, false, false, shielded),
+      kind: outcomeKind(false, this.boostArmed, false, shielded),
       correct: false,
-      boosted: false,
+      boosted: this.boostArmed,
       timedOut: false,
       thrustLeft: this.thrust,
       velocityBefore: this.flight.velocity,
       velocityAfter: this.flight.velocity,
       streakBefore: this.flight.streak,
       streakAfter: this.flight.streak,
-      chosen: pick.lane,
-      guessText: question.options[pick.lane] ?? "",
-      answerText: clusterAnswerText(question),
-      charge: 0,
-      picks: [...cluster.picked],
+      chosen: lane,
+      guessText: question.options[lane] ?? "",
+      answerText: question.options[question.answer] ?? "",
     });
+  }
+
+  /** Raise a one-shot banner over the scene. */
+  private flash(kind: Pulse["kind"], label: string, detail: string): void {
+    this.pulse = { id: ++this.pulseId, kind, label, detail };
   }
 
   private timeOut(): void {
     const question = this.question;
     if (!question) return;
+
+    // Running the clock down with plasma in the reactor banks it rather than
+    // throwing it away. The risk in a Cluster is the wrong lane, not the
+    // stopwatch, and five seconds a pick is tight enough already.
+    if (question.type === "cluster" && this.cluster && this.cluster.charge > 0) {
+      this.burn();
+      return;
+    }
     const answerText =
       question.type === "mcq"
         ? (question.options[question.answer] ?? "")
@@ -601,7 +717,7 @@ export class Run {
     // blank so the run keeps moving rather than stalling on a dead scorer.
     const verdict = scoreLocally(question, "");
     this.lock({
-      kind: outcomeKind(false, this.boostArmed, false, this.shield),
+      kind: outcomeKind(false, this.boostArmed, false, this.shields > 0),
       correct: false,
       boosted: this.boostArmed,
       timedOut: false,
@@ -618,12 +734,15 @@ export class Run {
     });
   }
 
-  /** The answer is in. The rock strikes; velocity changes on contact. */
-  private lock(outcome: Outcome): void {
+  /**
+   * The answer is in. Whatever is in the lane strikes; velocity changes on
+   * contact, `strikeSeconds` later.
+   */
+  private lock(outcome: Outcome, strikeSeconds: number = ENCOUNTER.strikeSeconds): void {
     this.pending = outcome;
     this.struck = false;
     this.phase = "resolving";
-    this.timer = ENCOUNTER.strikeSeconds + ENCOUNTER.resolveSeconds;
+    this.timer = strikeSeconds + ENCOUNTER.resolveSeconds;
     this.hooks.onLock(this.index, outcome);
   }
 
@@ -646,9 +765,11 @@ export class Run {
 
     // Salvage lands with the burst, so the HUD change and the FX line up.
     if (outcome.salvage === "shield") {
-      this.shield = true;
+      this.shields = Math.min(this.shields + 1, SHIELDS.perRun);
+      this.flash("plasma", "SALVAGE", "SHIELD RESTORED");
     } else if (outcome.salvage === "nova") {
       this.novaLeft += 1;
+      this.flash("plasma", "SALVAGE", "+1 NOVA");
     }
 
     this.outcome = outcome;
@@ -711,6 +832,7 @@ export class Run {
       fullBurns: this.outcomes.filter((o) => o.kind === "burn" && (o.charge ?? 0) >= fullCharge)
         .length,
       shieldLost: this.shieldLost,
+      shieldsLeft: this.shields,
       ratings: [...this.ratings],
       anomaly: anomaly
         ? {
@@ -727,12 +849,9 @@ export class Run {
   }
 }
 
-/** How far either side of centre the aim can steer the ship. */
-const CORRIDOR_AIM = 11;
-
-/** Stage rating from plasma banked. S also needs the shield intact. */
-export function rateStage(plasma: number, shield: boolean): Rating {
-  if (plasma >= WAYPOINT.ratings.S && shield) return "S";
+/** Stage rating from plasma banked. S also needs every shield still up. */
+export function rateStage(plasma: number, shields: number): Rating {
+  if (plasma >= WAYPOINT.ratings.S && shields >= SHIELDS.perRun) return "S";
   if (plasma >= WAYPOINT.ratings.A) return "A";
   if (plasma >= WAYPOINT.ratings.B) return "B";
   return "C";

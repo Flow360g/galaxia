@@ -102,11 +102,11 @@ export interface Round {
 // --------------------------------------------------------------------- run
 
 export type Phase =
-  /** Engines lighting, first asteroid not yet called. */
+  /** Engines lighting, first question not yet called. */
   | "intro"
-  /** Asteroid looming, thrust draining, answer open. */
+  /** Question open, thrust draining, lanes tappable. */
   | "approach"
-  /** Cluster: a pick is in flight. Input locked, thrust frozen. */
+  /** A lane was picked: the ship is veering and the pod or boulder is inbound. */
   | "collecting"
   /** Between stages: rating card, landmark, alien arrival. No input. */
   | "waypoint"
@@ -119,6 +119,22 @@ export type Phase =
   | "finished";
 
 export type NovaKind = "eliminate" | "clue" | "narrow";
+
+/**
+ * A one-shot thing to celebrate or mourn, handed to the HUD to animate.
+ *
+ * `id` is what makes it one-shot: it changes on every pulse, so the HUD can
+ * key on it and replay the animation even when two identical pulses land
+ * back to back.
+ */
+export interface Pulse {
+  id: number;
+  kind: "plasma" | "shield" | "boost";
+  /** Headline, e.g. PLASMA COLLECTED. */
+  label: string;
+  /** Figure under it, e.g. "+1" or "1 SHIELD LOST". */
+  detail: string;
+}
 
 /** Live state of a Vector encounter: where the aim is, in slider space 0..1. */
 export interface VectorState {
@@ -138,7 +154,7 @@ export interface WaypointState {
   next: string;
   rating: Rating;
   plasma: number;
-  shield: boolean;
+  shields: number;
   peakVelocity: number;
   /** Seconds into the waypoint. */
   t: number;
@@ -176,7 +192,7 @@ export type OutcomeKind =
   | "slingshot"
   /** Wrong: flew into it. */
   | "collision"
-  /** Wrong with boost armed, or wrong with the shield gone: hit it at speed. */
+  /** Wrong with boost armed, or wrong with no shields left: hit it at speed. */
   | "wreck"
   /** Cluster: banked the reactor charge. Impulse scales with `charge`. */
   | "burn"
@@ -239,8 +255,13 @@ export interface GameState {
   vector: VectorState | null;
   /** Waypoint card in progress, or null. */
   waypoint: WaypointState | null;
-  /** The run's one shield. Gone after the first Cluster miss. */
-  shield: boolean;
+  /** Seconds on a full clock for the current encounter. */
+  clockSeconds: number;
+  /** Shields left. Each wrong lane costs one; at zero, a miss is a wreck. */
+  shields: number;
+  maxShields: number;
+  /** The most recent collect or hit, for the HUD to flash. Never cleared mid-run. */
+  pulse: Pulse | null;
   /** Outcome of the most recent encounter, while its toast is up. */
   outcome: Outcome | null;
   running: boolean;
@@ -294,6 +315,8 @@ export interface RunSummary {
   /** Burns that banked the full charge. */
   fullBurns: number;
   shieldLost: boolean;
+  /** Shields still up at the end of the run. */
+  shieldsLeft: number;
   /** One rating per waypoint, in order. */
   ratings: Rating[];
   anomaly: { score: number; correct: boolean; verdict: string } | null;
