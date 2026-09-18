@@ -108,6 +108,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
           onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+          onLanes={(fractions) => engineRef.current?.setLaneFractions(fractions)}
         />
       ) : null}
 

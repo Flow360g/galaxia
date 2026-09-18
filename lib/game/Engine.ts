@@ -3,14 +3,14 @@ import { requestAnomalyScore } from "./anomaly";
 import { AsteroidField } from "./AsteroidField";
 import { Backdrop } from "./Backdrop";
 import { ChaseCamera } from "./Camera";
-import { ClusterField } from "./ClusterField";
 import { Debris } from "./Debris";
 import { EncounterAsteroid } from "./EncounterAsteroid";
+import { Incoming } from "./Incoming";
 import { Run } from "./Run";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
-import { CLUSTER, COLOR, ENCOUNTER, FX, PERF, WORLD } from "./Tuning";
+import { CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import type {
   DebugInfo,
@@ -46,8 +46,8 @@ export interface EngineOptions {
  * recycled pool, and leaves distance as a plain scalar the run owns.
  *
  * The engine is the glue between the pure `Run` and everything that moves:
- * it spawns the rock when a question is called, plays the strike when the
- * answer locks, and fires the burst or the impact on contact.
+ * it veers the ship into the lane that was picked, launches the pod or the
+ * boulder down it, and fires the burst or the impact on contact.
  */
 export class Engine {
   private readonly renderer: THREE.WebGLRenderer;
@@ -57,7 +57,7 @@ export class Engine {
   private readonly field: AsteroidField;
   private readonly stars: Starfield;
   private readonly rock: EncounterAsteroid;
-  private readonly cluster: ClusterField;
+  private readonly incoming: Incoming;
   private readonly debris: Debris;
   private readonly shield: Shield;
   private readonly backdrop: Backdrop;
@@ -81,8 +81,14 @@ export class Engine {
   private streakSurge = 0;
   /** Seconds the surge holds before it decays. A FULL BURN sets this. */
   private surgeHold = 0;
-  /** The current encounter is a cluster; the lone rock stays idle. */
-  private inCluster = false;
+  /**
+   * Horizontal screen fractions of the answer squares, measured by the HUD.
+   * Lane i's world X is whatever projects to `laneFractions[i]`, so the ship
+   * lands under the square that was tapped.
+   */
+  private laneFractions: number[] = [];
+  /** This encounter is answered by tapping lanes, not by typing. */
+  private laneEncounter = false;
 
   private fpsAccumulator = 0;
   private fpsFrames = 0;
@@ -143,8 +149,8 @@ export class Engine {
     this.rock = new EncounterAsteroid(random);
     this.scene.add(this.rock.group);
 
-    this.cluster = new ClusterField(random);
-    this.scene.add(this.cluster.group);
+    this.incoming = new Incoming(random);
+    this.scene.add(this.incoming.group);
 
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
@@ -196,7 +202,7 @@ export class Engine {
     this.stars.dispose();
     this.backdrop.dispose();
     this.rock.dispose();
-    this.cluster.dispose();
+    this.incoming.dispose();
     this.debris.dispose();
 
     this.scene.traverse((object) => {
@@ -228,6 +234,15 @@ export class Engine {
     this.run.pick(lane);
   }
 
+  /**
+   * The HUD reports where its answer squares actually sit, as fractions of
+   * viewport width. Called on mount, on resize and whenever the question
+   * changes; the engine never guesses the layout.
+   */
+  setLaneFractions(fractions: number[]): void {
+    this.laneFractions = fractions;
+  }
+
   /** Cluster: bank the reactor charge. */
   burn(): void {
     this.run.burn();
@@ -251,33 +266,54 @@ export class Engine {
 
   private onEncounterStart(index: number, question: Question): void {
     this.side = index % 2 === 0 ? 1 : -1;
-    this.inCluster = question.type === "cluster";
-    if (this.inCluster) this.cluster.spawn();
-    else this.rock.spawn(question.type === "anomaly");
+    this.laneEncounter = question.type !== "anomaly";
+    // A lane question opens on an empty sky: the ambient field and nothing
+    // else. Only the anomaly still rides in on its own rock.
+    if (!this.laneEncounter) this.rock.spawn(true);
+    this.incoming.retire();
+    this.chase.releaseLane();
     this.ship.recentre();
   }
 
   private onPick(lane: number, correct: boolean): void {
-    this.ship.holdLane(ClusterField.laneX(lane));
-    this.cluster.pick(lane, correct, CLUSTER.collectSeconds);
+    const x = this.worldXForLane(lane);
+    this.ship.holdLane(x);
+    this.chase.lockLane(LANE.lockSeconds);
+    this.incoming.launch(correct ? "pod" : "rock", x, LANE.runSeconds);
   }
 
   private onCollect(lane: number, charge: number): void {
-    this.cluster.collect(lane);
+    this.incoming.collect();
     this.shield.flash(FX.collect.shieldFlash, COLOR.cyan);
     this.ship.pulseExhaust(FX.collect.exhaustPulse + FX.collect.exhaustPulsePerCharge * charge);
     this.chase.shake(FX.collect.shake);
+    // Back to the centreline for the next decision.
+    this.chase.releaseLane();
+    this.ship.recentre();
+  }
+
+  /**
+   * World X for a lane, from the square the HUD drew. Falls back to an even
+   * spread across the corridor if the HUD has not measured yet.
+   */
+  private worldXForLane(lane: number): number {
+    const count = Math.max(this.laneFractions.length, CLUSTER.laneCount);
+    const fraction = this.laneFractions[lane] ?? (lane + 0.5) / count;
+    // Stop a little short of the square so the hull never hangs off the side.
+    return this.chase.laneX(0.5 + (fraction - 0.5) * LANE.reach);
   }
 
   private onLock(outcome: Outcome): void {
-    if (this.inCluster) {
-      if (outcome.kind === "burn") {
-        this.cluster.stream();
-        this.ship.manoeuvre("burn", this.side);
+    if (this.laneEncounter) {
+      if (outcome.correct) {
+        // The lane was clean and the pod is already collected. Let the rig go
+        // and fly the burst out.
+        this.chase.releaseLane();
+        this.ship.manoeuvre(outcome.kind, this.side);
       } else {
-        // A miss: the red rock in the picked lane makes its final run. A
-        // timeout has no rock to hit; the rest just stream past.
-        this.cluster.strike(outcome.chosen, ENCOUNTER.strikeSeconds);
+        // The boulder in the picked lane makes its final run. A timeout never
+        // picked a lane, so there is nothing to hit.
+        this.incoming.strike(ENCOUNTER.strikeSeconds);
       }
       return;
     }
@@ -306,7 +342,7 @@ export class Engine {
       }
       this.ship.pulseExhaust(FX.exhaustPulse.burn);
     } else if (outcome.correct) {
-      this.rock.contact(false);
+      if (!this.laneEncounter) this.rock.contact(false);
       const burst = kind === "slingshot" ? "slingshot" : "thread";
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.ship.pulseExhaust(FX.exhaustPulse[burst]);
@@ -316,12 +352,13 @@ export class Engine {
       }
     } else {
       const strength = kind === "wreck" ? 1.6 : 1;
-      if (this.inCluster) {
+      if (this.laneEncounter) {
         if (outcome.chosen !== null) {
-          this.cluster.positionOf(outcome.chosen, this.scratch);
-          this.cluster.shatter(outcome.chosen);
+          this.incoming.position(this.scratch);
+          this.incoming.shatter();
           this.debris.burst(this.scratch, strength, COLOR.panelLabel);
         }
+        this.chase.releaseLane();
       } else {
         this.rock.contact(true);
         this.scratch.copy(this.rock.group.position);
@@ -404,10 +441,9 @@ export class Engine {
 
     const phase = this.run.phase;
     const open = phase === "approach" || phase === "collecting";
-    if (open) {
-      if (this.inCluster) this.cluster.setLoom(1 - this.run.thrust);
-      else this.rock.setLoom(1 - this.run.thrust);
-    }
+    // Only the anomaly still has a rock hanging ahead of the ship to loom as
+    // the clock drains. Lane questions keep the sky clear.
+    if (open && !this.laneEncounter) this.rock.setLoom(1 - this.run.thrust);
 
     this.ship.update(dt, ratio, open ? this.run.thrust : 1);
     this.shield.update(dt);
@@ -415,7 +451,7 @@ export class Engine {
     this.stars.update(dt, speed, streakIntensity(ratio) + this.streakSurge);
     this.field.update(dt, speed);
     this.rock.update(dt, speed);
-    this.cluster.update(dt, speed);
+    this.incoming.update(dt, speed);
     this.debris.update(dt, speed);
     this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 
