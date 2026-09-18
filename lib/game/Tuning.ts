@@ -71,8 +71,8 @@ export const ENCOUNTER = {
   introSeconds: 1.6,
   /**
    * Seconds on the clock for a single pick. Thrust IS the timer, and it
-   * refills for every pick, so a six-lane cluster is six five-second
-   * decisions rather than one long one.
+   * refills for every pick, so a question is a short decision rather than one
+   * long one. Clusters get longer; see CLUSTER.thrustSeconds.
    */
   thrustSeconds: 5,
   /** The anomaly needs typing time. */
@@ -106,6 +106,18 @@ export const ENCOUNTER = {
 
 export const CLUSTER = {
   laneCount: 6,
+  /**
+   * Seconds per pick in a cluster. Longer than a plain question: there are
+   * six lanes to read rather than four, three of them are right, and the
+   * reactor is a decision on top of the answer.
+   */
+  thrustSeconds: 7,
+  /**
+   * Seconds the outcome holds before the next question is called. Double the
+   * usual: a cluster ends on a bank, a full reactor or a boulder, and all
+   * three want a beat to land before the next prompt arrives.
+   */
+  aftermathSeconds: 4.8,
   /**
    * Impulse multiplier by PLASMA banked. Index = charge. One plasma is a
    * plain thread; the full charge is the biggest burst in the game.

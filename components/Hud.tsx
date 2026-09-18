@@ -16,7 +16,6 @@ import type {
   Pulse,
   Round,
 } from "@/lib/game/types";
-import { ENCOUNTER } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatDelta, formatDistance, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
@@ -99,7 +98,7 @@ export function Hud({
   const maxThrust = isMaxThrust(outcome);
 
   const thrust = state?.thrust ?? 1;
-  const seconds = Math.max(Math.ceil(thrust * ENCOUNTER.thrustSeconds), 0);
+  const seconds = Math.max(Math.ceil(thrust * (state?.clockSeconds ?? 0)), 0);
   const thrustLow = thrust < 0.35;
   const shields = state?.shields ?? 0;
   const maxShields = state?.maxShields ?? 0;

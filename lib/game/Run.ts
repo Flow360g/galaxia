@@ -127,6 +127,7 @@ export class Run {
       peakVelocity: this.flight.peakVelocity,
       streak: this.flight.streak,
       thrust: this.thrust,
+      clockSeconds: this.thrustSeconds,
       boostArmed: this.boostArmed,
       novaLeft: this.novaLeft,
       nova: this.nova,
@@ -334,10 +335,7 @@ export class Run {
         if (!this.struck && this.timer <= ENCOUNTER.resolveSeconds) this.contact();
         if (this.timer <= 0) {
           this.phase = "aftermath";
-          this.timer =
-            this.question?.type === "anomaly"
-              ? ENCOUNTER.aftermathSecondsAnomaly
-              : ENCOUNTER.aftermathSeconds;
+          this.timer = this.aftermathSeconds();
         }
         break;
 
@@ -372,7 +370,11 @@ export class Run {
     this.cluster =
       question.type === "cluster" ? { picked: [], charge: 0, eliminated: [] } : null;
     this.thrustSeconds =
-      question.type === "anomaly" ? ENCOUNTER.anomalyThrustSeconds : ENCOUNTER.thrustSeconds;
+      question.type === "anomaly"
+        ? ENCOUNTER.anomalyThrustSeconds
+        : question.type === "cluster"
+          ? CLUSTER.thrustSeconds
+          : ENCOUNTER.thrustSeconds;
 
     this.hooks.onEncounterStart(index, question);
   }
@@ -508,6 +510,18 @@ export class Run {
       guessText: question.options[lane] ?? "",
       answerText: question.options[question.answer] ?? "",
     });
+  }
+
+  /** How long the outcome holds before the next question is called. */
+  private aftermathSeconds(): number {
+    switch (this.question?.type) {
+      case "anomaly":
+        return ENCOUNTER.aftermathSecondsAnomaly;
+      case "cluster":
+        return CLUSTER.aftermathSeconds;
+      default:
+        return ENCOUNTER.aftermathSeconds;
+    }
   }
 
   /** Raise a one-shot banner over the scene. */

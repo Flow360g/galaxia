@@ -179,8 +179,14 @@ export interface GameState {
   velocity: number;
   peakVelocity: number;
   streak: number;
-  /** Thrust remaining for the current encounter, 0..1. */
+  /** Thrust remaining for the current pick, 0..1. */
   thrust: number;
+  /**
+   * Seconds a full tank of thrust lasts on this question, so the HUD can put
+   * a real countdown on it. Varies by question type; see ENCOUNTER and
+   * CLUSTER in Tuning.
+   */
+  clockSeconds: number;
   boostArmed: boolean;
   novaLeft: number;
   nova: NovaResult | null;
