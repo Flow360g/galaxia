@@ -68,7 +68,7 @@ export const FLIGHT = {
 
 export const ENCOUNTER = {
   /** Engines lighting before the first asteroid is called. */
-  introSeconds: 1.6,
+  introSeconds: 2.6,
   /**
    * Seconds on the clock for a single pick. Thrust IS the timer, and it
    * refills for every pick, so a six-lane cluster is six five-second
@@ -84,14 +84,20 @@ export const ENCOUNTER = {
   strikeSeconds: 0.7,
   /**
    * Seconds from lock to contact when the lane was clean. There is nothing
-   * left to hit, so the impulse lands almost at once and the run moves on.
+   * left to hit, so the impulse lands soon after, with just enough of a beat
+   * for the collect flash to register before the toast takes the band.
    */
-  clearSeconds: 0.18,
+  clearSeconds: 0.6,
   /** Seconds the outcome animation owns the screen after contact. */
-  resolveSeconds: 1.0,
-  /** Seconds the outcome toast holds before the next asteroid is called. */
-  aftermathSeconds: 2.4,
-  aftermathSecondsAnomaly: 3.8,
+  resolveSeconds: 1.5,
+  /**
+   * Seconds the outcome toast holds before the next encounter is called.
+   * The toast carries the verdict, the right answer and a fact: this is the
+   * only place in the run where there is anything to READ, so it is paced for
+   * reading rather than for moving on.
+   */
+  aftermathSeconds: 4.4,
+  aftermathSecondsAnomaly: 6.0,
   /** Radius of an encounter asteroid, and of the anomaly. */
   radius: 4.6,
   anomalyRadius: 5.2,
@@ -106,6 +112,17 @@ export const ENCOUNTER = {
 
 export const CLUSTER = {
   laneCount: 6,
+  /**
+   * Extra seconds on the clock for the FIRST pick of a cluster only. Six
+   * options and a prompt have to be read before the first tap; every pick
+   * after it is read already, so those run on the plain five.
+   */
+  firstPickBonusSeconds: 2,
+  /**
+   * A breather after a plasma pod is collected, before the clock for the next
+   * pick starts draining. Long enough to see what was banked.
+   */
+  collectPauseSeconds: 1.1,
   /**
    * Impulse multiplier by PLASMA banked. Index = charge. One plasma is a
    * plain thread; the full charge is the biggest burst in the game.
@@ -162,26 +179,45 @@ export const SHIELDS = {
 export const VECTOR = {
   /** Thrust budget per vector, by how many vectors have been flown this run. */
   thrustSeconds: [20, 16],
-  /** Alien hold Z, by vector number: it comes in closer the second time. */
-  holdFar: [-85, -65],
+  /**
+   * Alien hold Z, by vector number: it comes in closer the second time. Near
+   * enough that the scout reads as a ship you are shooting AT rather than a
+   * speck on the horizon.
+   */
+  holdFar: [-58, -44],
+  /** How far above the corridor the scout holds station. */
+  holdY: 3.2,
   /** Normalised error at or under which a lock is a DIRECT HIT. */
   perfectBand: 0.15,
   /** Strength of a glancing hit at the edge of tolerance (1.0 at the perfect band). */
   glanceFloor: 0.4,
   /** Seconds the beam takes to reach the alien after lock. */
   beamSeconds: 0.35,
+  /**
+   * A shot that misses flies PAST the scout rather than stopping level with
+   * it: the beam runs on to this multiple of the range before it fades, so a
+   * miss reads as a miss.
+   */
+  missOvershoot: 1.5,
+  /**
+   * How hard a miss lands. Error 1 is the edge of tolerance and costs
+   * `severityFloor` of a full impact; error `severityFullAt` and beyond costs
+   * all of it. Being a little wrong should not read the same as being wild.
+   */
+  severityFloor: 0.3,
+  severityFullAt: 4,
   /** Fraction of the slider a NOVA scan leaves open around the truth. */
   novaWindow: 0.34,
-  /** Slow drift of the cloaked alien, so its rest position is not the answer. */
+  /** Slow drift of the scout, so its rest position is never the answer. */
   driftAmplitude: 6,
   driftRate: 0.23,
 } as const;
 
 export const WAYPOINT = {
-  seconds: 4.5,
+  seconds: 7.5,
   /** When the rating stamps in, and when the "entering" line lands. */
-  ratingAt: 0.8,
-  enteringAt: 2.8,
+  ratingAt: 1.1,
+  enteringAt: 4.0,
   /** Ambient field density during and after the waypoint, 0..1. */
   fieldDensity: 0.3,
   /** Plasma thresholds for a rating, checked from the top. S also needs every shield. */
@@ -208,18 +244,35 @@ export const LANDMARK = {
 
 export const ALIEN = {
   modelUrl: "/models/alien.glb",
-  modelLength: 5.2,
+  /**
+   * The hull, normalised to this long. The scout is the only thing the player
+   * is aiming at for a whole encounter, so it is read at ship scale, not at
+   * debris scale.
+   */
+  modelLength: 14,
   /** Where the warp-in starts on Z, and how long the run to station takes. */
   warpFromZ: -400,
   warpSeconds: 1.6,
-  /** Cloak shimmer: opacity floor and rate. */
-  cloakOpacity: 0.28,
-  cloakRate: 4.5,
-  /** Seconds to decloak at the truth after lock. */
+  /**
+   * The scout is lit, not cloaked: the hull is the whole point of it being
+   * there. It holds at this opacity and breathes by `shimmer` either side, a
+   * live engine rather than a field around the model.
+   */
+  holdOpacity: 0.92,
+  shimmer: 0.08,
+  cloakRate: 2.6,
+  /** Slow roll and yaw of the scout on station, radians/sec. */
+  idleSpin: 0.22,
+  /** Seconds to slide to the truth and settle once the shot is away. */
   decloakSeconds: 0.3,
+  /** A glancing hit: seconds of the spin, and how far it is knocked back. */
+  glanceSeconds: 0.9,
+  glanceKick: 7,
   /** Return fire: seconds for the red beam, and the warp-out run. */
   returnFireSeconds: 0.5,
   warpOutSeconds: 1.2,
+  /** Seconds the hull takes to come apart on a kill. */
+  destroySeconds: 0.9,
 } as const;
 
 export const NOVA = {
