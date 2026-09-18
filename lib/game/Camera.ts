@@ -34,6 +34,16 @@ export class ChaseCamera {
    * square the player tapped.
    */
   private laneLock = 0;
+  /**
+   * A sustained rumble, unlike `shake`'s single decaying kick: it holds at
+   * full for most of its life and only then eases off. MAXIMUM THRUST is the
+   * one thing that asks for it, and holding it is the whole point -- a hull
+   * struggling with the burn, not a single bang.
+   */
+  private rumbleLeft = 0;
+  private rumbleSeconds = 0;
+  private rumbleMagnitude = 0;
+  private rumbleRoll = 0;
   /** A neutral copy of the rig, used to map screen fractions onto lanes. */
   private readonly probe: THREE.PerspectiveCamera;
 
@@ -100,6 +110,18 @@ export class ChaseCamera {
     );
   }
 
+  /**
+   * Shake the rig steadily for `seconds`, as if the ship is fighting to hold
+   * its line. `roll` adds a slow wallow on top of the jitter.
+   */
+  rumble(seconds: number, magnitude: number, roll = 0): void {
+    if (this.reducedMotion) return;
+    this.rumbleLeft = seconds;
+    this.rumbleSeconds = Math.max(seconds, 0.01);
+    this.rumbleMagnitude = magnitude;
+    this.rumbleRoll = roll;
+  }
+
   /** A burst of acceleration: drop back and widen, then ease back in. */
   burst(pullback: number, fovKick: number): void {
     if (this.reducedMotion) return;
@@ -151,6 +173,12 @@ export class ChaseCamera {
     // Roll the camera slightly with the ship's bank. A little goes a long way;
     // matching it fully would make the horizon seasick.
     this.camera.rotation.z += ship.group.rotation.z * 0.18;
+    // A rumble wallows the horizon as well as jittering it, which is what
+    // separates "the hull is struggling" from "something went bang".
+    if (this.rumbleRoll > 0) {
+      this.camera.rotation.z +=
+        Math.sin(this.rumbleLeft * 11) * this.rumbleRoll * this.rumbleLevel;
+    }
 
     const fov =
       CAMERA.fov +
@@ -163,16 +191,41 @@ export class ChaseCamera {
   }
 
   private updateShake(dt: number): void {
-    if (this.shakeAmount <= 0.001) {
+    const rumble = this.updateRumble(dt);
+
+    if (this.shakeAmount <= 0.001 && rumble <= 0) {
       this.shakeAmount = 0;
       this.shakeX = 0;
       this.shakeY = 0;
       return;
     }
 
-    this.shakeX = (Math.random() - 0.5) * 2 * this.shakeAmount;
-    this.shakeY = (Math.random() - 0.5) * 2 * this.shakeAmount;
+    const amount = this.shakeAmount + rumble;
+    this.shakeX = (Math.random() - 0.5) * 2 * amount;
+    this.shakeY = (Math.random() - 0.5) * 2 * amount;
     this.shakeAmount *= Math.exp(-CAMERA.shakeDecay * dt);
+  }
+
+  /** Current rumble magnitude, holding at full then easing out. */
+  private updateRumble(dt: number): number {
+    if (this.rumbleLeft <= 0) return 0;
+    this.rumbleLeft -= dt;
+    if (this.rumbleLeft <= 0) {
+      this.rumbleLeft = 0;
+      return 0;
+    }
+    const left = this.rumbleLeft / this.rumbleSeconds;
+    const tail = FX.overdrive.hold;
+    // Full strength through the hold, then a smooth ease to nothing.
+    return this.rumbleMagnitude * (left >= 1 - tail ? 1 : left / (1 - tail));
+  }
+
+  /** How hard the rig is rumbling right now, 0..1 of its peak. */
+  get rumbleLevel(): number {
+    if (this.rumbleLeft <= 0 || this.rumbleMagnitude <= 0) return 0;
+    const left = this.rumbleLeft / this.rumbleSeconds;
+    const tail = FX.overdrive.hold;
+    return left >= 1 - tail ? 1 : left / (1 - tail);
   }
 }
 

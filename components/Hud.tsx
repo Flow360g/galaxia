@@ -16,7 +16,8 @@ import type {
   Pulse,
   Round,
 } from "@/lib/game/types";
-import { CLUSTER, ENCOUNTER } from "@/lib/game/Tuning";
+import { ENCOUNTER } from "@/lib/game/Tuning";
+import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatDelta, formatDistance, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
 
@@ -51,8 +52,6 @@ const NOVA_LABEL = {
   clue: "NOVA: CLUE",
   narrow: "NOVA: TWO MOST PLAUSIBLE",
 } as const;
-
-const FULL_CHARGE = CLUSTER.chargeMultiplier.length - 1;
 
 /**
  * DOM overlay HUD.
@@ -95,9 +94,9 @@ export function Hud({
   const isAnomaly = question?.type === "anomaly";
 
   useKeyboard({ state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova });
-  // The overlay's CSS animation ends invisible, so it can simply live as long
-  // as the full-burn outcome is current; no timer needed.
-  const warp = outcome?.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
+  // The overlay's CSS animations end invisible, so they can simply live as
+  // long as the MAXIMUM THRUST outcome is current; no timer needed.
+  const maxThrust = isMaxThrust(outcome);
 
   const thrust = state?.thrust ?? 1;
   const seconds = Math.max(Math.ceil(thrust * ENCOUNTER.thrustSeconds), 0);
@@ -107,7 +106,7 @@ export function Hud({
 
   return (
     <div className={styles.hud}>
-      {warp ? <div className={styles.warp} data-testid="warp" aria-hidden="true" /> : null}
+      {maxThrust ? <MaxThrust /> : null}
       {state?.pulse ? <PulseOverlay key={state.pulse.id} pulse={state.pulse} /> : null}
 
       <div className={styles.board}>
@@ -282,6 +281,36 @@ export function Hud({
 }
 
 /**
+ * MAXIMUM THRUST: every lane of a cluster found, and the whole reactor dumped
+ * into the engines at once.
+ *
+ * The only outcome with a full-screen treatment of its own. Radial speed
+ * lines, and a hazard placard that reads as a warning light coming on rather
+ * than a score: the ship is doing something it was not built to do, which is
+ * the point. The shake lives on the shell so the scene and the HUD move
+ * together; see GameCanvas.
+ */
+function MaxThrust() {
+  return (
+    <>
+      <div className={styles.warp} data-testid="warp" aria-hidden="true" />
+      <div className={styles.maxThrust} data-testid="max-thrust" aria-live="assertive">
+        <div className={styles.hazard}>
+          <span className={styles.hazardSign} aria-hidden="true">
+            &#9888;
+          </span>
+          <span className={`${styles.hazardText} arcade`}>MAXIMUM THRUST</span>
+          <span className={styles.hazardSign} aria-hidden="true">
+            &#9888;
+          </span>
+        </div>
+        <span className={`${styles.hazardSub} arcade`}>REACTOR DUMPED &middot; HOLD ON</span>
+      </div>
+    </>
+  );
+}
+
+/**
  * The answer squares: one row, one square per lane, in lane order.
  *
  * The row measures itself after every layout and reports each square's centre
@@ -414,8 +443,8 @@ function PulseOverlay({ pulse }: { pulse: Pulse }) {
 
 function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | undefined }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
-  const full = outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
-  const label = full ? "FULL BURN!" : OUTCOME_LABEL[outcome.kind];
+  const full = isMaxThrust(outcome);
+  const label = full ? "MAXIMUM THRUST" : OUTCOME_LABEL[outcome.kind];
   return (
     <section
       className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${full ? styles.toast_full : ""}`}

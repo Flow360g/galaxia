@@ -121,6 +121,15 @@ export class Ship {
   }
 
   /**
+   * Raw plasma in the burn, 0..1. Held by the engine for the length of a
+   * MAXIMUM THRUST rather than decayed here, so the plume stays huge and
+   * violet for as long as the moment lasts.
+   */
+  setOverdrive(amount: number): void {
+    for (const exhaust of this.exhausts) exhaust.setOverdrive(amount);
+  }
+
+  /**
    * React to a locked answer. Correct outcomes swerve; wrong ones hold course
    * into the rock. The tumble itself is triggered on contact, see `impact`.
    */

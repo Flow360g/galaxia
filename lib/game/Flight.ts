@@ -1,5 +1,5 @@
-import { FLIGHT } from "./Tuning";
-import type { OutcomeKind } from "./types";
+import { CLUSTER, FLIGHT } from "./Tuning";
+import type { Outcome, OutcomeKind } from "./types";
 
 /**
  * The velocity model. Pure: no three.js, no DOM, so it can be reasoned about
@@ -97,6 +97,19 @@ export function outcomeKind(
   if (timedOut) return "timeout";
   if (correct) return boosted ? "slingshot" : "thread";
   return boosted || !shielded ? "wreck" : "collision";
+}
+
+/** Plasma in a full reactor: every lane of a cluster found. */
+export const FULL_CHARGE = CLUSTER.chargeMultiplier.length - 1;
+
+/**
+ * MAXIMUM THRUST: a burn that banked the whole reactor.
+ *
+ * The one outcome the engine, the ship and the HUD all treat as special, so
+ * they all ask the same question here rather than each re-deriving it.
+ */
+export function isMaxThrust(outcome: Outcome | null | undefined): boolean {
+  return !!outcome && outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
 }
 
 export function clamp01(value: number): number {
