@@ -91,7 +91,8 @@ multiplier from `CLUSTER.chargeMultiplier`.
 `lib/game/Tuning.ts` holds every constant that decides how the game feels:
 `FLIGHT` (the velocity model), `ENCOUNTER` (timers, hold distances, swerve
 offsets), `CLUSTER` (thrust budget, lanes, charge multipliers), `NOVA`, `FX`
-(shake, pull-back, tumble, debris, the warp), plus the camera,
+(shake, pull-back, tumble, debris, the warp), `AUDIO` (bus levels, the engine
+drone, the music loop), plus the camera,
 ship, exhaust, field and star constants. Nothing else hardcodes a magic
 number.
 
@@ -130,6 +131,19 @@ yaw still fall out of lateral velocity.
 additive wireframe bubble that rings out. The camera pulls back and kicks FOV
 on a burst; streaks surge on a slingshot.
 
+**Sound** (`Audio.ts`) is synthesised at runtime through the Web Audio API,
+so no audio file ships and every cue is a number in `Tuning.ts` like the rest
+of the feel. Four layers across three buses: an engine drone plus a
+rushing-air bed, both riding the same 0..1 speed ratio the FOV and the
+streaks use; a generative music loop (bass, pad, arpeggio, hat over a
+four-bar minor progression) whose tempo and brightness rise with that same
+ratio; one-shot cues fired from the run hooks for plasma collected, rocks
+threaded, burns banked and hulls hit; and a master gain the SOUND toggle
+fades. Nothing in it is load-bearing: browsers hold the context suspended
+until a gesture, so every entry point is a no-op until one arrives and the
+whole class is safe on a device that never makes a sound. The choice of on
+or off lives in localStorage.
+
 **React owns the DOM, three.js owns the canvas.** The engine creates its own
 canvas inside a container div (a React-supplied canvas would be poisoned by
 `forceContextLoss()` on the StrictMode remount).
@@ -143,12 +157,12 @@ canvas inside a container div (a React-supplied canvas would be poisoned by
 app/                  routes: landing, /play, /api/anomaly, global styles
 components/           GameCanvas (mount boundary), Hud, ShareCard, BestRun, DebugStats
 lib/game/             Engine, Run, Flight, nova, anomaly, share, storage,
-                      Ship, EncounterAsteroid, ClusterField, Debris, Shield, Exhaust, Camera,
+                      Audio, Ship, EncounterAsteroid, ClusterField, Debris, Shield, Exhaust, Camera,
                       Backdrop, AsteroidField, Starfield, quality, Tuning
 lib/content/          round loader
 content/rounds/       one JSON file per daily round (2 cluster + 4 mcq + 1 anomaly)
 public/               spaceship.glb, backdrop, anomaly images
-e2e/                  Playwright full-run test
+e2e/                  Playwright full-run test, and the audio signal test
 ```
 
 ## Authoring a round
@@ -176,6 +190,7 @@ a NOVA clue reveals) and a `fact`. The anomaly entry carries `kind` (`open` or `
 
 ## What is deliberately not done
 
-Sound, group leaderboards, server-side persistence, more than one authored
-round, and haptics. The anomaly scorer is a single unstructured call; a
+Group leaderboards, server-side persistence, more than one authored round,
+and haptics. Sound is synthesised rather than authored: no recorded music or
+sampled impacts. The anomaly scorer is a single unstructured call; a
 structured-output tool call would be the next hardening step.

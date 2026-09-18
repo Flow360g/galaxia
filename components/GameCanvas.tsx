@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Engine } from "@/lib/game/Engine";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
-import { clearRun, loadRun, saveRun } from "@/lib/game/storage";
+import { clearRun, loadMuted, loadRun, saveMuted, saveRun } from "@/lib/game/storage";
 import { Hud } from "./Hud";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
@@ -34,6 +34,13 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   /** Bumped to remount the engine for a fresh run. */
   const [attempt, setAttempt] = useState(0);
   /**
+   * Sound on or off, remembered between runs. Reading storage in the lazy
+   * initialiser is safe here: the HUD this feeds is never rendered on the
+   * server or on the hydrating pass, since `stored` is undefined until then.
+   */
+  const [muted, setMuted] = useState(loadMuted);
+  const mutedRef = useRef(muted);
+  /**
    * Today's stored run, if any. `undefined` on the server and until hydration
    * so the engine never starts before storage has been checked.
    */
@@ -61,6 +68,16 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
 
   const playing = stored === null && summary === null;
 
+  const toggleSound = useCallback(() => {
+    setMuted((current) => {
+      const next = !current;
+      mutedRef.current = next;
+      saveMuted(next);
+      engineRef.current?.setMuted(next);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container || stored !== null) return;
@@ -68,6 +85,9 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     const engine = new Engine({
       container,
       round,
+      // Read through the ref: a change of mind mid-run goes to `setMuted` on
+      // the live engine, and must never remount it.
+      muted: mutedRef.current,
       onState: handleState,
       onRunEnd: handleRunEnd,
       onDebug: debug ? setDebugInfo : undefined,
@@ -108,6 +128,8 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
           onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+          muted={muted}
+          onToggleSound={toggleSound}
         />
       ) : null}
 

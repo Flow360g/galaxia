@@ -172,6 +172,59 @@ export const FX = {
   streakSurge: 0.9,
 } as const;
 
+/**
+ * Sound. Everything is synthesised at runtime through the Web Audio API:
+ * no audio files ship, so nothing to download, decode or keep in sync with
+ * the visuals, and every cue can be tuned by a number here like the rest of
+ * the feel. Gains are linear, frequencies hertz, times seconds.
+ */
+export const AUDIO = {
+  /** Bus levels. Master is what the mute toggle rides. */
+  master: 0.85,
+  musicBus: 0.42,
+  sfxBus: 0.95,
+  engineBus: 0.5,
+  /** Seconds the master fades over on mute, pause and resume. */
+  fadeSeconds: 0.25,
+
+  engine: {
+    /** Drone pitch at cruise and at the top of the visual band. */
+    baseHz: 44,
+    maxHz: 108,
+    /** Second oscillator, detuned in cents, so the drone beats slightly. */
+    detuneCents: 9,
+    /** Lowpass on the drone, opening with speed. */
+    filterHz: [220, 1500],
+    /** Rushing-air layer: bandpass over noise, also opening with speed. */
+    airHz: [320, 2100],
+    airGain: [0.05, 0.22],
+    /** Drone gain at cruise and at max speed. */
+    gain: [0.1, 0.26],
+    /** Seconds the drone takes to follow a change in speed. */
+    glide: 0.28,
+  },
+
+  music: {
+    /** Beats per minute at cruise and at max speed. */
+    bpm: [88, 116],
+    /** Scheduler lookahead and tick, seconds. */
+    lookahead: 0.15,
+    tickSeconds: 0.025,
+    /** Root note of each bar, as a frequency in hertz. A minor, four bars. */
+    roots: [55, 43.65, 65.41, 49],
+    /** Minor pentatonic, semitone offsets from the root. */
+    scale: [0, 3, 5, 7, 10, 12, 15],
+    steps: 8,
+    bassGain: 0.3,
+    padGain: 0.06,
+    arpGain: [0.035, 0.085],
+    hatGain: [0.012, 0.045],
+  },
+
+  /** Thrust running out: a tick that quickens as the tank empties. */
+  warning: { from: 0.34, minInterval: 0.32, maxInterval: 1.1, gain: 0.1, hz: 1560 },
+} as const;
+
 export const SHARE = {
   width: 1080,
   height: 1350,

@@ -80,6 +80,32 @@
   text-shadow: 0 0 10px rgba(255, 107, 92, 0.6);
 }
 
+/* Sound toggle. The one pointer-enabled control outside the bottom panel. */
+.sound {
+  pointer-events: auto;
+  align-self: flex-start;
+  margin-top: 2px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(79, 241, 255, 0.4);
+  background: rgba(7, 17, 34, 0.7);
+  color: var(--arcade-cyan);
+  transition: color 120ms, border-color 120ms, opacity 120ms;
+}
+
+.sound:active {
+  background: var(--arcade-cyan);
+  color: var(--ink);
+}
+
+.soundOff {
+  border-color: var(--rule-dark);
+  color: var(--panel-label);
+  opacity: 0.8;
+}
+
 .unit {
   font-family: var(--mono);
   font-size: 9px;

@@ -22,6 +22,9 @@ interface Props {
   onToggleBoost: () => void;
   onNova: () => void;
   onAnomaly: (text: string) => void;
+  /** Sound off. The engine owns the audio; this is only its switch. */
+  muted: boolean;
+  onToggleSound: () => void;
 }
 
 const OUTCOME_LABEL: Record<OutcomeKind, string> = {
@@ -60,6 +63,8 @@ export function Hud({
   onToggleBoost,
   onNova,
   onAnomaly,
+  muted,
+  onToggleSound,
 }: Props) {
   const question =
     state && state.encounter >= 0 ? round.questions[state.encounter] : undefined;
@@ -96,6 +101,18 @@ export function Hud({
             <span className={styles.unit}>KM</span>
           </span>
         </div>
+
+        <button
+          type="button"
+          className={`${styles.sound} ${muted ? styles.soundOff : ""} arcade`}
+          onClick={onToggleSound}
+          aria-pressed={muted}
+          aria-label={muted ? "Turn sound on" : "Turn sound off"}
+          data-testid="sound"
+          data-muted={String(muted)}
+        >
+          {muted ? "SOUND OFF" : "SOUND ON"}
+        </button>
 
         <div className={styles.readoutRight}>
           <span className="label">Velocity</span>

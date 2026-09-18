@@ -104,6 +104,13 @@ export class Run {
     return this.phase === "approach";
   }
 
+  /** Whether a NOVA scan would land right now. The HUD and the sound ask. */
+  get canNova(): boolean {
+    const question = this.question;
+    if (!this.answering || !question || question.type === "anomaly") return false;
+    return this.novaLeft > 0 && !this.nova;
+  }
+
   get state(): GameState {
     return {
       phase: this.phase,
@@ -216,8 +223,7 @@ export class Run {
   /** Spend a NOVA scan on the current question. */
   useNova(): void {
     const question = this.question;
-    if (!this.answering || !question || question.type === "anomaly") return;
-    if (this.novaLeft <= 0 || this.nova) return;
+    if (!this.canNova || !question || question.type === "anomaly") return;
 
     this.novaLeft -= 1;
     this.novasUsed += 1;

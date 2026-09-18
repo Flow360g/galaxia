@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { requestAnomalyScore } from "./anomaly";
 import { AsteroidField } from "./AsteroidField";
+import { AudioEngine } from "./Audio";
 import { Backdrop } from "./Backdrop";
 import { ChaseCamera } from "./Camera";
 import { ClusterField } from "./ClusterField";
@@ -31,6 +32,8 @@ export interface EngineOptions {
    */
   container: HTMLElement;
   round: Round;
+  /** Start muted. The player's last choice, read from storage by the shell. */
+  muted?: boolean;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onOutcome?: (outcome: Outcome, index: number) => void;
@@ -63,6 +66,7 @@ export class Engine {
   private readonly backdrop: Backdrop;
   private readonly governor: QualityGovernor;
   private readonly run: Run;
+  private readonly audio: AudioEngine;
 
   private readonly clock = new THREE.Clock();
   private frameHandle: number | null = null;
@@ -149,6 +153,11 @@ export class Engine {
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
 
+    // Sound is built now but stays silent until `start()`, and silent after
+    // that until the browser hands the context a gesture to unlock on.
+    this.audio = new AudioEngine(options.muted ?? false);
+    this.audio.init();
+
     this.run = new Run(
       options.round,
       {
@@ -171,6 +180,7 @@ export class Engine {
   start(): void {
     if (this.frameHandle !== null || this.disposed) return;
     this.clock.start();
+    this.audio.setRunning(true);
     this.loop();
   }
 
@@ -179,6 +189,7 @@ export class Engine {
     cancelAnimationFrame(this.frameHandle);
     this.frameHandle = null;
     this.clock.stop();
+    this.audio.setRunning(false);
   }
 
   dispose(): void {
@@ -198,6 +209,7 @@ export class Engine {
     this.rock.dispose();
     this.cluster.dispose();
     this.debris.dispose();
+    this.audio.dispose();
 
     this.scene.traverse((object) => {
       if (object instanceof THREE.Light) object.dispose?.();
@@ -234,7 +246,13 @@ export class Engine {
   }
 
   useNova(): void {
+    if (this.run.canNova) this.audio.nova();
     this.run.useNova();
+  }
+
+  /** Mute or unmute everything. The engine owns the sound, the shell the UI. */
+  setMuted(muted: boolean): void {
+    this.audio.setMuted(muted);
   }
 
   submitAnomaly(text: string): void {
@@ -255,21 +273,25 @@ export class Engine {
     if (this.inCluster) this.cluster.spawn();
     else this.rock.spawn(question.type === "anomaly");
     this.ship.recentre();
+    this.audio.encounter(question);
   }
 
   private onPick(lane: number, correct: boolean): void {
+    this.audio.pick();
     this.ship.holdLane(ClusterField.laneX(lane));
     this.cluster.pick(lane, correct, CLUSTER.collectSeconds);
   }
 
   private onCollect(lane: number, charge: number): void {
     this.cluster.collect(lane);
+    this.audio.collect(charge);
     this.shield.flash(FX.collect.shieldFlash, COLOR.cyan);
     this.ship.pulseExhaust(FX.collect.exhaustPulse + FX.collect.exhaustPulsePerCharge * charge);
     this.chase.shake(FX.collect.shake);
   }
 
   private onLock(outcome: Outcome): void {
+    this.audio.strike();
     if (this.inCluster) {
       if (outcome.kind === "burn") {
         this.cluster.stream();
@@ -291,6 +313,7 @@ export class Engine {
 
     if (kind === "burn") {
       const full = (outcome.charge ?? 0) >= CLUSTER.chargeMultiplier.length - 1;
+      this.audio.contact(kind, outcome.charge ?? 0, full);
       if (full) {
         this.chase.burst(FX.warp.pullback, FX.warp.fovKick);
         this.chase.shake(FX.warp.shake);
@@ -306,6 +329,7 @@ export class Engine {
       }
       this.ship.pulseExhaust(FX.exhaustPulse.burn);
     } else if (outcome.correct) {
+      this.audio.contact(kind);
       this.rock.contact(false);
       const burst = kind === "slingshot" ? "slingshot" : "thread";
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
@@ -315,6 +339,7 @@ export class Engine {
         this.streakSurge = FX.streakSurge;
       }
     } else {
+      this.audio.contact(kind);
       const strength = kind === "wreck" ? 1.6 : 1;
       if (this.inCluster) {
         if (outcome.chosen !== null) {
@@ -341,6 +366,7 @@ export class Engine {
   private endRun(): void {
     if (this.ended) return;
     this.ended = true;
+    this.audio.finish();
     this.options.onRunEnd?.(this.run.summary());
     // Keep flying under the share card: the ship coasting on is the story's
     // last frame. State updates stop mattering, the loop just renders.
@@ -409,6 +435,7 @@ export class Engine {
       else this.rock.setLoom(1 - this.run.thrust);
     }
 
+    this.audio.update(dt, ratio, this.run.thrust, open);
     this.ship.update(dt, ratio, open ? this.run.thrust : 1);
     this.shield.update(dt);
     this.chase.update(dt, this.ship, ratio);
