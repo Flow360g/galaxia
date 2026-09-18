@@ -165,22 +165,28 @@ codebase: the engine calls cues, nothing else makes a noise.
 ## Architecture in one screen
 
 ```
-app/                  routes: / (title), /play, /api/anomaly, layout, globals.css
-components/           GameCanvas (React/three.js boundary), Hud, ShareCard, BestRun, DebugStats
+app/                  routes: / (title), /play, /hangar (ship bay), /api/anomaly,
+                      layout, globals.css
+components/           GameCanvas (React/three.js boundary), Hud, ShareCard, BestRun,
+                      Briefing (first-flight explainer), Hangar (ship bay), TitleMenu,
+                      DebugStats
 lib/game/Run.ts       pure state machine: intro -> approach -> collecting|scanning -> resolving -> aftermath
 lib/game/Flight.ts    pure velocity model: cruise, streak floor, impulse, collision retain
 lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the canvas and loop
+lib/game/ShipBay.ts   the hangar's own tiny shell: one hull, turning on a lit deck
+lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
-                      CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, ...)
+                      CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, SHIPS, HANGAR, ...)
 lib/game/Incoming.ts  the one pod or boulder that comes down a picked lane
 lib/game/Audio.ts     all sound, synthesised: engine bed, music loop, one-shot cues
 lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, Backdrop,
                       AsteroidField, Starfield, quality, nova, anomaly, share (card + text),
-                      storage (localStorage), format, types
+                      storage (localStorage), gltf (GLB loader + merge), format, types
 lib/content/round.ts  round loader with build-time validation
 content/rounds/       one JSON per daily round: 2 cluster + 4 mcq + 1 anomaly
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
 e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
+e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks included
 ```
 
 Rules that fall out of this:
@@ -213,6 +219,41 @@ Rules that fall out of this:
   server-side; never send it to the client.
 - **Storage is best effort.** localStorage can be missing or full; every
   read and write is wrapped and a failure must never break play.
+
+## The briefing and the ship bay
+
+Two screens wrap the run. Neither is part of it, and neither may slow the
+path from a shared link to flying.
+
+- **The briefing** is the rules and the scoring system, shown once, before
+  the first round, when the flight log is empty and it has never been read.
+  The shell holds the engine back until it closes, so a new player is never
+  reading a rule against a draining clock. Every figure in its copy is read
+  from `Tuning.ts` and every count from the round, so retuning cannot leave
+  it lying: add a number to it the same way. `?replay=1` skips it along with
+  today's stored run, and the title screen can call it up again.
+- **The ship bay** (`/hangar`) is one hull turning on a lit deck.
+  `SHIPS` in `Tuning.ts` is the whole catalogue: name, blurb, model, scale,
+  yaw, nozzles and how it unlocks (`default`, `runs`, or `purchase`).
+  Adding a hull is one entry there plus a GLB in `public/models`.
+- **A hull is cosmetic, always.** Every ship has the same flight model. The
+  daily round has to stay comparable between two players, so a ship must
+  never touch speed, thrust, shields or scoring.
+- **Unlocks are counted, not derived.** `galaxia:flown` counts runs actually
+  completed, one per date, so the escape hatch cannot farm an unlock and
+  clearing today's run cannot undo one.
+- **A selection never blocks a run.** It is a string in localStorage, so it
+  can name a hull that is gone or was never unlocked; `selectedShip()` falls
+  back to standard issue rather than failing to fly.
+- **The limited edition has no provider behind it yet.** `purchaseShip()` in
+  `ships.ts` records the entitlement locally and is the seam: a real
+  checkout takes the money server-side, stores the entitlement against an
+  account, and has that function read it instead. Until then the bay says so
+  in as many words, and the hull is honour-system on the device.
+- **A many-part GLB is merged on load.** `gltf.ts` collapses an untextured
+  model of more than `PERF.mergeMeshesAbove` meshes into one, baking each
+  part's colour into vertices. The limited edition hull is 65 parts, which
+  unmerged is 65 of the scene's 60 draw calls.
 
 ## Commands
 

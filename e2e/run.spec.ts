@@ -126,6 +126,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("share-card")).toBeVisible({ timeout: 15_000 });
   await page.goto("/");
   await expect(page.getByTestId("today-run")).toContainText("KM");
+
+  // And the flight log counted it, which is what earns a hull in the bay.
+  expect(await page.evaluate(() => localStorage.getItem("galaxia:flown"))).toBe("1");
 });
 
 test("a full burn: all three lanes, keyboard, warp", async ({ page }) => {

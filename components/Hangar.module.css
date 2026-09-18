@@ -1,0 +1,333 @@
+/* The ship bay. Portrait: a header rail, the lit bay, then the plate under
+   it. Fills the viewport exactly and never scrolls, like every other screen
+   in the game. */
+
+.main {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--space);
+  color: #ffffff;
+  padding: 0 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  gap: 10px;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule-dark);
+  padding-bottom: 10px;
+}
+
+.back {
+  font-size: 9px;
+  color: #ffffff;
+  text-decoration: none;
+  /* A 9px link still needs a thumb-sized target. */
+  padding: 12px 10px;
+  margin: -12px -10px;
+}
+
+.back::before {
+  content: "< ";
+  color: var(--arcade-yellow);
+}
+
+.slot {
+  font-size: 9px;
+  color: var(--panel-label);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The bay itself takes whatever height the plate leaves it. */
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 180px;
+  border: 1px solid var(--rule-dark);
+  overflow: hidden;
+}
+
+.bay {
+  position: absolute;
+  inset: 0;
+}
+
+.bay > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: manipulation;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 46px;
+  min-height: 46px;
+  font-size: 13px;
+  color: #ffffff;
+  background: rgba(7, 17, 34, 0.7);
+  border: 1px solid var(--rule-dark);
+}
+
+.arrow:active {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+}
+
+.prev {
+  left: 8px;
+}
+
+.next {
+  right: 8px;
+}
+
+/* Corner stamp on a hull the player cannot fly yet. */
+.stamp {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 9px;
+  letter-spacing: var(--track-label);
+  color: var(--arcade-yellow);
+  border: 1px solid var(--arcade-yellow);
+  padding: 6px 8px;
+  background: rgba(7, 17, 34, 0.72);
+}
+
+.plate {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.namePlate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.name {
+  margin: 0;
+  font-size: 18px;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(79, 241, 255, 0.55);
+}
+
+.class {
+  font-size: 9px;
+  color: var(--arcade-cyan);
+  letter-spacing: var(--track-label);
+}
+
+.blurb {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d5dbe6;
+}
+
+.status {
+  margin: 0;
+  min-height: 14px;
+  font-size: 11px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statusValue {
+  font-size: 9px;
+  color: var(--arcade-yellow);
+}
+
+.statusAside {
+  font-size: 11px;
+  color: var(--panel-label);
+}
+
+/* Square-cornered, yellow on ink, same button as everywhere else. */
+.primary,
+.secondary {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 15px 16px;
+  font-size: 11px;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid var(--arcade-yellow);
+  background: var(--arcade-yellow);
+  color: var(--ink);
+}
+
+.primary:disabled {
+  background: transparent;
+  color: var(--panel-label);
+  border-color: var(--rule-dark);
+}
+
+.primary:active:not(:disabled) {
+  background: #ffffff;
+}
+
+.secondary {
+  background: transparent;
+  color: var(--panel-label);
+  border-color: var(--rule-dark);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions > .secondary {
+  flex: 0 0 38%;
+}
+
+.actions > .primary {
+  flex: 1;
+}
+
+.checkout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--arcade-yellow);
+  padding: 12px;
+  background: rgba(255, 224, 61, 0.05);
+}
+
+.checkoutPrice {
+  font-size: 16px;
+  color: var(--arcade-yellow);
+}
+
+.checkoutText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d5dbe6;
+}
+
+.note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--panel-label);
+}
+
+/* The rack: every hull at a glance, tappable. */
+.rack {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.rack > li {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.chip {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--rule-dark);
+  color: var(--panel-label);
+}
+
+.chip[data-on="true"] {
+  border-color: var(--arcade-cyan);
+  color: #ffffff;
+}
+
+.chipName {
+  font-size: 9px;
+  line-height: 1.3;
+  text-align: center;
+  /* Two lines of 9px pixel type, then stop. Six characters of a hull name is
+     not a name, so these wrap rather than truncate. */
+  overflow-wrap: anywhere;
+}
+
+.chipMark {
+  font-size: 9px;
+  color: var(--panel-label);
+}
+
+.chip[data-state="available"] .chipMark {
+  color: var(--arcade-cyan);
+}
+
+.chip[data-state="forSale"] .chipMark {
+  color: var(--arcade-yellow);
+}
+
+@media (min-width: 721px) {
+  .main {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .plate {
+    max-width: 620px;
+    width: 100%;
+    align-self: center;
+  }
+
+  .name {
+    font-size: 22px;
+  }
+}
+
+/* Short phones. The bay gives up height first, but never below 180px, and
+   the plate tightens around it. */
+@media (max-height: 700px) {
+  .blurb {
+    font-size: 13px;
+  }
+
+  .name {
+    font-size: 15px;
+  }
+
+  .plate {
+    gap: 8px;
+  }
+}
+
+@media (max-height: 620px) {
+  .blurb {
+    display: none;
+  }
+
+  .primary,
+  .secondary {
+    min-height: 44px;
+    padding: 13px 14px;
+    font-size: 10px;
+  }
+}

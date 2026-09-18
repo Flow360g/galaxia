@@ -1,0 +1,40 @@
+/* Secondary rail under Press Start. Quieter than the button on purpose: the
+   fastest path from a shared link to flying is still the one tap above. */
+
+.nav {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.item {
+  flex: 1;
+  min-height: 46px;
+  padding: 14px 10px;
+  font-size: 10px;
+  text-align: center;
+  text-decoration: none;
+  color: #ffffff;
+  background: rgba(7, 17, 34, 0.72);
+  border: 1px solid var(--rule-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item:active {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+  border-color: var(--arcade-yellow);
+}
+
+@media (max-width: 720px) {
+  .nav {
+    max-width: none;
+  }
+
+  .item {
+    font-size: 9px;
+  }
+}
