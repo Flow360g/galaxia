@@ -8,6 +8,15 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
 
+/**
+ * Nothing advances on a timer any more: a verdict or a waypoint card sits
+ * there until the player taps. Wait for TAP TO CONTINUE to arm, then tap.
+ */
+async function advance(page: Page) {
+  await expect(page.getByTestId("tap-prompt")).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("continue").click();
+}
+
 test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, scan, share", async ({
   page,
 }) => {
@@ -35,9 +44,13 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
   await expect(toast).toHaveAttribute("data-charge", "2");
   await shot(page, "03-burn");
+  // The verdict names the points, not just the velocity: 3 plasma at x1.
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+60/);
+  await expect(page.getByTestId("score")).toContainText("60");
   const velocityAfterBurn = await readVelocity(page);
   expect(velocityAfterBurn).toBeGreaterThan(4000);
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
+  await advance(page);
 
   // Encounter 2: cluster. One correct, then a wrong lane. A boulder in the
   // lane: COLLISION, and one of the three shields is gone.
@@ -55,6 +68,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("streak")).toHaveText(/^\s*$/);
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
   expect(await readVelocity(page)).toBeLessThan(velocityAfterBurn);
+  // A miss docks points as well as velocity.
+  await expect(page.getByTestId("toast-points")).toHaveText(/-\d/);
+  await advance(page);
 
   // Waypoint: Stage 1 rated (3 plasma, a shield down: B), then ALIEN CONTACT.
   const waypoint = page.getByTestId("waypoint");
@@ -63,6 +79,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "05-waypoint-rating");
   await expect(waypoint).toContainText("ALIEN CONTACT", { timeout: 6_000 });
   await shot(page, "06-waypoint-entering");
+  // The stage card waits to be tapped on too.
+  await advance(page);
 
   // Encounter 3: vector. Aim dead on. DIRECT HIT, salvage restores a shield.
   await expect(question).toBeVisible({ timeout: 15_000 });
@@ -75,6 +93,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("salvage")).toContainText("SHIELD RESTORED");
   await shot(page, "08-direct-hit");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
+  await advance(page);
 
   // Encounter 4: vector, aim at the far end. MISS, the alien fires back, a shield goes.
   await expect(question).toBeVisible({ timeout: 15_000 });
@@ -84,6 +103,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(toast).toContainText("MISS");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
   await shot(page, "09-miss");
+  await advance(page);
 
   // Encounter 5: NOVA then correct with boost. SLINGSHOT.
   await expect(question).toBeVisible({ timeout: 15_000 });
@@ -97,11 +117,13 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   });
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
   await shot(page, "10-slingshot");
+  await advance(page);
 
   // Encounter 6: let the five seconds run out. TOO SLOW.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(toast).toHaveAttribute("data-outcome", "timeout", { timeout: 30_000 });
   await shot(page, "11-timeout");
+  await advance(page);
 
   // Encounter 7: the anomaly. No API key, so the local scorer marks it.
   await expect(question).toBeVisible({ timeout: 15_000 });
@@ -110,6 +132,30 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await page.getByTestId("anomaly-submit").click();
   await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 20_000 });
   await expect(toast).toContainText("100%");
+  await advance(page);
+
+  // The scorecard: one line per encounter, then the total out of the perfect
+  // run. It is the beat before the share card, and it waits for a tap.
+  const tally = page.getByTestId("tally");
+  await expect(tally).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("tally-line-0")).toContainText("2 PLASMA BANKED");
+  await expect(page.getByTestId("tally-line-6")).toContainText("SCANNER");
+  // The lines land one at a time and the total lands after them. Text is in
+  // the DOM the whole time, so the reveal is asserted on the class that
+  // actually makes a line visible rather than on its content.
+  await expect(page.getByTestId("tally-line-6")).toHaveClass(/lineIn/, { timeout: 10_000 });
+  await expect(page.getByTestId("tally-total")).toContainText("/ 1,500");
+  await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE");
+  // The total stamps in a beat after the last line.
+  await expect(page.getByTestId("tally-total")).toBeVisible();
+  await page.waitForTimeout(700);
+  await shot(page, "12-tally");
+  const scored = Number(
+    (await page.getByTestId("tally-total").innerText()).split("/")[0]!.replace(/[^0-9]/g, ""),
+  );
+  expect(scored).toBeGreaterThan(0);
+  expect(scored).toBeLessThan(1500);
+  await page.getByTestId("tally-continue").click();
 
   // Share card.
   const card = page.getByTestId("share-card");
@@ -119,7 +165,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   });
   const distance = await page.getByTestId("final-distance").innerText();
   expect(Number(distance.replace(/[^0-9]/g, ""))).toBeGreaterThan(1000);
-  await shot(page, "12-share");
+  await expect(page.getByTestId("final-score")).toBeVisible();
+  await shot(page, "13-share");
 
   // The run is persisted: a reload shows the card, not a fresh run.
   await page.goto("/play");
@@ -149,6 +196,9 @@ test("a full burn: all three lanes, keyboard, warp", async ({ page }) => {
   await expect(toast).toHaveAttribute("data-charge", "3");
   await expect(toast).toContainText("FULL BURN");
   await expect(page.getByTestId("warp")).toBeAttached();
+  // Full charge at x1: the whole 100 for the encounter.
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+100/);
+  await expect(page.getByTestId("score")).toContainText("100");
   await shot(page, "09-full-burn");
   expect(await readVelocity(page)).toBeGreaterThan(6000);
   await expect(page.getByTestId("streak")).toHaveText("STREAK x1");

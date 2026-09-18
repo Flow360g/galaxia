@@ -2,8 +2,9 @@
 
 # Galaxia
 
-A daily quiz flight. Seven encounters, one run a day, and your score is the
-distance you fly. Every answer is a lane: tap a square, the ship veers into
+A daily quiz flight. Seven encounters, one run a day, scored out of a fixed
+1,500. Distance is still flown and still tracked; the score is what the run
+is played for. Every answer is a lane: tap a square, the ship veers into
 that lane, and the verdict rides in on it. A right lane sends a plasma pod
 the ship flies through and accelerates; a wrong lane sends a boulder that
 strikes the hull and kills its momentum. Built with Next.js 16 (App Router,
@@ -25,8 +26,21 @@ things that make those games sticky:
 - **Two to three minutes, one thumb.** A run has to fit a bus stop. Every
   interaction is a single tap. Nothing requires precision, reading a manual,
   or two hands.
+- **A score you can hold in your head.** Every encounter is worth the same
+  base, the streak multiplies it in whole steps, and a wrong answer docks a
+  flat amount. A run is quoted out of what a perfect run would have scored,
+  so "1,180 of 1,500" means the same to everyone comparing. Distance is a
+  speedometer reading and makes a poor anchor: nobody knows whether 12,000 km
+  is a good day. See `SCORE` in `Tuning.ts` and `lib/game/Score.ts`; the end
+  of the run tallies it line by line before the share card.
+- **The player says when to move on.** Nothing advances on a timer once a
+  verdict is up. The outcome toast and the waypoint card carry the right
+  answer and a fact, and they sit there until the screen is tapped. Only the
+  answer itself is timed.
 - **Tension, then release.** The clock is five seconds per pick, drawn as
-  thrust draining and a countdown, and it refills for every decision.
+  thrust draining and a countdown, and it refills for every decision. A
+  cluster's first pick gets two seconds more, because six options and a
+  prompt have to be read before the first tap.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
   to crawling. The Cluster is push-your-luck: bank the plasma now, or pick
   again for more and risk a boulder. Boost is confidence as a button. Three
@@ -72,7 +86,9 @@ The screen has two zones. Respect them:
   a run is live. The one exception is the pulse (PLASMA COLLECTED, SHIELD
   LOST), a short one-shot flash at about 64% down that is `pointer-events:
   none` and fades in 1.4 seconds. If a new element must exist, it goes in
-  the band.
+  the band. The tap-to-continue catcher covers the whole screen but is drawn
+  nowhere and only exists while the run is parked on a verdict; the visible
+  TAP TO CONTINUE prompt lives in the band like everything else.
 - **The answer row is the lane map.** The squares sit in one horizontal
   row in lane order, and the row measures its own layout and hands the
   engine each square's horizontal screen fraction, so tapping square 3
@@ -167,11 +183,12 @@ codebase: the engine calls cues, nothing else makes a noise.
 ```
 app/                  routes: / (title), /play, /hangar (ship bay), /api/anomaly,
                       layout, globals.css
-components/           GameCanvas (React/three.js boundary), Hud, ShareCard, BestRun,
-                      Briefing (first-flight explainer), Hangar (ship bay), TitleMenu,
-                      DebugStats
+components/           GameCanvas (React/three.js boundary), Hud, ScoreTally, ShareCard,
+                      BestRun, Briefing (first-flight explainer), Hangar (ship bay),
+                      TitleMenu, DebugStats
 lib/game/Run.ts       pure state machine: intro -> approach -> collecting|scanning -> resolving -> aftermath
 lib/game/Flight.ts    pure velocity model: cruise, streak floor, impulse, collision retain
+lib/game/Score.ts     pure scoring: base per encounter, streak multiplier, penalties, tally
 lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the canvas and loop
 lib/game/ShipBay.ts   the hangar's own tiny shell: one hull, turning on a lit deck
 lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
@@ -191,11 +208,12 @@ e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks inclu
 
 Rules that fall out of this:
 
-- **Pure core, imperative shell.** `Run.ts` and `Flight.ts` import neither
-  three.js nor React. Game rules go there so they can be stepped with a
+- **Pure core, imperative shell.** `Run.ts`, `Flight.ts` and `Score.ts` import
+  neither three.js nor React. Game rules go there so they can be stepped with a
   fake clock. Visuals go in `Engine.ts` and the scene modules. The HUD is
   a view of `GameState` plus method calls on the engine (`answer`, `pick`,
-  `burn`, `toggleBoost`, `useNova`, `submitAnomaly`, `setLaneFractions`).
+  `burn`, `toggleBoost`, `useNova`, `submitAnomaly`, `confirm`,
+  `setLaneFractions`).
 - **Every answer is a lane.** MCQ and Cluster both go through the same
   pick -> veer -> incoming -> verdict flow, so the run reads one way. The
   camera stops tracking laterally for `LANE.lockSeconds` after a pick so

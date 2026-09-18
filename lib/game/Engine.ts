@@ -334,6 +334,11 @@ export class Engine {
     this.run.lockVector();
   }
 
+  /** The player tapped to move past a verdict or a waypoint card. */
+  confirm(): void {
+    this.run.confirm();
+  }
+
   useNova(): void {
     if (this.run.canNova) this.audio.nova();
     this.run.useNova();

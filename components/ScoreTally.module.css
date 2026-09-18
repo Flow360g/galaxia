@@ -1,0 +1,207 @@
+/* The scorecard between the last encounter and the share card. A full-screen
+   overlay, which is allowed here because the run is over: the rule that keeps
+   the lower half clear protects the ship while it is being flown. */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  background: rgba(7, 17, 34, 0.86);
+  backdrop-filter: blur(3px);
+  z-index: 3;
+}
+
+/* The tap target is the whole screen and is drawn nowhere. */
+.catcher {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px 16px;
+  background: rgba(10, 10, 10, 0.86);
+  border: 1px solid var(--rule-dark, rgba(255, 255, 255, 0.14));
+  border-radius: 4px;
+}
+
+.heading {
+  font-size: 13px;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each line lands rather than appearing: the tally is a sum being read out. */
+.line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label sum"
+    "detail sum";
+  column-gap: 12px;
+  row-gap: 2px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--rule-dark, rgba(255, 255, 255, 0.1));
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.lineIn {
+  opacity: 1;
+  transform: none;
+}
+
+.lineLabel {
+  grid-area: label;
+  font-size: 9px;
+  color: var(--arcade-cyan);
+}
+
+.lineDetail {
+  grid-area: detail;
+  font-size: 12px;
+  color: var(--panel-label, #9aa3b2);
+}
+
+.lineSum {
+  grid-area: sum;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.lineMath {
+  font-size: 8px;
+  color: var(--panel-label, #9aa3b2);
+}
+
+.linePoints {
+  font-size: 14px;
+  color: var(--arcade-yellow);
+  min-width: 52px;
+  text-align: right;
+}
+
+.linePointsDown {
+  color: #ff6b5c;
+}
+
+.linePointsNil {
+  color: var(--panel-label, #9aa3b2);
+}
+
+.lineMax {
+  font-size: 9px;
+  color: var(--panel-label, #9aa3b2);
+  min-width: 40px;
+}
+
+/* Where the points were left behind. */
+.lineMissed {
+  color: #ff6b5c;
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
+}
+
+.totalIn {
+  opacity: 1;
+  transform: none;
+}
+
+.totalValue {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--arcade-yellow);
+  text-shadow: 0 0 18px rgba(255, 224, 61, 0.45);
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.totalOutOf {
+  font-size: 13px;
+  color: var(--panel-label, #9aa3b2);
+  text-shadow: none;
+}
+
+.continue {
+  pointer-events: auto;
+  align-self: stretch;
+  font-size: 10px;
+  padding: 12px;
+  min-height: 44px;
+  color: var(--arcade-cyan);
+  background: transparent;
+  border: 1px solid var(--arcade-cyan);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.continue:active {
+  color: var(--ink, #0a0a0a);
+  background: var(--arcade-yellow);
+  border-color: var(--arcade-yellow);
+}
+
+.continueWaiting {
+  color: var(--panel-label, #9aa3b2);
+  border-color: var(--rule-dark, rgba(255, 255, 255, 0.18));
+}
+
+@media (max-width: 720px) {
+  .totalValue {
+    font-size: 26px;
+  }
+
+  .lineDetail {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .total {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}

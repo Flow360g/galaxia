@@ -1,5 +1,5 @@
 import { SHARE } from "./Tuning";
-import { formatDistance, formatRoundNumber, formatVelocity } from "./format";
+import { formatDistance, formatRoundNumber, formatScore, formatVelocity } from "./format";
 import type { FlightSample, OutcomeKind, RunEvent, RunSummary } from "./types";
 
 /**
@@ -21,11 +21,19 @@ const HEADER_Y = 92;
 const HEADER_RULE_Y = 124;
 const THEME_Y = 162;
 
-const DISTANCE_LABEL_Y = 226;
-const DISTANCE_Y = 338;
-const DISTANCE_FONT = 104;
-const DISTANCE_UNIT_FONT = 26;
-const DISTANCE_UNIT_GAP = 22;
+const HERO_LABEL_Y = 226;
+const HERO_Y = 338;
+const HERO_FONT = 104;
+const HERO_UNIT_FONT = 26;
+const HERO_UNIT_GAP = 22;
+/** The "/ 1,500" anchor, set under the hero figure rather than beside it: at
+ *  four digits the score already runs half the card wide. */
+const HERO_MAX_Y = 380;
+const HERO_MAX_FONT = 26;
+/** Distance, demoted to the right of the hero band but still a real figure. */
+const DISTANCE_FIGURE_FONT = 34;
+const DISTANCE_UNIT_FONT = 16;
+const DISTANCE_UNIT_GAP = 12;
 
 const CHART_TOP = 420;
 const CHART_BOTTOM = 950;
@@ -94,7 +102,7 @@ export function renderShareCard(
 
     drawBackground(ctx);
     drawHeader(ctx, summary, arcade);
-    drawDistance(ctx, summary, arcade);
+    drawHero(ctx, summary, arcade);
     drawChart(ctx, summary, arcade);
     drawStats(ctx, summary, arcade);
     drawAnomaly(ctx, summary, arcade);
@@ -117,7 +125,11 @@ export async function shareCardBlob(summary: RunSummary): Promise<Blob> {
   });
 }
 
-/** Three lines for the clipboard: score, glyph strip, headline stats. */
+/**
+ * Three lines for the clipboard: the score out of a perfect run, the glyph
+ * strip, then the supporting stats. Short enough to paste into a group chat
+ * without it becoming a wall, and the first line alone is the whole brag.
+ */
 export function shareText(summary: RunSummary): string {
   const total = stripLength(summary);
   const glyphs: string[] = [];
@@ -127,10 +139,17 @@ export function shareText(summary: RunSummary): string {
     glyphs.push(isAnomalyIndex(summary, i) ? `◆${glyph}` : glyph);
   }
 
+  // A stored run from before the score has nothing to quote, so that one
+  // leads with distance the way the old strip did, and does not repeat it.
+  const max = stored(summary.maxScore);
+  const score = stored(summary.score);
+  const scored = max !== null && max > 0 && score !== null;
+
   const stats = [
     `Peak ${formatVelocity(summary.peakVelocity)} km/h`,
     `Streak ${Math.max(0, Math.floor(summary.bestStreak))}`,
   ];
+  if (scored) stats.unshift(`${formatDistance(summary.distance)} km`);
   if (summary.fullBurns > 0) {
     stats.push(`Full burn${summary.fullBurns > 1 ? "s" : ""} ${summary.fullBurns}`);
   }
@@ -141,8 +160,12 @@ export function shareText(summary: RunSummary): string {
     stats.push(`Anomaly ${percent(summary.anomaly.score)}%`);
   }
 
+  const headline = scored
+    ? `${formatScore(score)} / ${formatScore(max)}`
+    : `${formatDistance(summary.distance)} km`;
+
   return [
-    `GALAXIA #${formatRoundNumber(summary.roundNumber)} · ${formatDistance(summary.distance)} km`,
+    `GALAXIA #${formatRoundNumber(summary.roundNumber)} · ${headline}`,
     glyphs.join(""),
     stats.join(" · "),
   ].join("\n");
@@ -218,6 +241,15 @@ function percent(score: number): number {
 
 function safe(n: number, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
+}
+
+/**
+ * A field that a summary read back from localStorage may simply not have: the
+ * score arrived after some runs were already stored. Null means "this run
+ * predates the figure", which is a different thing from a zero.
+ */
+function stored(value: number | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function kindColor(kind: OutcomeKind): string {
@@ -306,24 +338,84 @@ function drawHeader(ctx: Ctx, summary: RunSummary, arcade: string): void {
   }
 }
 
-function drawDistance(ctx: Ctx, summary: RunSummary, arcade: string): void {
-  text(ctx, "DISTANCE FLOWN", PAD, DISTANCE_LABEL_Y, arcadeFont(12, arcade), LABEL);
+/**
+ * The hero band: SCORE out of a perfect run, with distance beside it.
+ *
+ * The score leads because it is the figure the run is played for and the only
+ * one that means anything on its own: "1,180 / 1,500" is legible to somebody
+ * who has never flown. The maximum is never dropped, because the score without
+ * its anchor is just another number nobody can place. Distance keeps a real
+ * figure on the right, since the chart below it is a distance and velocity
+ * story, but it is a supporting stat now.
+ *
+ * A summary stored before the score existed has no anchor to show, so it falls
+ * back to the old card and leads with distance rather than drawing "NaN".
+ */
+function drawHero(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  const max = stored(summary.maxScore);
+  const score = stored(summary.score);
+  if (max === null || max <= 0 || score === null) {
+    drawLegacyDistance(ctx, summary, arcade);
+    return;
+  }
+
+  text(ctx, "SCORE", PAD, HERO_LABEL_Y, arcadeFont(12, arcade), LABEL);
+
+  const figure = formatScore(score);
+  ctx.save();
+  ctx.shadowColor = "rgba(255, 224, 61, 0.55)";
+  ctx.shadowBlur = 28;
+  text(ctx, figure, PAD, HERO_Y, arcadeFont(HERO_FONT, arcade), YELLOW);
+  ctx.restore();
+  text(
+    ctx,
+    `/ ${formatScore(max)}`,
+    PAD,
+    HERO_MAX_Y,
+    arcadeFont(HERO_MAX_FONT, arcade),
+    LABEL,
+  );
+
+  drawDistanceAside(ctx, summary, arcade);
+}
+
+/** Distance, right-aligned in the hero band: second billing, same eye line. */
+function drawDistanceAside(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  text(ctx, "DISTANCE FLOWN", W - PAD, HERO_LABEL_Y, arcadeFont(12, arcade), LABEL, "right");
+
+  ctx.font = arcadeFont(DISTANCE_UNIT_FONT, arcade);
+  const unitWidth = ctx.measureText("KM").width;
+  text(ctx, "KM", W - PAD, HERO_Y, arcadeFont(DISTANCE_UNIT_FONT, arcade), LABEL, "right");
+  text(
+    ctx,
+    formatDistance(summary.distance),
+    W - PAD - unitWidth - DISTANCE_UNIT_GAP,
+    HERO_Y,
+    arcadeFont(DISTANCE_FIGURE_FONT, arcade),
+    WHITE,
+    "right",
+  );
+}
+
+/** The card as it was before the score: distance as the hero figure. */
+function drawLegacyDistance(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  text(ctx, "DISTANCE FLOWN", PAD, HERO_LABEL_Y, arcadeFont(12, arcade), LABEL);
 
   const figure = formatDistance(summary.distance);
   ctx.save();
   ctx.shadowColor = "rgba(255, 224, 61, 0.55)";
   ctx.shadowBlur = 28;
-  text(ctx, figure, PAD, DISTANCE_Y, arcadeFont(DISTANCE_FONT, arcade), YELLOW);
+  text(ctx, figure, PAD, HERO_Y, arcadeFont(HERO_FONT, arcade), YELLOW);
   ctx.restore();
 
-  ctx.font = arcadeFont(DISTANCE_FONT, arcade);
+  ctx.font = arcadeFont(HERO_FONT, arcade);
   const width = ctx.measureText(figure).width;
   text(
     ctx,
     "KM",
-    PAD + width + DISTANCE_UNIT_GAP,
-    DISTANCE_Y,
-    arcadeFont(DISTANCE_UNIT_FONT, arcade),
+    PAD + width + HERO_UNIT_GAP,
+    HERO_Y,
+    arcadeFont(HERO_UNIT_FONT, arcade),
     LABEL,
   );
 }

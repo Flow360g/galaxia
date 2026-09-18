@@ -235,6 +235,37 @@ export interface Outcome {
    * guess costs. Everything else is a flat 1.
    */
   severity?: number;
+  /** Points earned before the streak multiplier. 0 on a wrong answer. */
+  base?: number;
+  /** The streak multiplier this encounter was scored at. */
+  multiplier?: number;
+  /** Net points this encounter added to the score. Negative when it cost. */
+  points?: number;
+  /** The score after this encounter landed. */
+  scoreAfter?: number;
+}
+
+/** One encounter's line in the end-of-run tally. */
+export interface ScoreLine {
+  index: number;
+  /** CLUSTER, VECTOR, LANE, ANOMALY. */
+  label: string;
+  /** One short line: "3 PLASMA BANKED", "DIRECT HIT", "MISSED". */
+  detail: string;
+  /** Points earned before the multiplier. */
+  base: number;
+  multiplier: number;
+  /** Net points, negative when the encounter cost points. */
+  points: number;
+  /** Points a perfect run would have taken from this encounter. */
+  max: number;
+  /**
+   * Whether the encounter itself was full marks. It can be true on a line
+   * that still fell short of `max`, because `max` also counts the streak
+   * multiplier a perfect run would have carried in. Only a line that left
+   * points on the table at the encounter is called out.
+   */
+  full: boolean;
 }
 
 /** Live state the HUD reads each frame. Flat and primitive on purpose. */
@@ -244,7 +275,11 @@ export interface GameState {
   encounter: number;
   /** Encounters resolved so far. */
   resolved: number;
-  /** Total distance this run, km. The score. */
+  /** The score: what the run is played for. See `Score.ts`. */
+  score: number;
+  /** What a perfect run would score. The score is always quoted out of this. */
+  maxScore: number;
+  /** Total distance this run, km. Tracked and shared, but not the score. */
   distance: number;
   /** Current velocity, km/h. */
   velocity: number;
@@ -270,6 +305,11 @@ export interface GameState {
   pulse: Pulse | null;
   /** Outcome of the most recent encounter, while its toast is up. */
   outcome: Outcome | null;
+  /**
+   * Nothing moves on until the player taps. True once the toast or the
+   * waypoint card has had its beat and is waiting on them.
+   */
+  awaitingTap: boolean;
   running: boolean;
 }
 
@@ -308,6 +348,11 @@ export interface RunSummary {
   date: string;
   roundNumber: number;
   theme: string;
+  /** The score, and what a perfect run would have scored. */
+  score: number;
+  maxScore: number;
+  /** One line per encounter flown, for the end-of-run tally. */
+  lines: ScoreLine[];
   distance: number;
   peakVelocity: number;
   bestStreak: number;

@@ -91,13 +91,11 @@ export const ENCOUNTER = {
   /** Seconds the outcome animation owns the screen after contact. */
   resolveSeconds: 1.5,
   /**
-   * Seconds the outcome toast holds before the next encounter is called.
-   * The toast carries the verdict, the right answer and a fact: this is the
-   * only place in the run where there is anything to READ, so it is paced for
-   * reading rather than for moving on.
+   * The toast carries the verdict, the right answer and a fact, and nothing
+   * moves on until the player taps. This is only the beat before TAP TO
+   * CONTINUE arms, so the tap that answered cannot skip its own verdict.
    */
-  aftermathSeconds: 4.4,
-  aftermathSecondsAnomaly: 6.0,
+  confirmArmSeconds: 0.7,
   /** Radius of an encounter asteroid, and of the anomaly. */
   radius: 4.6,
   anomalyRadius: 5.2,
@@ -171,6 +169,39 @@ export const LANE = {
   lockSeconds: 3.2,
 } as const;
 
+/**
+ * The SCORE: the number the player is actually playing for.
+ *
+ * Distance is still tracked and still the story the share card tells, but it
+ * is a speedometer reading, and a speedometer is a poor anchor: nobody knows
+ * whether 12,000 km is good. The score is fixed and countable instead. Every
+ * encounter is worth the same base, the streak multiplies it in whole steps,
+ * and a wrong answer docks a flat amount, so "1,180 out of 1,500" means the
+ * same thing to everyone comparing runs.
+ */
+export const SCORE = {
+  /** Points an encounter is worth at full marks, before the multiplier. */
+  perEncounter: 100,
+  /** Cluster: share of the base for 1, 2 and 3 plasma banked. */
+  clusterShare: [0.3, 0.6, 1],
+  /** Vector: share of the base for a direct hit and for a glancing hit. */
+  vectorDirect: 1,
+  vectorGlance: 0.5,
+  /** Anomaly: share at full marks, and for a partial answer. */
+  anomalyFull: 1,
+  anomalyPartial: 0.5,
+  /** Scanner score at or above which the anomaly is full marks. */
+  anomalyFullAt: 0.8,
+  /**
+   * Multiplier by the streak carried INTO the encounter; the last value holds
+   * for anything longer. Whole numbers on purpose: x2 is a thing a player can
+   * hold in their head mid-run, x1.65 is not.
+   */
+  streakMultipliers: [1, 1, 2, 2, 3, 3, 3],
+  /** Points docked for getting it wrong. A wreck costs double a collision. */
+  penalty: { collision: 25, wreck: 50, timeout: 25 },
+} as const;
+
 /** The run's shields. Each wrong lane costs one; at zero, a miss is a wreck. */
 export const SHIELDS = {
   perRun: 3,
@@ -214,7 +245,8 @@ export const VECTOR = {
 } as const;
 
 export const WAYPOINT = {
-  seconds: 7.5,
+  /** Seconds its beats take to play. It then waits for a tap like the toast. */
+  seconds: 6,
   /** When the rating stamps in, and when the "entering" line lands. */
   ratingAt: 1.1,
   enteringAt: 4.0,

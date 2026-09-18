@@ -17,6 +17,13 @@ const SHIP_KEY = "galaxia:ship";
 const OWNED_KEY = "galaxia:owned";
 
 export interface BestRecord {
+  /**
+   * The score, and what a perfect run that day would have scored. Both are
+   * optional because a record written before the score existed has neither;
+   * such a record is still shown, on its distance alone.
+   */
+  score?: number;
+  maxScore?: number;
   distance: number;
   date: string;
   roundNumber: number;
@@ -60,8 +67,10 @@ export function saveRun(summary: RunSummary): void {
   if (firstToday) write(FLOWN_KEY, loadFlown() + 1);
 
   const best = loadBest();
-  if (!best || summary.distance > best.distance) {
+  if (!best || beats(summary, best)) {
     const record: BestRecord = {
+      score: num(summary.score),
+      maxScore: num(summary.maxScore),
       distance: summary.distance,
       date: summary.date,
       roundNumber: summary.roundNumber,
@@ -70,6 +79,30 @@ export function saveRun(summary: RunSummary): void {
   }
 }
 
+/**
+ * Best means highest score, because the score is what the run is played for.
+ * Distance only breaks a tie, which it does often: two clean runs can score
+ * the same 1,500 and the faster flight is the better one.
+ *
+ * A record from before the score existed scores 0 here, so the first scored
+ * run replaces it. That is the honest outcome: the two are not comparable,
+ * and the anchored figure is the one worth keeping.
+ */
+function beats(summary: RunSummary, best: BestRecord): boolean {
+  const score = num(summary.score);
+  const bestScore = num(best.score);
+  if (score !== bestScore) return score > bestScore;
+  return summary.distance > num(best.distance);
+}
+
+function num(value: number | undefined): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * Today's stored run, or null. Only distance is checked, so a summary written
+ * before the score existed still replays; readers guard `score` themselves.
+ */
 export function loadRun(date: string): RunSummary | null {
   const run = read<RunSummary>(`${RUN_PREFIX}${date}`);
   return run && typeof run === "object" && typeof run.distance === "number"
@@ -77,14 +110,30 @@ export function loadRun(date: string): RunSummary | null {
     : null;
 }
 
+/**
+ * The stored best, or null. Distance and date are the only fields an old
+ * record is guaranteed to have, so they are all that is validated; the score
+ * is normalised and simply comes back undefined when the record predates it.
+ */
 export function loadBest(): BestRecord | null {
   const best = read<BestRecord>(BEST_KEY);
-  return best &&
-    typeof best === "object" &&
-    typeof best.distance === "number" &&
-    typeof best.date === "string"
-    ? best
-    : null;
+  if (
+    !best ||
+    typeof best !== "object" ||
+    typeof best.distance !== "number" ||
+    typeof best.date !== "string"
+  ) {
+    return null;
+  }
+  return {
+    ...best,
+    score: optional(best.score),
+    maxScore: optional(best.maxScore),
+  };
+}
+
+function optional(value: number | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 /** Sound on or off, remembered between runs. Sound is on by default. */
