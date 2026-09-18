@@ -60,6 +60,10 @@ export const SHIP = {
   /** Idle bob amplitude and rate, so the ship never looks frozen. */
   bobAmplitude: 0.09,
   bobRate: 1.6,
+  /** Distance from a corridor wall over which steering into it eases off. */
+  wallSoftZone: 3.5,
+  /** How fast residual velocity into a wall bleeds away, per second. */
+  wallBleed: 12,
   /** Fixed Z the ship sits at. The world moves past it. */
   z: 0,
   /** URL of the hull model. Served from /public. */

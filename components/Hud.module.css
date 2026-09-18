@@ -7,49 +7,53 @@
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  /* Top-weighted, not space-between: the ship sits low-centre and the lower
-     half must stay clear so the player can read what is coming at them. */
+  /* The question sits at the top, readouts in the bottom corners. The
+     middle, where the ship flies and the rocks arrive, stays clear. */
   justify-content: flex-start;
-  gap: 20px;
-  padding: 24px;
+  gap: 16px;
+  padding: 20px;
   /* Notches and home indicators. */
   padding-top: max(24px, env(safe-area-inset-top));
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
-.top {
+.bottom {
+  margin-top: auto;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
 }
 
-.column {
+.column,
+.columnRight {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+}
+
+.columnRight {
+  align-items: flex-end;
 }
 
 .readout,
 .readoutRight {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 .readoutRight {
   align-items: flex-end;
 }
 
-.topRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 14px;
+.readout .label,
+.readoutRight .label {
+  font-size: 8px;
 }
 
 .figure {
-  font-size: 26px;
+  font-size: 18px;
   line-height: 1;
   color: var(--arcade-yellow);
   text-shadow: 0 0 12px rgba(255, 224, 61, 0.45);
@@ -59,7 +63,7 @@
 }
 
 .figureSmall {
-  font-size: 15px;
+  font-size: 12px;
   line-height: 1;
   color: #ffffff;
   display: flex;
@@ -69,7 +73,7 @@
 
 .unit {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: var(--track-label);
   color: var(--panel-label);
 }
@@ -81,8 +85,8 @@
 
 .hull > span {
   display: block;
-  width: 14px;
-  height: 10px;
+  width: 12px;
+  height: 8px;
   border: 1px solid var(--arcade-cyan);
 }
 
@@ -99,7 +103,6 @@
 /* Question and toast sit low, under the ship, so the rocks arriving at the
    horizon are never covered. The panels take the 4-6px radius. */
 .question {
-  margin-top: auto;
   align-self: center;
   width: 100%;
   max-width: 44ch;
@@ -164,7 +167,6 @@
 }
 
 .toast {
-  margin-top: auto;
   align-self: center;
   width: 100%;
   max-width: 44ch;
@@ -231,7 +233,6 @@
 }
 
 .hint {
-  margin-top: auto;
   display: flex;
   justify-content: center;
   opacity: 0.5;
@@ -244,11 +245,11 @@
   }
 
   .figure {
-    font-size: 20px;
+    font-size: 15px;
   }
 
   .figureSmall {
-    font-size: 12px;
+    font-size: 10px;
   }
 
   .question,

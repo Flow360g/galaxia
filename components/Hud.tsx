@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AnswerEvent, GameState, Round } from "@/lib/game/types";
-import { formatDistance, formatRoundNumber, formatScore, formatSpeed } from "@/lib/game/format";
+import { formatDistance, formatScore, formatSpeed } from "@/lib/game/format";
 import { BAND_LABEL, formatValue, labelsForQuestion } from "@/lib/game/scoring";
 import { SCORING, WORLD } from "@/lib/game/Tuning";
 import styles from "./Hud.module.css";
@@ -34,48 +34,8 @@ export function Hud({ state, round, lastAnswer }: Props) {
 
   return (
     <div className={styles.hud}>
-      <div className={styles.top}>
-        <div className={styles.column}>
-          <div className={styles.readout}>
-            <span className="label">Score</span>
-            <span className={`${styles.figure} arcade`} data-testid="score">
-              {formatScore(state?.score ?? 0)}
-            </span>
-          </div>
-          <div className={styles.readout}>
-            <span className="label">Distance</span>
-            <span className={`${styles.figureSmall} arcade`}>
-              {formatDistance(state?.distance ?? 0)}
-              <span className={styles.unit}>KM</span>
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.topRight}>
-          <span className="eyebrow">
-            {formatRoundNumber(round.roundNumber)} / GALAXIA
-          </span>
-          <div className={styles.readoutRight}>
-            <span className="label">Hull</span>
-            <span className={styles.hull} aria-label={`Hull ${Math.round(hull * 100)}%`}>
-              {Array.from({ length: HULL_SEGMENTS }, (_, i) => (
-                <span
-                  key={i}
-                  className={i < litSegments ? styles.hullOn : styles.hullOff}
-                />
-              ))}
-            </span>
-          </div>
-          <div className={styles.readoutRight}>
-            <span className="label">Velocity</span>
-            <span className={`${styles.figureSmall} arcade`}>
-              {formatSpeed(state?.speed ?? 0)}
-              <span className={styles.unit}>KM/S</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
+      {/* Question, or the resolve toast, at the top: the ship and the rocks
+          arriving at the horizon keep the middle and lower screen clear. */}
       {question && state?.answering ? (
         <div className={styles.question} data-testid="question">
           <span className="label">
@@ -137,6 +97,45 @@ export function Hud({ state, round, lastAnswer }: Props) {
           <span className="label">Drag to steer into your answer</span>
         </div>
       ) : null}
+
+      <div className={styles.bottom}>
+        <div className={styles.column}>
+          <div className={styles.readout}>
+            <span className="label">Score</span>
+            <span className={`${styles.figure} arcade`} data-testid="score">
+              {formatScore(state?.score ?? 0)}
+            </span>
+          </div>
+          <div className={styles.readout}>
+            <span className="label">Distance</span>
+            <span className={`${styles.figureSmall} arcade`}>
+              {formatDistance(state?.distance ?? 0)}
+              <span className={styles.unit}>KM</span>
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.columnRight}>
+          <div className={styles.readoutRight}>
+            <span className="label">Hull</span>
+            <span className={styles.hull} aria-label={`Hull ${Math.round(hull * 100)}%`}>
+              {Array.from({ length: HULL_SEGMENTS }, (_, i) => (
+                <span
+                  key={i}
+                  className={i < litSegments ? styles.hullOn : styles.hullOff}
+                />
+              ))}
+            </span>
+          </div>
+          <div className={styles.readoutRight}>
+            <span className="label">Velocity</span>
+            <span className={`${styles.figureSmall} arcade`}>
+              {formatSpeed(state?.speed ?? 0)}
+              <span className={styles.unit}>KM/S</span>
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
