@@ -134,6 +134,34 @@ for three.js in `COLOR` inside `lib/game/Tuning.ts`. Keep them in sync.
   dashes anywhere in UI copy or share text; use a middle dot, comma or
   full stop.
 
+## Sound
+
+All of it is synthesised at runtime in `lib/game/Audio.ts`. No audio file
+ships, and every level, length and frequency is a constant in `AUDIO` inside
+`Tuning.ts` like the rest of the feel. Sound is off-limits to the rest of the
+codebase: the engine calls cues, nothing else makes a noise.
+
+- **Layers, not waveforms.** A crash is a crack, a mass, the hull ringing on
+  inharmonic partials and debris scattering, each with its own envelope. One
+  oscillator per event is what makes a game sound cheap. A new cue gets the
+  same treatment or it does not go in.
+- **Space and glue.** One convolution reverb, fed by a send from every cue,
+  and a limiter across the master. Dry one-shots sound like a browser making
+  beeps however well they are synthesised. Impacts also duck the music and
+  engine for about half a second so they land in a hole of their own.
+- **Movement.** Anything passing the ship sweeps its filter up and back down
+  and crosses the stereo field with it, so it reads as a thing going by.
+- **The bed rides the flight.** The engine drone, the rushing-air noise and
+  the music tempo all track the same 0..1 speed ratio the FOV and the
+  streaks use, so the ship sounds as fast as it looks.
+- **Never load-bearing.** Browsers hold the context suspended until a
+  gesture, some devices have no output and `AudioContext` can throw. Every
+  entry point is a no-op without a context, and a run plays out in silence
+  rather than failing. The SOUND toggle lives in the top band and the choice
+  is remembered in localStorage.
+- **Auditioning.** `?debug=1` puts the audio engine on `window.galaxiaAudio`,
+  so a cue can be fired from the console while tuning it.
+
 ## Architecture in one screen
 
 ```
@@ -145,12 +173,14 @@ lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the c
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
                       CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, ...)
 lib/game/Incoming.ts  the one pod or boulder that comes down a picked lane
+lib/game/Audio.ts     all sound, synthesised: engine bed, music loop, one-shot cues
 lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, Backdrop,
                       AsteroidField, Starfield, quality, nova, anomaly, share (card + text),
                       storage (localStorage), format, types
 lib/content/round.ts  round loader with build-time validation
 content/rounds/       one JSON per daily round: 2 cluster + 4 mcq + 1 anomaly
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
+e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
 ```
 
 Rules that fall out of this:
@@ -236,7 +266,8 @@ four `mcq`, one `anomaly`. The loader validates cluster shape at import.
 
 ## Deliberately not done
 
-Sound, haptics, group leaderboards, server-side persistence, accounts, and
-more than one authored round. Do not add these in passing. If one is asked
+Haptics, group leaderboards, server-side persistence, accounts, and more
+than one authored round. Recorded audio is also out: sound is synthesised,
+and a sample library is not the way back in. Do not add these in passing. If one is asked
 for, `lib/content/round.ts` and `lib/game/storage.ts` are the seams that
 change; the engine and HUD should not.

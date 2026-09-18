@@ -215,12 +215,34 @@ export const FX = {
  */
 export const AUDIO = {
   /** Bus levels. Master is what the mute toggle rides. */
-  master: 0.85,
-  musicBus: 0.42,
-  sfxBus: 0.95,
+  master: 0.8,
+  musicBus: 0.38,
+  sfxBus: 0.9,
   engineBus: 0.5,
   /** Seconds the master fades over on mute, pause and resume. */
   fadeSeconds: 0.25,
+
+  /**
+   * The room. A convolution tail is the single thing that separates a game
+   * that sounds built from one that sounds like a browser playing beeps: dry
+   * one-shots read as cheap however well they are synthesised. Every cue
+   * sends a little of itself here, impacts most of all.
+   */
+  reverb: {
+    seconds: 1.9,
+    /** Decay exponent. Higher empties the tail faster. */
+    decay: 2.4,
+    /** Silence before the tail starts, seconds. Distance, in one number. */
+    preDelay: 0.014,
+    /** Level of the whole wet path. */
+    wet: 0.85,
+  },
+
+  /**
+   * Sidechain. A big hit dips the music and the engine for a moment so it
+   * lands in a hole of its own rather than fighting the bed.
+   */
+  duck: { impact: 0.32, burn: 0.55, attack: 0.04, release: 0.6 },
 
   engine: {
     /** Drone pitch at cruise and at the top of the visual band. */
@@ -250,14 +272,63 @@ export const AUDIO = {
     /** Minor pentatonic, semitone offsets from the root. */
     scale: [0, 3, 5, 7, 10, 12, 15],
     steps: 8,
-    bassGain: 0.3,
-    padGain: 0.06,
-    arpGain: [0.035, 0.085],
-    hatGain: [0.012, 0.045],
+    bassGain: 0.26,
+    padGain: 0.055,
+    arpGain: [0.03, 0.07],
+    hatGain: [0.01, 0.035],
+    /** How much of the music goes to the tail. */
+    send: 0.22,
   },
 
+  /**
+   * A collision, in four layers, because that is what a crash is: the crack
+   * of contact, the body of the mass behind it, the hull ringing, and the
+   * debris coming off. A wreck is the same event scaled by `wreck`.
+   */
+  impact: {
+    /** Contact. Bright, and over before you can think about it. */
+    crack: { seconds: 0.085, gain: 0.5, from: 3200, to: 800 },
+    /** The mass: a noise slam collapsing into a sub thump, both driven. */
+    body: { seconds: 0.7, gain: 0.55, from: 1800, to: 70, subFrom: 155, subTo: 33, subGain: 0.6 },
+    /**
+     * The hull. Inharmonic ratios, not a chord: harmonic partials read as a
+     * note being played, these read as metal being struck.
+     */
+    metal: { ratios: [1, 1.71, 2.43, 3.17, 4.41], baseHz: 152, seconds: 1.3, gain: 0.075 },
+    /** Debris skittering off, scattered so no two hits are the same. */
+    rubble: { count: 13, spread: 1.1, gain: 0.13, hz: [700, 5400], seconds: 0.09 },
+    /** Wreck multipliers: louder, longer, lower, more debris. */
+    wreck: { gain: 1.3, seconds: 1.55, pitch: 0.74, rubble: 1.5 },
+    send: 0.5,
+  },
+
+  /**
+   * A pass: the Doppler of something going by. The filter rises to `peak` as
+   * it approaches and falls away behind, and the pan crosses with it.
+   */
+  whoosh: { q: 5.5, peakBias: 0.42, bodyGain: 0.5, send: 0.35 },
+
+  /** Boost, slingshot and the burn: thrust you can hear winding up. */
+  boost: {
+    /** Seconds the soar takes at its smallest and at a FULL BURN. */
+    seconds: [0.8, 1.9],
+    /** Resonant sweep of the soar layer. */
+    sweepHz: [180, 2600],
+    q: 7,
+    /** Sub under it. */
+    subHz: [48, 150],
+    subGain: 0.34,
+    /** Detune of the two saws that make the body, in cents. */
+    detuneCents: 14,
+    gain: 0.3,
+    send: 0.45,
+  },
+
+  /** FM bell, used for plasma and for anything that should ring, not beep. */
+  bell: { ratio: 2.01, index: 340, seconds: 0.85, gain: 0.22, send: 0.4 },
+
   /** Thrust running out: a tick that quickens as the tank empties. */
-  warning: { from: 0.34, minInterval: 0.32, maxInterval: 1.1, gain: 0.1, hz: 1560 },
+  warning: { from: 0.34, minInterval: 0.3, maxInterval: 1.0, gain: 0.14, hz: 860 },
 } as const;
 
 export const SHARE = {

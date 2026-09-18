@@ -14,6 +14,10 @@ import round from "../content/rounds/2026-09-18.json";
 declare global {
   interface Window {
     __peak: number;
+    /** Brightness of the mix right now, as a spectral centroid in hertz. */
+    __centroid: number;
+    /** Brightest the mix has been since the last reset. */
+    __brightest: number;
     __audioState: () => string;
   }
 }
@@ -22,6 +26,7 @@ declare global {
 function probe(): void {
   const connect = AudioNode.prototype.connect;
   window.__peak = 0;
+  window.__brightest = 0;
   window.__audioState = () => "none";
 
   AudioNode.prototype.connect = function (
@@ -43,11 +48,25 @@ function probe(): void {
       window.__audioState = () => context.state;
 
       const samples = new Float32Array(analyser.fftSize);
+      const spectrum = new Float32Array(analyser.frequencyBinCount);
       setInterval(() => {
         analyser.getFloatTimeDomainData(samples);
         let peak = 0;
         for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
         window.__peak = Math.max(window.__peak, peak);
+
+        // Spectral centroid: where the energy sits. It is the one number
+        // that separates a bright crack from a low rumble.
+        analyser.getFloatFrequencyData(spectrum);
+        let weighted = 0;
+        let total = 0;
+        for (let i = 0; i < spectrum.length; i += 1) {
+          const magnitude = Math.pow(10, spectrum[i]! / 20);
+          weighted += (magnitude * i * context.sampleRate) / (2 * spectrum.length);
+          total += magnitude;
+        }
+        window.__centroid = total > 0 ? weighted / total : 0;
+        window.__brightest = Math.max(window.__brightest, window.__centroid);
       }, 40);
     }
     return (connect as (...args: unknown[]) => AudioNode).call(this, tapped.__tap, ...rest);
@@ -91,16 +110,27 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   // transient, and a window opened once the toast is up has already missed it.
   await page.evaluate(() => {
     window.__peak = 0;
+    window.__brightest = 0;
   });
   await page.getByTestId(`option-${wrongLaneOf(0)}`).click();
   await expect(page.getByTestId("toast")).toHaveAttribute("data-outcome", "collision", {
     timeout: 10_000,
   });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(700);
+  // The crack is over in under a tenth of a second, far quicker than a poll
+  // can be aimed at it, so the onset is taken as the brightest moment of the
+  // whole encounter rather than a reading at one instant.
+  const onset = await page.evaluate(() => window.__brightest);
   const hit = await page.evaluate(() => window.__peak);
   expect(hit).toBeGreaterThan(bed * 1.5);
   // Nothing anywhere in the mix may clip.
   expect(hit).toBeLessThan(1);
+
+  // A crash is a shape, not a level: bright contact collapsing into a low
+  // tail of hull and debris. A beep would hold its brightness instead.
+  const tail = await page.evaluate(() => window.__centroid);
+  expect(onset).toBeGreaterThan(2500);
+  expect(tail).toBeLessThan(onset * 0.6);
 
   // Muted: the master fades to silence and stays there.
   await toggle.click();

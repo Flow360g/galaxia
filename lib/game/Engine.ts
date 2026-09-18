@@ -163,6 +163,11 @@ export class Engine {
     // that until the browser hands the context a gesture to unlock on.
     this.audio = new AudioEngine(options.muted ?? false);
     this.audio.init();
+    // Under ?debug=1 the cues are reachable from the console, which is the
+    // only practical way to audition one without playing to it.
+    if (options.onDebug) {
+      (window as Window & { galaxiaAudio?: AudioEngine }).galaxiaAudio = this.audio;
+    }
 
     this.run = new Run(
       options.round,

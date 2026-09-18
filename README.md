@@ -133,13 +133,16 @@ on a burst; streaks surge on a slingshot.
 
 **Sound** (`Audio.ts`) is synthesised at runtime through the Web Audio API,
 so no audio file ships and every cue is a number in `Tuning.ts` like the rest
-of the feel. Four layers across three buses: an engine drone plus a
-rushing-air bed, both riding the same 0..1 speed ratio the FOV and the
-streaks use; a generative music loop (bass, pad, arpeggio, hat over a
-four-bar minor progression) whose tempo and brightness rise with that same
-ratio; one-shot cues fired from the run hooks for plasma collected, rocks
-threaded, burns banked and hulls hit; and a master gain the SOUND toggle
-fades. Nothing in it is load-bearing: browsers hold the context suspended
+of the feel. Under it: an engine drone plus a rushing-air bed, both riding
+the same 0..1 speed ratio the FOV and the streaks use, and a generative music
+loop (bass, pad, arpeggio, hat over a four-bar minor progression) whose tempo
+and brightness rise with that same ratio. Over it: one-shot cues built in
+layers rather than out of single waveforms. A crash is a crack, a mass, the
+hull ringing on inharmonic partials and debris scattering; a boost is a
+resonant sweep climbing through detuned saws with a sub under it; a pass
+sweeps its filter up and back down while crossing the stereo field. One
+convolution reverb takes a send from everything, impacts duck the bed for
+half a second, and a limiter across the master glues it together. Nothing in it is load-bearing: browsers hold the context suspended
 until a gesture, so every entry point is a no-op until one arrives and the
 whole class is safe on a device that never makes a sound. The choice of on
 or off lives in localStorage.

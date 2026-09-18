@@ -6,17 +6,25 @@ import type { OutcomeKind, Question } from "./types";
  * Audio API, so nothing is downloaded, nothing is decoded and no asset can
  * drift out of step with the visuals it belongs to.
  *
- * Four layers, three buses:
+ * The thing that decides whether synthesis sounds built or sounds cheap is
+ * not the oscillators, it is everything around them:
  *
- *   engine  a continuous drone plus a rushing-air noise bed, both tracking
- *           the same 0..1 visual speed ratio the FOV and the streaks use, so
- *           the ship sounds as fast as it looks
- *   music   a generative loop scheduled a beat ahead of the clock: bass,
- *           pad, arpeggio and hat over a four-bar minor progression, with
- *           tempo and brightness riding the speed ratio
- *   sfx     one-shots fired from the run hooks: plasma collected, rock
- *           threaded, burn banked, hull hit
- *   master  the one gain the mute toggle rides, faded rather than switched
+ *   layers    a crash is a crack, a mass, a hull ringing and debris coming
+ *             off, not one noise burst. Each layer has its own envelope, and
+ *             the inharmonic ratios in the ring are what make it read as
+ *             metal rather than as a note
+ *   movement  passes sweep their filter up and back down and cross the
+ *             stereo field with it, so a rock goes past rather than plays
+ *   drive     impacts run through a soft-clip curve, which is what gives
+ *             them grit instead of politeness
+ *   space     one convolution reverb, fed by a send from every cue. Dry
+ *             one-shots always sound like a browser making beeps
+ *   glue      a duck on the music and engine under each hit, and a limiter
+ *             across the master so the mix never clips
+ *
+ * Over that sit the continuous layers: the engine drone and rushing-air bed,
+ * both tracking the same 0..1 speed ratio the FOV and the streaks use, and a
+ * generative music loop whose tempo and brightness ride it too.
  *
  * Nothing in here is load-bearing. Browsers block audio until a gesture,
  * some devices have no output at all and AudioContext can simply throw, so
@@ -27,12 +35,55 @@ import type { OutcomeKind, Question } from "./types";
 /** Web Audio cannot ramp to zero on an exponential curve. This is silence. */
 const SILENT = 0.0001;
 
+/** Options shared by every one-shot voice. */
+interface VoiceOptions {
+  duration: number;
+  gain: number;
+  /** Seconds to reach full gain. Short is a hit, long is a swell. */
+  attack?: number;
+  /** Seconds to wait before the voice starts. */
+  delay?: number;
+  /** How much of this voice goes to the reverb, 0..1. */
+  send?: number;
+  /** Run it through the soft-clip curve. Grit, for impacts. */
+  drive?: boolean;
+  /** Pan start and end, -1..1. The voice travels between them. */
+  pan?: [number, number];
+  bus?: GainNode | null;
+}
+
+interface ToneOptions extends VoiceOptions {
+  type?: OscillatorType;
+  /** Glide to this frequency across the voice. */
+  sweepTo?: number;
+  filterHz?: number;
+  filterQ?: number;
+  detune?: number;
+}
+
+interface NoiseOptions extends VoiceOptions {
+  type: BiquadFilterType;
+  from: number;
+  to: number;
+  /**
+   * Frequency to pass through on the way, reached at `peakAt` of the
+   * duration. This is what turns a sweep into something going past.
+   */
+  peak?: number;
+  peakAt?: number;
+  q?: number;
+}
+
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private musicBus: GainNode | null = null;
   private sfxBus: GainNode | null = null;
   private engineBus: GainNode | null = null;
+  /** Send into the reverb. Voices tap this rather than owning a convolver. */
+  private reverbSend: GainNode | null = null;
+  /** Shared soft-clip curve, for anything that should sound driven. */
+  private shaper: WaveShaperNode | null = null;
 
   /** The drone: two detuned saws through a lowpass, plus filtered noise. */
   private drone: OscillatorNode[] = [];
@@ -67,7 +118,7 @@ export class AudioEngine {
 
   /**
    * Build the graph. Safe to call more than once and safe to call before any
-   * gesture: the context simply starts suspended and `unlock` resumes it.
+   * gesture: the context simply starts suspended and the first tap resumes it.
    */
   init(): void {
     if (this.ctx || this.disposed || typeof window === "undefined") return;
@@ -86,13 +137,40 @@ export class AudioEngine {
     }
     this.ctx = ctx;
 
+    // Master into a limiter: the cues are layered and overlapping, and a hit
+    // landing on a full-burn tail would otherwise clip the output.
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -6;
+    limiter.knee.value = 6;
+    limiter.ratio.value = 12;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.22;
+    limiter.connect(ctx.destination);
+
     this.master = ctx.createGain();
     this.master.gain.value = this.muted ? SILENT : AUDIO.master;
-    this.master.connect(ctx.destination);
+    this.master.connect(limiter);
 
     this.musicBus = this.bus(AUDIO.musicBus);
     this.sfxBus = this.bus(AUDIO.sfxBus);
     this.engineBus = this.bus(AUDIO.engineBus);
+
+    // The room. One convolver, fed by sends, so the cost is paid once
+    // however many voices are ringing.
+    const convolver = ctx.createConvolver();
+    convolver.buffer = buildImpulse(ctx);
+    const wet = ctx.createGain();
+    wet.gain.value = AUDIO.reverb.wet;
+    convolver.connect(wet);
+    wet.connect(this.master);
+    this.reverbSend = ctx.createGain();
+    this.reverbSend.gain.value = 1;
+    this.reverbSend.connect(convolver);
+
+    this.shaper = ctx.createWaveShaper();
+    this.shaper.curve = buildDriveCurve();
+    this.shaper.oversample = "2x";
+    this.shaper.connect(this.sfxBus);
 
     this.noise = buildNoise(ctx);
     this.buildDrone();
@@ -215,6 +293,8 @@ export class AudioEngine {
     this.ctx = null;
     this.master = null;
     this.musicBus = this.sfxBus = this.engineBus = null;
+    this.reverbSend = null;
+    this.shaper = null;
     void ctx?.close().catch(() => {});
   }
 
@@ -307,7 +387,25 @@ export class AudioEngine {
     this.warningTimer -= dt;
     if (this.warningTimer > 0) return;
     this.warningTimer = lerp(cfg.maxInterval, cfg.minInterval, urgency);
-    this.blip(cfg.hz, { duration: 0.07, gain: cfg.gain * (0.6 + 0.4 * urgency), type: "square" });
+
+    // A muted wooden tick rather than a beep: it reads as a countdown without
+    // sitting on top of the music the way a square wave does.
+    const gain = cfg.gain * (0.55 + 0.45 * urgency);
+    this.tone(cfg.hz * (1 + 0.25 * urgency), 0, {
+      duration: 0.09,
+      gain,
+      type: "triangle",
+      sweepTo: cfg.hz * 0.55,
+      filterHz: 2400,
+      send: 0.15,
+    });
+    this.noiseVoice(0, {
+      duration: 0.035,
+      gain: gain * 0.5,
+      type: "highpass",
+      from: 2600,
+      to: 1800,
+    });
   }
 
   /** Spike the engine, e.g. when the exhaust pulses on a burst. */
@@ -319,6 +417,27 @@ export class AudioEngine {
     this.droneGain.gain.cancelScheduledValues(now);
     this.droneGain.gain.setValueAtTime(base * (1 + 0.8 * strength), now);
     this.droneGain.gain.linearRampToValueAtTime(base, now + 0.5 + 0.2 * strength);
+  }
+
+  /**
+   * Sidechain the bed under a cue. The music and the engine dip fast and
+   * come back slowly, which is what leaves a hit room to land in.
+   */
+  private duck(amount: number): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const cfg = AUDIO.duck;
+    const now = ctx.currentTime;
+    for (const [bus, level] of [
+      [this.musicBus, AUDIO.musicBus],
+      [this.engineBus, AUDIO.engineBus],
+    ] as const) {
+      if (!bus) continue;
+      bus.gain.cancelScheduledValues(now);
+      bus.gain.setValueAtTime(bus.gain.value, now);
+      bus.gain.linearRampToValueAtTime(level * (1 - amount), now + cfg.attack);
+      bus.gain.linearRampToValueAtTime(level, now + cfg.attack + cfg.release);
+    }
   }
 
   // ----------------------------------------------------------------- music
@@ -363,13 +482,15 @@ export class AudioEngine {
     const t = this.intensity;
 
     // Bass on the downbeat and the half bar: the pulse the run is flown to.
+    // Driven, so it has some weight on a phone speaker.
     if (beat === 0 || beat === 4) {
       this.tone(root, when, {
         duration: stepSeconds * 1.6,
         gain: cfg.bassGain,
         type: "triangle",
-        attack: 0.01,
-        filterHz: 320,
+        attack: 0.012,
+        filterHz: 340,
+        drive: true,
         bus: this.musicBus,
       });
     }
@@ -385,35 +506,39 @@ export class AudioEngine {
           type: "sine",
           attack: barSeconds * 0.25,
           detune,
+          send: cfg.send,
           bus: this.musicBus,
         });
       }
     }
 
-    // Arpeggio: the melody line, climbing the pentatonic and reaching an
-    // octave higher the faster the ship is going.
+    // Arpeggio: the melody, climbing the pentatonic and reaching an octave
+    // higher the faster the ship is going. Triangle through a resonant
+    // lowpass with a tail on it, rather than a bare square: the same line,
+    // without the toy.
     const degree = (ARP[beat % ARP.length] ?? 0) + (t > 0.55 && beat % 2 === 1 ? 5 : 0);
     const semitones =
-      (cfg.scale[degree % cfg.scale.length] ?? 0) +
-      12 * Math.floor(degree / cfg.scale.length);
+      (cfg.scale[degree % cfg.scale.length] ?? 0) + 12 * Math.floor(degree / cfg.scale.length);
     this.tone(root * 4 * Math.pow(2, semitones / 12), when, {
-      duration: stepSeconds * 0.8,
+      duration: stepSeconds * 0.9,
       gain: lerp(cfg.arpGain[0], cfg.arpGain[1], t),
-      type: "square",
-      attack: 0.005,
-      filterHz: lerp(1400, 4200, t),
+      type: "triangle",
+      attack: 0.006,
+      filterHz: lerp(1600, 4600, t),
+      filterQ: 3,
+      send: cfg.send,
       bus: this.musicBus,
     });
 
-    // Hat: an offbeat noise tick. It is what makes the tempo readable at low
+    // Hat: an offbeat tick. It is what makes the tempo readable at low
     // volume on a phone speaker.
     if (beat % 2 === 1) {
-      this.noiseBurst(when, {
-        duration: 0.045,
+      this.noiseVoice(when, {
+        duration: 0.04,
         gain: lerp(cfg.hatGain[0], cfg.hatGain[1], t),
         type: "highpass",
-        from: 6000,
-        to: 9000,
+        from: 7000,
+        to: 9500,
         bus: this.musicBus,
       });
     }
@@ -421,106 +546,166 @@ export class AudioEngine {
 
   // ------------------------------------------------------------------- cues
 
-  /** A new encounter is called: the rock announces itself. */
+  /** A new encounter is called. */
   encounter(question: Question): void {
     if (question.type === "anomaly") {
       // The anomaly is the odd one out on screen, so it is the odd one out
       // here too: a violet shimmer rather than the usual alert.
-      this.tone(220, 0, { duration: 1.4, gain: 0.06, type: "sine", attack: 0.4, sweepTo: 330 });
-      this.tone(330, 0, { duration: 1.4, gain: 0.05, type: "sine", attack: 0.5, detune: 8 });
+      this.tone(220, 0, {
+        duration: 1.6,
+        gain: 0.07,
+        type: "sine",
+        attack: 0.5,
+        sweepTo: 330,
+        send: 0.7,
+      });
+      this.tone(330, 0, {
+        duration: 1.6,
+        gain: 0.055,
+        type: "sine",
+        attack: 0.6,
+        detune: 8,
+        send: 0.7,
+      });
       return;
     }
+    // A sub swell with a breath of air over it: something large is coming,
+    // and the lanes are open.
     const cluster = question.type === "cluster";
-    this.tone(cluster ? 180 : 140, 0, {
-      duration: 0.5,
-      gain: 0.1,
-      type: "sawtooth",
-      attack: 0.02,
-      filterHz: 700,
-      sweepTo: cluster ? 240 : 96,
+    this.tone(cluster ? 82 : 66, 0, {
+      duration: 0.9,
+      gain: 0.22,
+      type: "sine",
+      attack: 0.08,
+      sweepTo: cluster ? 120 : 98,
+      send: 0.3,
+    });
+    this.noiseVoice(0, {
+      duration: 0.8,
+      gain: 0.08,
+      type: "bandpass",
+      from: 400,
+      to: 1500,
+      q: 1.4,
+      attack: 0.2,
+      send: 0.5,
     });
   }
 
-  /** A cluster lane is picked: the ship commits before the verdict lands. */
+  /** A lane is picked: the ship commits before the verdict lands. */
   pick(): void {
-    this.blip(520, { duration: 0.06, gain: 0.12, type: "square" });
-    this.blip(780, { duration: 0.09, gain: 0.07, type: "square", delay: 0.05 });
+    // A switch being thrown, not a beep: a click with a short body under it.
+    this.noiseVoice(0, { duration: 0.03, gain: 0.22, type: "bandpass", from: 2600, to: 1400, q: 2 });
+    this.tone(320, 0, { duration: 0.1, gain: 0.12, type: "triangle", sweepTo: 200, send: 0.2 });
   }
 
   /** PLASMA collected. The pitch climbs with the charge in the reactor. */
   collect(charge: number): void {
     const step = Math.max(charge - 1, 0);
-    const root = 660 * Math.pow(2, step / 6);
-    // A major triad, arpeggiated upward: the pod reads as gained, not spent.
-    for (const [i, semitones] of [0, 4, 7].entries()) {
-      this.blip(root * Math.pow(2, semitones / 12), {
-        duration: 0.13,
-        gain: 0.13,
-        type: "triangle",
-        delay: i * 0.055,
+    const root = 620 * Math.pow(2, step / 6);
+    // FM bells, not square blips: a struck ring with a tail, arpeggiated
+    // upward so the pod reads as gained.
+    for (const [i, semitones] of [0, 7, 12].entries()) {
+      this.bell(root * Math.pow(2, semitones / 12), {
+        duration: AUDIO.bell.seconds * (i === 2 ? 1.3 : 1),
+        gain: AUDIO.bell.gain * (i === 2 ? 0.8 : 1),
+        delay: i * 0.05,
       });
     }
-    // A little shimmer on top, so a pod sounds picked up rather than played.
-    this.noiseBurst(0, { duration: 0.22, gain: 0.05, type: "bandpass", from: 3200, to: 7200 });
+    // The pod itself going through the ship: a short rush of air.
+    this.noiseVoice(0, {
+      duration: 0.3,
+      gain: 0.09,
+      type: "bandpass",
+      from: 900,
+      to: 4200,
+      peak: 5200,
+      peakAt: 0.4,
+      q: 3,
+      pan: [-0.3, 0.3],
+      send: 0.4,
+    });
     this.pulseEngine(0.3 + 0.2 * step);
   }
 
-  /** The answer locked and the rock is making its run. */
+  /** The verdict is on its way down the lane. */
   strike(): void {
-    this.noiseBurst(0, { duration: 0.35, gain: 0.07, type: "bandpass", from: 180, to: 900 });
+    // Approach: a low bandpass rising as the thing closes. It sets up the
+    // contact rather than being an event of its own.
+    this.noiseVoice(0, {
+      duration: 0.5,
+      gain: 0.1,
+      type: "bandpass",
+      from: 160,
+      to: 700,
+      q: 2.2,
+      attack: 0.25,
+      send: 0.3,
+    });
   }
 
   /** A NOVA scan fires. */
   nova(): void {
-    for (let i = 0; i < 4; i += 1) {
-      this.blip(880 * Math.pow(2, i / 4), {
-        duration: 0.5,
-        gain: 0.06,
-        type: "sine",
-        delay: i * 0.04,
+    for (const [i, semitones] of [0, 5, 9, 14].entries()) {
+      this.bell(760 * Math.pow(2, semitones / 12), {
+        duration: 1.1,
+        gain: 0.1,
+        delay: i * 0.05,
+        ratio: 3.51,
+        index: 180,
       });
     }
+    this.noiseVoice(0, {
+      duration: 0.7,
+      gain: 0.05,
+      type: "bandpass",
+      from: 1800,
+      to: 7000,
+      q: 6,
+      send: 0.7,
+    });
   }
 
   /** Contact. One call covers every way an encounter can end. */
   contact(kind: OutcomeKind, charge = 0, full = false): void {
     switch (kind) {
       case "thread":
-        this.whoosh(0.34, 0.1, 600, 2600);
-        this.blip(520, { duration: 0.18, gain: 0.08, type: "sine", sweepTo: 880 });
+        // The lane was clear: the pod goes through and the ship leans on it.
+        this.pass(0.45, 0.16, [-0.5, 0.5]);
+        this.bell(540, { duration: 0.7, gain: 0.14 });
+        this.soar(0.55, 0.45);
         this.pulseEngine(0.4);
         break;
 
       case "slingshot":
-        // The rock is skimmed, not avoided: a hard pass close enough to hear.
-        this.whoosh(0.5, 0.17, 320, 3600);
-        this.tone(180, 0, { duration: 0.7, gain: 0.16, type: "sawtooth", sweepTo: 720, filterHz: 1800 });
-        this.tone(90, 0, { duration: 0.5, gain: 0.2, type: "sine", sweepTo: 220 });
+        // Boost paid off. This is the sound of a ship being thrown: a pass
+        // that crosses the field, a resonant sweep climbing behind it, and
+        // the sub of the hull loading up.
+        this.duck(AUDIO.duck.impact * 0.6);
+        this.pass(0.7, 0.26, [-0.8, 0.8]);
+        this.soar(0.95, 0.9);
         this.pulseEngine(0.9);
         break;
 
       case "burn": {
-        // The reactor dumps. A full burn is the biggest moment in the run,
-        // so it gets the long rise, the sub and a held chord on top.
-        const scale = full ? 1 : 0.45 + 0.25 * charge;
-        const seconds = full ? 1.5 : 0.7;
-        this.tone(55, 0, { duration: seconds, gain: 0.26 * scale, type: "sine", sweepTo: 165 });
-        this.tone(110, 0, {
-          duration: seconds,
-          gain: 0.16 * scale,
-          type: "sawtooth",
-          sweepTo: 660 * scale,
-          filterHz: 2200,
-        });
-        this.whoosh(seconds, 0.2 * scale, 240, 5200);
+        // The reactor dumps. A FULL BURN is the biggest moment in the run,
+        // so it gets the longest rise, the deepest sub and a chord on top.
+        const scale = full ? 1 : 0.5 + 0.25 * charge;
+        this.duck(AUDIO.duck.burn * scale);
+        this.soar(full ? 1 : 0.55 + 0.2 * charge, scale);
+        this.pass(full ? 1.3 : 0.8, 0.22 * scale, [0.7, -0.7]);
         if (full) {
-          for (const [i, semis] of [0, 7, 12, 19].entries()) {
-            this.tone(220 * Math.pow(2, semis / 12), 0, {
-              duration: 1.3,
-              gain: 0.08,
+          // The warp itself: a held chord over the top of the rise, arriving
+          // late so it lands as the burst does, not with the wind-up.
+          for (const [i, semitones] of [0, 7, 12, 19].entries()) {
+            this.tone(220 * Math.pow(2, semitones / 12), 0, {
+              duration: 1.6,
+              gain: 0.09,
               type: "triangle",
-              attack: 0.06,
-              delay: 0.18 + i * 0.07,
+              attack: 0.08,
+              delay: 0.42 + i * 0.05,
+              filterHz: 3200,
+              send: 0.6,
             });
           }
         }
@@ -529,102 +714,217 @@ export class AudioEngine {
       }
 
       case "collision":
-      case "wreck": {
-        const hard = kind === "wreck";
-        const gain = hard ? 0.42 : 0.3;
-        // Crack: a bright transient at the moment of contact. The body below
-        // is nearly all low end, which a phone speaker barely moves; this is
-        // the part that actually reads as hitting something.
-        this.noiseBurst(0, {
-          duration: hard ? 0.14 : 0.09,
-          gain: hard ? 0.36 : 0.26,
-          type: "highpass",
-          from: 1800,
-          to: 3600,
-        });
-        // Body: a lowpassed noise slam with a sine drop under it.
-        this.noiseBurst(0, {
-          duration: hard ? 0.9 : 0.55,
-          gain,
-          type: "lowpass",
-          from: 1400,
-          to: 90,
-        });
-        this.tone(160, 0, {
-          duration: hard ? 0.8 : 0.5,
-          gain: gain * 0.9,
-          type: "sine",
-          sweepTo: 38,
-        });
-        // Hull: a detuned square ringing down, the metal in the hit.
-        this.tone(hard ? 196 : 262, 0, {
-          duration: hard ? 1.2 : 0.6,
-          gain: 0.08,
-          type: "square",
-          sweepTo: hard ? 58 : 110,
-          filterHz: 1200,
-          detune: -18,
-        });
-        if (hard) {
-          this.noiseBurst(0, {
-            duration: 1.4,
-            gain: 0.07,
-            type: "bandpass",
-            from: 2400,
-            to: 400,
-            delay: 0.12,
-          });
-        }
+      case "wreck":
+        this.crash(kind === "wreck");
         break;
-      }
 
       case "timeout":
-        // Nothing hit it: the engines simply give out. Two falling tones.
-        this.tone(330, 0, { duration: 0.34, gain: 0.12, type: "square", sweepTo: 262 });
-        this.tone(196, 0, { duration: 0.7, gain: 0.12, type: "square", sweepTo: 98, delay: 0.22 });
+        // Nothing hit the ship. The engines simply gave out: the drone falls
+        // away, the air goes with it, and something coughs.
+        this.duck(AUDIO.duck.impact * 0.7);
+        this.tone(150, 0, {
+          duration: 1.1,
+          gain: 0.26,
+          type: "sawtooth",
+          sweepTo: 42,
+          filterHz: 900,
+          filterQ: 4,
+          drive: true,
+          send: 0.35,
+        });
+        this.noiseVoice(0, {
+          duration: 1.2,
+          gain: 0.12,
+          type: "lowpass",
+          from: 1800,
+          to: 220,
+          attack: 0.05,
+          send: 0.4,
+        });
+        this.tone(64, 0, { duration: 0.5, gain: 0.2, type: "sine", sweepTo: 38, delay: 0.1 });
         break;
     }
   }
 
   /** The run is over. A short cadence under the share card. */
   finish(): void {
-    for (const [i, semis] of [0, 7, 12, 16].entries()) {
-      this.tone(110 * Math.pow(2, semis / 12), 0, {
-        duration: 2.2,
+    for (const [i, semitones] of [0, 7, 12, 16].entries()) {
+      this.tone(110 * Math.pow(2, semitones / 12), 0, {
+        duration: 2.6,
         gain: 0.1,
         type: "triangle",
-        attack: 0.08,
+        attack: 0.1,
         delay: i * 0.13,
+        filterHz: 2600,
+        send: 0.55,
       });
     }
   }
 
+  // ------------------------------------------------------------ composites
+
+  /**
+   * A crash, in four layers.
+   *
+   * The crack is the moment of contact and is over in under a tenth of a
+   * second. The body is the mass behind it, a noise slam collapsing into a
+   * sub thump, both driven so they tear rather than thud politely. The metal
+   * is the hull, five inharmonic partials ringing down at different rates,
+   * which is the difference between metal and a note. The rubble is debris
+   * coming off, scattered at random so no two crashes are the same hit.
+   */
+  private crash(hard: boolean): void {
+    const cfg = AUDIO.impact;
+    const w = cfg.wreck;
+    const gain = hard ? w.gain : 1;
+    const seconds = hard ? w.seconds : 1;
+    const pitch = hard ? w.pitch : 1;
+    const send = cfg.send;
+
+    this.duck(AUDIO.duck.impact * (hard ? 1.2 : 1));
+
+    // 1. Contact.
+    this.noiseVoice(0, {
+      duration: cfg.crack.seconds * seconds,
+      gain: cfg.crack.gain * gain,
+      type: "highpass",
+      from: cfg.crack.from * pitch,
+      to: cfg.crack.to * pitch,
+      drive: true,
+      send: send * 0.5,
+    });
+
+    // 2. Mass.
+    this.noiseVoice(0, {
+      duration: cfg.body.seconds * seconds,
+      gain: cfg.body.gain * gain,
+      type: "lowpass",
+      from: cfg.body.from * pitch,
+      to: cfg.body.to,
+      q: 1.4,
+      drive: true,
+      send,
+    });
+    this.tone(cfg.body.subFrom * pitch, 0, {
+      duration: cfg.body.seconds * seconds * 1.1,
+      gain: cfg.body.gain * cfg.body.subGain * gain,
+      type: "sine",
+      sweepTo: cfg.body.subTo * pitch,
+      drive: true,
+      send: send * 0.4,
+    });
+
+    // 3. Hull.
+    for (const [i, ratio] of cfg.metal.ratios.entries()) {
+      this.tone(cfg.metal.baseHz * pitch * ratio, 0, {
+        // Higher partials die first, as they do on a struck plate.
+        duration: cfg.metal.seconds * seconds * (1 - i * 0.13),
+        gain: cfg.metal.gain * gain * (1 - i * 0.14),
+        type: "sine",
+        detune: (i % 2 === 0 ? 1 : -1) * (6 + i * 4),
+        delay: 0.004 * i,
+        send: send * 1.2,
+      });
+    }
+
+    // 4. Debris.
+    const count = Math.round(cfg.rubble.count * (hard ? w.rubble : 1));
+    for (let i = 0; i < count; i += 1) {
+      // Weighted toward the start: most of the debris comes off on impact
+      // and the rest rattles away behind it.
+      const at = Math.pow(Math.random(), 1.7) * cfg.rubble.spread * seconds;
+      const hz = lerp(cfg.rubble.hz[0], cfg.rubble.hz[1], Math.random());
+      this.noiseVoice(0, {
+        duration: cfg.rubble.seconds * (0.6 + Math.random()),
+        gain: cfg.rubble.gain * gain * (1 - at / (cfg.rubble.spread * seconds)) * (0.4 + Math.random() * 0.6),
+        type: "bandpass",
+        from: hz,
+        to: hz * 0.55,
+        q: 4 + Math.random() * 6,
+        delay: 0.02 + at,
+        pan: [Math.random() * 2 - 1, Math.random() * 2 - 1],
+        send,
+      });
+    }
+  }
+
+  /**
+   * Something going past. The filter climbs to a peak as it closes and falls
+   * away behind, and the pan crosses with it, so it reads as a thing moving
+   * rather than a filter sweeping.
+   */
+  private pass(duration: number, gain: number, pan: [number, number]): void {
+    const cfg = AUDIO.whoosh;
+    this.noiseVoice(0, {
+      duration,
+      gain,
+      type: "bandpass",
+      from: 420,
+      to: 260,
+      peak: 3400,
+      peakAt: cfg.peakBias,
+      q: cfg.q,
+      attack: duration * 0.12,
+      pan,
+      send: cfg.send,
+    });
+    // Body underneath, so the pass has weight and not just air.
+    this.noiseVoice(0, {
+      duration: duration * 1.15,
+      gain: gain * cfg.bodyGain,
+      type: "lowpass",
+      from: 700,
+      to: 180,
+      peak: 1400,
+      peakAt: cfg.peakBias,
+      attack: duration * 0.15,
+      pan: [pan[0] * 0.6, pan[1] * 0.6],
+      send: cfg.send,
+    });
+  }
+
+  /**
+   * Thrust winding up: a resonant sweep climbing through detuned saws, with
+   * a sub under it. This is the soaring part of a boost, and `strength`
+   * scales it from a lane clear to a FULL BURN.
+   */
+  private soar(seconds: number, strength: number): void {
+    const cfg = AUDIO.boost;
+    const duration = lerp(cfg.seconds[0], cfg.seconds[1], clamp01(seconds));
+
+    for (const detune of [-cfg.detuneCents, cfg.detuneCents]) {
+      this.tone(cfg.sweepHz[0], 0, {
+        duration,
+        gain: cfg.gain * strength * 0.5,
+        type: "sawtooth",
+        sweepTo: lerp(cfg.sweepHz[0], cfg.sweepHz[1], 0.5 + 0.5 * strength),
+        filterHz: lerp(900, 5200, strength),
+        filterQ: cfg.q,
+        attack: duration * 0.22,
+        detune,
+        send: cfg.send,
+      });
+    }
+    this.tone(cfg.subHz[0], 0, {
+      duration: duration * 0.9,
+      gain: cfg.subGain * strength,
+      type: "sine",
+      sweepTo: lerp(cfg.subHz[0], cfg.subHz[1], strength),
+      attack: duration * 0.15,
+      drive: true,
+      send: cfg.send * 0.4,
+    });
+  }
+
   // -------------------------------------------------------------- synthesis
 
-  /** A pitched voice: oscillator, optional lowpass, exponential release. */
-  private tone(
-    frequency: number,
-    at: number,
-    options: {
-      duration: number;
-      gain: number;
-      type?: OscillatorType;
-      attack?: number;
-      /** Glide to this frequency across the note. */
-      sweepTo?: number;
-      filterHz?: number;
-      detune?: number;
-      delay?: number;
-      /** Defaults to the sfx bus; the music scheduler passes its own. */
-      bus?: GainNode | null;
-    },
-  ): void {
+  /** A pitched voice: oscillator, optional resonant lowpass, and a tail. */
+  private tone(frequency: number, at: number, options: ToneOptions): void {
     const ctx = this.ctx;
-    const bus = options.bus ?? this.sfxBus;
+    const bus = this.busFor(options);
     if (!ctx || !bus || this.muted) return;
 
     const when = (at || ctx.currentTime) + (options.delay ?? 0);
-    const attack = options.attack ?? 0.008;
     const osc = ctx.createOscillator();
     osc.type = options.type ?? "sine";
     osc.frequency.setValueAtTime(frequency, when);
@@ -636,21 +936,19 @@ export class AudioEngine {
     }
     if (options.detune) osc.detune.value = options.detune;
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(SILENT, when);
-    gain.gain.exponentialRampToValueAtTime(Math.max(options.gain, SILENT), when + attack);
-    gain.gain.exponentialRampToValueAtTime(SILENT, when + options.duration);
-
     let tail: AudioNode = osc;
     if (options.filterHz !== undefined) {
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
       filter.frequency.value = options.filterHz;
+      filter.Q.value = options.filterQ ?? 1;
       osc.connect(filter);
       tail = filter;
     }
+
+    const gain = this.envelope(when, options);
     tail.connect(gain);
-    gain.connect(bus);
+    this.route(gain, options, bus);
 
     osc.start(when);
     osc.stop(when + options.duration + 0.05);
@@ -660,37 +958,59 @@ export class AudioEngine {
     };
   }
 
-  /** A short pitched hit. `tone` with the arcade defaults. */
-  private blip(
+  /**
+   * An FM bell: one operator modulating another. Two oscillators and a gain
+   * buy an inharmonic ring that no single waveform has, and it is the reason
+   * plasma sounds struck rather than beeped.
+   */
+  private bell(
     frequency: number,
-    options: {
-      duration: number;
-      gain: number;
-      type?: OscillatorType;
-      delay?: number;
-      sweepTo?: number;
-    },
-  ): void {
-    this.tone(frequency, 0, { ...options, attack: 0.004 });
-  }
-
-  /** Filtered noise, the body of every impact and every rush of air. */
-  private noiseBurst(
-    at: number,
-    options: {
-      duration: number;
-      gain: number;
-      type: BiquadFilterType;
-      from: number;
-      to: number;
-      delay?: number;
-      bus?: GainNode | null;
-    },
+    options: { duration: number; gain: number; delay?: number; ratio?: number; index?: number },
   ): void {
     const ctx = this.ctx;
-    if (!ctx || !this.noise || this.muted) return;
-    const bus = options.bus ?? this.sfxBus;
-    if (!bus) return;
+    const bus = this.sfxBus;
+    if (!ctx || !bus || this.muted) return;
+
+    const cfg = AUDIO.bell;
+    const when = ctx.currentTime + (options.delay ?? 0);
+
+    const carrier = ctx.createOscillator();
+    carrier.type = "sine";
+    carrier.frequency.value = frequency;
+
+    const modulator = ctx.createOscillator();
+    modulator.type = "sine";
+    modulator.frequency.value = frequency * (options.ratio ?? cfg.ratio);
+
+    // The modulation index falls with the note, which is what gives a bell
+    // its bright strike and its pure tail.
+    const index = ctx.createGain();
+    index.gain.setValueAtTime(options.index ?? cfg.index, when);
+    index.gain.exponentialRampToValueAtTime(1, when + options.duration);
+    modulator.connect(index);
+    index.connect(carrier.frequency);
+
+    const gain = this.envelope(when, { duration: options.duration, gain: options.gain });
+    carrier.connect(gain);
+    this.route(gain, { duration: options.duration, gain: options.gain, send: cfg.send }, bus);
+
+    modulator.start(when);
+    carrier.start(when);
+    modulator.stop(when + options.duration + 0.05);
+    carrier.stop(when + options.duration + 0.05);
+    carrier.onended = () => {
+      carrier.disconnect();
+      modulator.disconnect();
+      index.disconnect();
+      gain.disconnect();
+    };
+  }
+
+  /** Filtered noise: the body of every impact, every rush of air. */
+  private noiseVoice(at: number, options: NoiseOptions): void {
+    const ctx = this.ctx;
+    const bus = this.busFor(options);
+    if (!ctx || !this.noise || !bus || this.muted) return;
 
     const when = (at || ctx.currentTime) + (options.delay ?? 0);
     const source = ctx.createBufferSource();
@@ -699,21 +1019,27 @@ export class AudioEngine {
 
     const filter = ctx.createBiquadFilter();
     filter.type = options.type;
-    filter.Q.value = options.type === "bandpass" ? 1.2 : 0.9;
+    filter.Q.value = options.q ?? (options.type === "bandpass" ? 1.2 : 0.9);
     filter.frequency.setValueAtTime(Math.max(options.from, 20), when);
-    filter.frequency.exponentialRampToValueAtTime(
-      Math.max(options.to, 20),
-      when + options.duration,
-    );
+    if (options.peak !== undefined) {
+      // Through a peak and out the other side: the shape of a fly-past.
+      const at = clamp01(options.peakAt ?? 0.4) * options.duration;
+      filter.frequency.exponentialRampToValueAtTime(Math.max(options.peak, 20), when + at);
+      filter.frequency.exponentialRampToValueAtTime(
+        Math.max(options.to, 20),
+        when + options.duration,
+      );
+    } else {
+      filter.frequency.exponentialRampToValueAtTime(
+        Math.max(options.to, 20),
+        when + options.duration,
+      );
+    }
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(SILENT, when);
-    gain.gain.exponentialRampToValueAtTime(Math.max(options.gain, SILENT), when + 0.012);
-    gain.gain.exponentialRampToValueAtTime(SILENT, when + options.duration);
-
+    const gain = this.envelope(when, options);
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(bus);
+    this.route(gain, options, bus);
 
     // A random offset into the buffer, so repeated hits never phase into the
     // same sound the way one buffer played from the top every time would.
@@ -726,17 +1052,48 @@ export class AudioEngine {
     };
   }
 
-  /** The air a rock displaces as it goes past. */
-  private whoosh(duration: number, gain: number, from: number, to: number): void {
-    this.noiseBurst(0, { duration, gain, type: "bandpass", from, to });
-    this.noiseBurst(0, {
-      duration: duration * 1.3,
-      gain: gain * 0.5,
-      type: "lowpass",
-      from: to,
-      to: from,
-      delay: duration * 0.35,
-    });
+  /** Attack up, exponential tail down. Every voice in the game wears one. */
+  private envelope(when: number, options: { duration: number; gain: number; attack?: number }): GainNode {
+    const ctx = this.ctx as AudioContext;
+    const attack = Math.max(options.attack ?? 0.006, 0.001);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(SILENT, when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(options.gain, SILENT), when + attack);
+    gain.gain.exponentialRampToValueAtTime(SILENT, when + options.duration);
+    return gain;
+  }
+
+  /**
+   * Wire a finished voice to its bus, through the drive curve and the pan if
+   * it asked for them, and tap the reverb send.
+   */
+  private route(gain: GainNode, options: VoiceOptions, bus: GainNode): void {
+    const ctx = this.ctx as AudioContext;
+    let tail: AudioNode = gain;
+
+    if (options.pan && ctx.createStereoPanner) {
+      const panner = ctx.createStereoPanner();
+      const now = ctx.currentTime + (options.delay ?? 0);
+      panner.pan.setValueAtTime(options.pan[0], now);
+      panner.pan.linearRampToValueAtTime(options.pan[1], now + options.duration);
+      tail.connect(panner);
+      tail = panner;
+    }
+
+    if (options.drive && this.shaper) tail.connect(this.shaper);
+    else tail.connect(bus);
+
+    const send = options.send ?? 0;
+    if (send > 0 && this.reverbSend) {
+      const wet = ctx.createGain();
+      wet.gain.value = send;
+      tail.connect(wet);
+      wet.connect(this.reverbSend);
+    }
+  }
+
+  private busFor(options: VoiceOptions): GainNode | null {
+    return options.bus ?? this.sfxBus;
   }
 }
 
@@ -750,6 +1107,43 @@ function buildNoise(ctx: AudioContext): AudioBuffer {
   const data = buffer.getChannelData(0);
   for (let i = 0; i < length; i += 1) data[i] = Math.random() * 2 - 1;
   return buffer;
+}
+
+/**
+ * The reverb impulse: decaying noise, decorrelated across the two channels
+ * so the tail is wide, with a gap at the front for pre-delay. Generated
+ * rather than loaded, like everything else here.
+ */
+function buildImpulse(ctx: AudioContext): AudioBuffer {
+  const cfg = AUDIO.reverb;
+  const length = Math.floor(ctx.sampleRate * cfg.seconds);
+  const silent = Math.floor(ctx.sampleRate * cfg.preDelay);
+  const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+
+  for (let channel = 0; channel < 2; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    for (let i = silent; i < length; i += 1) {
+      const t = (i - silent) / (length - silent);
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, cfg.decay);
+    }
+  }
+  return buffer;
+}
+
+/**
+ * Soft clip. Impacts pushed through this gain harmonics and stop sounding
+ * like a clean synth voice, which is most of what "cheap" means in a game
+ * that generates its own sound.
+ */
+function buildDriveCurve(): Float32Array {
+  const samples = 1024;
+  const curve = new Float32Array(samples);
+  const amount = 2.2;
+  for (let i = 0; i < samples; i += 1) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = Math.tanh(x * amount) / Math.tanh(amount);
+  }
+  return curve;
 }
 
 /**
