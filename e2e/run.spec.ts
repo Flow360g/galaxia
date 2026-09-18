@@ -8,47 +8,67 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
 
-test("a full run: thread, slingshot, collide, scan, share", async ({ page }) => {
+test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, share", async ({
+  page,
+}) => {
   await page.goto("/play?replay=1");
 
   const question = page.getByTestId("question");
   const toast = page.getByTestId("toast");
 
-  // Encounter 1: correct, plain. THREADED.
+  // Encounter 1: cluster. Two correct picks, then BURN at 2 plasma.
   await expect(question).toBeVisible({ timeout: 20_000 });
-  await shot(page, "01-encounter");
-  await page.getByTestId(`option-${answerOf(0)}`).click();
-  await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 10_000 });
-  await shot(page, "02-thread");
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "0");
+  await expect(page.getByTestId("burn")).toBeDisabled();
+  await shot(page, "01-cluster");
+  const [right1, right2] = answersOf(0);
+  await page.getByTestId(`option-${right1}`).click();
+  await expect(page.getByTestId(`option-${right1}`)).toHaveAttribute("data-got", "true", {
+    timeout: 5_000,
+  });
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1");
+  await expect(page.getByTestId("burn")).toBeEnabled();
+  await page.getByTestId(`option-${right2}`).click();
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "2", { timeout: 5_000 });
+  await shot(page, "02-two-plasma");
+  await page.getByTestId("burn").click();
+  await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
+  await expect(toast).toHaveAttribute("data-charge", "2");
+  await shot(page, "03-burn");
+  const velocityAfterBurn = await readVelocity(page);
+  expect(velocityAfterBurn).toBeGreaterThan(4000);
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shield", "true");
 
-  // Encounter 2: NOVA then correct with boost. SLINGSHOT.
+  // Encounter 2: cluster. One correct, then a wrong lane. Collision, shield gone.
+  await expect(question).toBeVisible({ timeout: 15_000 });
+  const [right] = answersOf(1);
+  await page.getByTestId(`option-${right}`).click();
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
+  await page.getByTestId(`option-${wrongLaneOf(1)}`).click();
+  await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
+  await expect(toast).toContainText("1 plasma lost");
+  await shot(page, "04-cluster-miss");
+  await expect(page.getByTestId("streak")).toHaveText(/^\s*$/);
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shield", "false");
+  expect(await readVelocity(page)).toBeLessThan(velocityAfterBurn);
+
+  // Encounter 3: MCQ, wrong, no boost. Unshielded, so a WRECK.
+  await expect(question).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId(`option-${wrongOf(2)}`).click();
+  await expect(toast).toHaveAttribute("data-outcome", "wreck", { timeout: 10_000 });
+  await shot(page, "05-wreck");
+
+  // Encounter 4: NOVA then correct with boost. SLINGSHOT.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("nova").click();
   await expect(page.getByTestId("nova-result")).toBeVisible();
   await page.getByTestId("boost").click();
   await expect(page.getByTestId("boost")).toHaveAttribute("aria-pressed", "true");
-  await shot(page, "03-nova-boost");
-  await page.getByTestId(`option-${answerOf(1)}`).click();
+  await page.getByTestId(`option-${answerOf(3)}`).click();
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
-  await shot(page, "04-slingshot");
-  const velocityAfterSlingshot = await readVelocity(page);
-  expect(velocityAfterSlingshot).toBeGreaterThan(4000);
+  await shot(page, "06-slingshot");
 
-  // Encounter 3: wrong. COLLISION, streak lost, velocity collapses.
-  await expect(question).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId(`option-${wrongOf(2)}`).click();
-  await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
-  await shot(page, "05-collision");
-  await expect(page.getByTestId("streak")).toHaveText(/^\s*$/);
-  expect(await readVelocity(page)).toBeLessThan(velocityAfterSlingshot);
-
-  // Encounter 4: wrong with boost. WRECKED.
-  await expect(question).toBeVisible({ timeout: 15_000 });
-  await page.keyboard.press("b");
-  await page.keyboard.press(String(wrongOf(3) + 1));
-  await expect(toast).toHaveAttribute("data-outcome", "wreck", { timeout: 10_000 });
-
-  // Encounter 5: correct via keyboard.
+  // Encounter 5: correct via keyboard. THREADED.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await page.keyboard.press(String(answerOf(4) + 1));
   await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 10_000 });
@@ -56,12 +76,11 @@ test("a full run: thread, slingshot, collide, scan, share", async ({ page }) => 
   // Encounter 6: let thrust run out. THRUST OUT.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(toast).toHaveAttribute("data-outcome", "timeout", { timeout: 30_000 });
-  await shot(page, "06-timeout");
+  await shot(page, "07-timeout");
 
   // Encounter 7: the anomaly. No API key, so the local scorer marks it.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("AI ANOMALY")).toBeVisible();
-  await shot(page, "07-anomaly");
   await page.getByTestId("anomaly-input").fill("Orion");
   await page.getByTestId("anomaly-submit").click();
   await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 20_000 });
@@ -84,6 +103,29 @@ test("a full run: thread, slingshot, collide, scan, share", async ({ page }) => 
   await expect(page.getByTestId("today-run")).toContainText("KM");
 });
 
+test("a full burn: all three lanes, keyboard, warp", async ({ page }) => {
+  await page.goto("/play?replay=1");
+  const toast = page.getByTestId("toast");
+
+  await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+  const lanes = answersOf(0);
+  for (const lane of lanes.slice(0, -1)) {
+    await page.keyboard.press(String(lane + 1));
+    await expect(page.getByTestId(`option-${lane}`)).toHaveAttribute("data-got", "true", {
+      timeout: 5_000,
+    });
+  }
+  // Third correct pick auto-burns: the panel gives way to the toast, no BURN tap needed.
+  await page.keyboard.press(String(lanes[lanes.length - 1]! + 1));
+  await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
+  await expect(toast).toHaveAttribute("data-charge", "3");
+  await expect(toast).toContainText("FULL BURN");
+  await expect(page.getByTestId("warp")).toBeAttached();
+  await shot(page, "09-full-burn");
+  expect(await readVelocity(page)).toBeGreaterThan(6000);
+  await expect(page.getByTestId("streak")).toHaveText("STREAK x1");
+});
+
 async function readVelocity(page: Page): Promise<number> {
   const text = await page.getByTestId("velocity").innerText();
   return Number(text.replace(/[^0-9]/g, ""));
@@ -92,9 +134,24 @@ async function readVelocity(page: Page): Promise<number> {
 function answerOf(index: number): number {
   const question = round.questions[index];
   if (!question || question.type !== "mcq") throw new Error(`no mcq at ${index}`);
-  return question.answer;
+  return question.answer as number;
 }
 
 function wrongOf(index: number): number {
   return (answerOf(index) + 1) % 4;
+}
+
+function answersOf(index: number): number[] {
+  const question = round.questions[index];
+  if (!question || question.type !== "cluster") throw new Error(`no cluster at ${index}`);
+  return question.answers as number[];
+}
+
+function wrongLaneOf(index: number): number {
+  const question = round.questions[index];
+  if (!question || question.type !== "cluster") throw new Error(`no cluster at ${index}`);
+  const answers = question.answers as number[];
+  const lane = question.options.findIndex((_, i) => !answers.includes(i));
+  if (lane < 0) throw new Error(`no wrong lane at ${index}`);
+  return lane;
 }

@@ -1,5 +1,5 @@
 import { NOVA } from "./Tuning";
-import type { McqQuestion, NovaKind, NovaResult } from "./types";
+import type { ClusterQuestion, McqQuestion, NovaKind, NovaResult } from "./types";
 
 /**
  * NOVA scans: one tap, an indirect hint, some thrust.
@@ -34,6 +34,22 @@ export function resolveNova(
       return { kind, eliminated: [], highlighted: keep, clue: null };
     }
   }
+}
+
+/**
+ * NOVA on a cluster: one wrong, unpicked lane goes dark. Never a right one,
+ * and never a clue, so the push-your-luck decision stays the player's.
+ */
+export function resolveClusterNova(
+  question: ClusterQuestion,
+  picked: number[],
+  random: () => number,
+): NovaResult {
+  const wrong = question.options
+    .map((_, index) => index)
+    .filter((index) => !question.answers.includes(index) && !picked.includes(index));
+  shuffle(wrong, random);
+  return { kind: "eliminate", eliminated: wrong.slice(0, 1), highlighted: [], clue: null };
 }
 
 function shuffle<T>(items: T[], random: () => number): void {

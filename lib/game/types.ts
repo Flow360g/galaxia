@@ -42,7 +42,23 @@ export interface AnomalyQuestion {
   fact?: string;
 }
 
-export type Question = McqQuestion | AnomalyQuestion;
+/**
+ * A Cluster: six options, three of them right. Each correct pick charges the
+ * reactor with PLASMA; the player BURNs to bank the charge or keeps picking
+ * for a bigger burn. One wrong pick is a collision and the charge is lost.
+ */
+export interface ClusterQuestion {
+  id: string;
+  type: "cluster";
+  prompt: string;
+  /** Exactly six. */
+  options: string[];
+  /** Indices into `options`. Exactly three, distinct. */
+  answers: number[];
+  fact?: string;
+}
+
+export type Question = McqQuestion | ClusterQuestion | AnomalyQuestion;
 
 export interface Round {
   date: string;
@@ -59,6 +75,8 @@ export type Phase =
   | "intro"
   /** Asteroid looming, thrust draining, answer open. */
   | "approach"
+  /** Cluster: a pick is in flight. Input locked, thrust frozen. */
+  | "collecting"
   /** Anomaly answer sent, waiting on the scorer. Thrust frozen. */
   | "scanning"
   /** Answer locked, asteroid striking, outcome animating. */
@@ -68,6 +86,20 @@ export type Phase =
   | "finished";
 
 export type NovaKind = "eliminate" | "clue" | "narrow";
+
+/** Live state of a Cluster encounter, while it is open. */
+export interface ClusterState {
+  /** Lanes picked so far, in order. All were correct or the run would be over. */
+  picked: number[];
+  /** PLASMA banked so far, 0..3. */
+  charge: number;
+  /** km/h a BURN right now would add. */
+  projected: number;
+  /** km/h a BURN after one more correct pick would add. */
+  projectedNext: number;
+  /** Lanes a NOVA scan ruled out. */
+  eliminated: number[];
+}
 
 export interface NovaResult {
   kind: NovaKind;
@@ -85,8 +117,10 @@ export type OutcomeKind =
   | "slingshot"
   /** Wrong: flew into it. */
   | "collision"
-  /** Wrong with boost armed: hit it at speed. */
+  /** Wrong with boost armed, or wrong with the shield gone: hit it at speed. */
   | "wreck"
+  /** Cluster: banked the reactor charge. Impulse scales with `charge`. */
+  | "burn"
   /** Thrust ran out before an answer locked. Treated as a collision. */
   | "timeout";
 
@@ -110,6 +144,10 @@ export interface Outcome {
   /** Anomaly only: model score 0..1 and its one-line verdict. */
   anomalyScore?: number;
   anomalyVerdict?: string;
+  /** Cluster only: PLASMA banked by a burn (0 on a miss or a vent). */
+  charge?: number;
+  /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
+  picks?: number[];
 }
 
 /** Live state the HUD reads each frame. Flat and primitive on purpose. */
@@ -130,6 +168,10 @@ export interface GameState {
   boostArmed: boolean;
   novaLeft: number;
   nova: NovaResult | null;
+  /** Cluster encounter in progress, or null. */
+  cluster: ClusterState | null;
+  /** The run's one shield. Gone after the first Cluster miss. */
+  shield: boolean;
   /** Outcome of the most recent encounter, while its toast is up. */
   outcome: Outcome | null;
   running: boolean;
@@ -159,6 +201,8 @@ export interface RunEvent {
   v: number;
   /** Streak after the event. */
   streak: number;
+  /** Burn events: plasma banked. */
+  charge?: number;
 }
 
 /** Everything the share card and the record need. Serialisable. */
@@ -176,6 +220,9 @@ export interface RunSummary {
   boostHits: number;
   collisions: number;
   novasUsed: number;
+  /** Burns that banked the full charge. */
+  fullBurns: number;
+  shieldLost: boolean;
   anomaly: { score: number; correct: boolean; verdict: string } | null;
   outcomes: Outcome[];
   samples: FlightSample[];

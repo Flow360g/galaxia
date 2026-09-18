@@ -3,13 +3,14 @@ import { requestAnomalyScore } from "./anomaly";
 import { AsteroidField } from "./AsteroidField";
 import { Backdrop } from "./Backdrop";
 import { ChaseCamera } from "./Camera";
+import { ClusterField } from "./ClusterField";
 import { Debris } from "./Debris";
 import { EncounterAsteroid } from "./EncounterAsteroid";
 import { Run } from "./Run";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
-import { COLOR, ENCOUNTER, FX, PERF, WORLD } from "./Tuning";
+import { CLUSTER, COLOR, ENCOUNTER, FX, PERF, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import type {
   DebugInfo,
@@ -56,6 +57,7 @@ export class Engine {
   private readonly field: AsteroidField;
   private readonly stars: Starfield;
   private readonly rock: EncounterAsteroid;
+  private readonly cluster: ClusterField;
   private readonly debris: Debris;
   private readonly shield: Shield;
   private readonly backdrop: Backdrop;
@@ -75,8 +77,12 @@ export class Engine {
 
   /** Which side the ship swerves to for this encounter, alternating. */
   private side: 1 | -1 = 1;
-  /** Extra streak intensity from a slingshot, decaying. */
+  /** Extra streak intensity from a slingshot or a burn, decaying. */
   private streakSurge = 0;
+  /** Seconds the surge holds before it decays. A FULL BURN sets this. */
+  private surgeHold = 0;
+  /** The current encounter is a cluster; the lone rock stays idle. */
+  private inCluster = false;
 
   private fpsAccumulator = 0;
   private fpsFrames = 0;
@@ -137,6 +143,9 @@ export class Engine {
     this.rock = new EncounterAsteroid(random);
     this.scene.add(this.rock.group);
 
+    this.cluster = new ClusterField(random);
+    this.scene.add(this.cluster.group);
+
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
 
@@ -144,6 +153,8 @@ export class Engine {
       options.round,
       {
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
+        onPick: (lane, correct) => this.onPick(lane, correct),
+        onCollect: (lane, charge) => this.onCollect(lane, charge),
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
         onFinished: () => this.endRun(),
@@ -185,6 +196,7 @@ export class Engine {
     this.stars.dispose();
     this.backdrop.dispose();
     this.rock.dispose();
+    this.cluster.dispose();
     this.debris.dispose();
 
     this.scene.traverse((object) => {
@@ -211,6 +223,16 @@ export class Engine {
     this.run.toggleBoost();
   }
 
+  /** Cluster: pick a lane. */
+  pick(lane: number): void {
+    this.run.pick(lane);
+  }
+
+  /** Cluster: bank the reactor charge. */
+  burn(): void {
+    this.run.burn();
+  }
+
   useNova(): void {
     this.run.useNova();
   }
@@ -229,11 +251,36 @@ export class Engine {
 
   private onEncounterStart(index: number, question: Question): void {
     this.side = index % 2 === 0 ? 1 : -1;
-    this.rock.spawn(question.type === "anomaly");
+    this.inCluster = question.type === "cluster";
+    if (this.inCluster) this.cluster.spawn();
+    else this.rock.spawn(question.type === "anomaly");
     this.ship.recentre();
   }
 
+  private onPick(lane: number, correct: boolean): void {
+    this.ship.holdLane(ClusterField.laneX(lane));
+    this.cluster.pick(lane, correct, CLUSTER.collectSeconds);
+  }
+
+  private onCollect(lane: number, charge: number): void {
+    this.cluster.collect(lane);
+    this.shield.flash(FX.collect.shieldFlash, COLOR.cyan);
+    this.ship.pulseExhaust(FX.collect.exhaustPulse + FX.collect.exhaustPulsePerCharge * charge);
+    this.chase.shake(FX.collect.shake);
+  }
+
   private onLock(outcome: Outcome): void {
+    if (this.inCluster) {
+      if (outcome.kind === "burn") {
+        this.cluster.stream();
+        this.ship.manoeuvre("burn", this.side);
+      } else {
+        // A miss: the red rock in the picked lane makes its final run. A
+        // timeout has no rock to hit; the rest just stream past.
+        this.cluster.strike(outcome.chosen, ENCOUNTER.strikeSeconds);
+      }
+      return;
+    }
     this.rock.strike(ENCOUNTER.strikeSeconds, outcome.correct);
     this.ship.manoeuvre(outcome.kind, this.side);
   }
@@ -242,7 +289,23 @@ export class Engine {
     const kind = outcome.kind;
     this.chase.shake(FX.shake[kind]);
 
-    if (outcome.correct) {
+    if (kind === "burn") {
+      const full = (outcome.charge ?? 0) >= CLUSTER.chargeMultiplier.length - 1;
+      if (full) {
+        this.chase.burst(FX.warp.pullback, FX.warp.fovKick);
+        this.chase.shake(FX.warp.shake);
+        this.streakSurge = FX.warp.streakSurge;
+        this.surgeHold = FX.warp.holdSeconds;
+        this.shield.flash(1, COLOR.boost);
+      } else {
+        const charge = outcome.charge ?? 1;
+        const scale = charge >= 2 ? 1 : 0.6;
+        this.chase.burst(FX.pullback.burn * scale, FX.fovKick.burn * scale);
+        this.streakSurge = FX.streakSurge * scale;
+        if (charge >= 2) this.shield.flash(0.8, COLOR.boost);
+      }
+      this.ship.pulseExhaust(FX.exhaustPulse.burn);
+    } else if (outcome.correct) {
       this.rock.contact(false);
       const burst = kind === "slingshot" ? "slingshot" : "thread";
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
@@ -252,14 +315,22 @@ export class Engine {
         this.streakSurge = FX.streakSurge;
       }
     } else {
-      this.rock.contact(true);
-      this.scratch.copy(this.rock.group.position);
       const strength = kind === "wreck" ? 1.6 : 1;
-      this.debris.burst(
-        this.scratch,
-        strength,
-        this.rock.anomaly ? COLOR.anomaly : COLOR.panelLabel,
-      );
+      if (this.inCluster) {
+        if (outcome.chosen !== null) {
+          this.cluster.positionOf(outcome.chosen, this.scratch);
+          this.cluster.shatter(outcome.chosen);
+          this.debris.burst(this.scratch, strength, COLOR.panelLabel);
+        }
+      } else {
+        this.rock.contact(true);
+        this.scratch.copy(this.rock.group.position);
+        this.debris.burst(
+          this.scratch,
+          strength,
+          this.rock.anomaly ? COLOR.anomaly : COLOR.panelLabel,
+        );
+      }
       this.shield.flash(kind === "wreck" ? 1.4 : 1);
       this.ship.impact(kind, this.side);
     }
@@ -328,17 +399,23 @@ export class Engine {
     const speed = flight.worldSpeed;
     const ratio = flight.visualRatio;
 
-    this.streakSurge *= Math.exp(-FX.pullbackDecay * dt);
+    if (this.surgeHold > 0) this.surgeHold -= dt;
+    else this.streakSurge *= Math.exp(-FX.pullbackDecay * dt);
 
     const phase = this.run.phase;
-    if (phase === "approach") this.rock.setLoom(1 - this.run.thrust);
+    const open = phase === "approach" || phase === "collecting";
+    if (open) {
+      if (this.inCluster) this.cluster.setLoom(1 - this.run.thrust);
+      else this.rock.setLoom(1 - this.run.thrust);
+    }
 
-    this.ship.update(dt, ratio, phase === "approach" ? this.run.thrust : 1);
+    this.ship.update(dt, ratio, open ? this.run.thrust : 1);
     this.shield.update(dt);
     this.chase.update(dt, this.ship, ratio);
     this.stars.update(dt, speed, streakIntensity(ratio) + this.streakSurge);
     this.field.update(dt, speed);
     this.rock.update(dt, speed);
+    this.cluster.update(dt, speed);
     this.debris.update(dt, speed);
     this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 

@@ -6,31 +6,41 @@
   "questions": [
     {
       "id": "q1",
-      "type": "mcq",
-      "prompt": "In what year did humans first land on the Moon?",
+      "type": "cluster",
+      "prompt": "Which of these are moons of Jupiter?",
       "options": [
-        "1961",
-        "1969",
-        "1972",
-        "1975"
+        "Titan",
+        "Io",
+        "Phobos",
+        "Europa",
+        "Callisto",
+        "Triton"
       ],
-      "answer": 1,
-      "hint": "Same year as Woodstock.",
-      "fact": "Apollo 11 touched down on 20 July 1969."
+      "answers": [
+        1,
+        3,
+        4
+      ],
+      "fact": "Jupiter has 95 known moons. Titan orbits Saturn, Phobos orbits Mars and Triton orbits Neptune."
     },
     {
       "id": "q2",
-      "type": "mcq",
-      "prompt": "How many bones are in an adult human body?",
+      "type": "cluster",
+      "prompt": "Which of these countries are landlocked?",
       "options": [
-        "106",
-        "206",
-        "306",
-        "406"
+        "Vietnam",
+        "Bolivia",
+        "Portugal",
+        "Mongolia",
+        "Kenya",
+        "Austria"
       ],
-      "answer": 1,
-      "hint": "Babies have about 270, and many of them fuse.",
-      "fact": "206. Babies are born with about 270; many fuse as they grow."
+      "answers": [
+        1,
+        3,
+        5
+      ],
+      "fact": "Bolivia lost its coast to Chile in 1884 and still keeps a navy on Lake Titicaca."
     },
     {
       "id": "q3",

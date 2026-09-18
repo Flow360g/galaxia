@@ -95,6 +95,35 @@ export const ENCOUNTER = {
   scanTimeoutSeconds: 9,
 } as const;
 
+export const CLUSTER = {
+  /** Thrust budget for a cluster. Six squares and a bank decision need room. */
+  thrustSeconds: 26,
+  /** Seconds a pick is in flight: ship steers, rock strikes, verdict lands. */
+  collectSeconds: 0.6,
+  laneCount: 6,
+  /** Lanes span this fraction of the corridor half-width, edge to edge. */
+  laneSpan: 0.86,
+  /** Radius of a cluster rock; smaller than the lone encounter rock. */
+  rockRadius: 2.6,
+  /**
+   * Cluster rocks hold nearer than the lone rock so six lanes read as six
+   * lanes on a phone rather than a huddle at the vanishing point.
+   */
+  holdFar: -110,
+  holdNear: -40,
+  /**
+   * Rocks fan out with distance so six lanes read as six on a phone: at the
+   * far hold a lane sits this many times further from centre than the ship
+   * will steer to. A picked rock converges on the true lane as it comes in.
+   */
+  farSpread: 2.6,
+  /**
+   * Impulse multiplier by PLASMA banked. Index = charge. One plasma is a
+   * plain thread; the full charge is the biggest burst in the game.
+   */
+  chargeMultiplier: [0, 1, 1.7, 2.6],
+} as const;
+
 export const NOVA = {
   perRun: 2,
   /** Thrust spent on a scan, as a fraction of full thrust. */
@@ -111,12 +140,24 @@ export const FX = {
     collision: 1.3,
     wreck: 2.2,
     timeout: 1.1,
+    burn: 0.8,
   },
   /** Camera pull-back (extra +Z offset) on a burst, and its decay per second. */
-  pullback: { thread: 2.2, slingshot: 5.5 },
+  pullback: { thread: 2.2, slingshot: 5.5, burn: 4.5 },
   pullbackDecay: 1.6,
   /** Extra FOV degrees kicked in on a burst, decaying with pullback. */
-  fovKick: { thread: 4, slingshot: 12 },
+  fovKick: { thread: 4, slingshot: 12, burn: 10 },
+  /** A FULL BURN: the biggest moment in the run. Held, not just kicked. */
+  warp: {
+    pullback: 8,
+    fovKick: 18,
+    shake: 1.4,
+    streakSurge: 1.6,
+    /** Seconds the surge holds before it starts to decay. */
+    holdSeconds: 2,
+  },
+  /** Collecting a plasma pod on a correct cluster pick. */
+  collect: { shake: 0.15, exhaustPulse: 0.8, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
   /** Ship tumble on a collision: full rolls and the seconds they take. */
   tumble: { collision: { rolls: 1, seconds: 1.1 }, wreck: { rolls: 2, seconds: 1.5 } },
   /** Shield flash hold time. */
@@ -126,7 +167,7 @@ export const FX = {
   debrisSeconds: 1.4,
   debrisSpeed: 26,
   /** Exhaust pulse strength on a burst. */
-  exhaustPulse: { thread: 1.2, slingshot: 2.4 },
+  exhaustPulse: { thread: 1.2, slingshot: 2.4, burn: 3.4 },
   /** Extra speed-streak intensity on a slingshot, decaying like pullback. */
   streakSurge: 0.9,
 } as const;

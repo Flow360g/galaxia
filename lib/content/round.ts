@@ -11,8 +11,32 @@ import type { Round } from "@/lib/game/types";
  */
 
 const ROUNDS: Record<string, Round> = {
-  [sampleRound.date]: sampleRound as Round,
+  [sampleRound.date]: validate(sampleRound as Round),
 };
+
+/**
+ * A malformed round should fail at import, in the build, not mid-flight for
+ * a player. Clusters are the fiddly ones: six lanes, three distinct answers.
+ */
+function validate(round: Round): Round {
+  for (const question of round.questions) {
+    if (question.type !== "cluster") continue;
+    const lanes = question.options.length;
+    const answers = new Set(question.answers);
+    if (lanes !== 6) {
+      throw new Error(`Round ${round.date} cluster ${question.id}: ${lanes} options, need 6`);
+    }
+    if (answers.size !== 3 || question.answers.length !== 3) {
+      throw new Error(`Round ${round.date} cluster ${question.id}: need 3 distinct answers`);
+    }
+    for (const index of answers) {
+      if (!Number.isInteger(index) || index < 0 || index >= lanes) {
+        throw new Error(`Round ${round.date} cluster ${question.id}: answer ${index} out of range`);
+      }
+    }
+  }
+  return round;
+}
 
 /** Local calendar date as YYYY-MM-DD. Rounds turn over at the player's midnight. */
 export function todayKey(now: Date = new Date()): string {

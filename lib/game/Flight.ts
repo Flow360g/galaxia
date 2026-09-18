@@ -53,15 +53,18 @@ export class Flight {
   /**
    * Apply an outcome. Returns the velocity after it landed.
    *
-   * `strength` scales a correct outcome's impulse, so a partially right
-   * anomaly answer earns a partial burst.
+   * `strength` (0..1) scales a correct outcome's impulse, so a partially
+   * right anomaly answer earns a partial burst. `multiplier` scales it up:
+   * a cluster burn passes the charge multiplier here.
    */
-  applyOutcome(kind: OutcomeKind, thrustLeft: number, strength = 1): number {
+  applyOutcome(kind: OutcomeKind, thrustLeft: number, strength = 1, multiplier = 1): number {
     switch (kind) {
       case "thread":
-      case "slingshot": {
+      case "slingshot":
+      case "burn": {
         const boost = kind === "slingshot" ? FLIGHT.boostImpulse : 1;
-        const impulse = this.impulseFor(thrustLeft) * boost * clamp01(strength);
+        const impulse =
+          this.impulseFor(thrustLeft) * boost * clamp01(strength) * Math.max(multiplier, 0);
         this.streak += 1;
         this.velocity = Math.min(this.velocity + impulse, FLIGHT.maxVelocity);
         break;
@@ -81,11 +84,19 @@ export class Flight {
   }
 }
 
-/** Which physical outcome an answer produces. */
-export function outcomeKind(correct: boolean, boosted: boolean, timedOut: boolean): OutcomeKind {
+/**
+ * Which physical outcome an answer produces. A wrong answer with boost armed,
+ * or with the run's shield already gone, is a wreck rather than a collision.
+ */
+export function outcomeKind(
+  correct: boolean,
+  boosted: boolean,
+  timedOut: boolean,
+  shielded = true,
+): OutcomeKind {
   if (timedOut) return "timeout";
   if (correct) return boosted ? "slingshot" : "thread";
-  return boosted ? "wreck" : "collision";
+  return boosted || !shielded ? "wreck" : "collision";
 }
 
 export function clamp01(value: number): number {

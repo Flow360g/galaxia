@@ -74,6 +74,7 @@ const YELLOW = "#ffe03d";
 const RED = "#ff6b5c";
 const RED_DEEP = "#b3261e";
 const VIOLET = "#b28cff";
+const ORANGE = "#ff8a1f";
 
 const ARCADE_FALLBACK = '"Press Start 2P", monospace';
 
@@ -130,6 +131,9 @@ export function shareText(summary: RunSummary): string {
     `Peak ${formatVelocity(summary.peakVelocity)} km/h`,
     `Streak ${Math.max(0, Math.floor(summary.bestStreak))}`,
   ];
+  if (summary.fullBurns > 0) {
+    stats.push(`Full burn${summary.fullBurns > 1 ? "s" : ""} ${summary.fullBurns}`);
+  }
   if (summary.anomaly) {
     stats.push(`Anomaly ${percent(summary.anomaly.score)}%`);
   }
@@ -149,6 +153,7 @@ const TEXT_GLYPH: Record<OutcomeKind, string> = {
   collision: "✕",
   wreck: "✖",
   timeout: "○",
+  burn: "»",
 };
 
 /**
@@ -218,6 +223,8 @@ function kindColor(kind: OutcomeKind): string {
       return CYAN;
     case "slingshot":
       return YELLOW;
+    case "burn":
+      return ORANGE;
     default:
       return RED;
   }
@@ -542,6 +549,13 @@ function drawMarker(ctx: Ctx, event: RunEvent, x: number, y: number): void {
       drawStreakTrail(ctx, x, y);
       drawStar(ctx, x, y, MARKER_LARGE, YELLOW);
       break;
+    case "burn": {
+      // Sized by the charge banked: a full burn is the biggest mark on the card.
+      const charge = Math.max(1, Math.min(3, Math.floor(safe(event.charge ?? 1, 1))));
+      if (charge >= 2) drawStreakTrail(ctx, x, y);
+      drawChevrons(ctx, x, y, MARKER_SMALL + charge * 3, charge, ORANGE);
+      break;
+    }
     case "collision":
       drawShatter(ctx, x, y, MARKER_SMALL + 4, 1);
       drawCross(ctx, x, y, MARKER_SMALL, RED, 4);
@@ -560,7 +574,7 @@ function drawMarker(ctx: Ctx, event: RunEvent, x: number, y: number): void {
       break;
   }
   if (event.anomaly) {
-    const r = (event.kind === "thread" || event.kind === "timeout" || event.kind === "collision"
+    const r = (event.kind === "thread" || event.kind === "timeout" || event.kind === "collision" || event.kind === "burn"
       ? MARKER_SMALL
       : MARKER_LARGE) + ANOMALY_RING_PAD;
     ctx.shadowColor = VIOLET;
@@ -611,6 +625,25 @@ function drawStar(ctx: Ctx, x: number, y: number, r: number, color: string): voi
   }
   ctx.closePath();
   ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+/** Stacked chevrons pointing right: one per plasma banked. */
+function drawChevrons(ctx: Ctx, x: number, y: number, r: number, count: number, color: string): void {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+  const step = r * 0.55;
+  const left = x - ((count - 1) * step) / 2;
+  ctx.beginPath();
+  for (let i = 0; i < count; i += 1) {
+    const cx = left + i * step;
+    ctx.moveTo(cx - r * 0.45, y - r);
+    ctx.lineTo(cx + r * 0.35, y);
+    ctx.lineTo(cx - r * 0.45, y + r);
+  }
+  ctx.stroke();
   ctx.shadowBlur = 0;
 }
 
@@ -750,8 +783,14 @@ function drawRailCell(
   }
 
   const color = kindColor(kind);
-  const filled = kind === "slingshot" || kind === "wreck";
-  ctx.fillStyle = filled ? (kind === "wreck" ? RED_DEEP : YELLOW) : "rgba(7, 17, 34, 0.9)";
+  const filled = kind === "slingshot" || kind === "wreck" || kind === "burn";
+  ctx.fillStyle = filled
+    ? kind === "wreck"
+      ? RED_DEEP
+      : kind === "burn"
+        ? ORANGE
+        : YELLOW
+    : "rgba(7, 17, 34, 0.9)";
   ctx.fillRect(x, y, RAIL_CELL, RAIL_CELL);
   ctx.strokeStyle = anomaly ? VIOLET : color;
   ctx.lineWidth = anomaly ? 3 : 2;
@@ -771,6 +810,9 @@ function drawRailCell(
       break;
     case "slingshot":
       drawStar(ctx, cx, cy, r + 3, glyphColor);
+      break;
+    case "burn":
+      drawChevrons(ctx, cx, cy, r, 2, glyphColor);
       break;
     case "collision":
       drawCross(ctx, cx, cy, r, glyphColor, 3);

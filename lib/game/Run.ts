@@ -1,10 +1,12 @@
 import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
-import { resolveNova } from "./nova";
-import { ENCOUNTER, NOVA } from "./Tuning";
+import { resolveClusterNova, resolveNova } from "./nova";
+import { CLUSTER, ENCOUNTER, NOVA } from "./Tuning";
 import type {
   AnomalyQuestion,
   AnomalyVerdict,
+  ClusterQuestion,
+  ClusterState,
   FlightSample,
   GameState,
   NovaResult,
@@ -19,17 +21,25 @@ import type {
 /**
  * The run: seven encounters, one after another, each a state machine step.
  *
- *   intro -> approach -> (scanning) -> resolving -> aftermath -> approach ...
+ *   intro -> approach -> (scanning | collecting) -> resolving -> aftermath -> approach ...
  *
  * Pure game logic. The engine subscribes through `RunHooks` to spawn rocks,
  * play the strike and light the fireworks; the HUD reads `state`. Nothing in
  * here knows about three.js or React, so the whole run can be stepped in a
  * test with a fake clock.
+ *
+ * A Cluster loops inside one encounter: approach -> collecting -> approach
+ * for each correct pick, until the player burns (lock as "burn"), misses
+ * (lock as a collision), or thrust runs out (lock as a timeout).
  */
 
 export interface RunHooks {
   /** A new asteroid is called. Spawn it at the far hold. */
   onEncounterStart(index: number, question: Question): void;
+  /** Cluster: a lane was picked. Steer into it; that rock strikes. */
+  onPick(lane: number, correct: boolean): void;
+  /** Cluster: the pick was right. The pod is collected; `charge` is the new total. */
+  onCollect(lane: number, charge: number): void;
   /** The answer locked. The rock strikes; the ship reacts to `outcome.kind`. */
   onLock(index: number, outcome: Outcome): void;
   /** Contact. Velocity has just changed; play the burst or the impact. */
@@ -40,6 +50,12 @@ export interface RunHooks {
 }
 
 const SAMPLE_INTERVAL = 0.25;
+
+interface ClusterProgress {
+  picked: number[];
+  charge: number;
+  eliminated: number[];
+}
 
 export class Run {
   readonly flight = new Flight();
@@ -54,6 +70,8 @@ export class Run {
   boostArmed = false;
   novaLeft: number = NOVA.perRun;
   nova: NovaResult | null = null;
+  /** The run's one shield. A Cluster miss takes it; after that, misses are wrecks. */
+  shield = true;
   /** The last resolved outcome, kept through its aftermath. */
   outcome: Outcome | null = null;
 
@@ -64,6 +82,9 @@ export class Run {
   private struck = false;
   private sampleTimer = 0;
   private novasUsed = 0;
+  private shieldLost = false;
+  private cluster: ClusterProgress | null = null;
+  private pendingPick: { lane: number; correct: boolean } | null = null;
   /** Bumped on every lock so a late scan result cannot land on a later rock. */
   private scanToken = 0;
 
@@ -96,9 +117,29 @@ export class Run {
       boostArmed: this.boostArmed,
       novaLeft: this.novaLeft,
       nova: this.nova,
+      cluster: this.clusterState(),
+      shield: this.shield,
       outcome: this.phase === "aftermath" || this.phase === "finished" ? this.outcome : null,
       running: true,
     };
+  }
+
+  private clusterState(): ClusterState | null {
+    const cluster = this.cluster;
+    if (!cluster || (this.phase !== "approach" && this.phase !== "collecting")) return null;
+    return {
+      picked: cluster.picked,
+      charge: cluster.charge,
+      projected: this.burnImpulse(cluster.charge),
+      projectedNext: this.burnImpulse(cluster.charge + 1),
+      eliminated: cluster.eliminated,
+    };
+  }
+
+  /** km/h a burn at `charge` would add with the thrust left right now. */
+  private burnImpulse(charge: number): number {
+    const multiplier = CLUSTER.chargeMultiplier[charge] ?? 0;
+    return this.flight.impulseFor(this.thrust) * multiplier;
   }
 
   // ---------------------------------------------------------------- input
@@ -112,7 +153,7 @@ export class Run {
 
     const correct = option === question.answer;
     this.lock({
-      kind: outcomeKind(correct, this.boostArmed, false),
+      kind: outcomeKind(correct, this.boostArmed, false, this.shield),
       correct,
       boosted: this.boostArmed,
       timedOut: false,
@@ -127,21 +168,68 @@ export class Run {
     });
   }
 
+  /** Cluster: pick a lane. The verdict lands after `collectSeconds`. */
+  pick(lane: number): void {
+    const question = this.question;
+    const cluster = this.cluster;
+    if (!this.answering || !question || question.type !== "cluster" || !cluster) return;
+    if (lane < 0 || lane >= question.options.length) return;
+    if (cluster.picked.includes(lane) || cluster.eliminated.includes(lane)) return;
+
+    const correct = question.answers.includes(lane);
+    this.pendingPick = { lane, correct };
+    this.phase = "collecting";
+    this.timer = CLUSTER.collectSeconds;
+    this.hooks.onPick(lane, correct);
+  }
+
+  /** Cluster: bank the charge. Ignored with nothing in the reactor. */
+  burn(): void {
+    const question = this.question;
+    const cluster = this.cluster;
+    if (!this.answering || !question || question.type !== "cluster" || !cluster) return;
+    if (cluster.charge <= 0) return;
+
+    this.lock({
+      kind: "burn",
+      correct: true,
+      boosted: false,
+      timedOut: false,
+      thrustLeft: this.thrust,
+      velocityBefore: this.flight.velocity,
+      velocityAfter: this.flight.velocity,
+      streakBefore: this.flight.streak,
+      streakAfter: this.flight.streak,
+      chosen: null,
+      guessText: cluster.picked.map((lane) => question.options[lane] ?? "").join(", "),
+      answerText: clusterAnswerText(question),
+      charge: cluster.charge,
+      picks: [...cluster.picked],
+    });
+  }
+
   toggleBoost(): void {
-    if (!this.answering) return;
+    if (!this.answering || this.question?.type === "cluster") return;
     this.boostArmed = !this.boostArmed;
   }
 
   /** Spend a NOVA scan on the current question. */
   useNova(): void {
     const question = this.question;
-    if (!this.answering || !question || question.type !== "mcq") return;
+    if (!this.answering || !question || question.type === "anomaly") return;
     if (this.novaLeft <= 0 || this.nova) return;
 
     this.novaLeft -= 1;
     this.novasUsed += 1;
     this.thrust = Math.max(this.thrust - NOVA.thrustCost, 0.02);
-    this.nova = resolveNova(question, this.random);
+
+    if (question.type === "cluster") {
+      const cluster = this.cluster;
+      this.nova = resolveClusterNova(question, cluster?.picked ?? [], this.random);
+      if (cluster) cluster.eliminated = [...this.nova.eliminated];
+    } else {
+      this.nova = resolveNova(question, this.random);
+    }
   }
 
   /** Send an anomaly answer to the scorer. Thrust freezes while it scans. */
@@ -162,7 +250,7 @@ export class Run {
       const score = clamp01(verdict.score);
       const correct = anomalyCorrect(score);
       this.lock({
-        kind: outcomeKind(correct, boosted, false),
+        kind: outcomeKind(correct, boosted, false, this.shield),
         correct,
         boosted,
         timedOut: false,
@@ -209,6 +297,13 @@ export class Run {
           this.thrust = 0;
           this.timeOut();
         }
+        break;
+
+      case "collecting":
+        // Thrust is frozen while the pick is in flight; the verdict lands on
+        // the timer, not on the tank.
+        this.timer -= dt;
+        if (this.timer <= 0) this.resolvePick();
         break;
 
       case "scanning":
@@ -261,13 +356,68 @@ export class Run {
     this.boostArmed = false;
     this.nova = null;
     this.pending = null;
+    this.pendingPick = null;
     this.struck = false;
+    this.cluster =
+      question.type === "cluster" ? { picked: [], charge: 0, eliminated: [] } : null;
     this.thrustSeconds =
       question.type === "anomaly"
         ? ENCOUNTER.anomalyThrustSeconds
-        : ENCOUNTER.thrustSeconds;
+        : question.type === "cluster"
+          ? CLUSTER.thrustSeconds
+          : ENCOUNTER.thrustSeconds;
 
     this.hooks.onEncounterStart(index, question);
+  }
+
+  /** Cluster: the pick's verdict lands. Collect the pod, or hit the rock. */
+  private resolvePick(): void {
+    const question = this.question;
+    const cluster = this.cluster;
+    const pick = this.pendingPick;
+    this.pendingPick = null;
+    if (!question || question.type !== "cluster" || !cluster || !pick) {
+      this.phase = "approach";
+      return;
+    }
+
+    cluster.picked.push(pick.lane);
+
+    if (pick.correct) {
+      cluster.charge += 1;
+      this.hooks.onCollect(pick.lane, cluster.charge);
+      if (cluster.charge >= question.answers.length) {
+        // Nothing left to find. FULL BURN, no decision needed.
+        this.phase = "approach";
+        this.burn();
+      } else {
+        this.phase = "approach";
+      }
+      return;
+    }
+
+    const shielded = this.shield;
+    if (shielded) {
+      this.shield = false;
+      this.shieldLost = true;
+    }
+    this.phase = "approach";
+    this.lock({
+      kind: outcomeKind(false, false, false, shielded),
+      correct: false,
+      boosted: false,
+      timedOut: false,
+      thrustLeft: this.thrust,
+      velocityBefore: this.flight.velocity,
+      velocityAfter: this.flight.velocity,
+      streakBefore: this.flight.streak,
+      streakAfter: this.flight.streak,
+      chosen: pick.lane,
+      guessText: question.options[pick.lane] ?? "",
+      answerText: clusterAnswerText(question),
+      charge: 0,
+      picks: [...cluster.picked],
+    });
   }
 
   private timeOut(): void {
@@ -276,7 +426,9 @@ export class Run {
     const answerText =
       question.type === "mcq"
         ? (question.options[question.answer] ?? "")
-        : question.answerText;
+        : question.type === "cluster"
+          ? clusterAnswerText(question)
+          : question.answerText;
 
     this.lock({
       kind: "timeout",
@@ -291,6 +443,7 @@ export class Run {
       chosen: null,
       guessText: "No answer",
       answerText,
+      ...(this.cluster ? { charge: 0, picks: [...this.cluster.picked] } : {}),
     });
   }
 
@@ -299,7 +452,7 @@ export class Run {
     // blank so the run keeps moving rather than stalling on a dead scorer.
     const verdict = scoreLocally(question, "");
     this.lock({
-      kind: outcomeKind(false, this.boostArmed, false),
+      kind: outcomeKind(false, this.boostArmed, false, this.shield),
       correct: false,
       boosted: this.boostArmed,
       timedOut: false,
@@ -331,11 +484,14 @@ export class Run {
     this.struck = true;
 
     const strength = outcome.anomalyScore ?? 1;
+    const multiplier =
+      outcome.kind === "burn" ? (CLUSTER.chargeMultiplier[outcome.charge ?? 0] ?? 0) : 1;
     outcome.velocityBefore = this.flight.velocity;
     outcome.velocityAfter = this.flight.applyOutcome(
       outcome.kind,
       outcome.thrustLeft,
       strength,
+      multiplier,
     );
     outcome.streakAfter = this.flight.streak;
 
@@ -351,6 +507,7 @@ export class Run {
       d: this.flight.distance,
       v: outcome.velocityAfter,
       streak: outcome.streakAfter,
+      ...(outcome.kind === "burn" ? { charge: outcome.charge ?? 0 } : {}),
     });
     this.sample();
 
@@ -360,6 +517,7 @@ export class Run {
   private finish(): void {
     this.phase = "finished";
     this.index = -1;
+    this.cluster = null;
     this.sample();
     this.hooks.onFinished();
   }
@@ -379,6 +537,7 @@ export class Run {
       bestStreak = Math.max(bestStreak, outcome.streakAfter);
     }
     const boosts = this.outcomes.filter((o) => o.boosted).length;
+    const fullCharge = CLUSTER.chargeMultiplier.length - 1;
 
     return {
       date: this.round.date,
@@ -393,6 +552,9 @@ export class Run {
       boostHits: this.outcomes.filter((o) => o.boosted && o.correct).length,
       collisions: this.outcomes.filter((o) => !o.correct).length,
       novasUsed: this.novasUsed,
+      fullBurns: this.outcomes.filter((o) => o.kind === "burn" && (o.charge ?? 0) >= fullCharge)
+        .length,
+      shieldLost: this.shieldLost,
       anomaly: anomaly
         ? {
             score: anomaly.anomalyScore ?? 0,
@@ -408,3 +570,7 @@ export class Run {
   }
 }
 
+/** The three right answers, for the toast and the share record. */
+function clusterAnswerText(question: ClusterQuestion): string {
+  return question.answers.map((lane) => question.options[lane] ?? "").join(", ");
+}

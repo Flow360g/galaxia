@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { GameState, Outcome, OutcomeKind, Round } from "@/lib/game/types";
+import type {
+  ClusterQuestion,
+  ClusterState,
+  GameState,
+  Outcome,
+  OutcomeKind,
+  Round,
+} from "@/lib/game/types";
+import { CLUSTER } from "@/lib/game/Tuning";
 import { formatDelta, formatDistance, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
 
@@ -9,6 +17,8 @@ interface Props {
   state: GameState | null;
   round: Round;
   onAnswer: (option: number) => void;
+  onPick: (lane: number) => void;
+  onBurn: () => void;
   onToggleBoost: () => void;
   onNova: () => void;
   onAnomaly: (text: string) => void;
@@ -20,6 +30,7 @@ const OUTCOME_LABEL: Record<OutcomeKind, string> = {
   collision: "COLLISION",
   wreck: "WRECKED",
   timeout: "THRUST OUT",
+  burn: "BURN",
 };
 
 const NOVA_LABEL = {
@@ -27,6 +38,9 @@ const NOVA_LABEL = {
   clue: "NOVA: CLUE",
   narrow: "NOVA: TWO MOST PLAUSIBLE",
 } as const;
+
+const FULL_CHARGE = CLUSTER.chargeMultiplier.length - 1;
+
 
 /**
  * DOM overlay HUD.
@@ -37,21 +51,37 @@ const NOVA_LABEL = {
  * are the speedometer; the panel at the bottom is the only thing that takes
  * taps. The middle of the screen, where the rock looms, stays clear.
  */
-export function Hud({ state, round, onAnswer, onToggleBoost, onNova, onAnomaly }: Props) {
+export function Hud({
+  state,
+  round,
+  onAnswer,
+  onPick,
+  onBurn,
+  onToggleBoost,
+  onNova,
+  onAnomaly,
+}: Props) {
   const question =
     state && state.encounter >= 0 ? round.questions[state.encounter] : undefined;
   const answering = state?.phase === "approach";
+  const collecting = state?.phase === "collecting";
   const scanning = state?.phase === "scanning";
+  const open = answering || collecting || scanning;
   const total = round.questions.length;
   const outcome = state?.outcome ?? null;
+  const isCluster = question?.type === "cluster";
 
-  useKeyboard({ state, onAnswer, onToggleBoost, onNova });
+  useKeyboard({ state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova });
+  // The overlay's CSS animation ends invisible, so it can simply live as long
+  // as the full-burn outcome is current; no timer needed.
+  const warp = outcome?.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
 
   const thrust = state?.thrust ?? 1;
   const thrustLow = thrust < 0.3;
 
   return (
     <div className={styles.hud}>
+      {warp ? <div className={styles.warp} data-testid="warp" aria-hidden="true" /> : null}
       <header className={styles.top}>
         <div className={styles.readout}>
           <span className="label">
@@ -81,6 +111,13 @@ export function Hud({ state, round, onAnswer, onToggleBoost, onNova, onAnomaly }
           <span className={`${styles.streak} arcade`} data-testid="streak">
             {state && state.streak > 0 ? `STREAK x${state.streak}` : " "}
           </span>
+          <span
+            className={`${styles.shield} ${state && !state.shield ? styles.shieldDown : ""} arcade`}
+            data-testid="shield"
+            data-shield={state ? String(state.shield) : "true"}
+          >
+            {state && !state.shield ? "SHIELD DOWN" : "◈ SHIELD"}
+          </span>
         </div>
       </header>
 
@@ -99,17 +136,31 @@ export function Hud({ state, round, onAnswer, onToggleBoost, onNova, onAnomaly }
       ) : null}
 
       <div className={styles.bottom}>
-        {question && (answering || scanning) ? (
+        {question && open ? (
           <section
-            className={`${styles.panel} ${question.type === "anomaly" ? styles.panelAnomaly : ""}`}
+            className={`${styles.panel} ${question.type === "anomaly" ? styles.panelAnomaly : ""} ${
+              isCluster ? styles.panelCluster : ""
+            }`}
             data-testid="question"
           >
             {question.type === "anomaly" ? (
               <span className={`${styles.anomalyTag} arcade`}>AI ANOMALY</span>
             ) : null}
+            {isCluster ? (
+              <span className={`${styles.clusterTag} arcade`}>CLUSTER · 3 OF 6</span>
+            ) : null}
             <p className={styles.prompt}>{question.prompt}</p>
 
-            {question.type === "mcq" ? (
+            {question.type === "cluster" ? (
+              <ClusterPanel
+                question={question}
+                cluster={state?.cluster ?? null}
+                answering={answering}
+                collecting={collecting}
+                onPick={onPick}
+                onBurn={onBurn}
+              />
+            ) : question.type === "mcq" ? (
               <>
                 {state?.nova ? (
                   <p className={styles.novaLine} data-testid="nova-result">
@@ -154,22 +205,30 @@ export function Hud({ state, round, onAnswer, onToggleBoost, onNova, onAnomaly }
               <button
                 type="button"
                 className={`${styles.tool} ${styles.nova} arcade`}
-                disabled={!answering || question.type !== "mcq" || !state || state.novaLeft <= 0 || !!state.nova}
+                disabled={
+                  !answering ||
+                  question.type === "anomaly" ||
+                  !state ||
+                  state.novaLeft <= 0 ||
+                  !!state.nova
+                }
                 onClick={onNova}
                 data-testid="nova"
               >
                 NOVA <span className={styles.pips}>{"◆".repeat(state?.novaLeft ?? 0)}</span>
               </button>
-              <button
-                type="button"
-                className={`${styles.tool} ${styles.boost} ${state?.boostArmed ? styles.boostOn : ""} arcade`}
-                disabled={!answering}
-                onClick={onToggleBoost}
-                aria-pressed={state?.boostArmed ?? false}
-                data-testid="boost"
-              >
-                {state?.boostArmed ? "BOOST ARMED" : "BOOST"}
-              </button>
+              {isCluster ? null : (
+                <button
+                  type="button"
+                  className={`${styles.tool} ${styles.boost} ${state?.boostArmed ? styles.boostOn : ""} arcade`}
+                  disabled={!answering}
+                  onClick={onToggleBoost}
+                  aria-pressed={state?.boostArmed ?? false}
+                  data-testid="boost"
+                >
+                  {state?.boostArmed ? "BOOST ARMED" : "BOOST"}
+                </button>
+              )}
             </div>
           </section>
         ) : null}
@@ -184,19 +243,123 @@ export function Hud({ state, round, onAnswer, onToggleBoost, onNova, onAnomaly }
   );
 }
 
+/**
+ * The cluster panel: reactor gauge, six lanes, and the BURN decision. The
+ * projected gain is shown on the button so the risk is a number, not a vibe.
+ */
+function ClusterPanel({
+  question,
+  cluster,
+  answering,
+  collecting,
+  onPick,
+  onBurn,
+}: {
+  question: ClusterQuestion;
+  cluster: ClusterState | null;
+  answering: boolean;
+  collecting: boolean;
+  onPick: (lane: number) => void;
+  onBurn: () => void;
+}) {
+  const charge = cluster?.charge ?? 0;
+  const picked = cluster?.picked ?? [];
+  const eliminated = cluster?.eliminated ?? [];
+  const segments = Array.from({ length: FULL_CHARGE }, (_, i) => i < charge);
+
+  return (
+    <div className={styles.cluster}>
+      <div className={styles.reactor} aria-label={`Plasma ${charge} of ${FULL_CHARGE}`}>
+        <span className={`${styles.reactorLabel} arcade`}>REACTOR</span>
+        <div className={styles.reactorTrack} data-testid="reactor" data-charge={charge}>
+          {segments.map((lit, i) => (
+            <span
+              key={i}
+              className={`${styles.reactorCell} ${lit ? styles.reactorLit : ""}`}
+              data-testid={`plasma-${i}`}
+              data-lit={lit}
+            />
+          ))}
+        </div>
+        <span className={`${styles.reactorValue} arcade`}>
+          {charge > 0 ? `${charge} PLASMA` : "EMPTY"}
+        </span>
+      </div>
+
+      <div className={styles.lanes}>
+        {question.options.map((option, index) => {
+          const got = picked.includes(index);
+          const out = eliminated.includes(index);
+          return (
+            <button
+              key={index}
+              type="button"
+              className={`${styles.option} ${styles.lane} ${got ? styles.laneGot : ""} ${
+                out ? styles.optionOut : ""
+              }`}
+              disabled={!answering || got || out || collecting}
+              onClick={() => onPick(index)}
+              data-testid={`option-${index}`}
+              data-got={got}
+            >
+              <span className={`${styles.optionKey} arcade`}>{index + 1}</span>
+              <span className={styles.optionText}>{option}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={styles.burnRow}>
+        <button
+          type="button"
+          className={`${styles.burn} ${charge >= 2 ? styles.burnHot : ""} arcade`}
+          disabled={!answering || charge <= 0}
+          onClick={onBurn}
+          data-testid="burn"
+        >
+          {charge > 0 ? `BURN  +${formatVelocity(cluster?.projected ?? 0)} KM/H` : "PICK A LANE"}
+        </button>
+        <span className={styles.burnNext}>
+          {charge > 0 && charge < FULL_CHARGE
+            ? `one more: +${formatVelocity(cluster?.projectedNext ?? 0)} km/h, or lose it all`
+            : charge === 0
+              ? "each correct lane charges the reactor"
+              : ""}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | undefined }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
+  const full = outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
+  const label = full ? "FULL BURN!" : OUTCOME_LABEL[outcome.kind];
   return (
     <section
-      className={`${styles.toast} ${styles[`toast_${outcome.kind}`]}`}
+      className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${full ? styles.toast_full : ""}`}
       data-testid="toast"
       data-outcome={outcome.kind}
+      data-charge={outcome.charge}
     >
       <div className={styles.toastHead}>
-        <span className={`${styles.toastKind} arcade`}>{OUTCOME_LABEL[outcome.kind]}</span>
+        <span className={`${styles.toastKind} arcade`}>{label}</span>
         <span className={`${styles.toastDelta} arcade`}>{formatDelta(delta)} KM/H</span>
       </div>
-      {outcome.anomalyVerdict ? (
+      {outcome.kind === "burn" ? (
+        <span className={styles.toastAnswer}>
+          Banked <strong>{outcome.charge} plasma</strong>
+          {(outcome.charge ?? 0) < FULL_CHARGE ? <> &middot; All three: {outcome.answerText}</> : null}
+        </span>
+      ) : outcome.picks ? (
+        <span className={styles.toastAnswer}>
+          The three: <strong>{outcome.answerText}</strong>
+          {!outcome.correct && outcome.chosen !== null ? <> &middot; You hit: {outcome.guessText}</> : null}
+          {!outcome.correct && outcome.picks.length > 1 ? (
+            <> &middot; {outcome.picks.length - 1} plasma lost</>
+          ) : null}
+        </span>
+      ) : outcome.anomalyVerdict ? (
         <span className={styles.toastAnswer}>
           <strong>{outcome.anomalyVerdict}</strong>
           {" "}
@@ -281,16 +444,24 @@ function AnomalyForm({
   );
 }
 
-/** 1-4 answer, B arms boost, N fires a scan. Ignored while typing. */
+/**
+ * 1-4 answer (1-6 on a cluster), Enter or Space burns, B arms boost, N fires
+ * a scan. Ignored while typing.
+ */
 function useKeyboard({
   state,
+  question,
   onAnswer,
+  onPick,
+  onBurn,
   onToggleBoost,
   onNova,
-}: Pick<Props, "state" | "onAnswer" | "onToggleBoost" | "onNova">) {
-  const latest = useRef({ state, onAnswer, onToggleBoost, onNova });
+}: Pick<Props, "state" | "onAnswer" | "onPick" | "onBurn" | "onToggleBoost" | "onNova"> & {
+  question: Round["questions"][number] | undefined;
+}) {
+  const latest = useRef({ state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova });
   useEffect(() => {
-    latest.current = { state, onAnswer, onToggleBoost, onNova };
+    latest.current = { state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova };
   });
 
   useEffect(() => {
@@ -299,8 +470,13 @@ function useKeyboard({
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const current = latest.current;
       if (current.state?.phase !== "approach") return;
+      const cluster = current.question?.type === "cluster";
 
-      if (event.key >= "1" && event.key <= "4") {
+      if (cluster && event.key >= "1" && event.key <= "6") {
+        current.onPick(Number(event.key) - 1);
+      } else if (cluster && (event.key === "Enter" || event.key === " ")) {
+        current.onBurn();
+      } else if (!cluster && event.key >= "1" && event.key <= "4") {
         current.onAnswer(Number(event.key) - 1);
       } else if (event.key === "b" || event.key === "B") {
         current.onToggleBoost();

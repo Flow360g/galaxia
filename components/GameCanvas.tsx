@@ -103,6 +103,8 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           state={state}
           round={round}
           onAnswer={(option) => engineRef.current?.answer(option)}
+          onPick={(lane) => engineRef.current?.pick(lane)}
+          onBurn={() => engineRef.current?.burn()}
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
           onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}

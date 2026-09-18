@@ -133,6 +133,11 @@ export class Ship {
       case "slingshot":
         this.setSwerve(side * ENCOUNTER.skimOffsetX, -0.4);
         break;
+      case "burn":
+        // Already in a lane. Dip the nose and hold the line; the camera and
+        // the exhaust do the rest.
+        this.setSwerve(this.targetX, -0.6);
+        break;
       default:
         // Line up on the rock. The autopilot flies straight into it.
         this.setSwerve(0, 0);
@@ -150,6 +155,18 @@ export class Ship {
     this.tumbleSign = side;
     // Knocked sideways, then the autopilot recovers.
     this.setSwerve(-side * 4.5, 1.5);
+  }
+
+  /**
+   * Cluster: steer into a lane and hold it until the next manoeuvre or a
+   * recentre. The hold is open-ended; the swerve timer is left untouched so
+   * the weave does not creep back while the player is still picking.
+   */
+  holdLane(x: number): void {
+    this.weaving = false;
+    this.swerveTimer = 0;
+    this.targetX = x;
+    this.targetY = 0;
   }
 
   /** Back to the lazy cruise weave. */

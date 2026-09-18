@@ -69,6 +69,17 @@
   min-height: 11px;
 }
 
+.shield {
+  font-size: 8px;
+  color: var(--arcade-cyan);
+  opacity: 0.85;
+}
+
+.shieldDown {
+  color: #ff6b5c;
+  text-shadow: 0 0 10px rgba(255, 107, 92, 0.6);
+}
+
 .unit {
   font-family: var(--mono);
   font-size: 9px;
@@ -132,6 +143,150 @@
 .panelAnomaly {
   border-color: rgba(178, 140, 255, 0.55);
   box-shadow: 0 0 28px rgba(178, 140, 255, 0.25);
+}
+
+.panelCluster {
+  border-color: rgba(79, 241, 255, 0.45);
+}
+
+.clusterTag {
+  font-size: 9px;
+  color: var(--arcade-cyan);
+  letter-spacing: 0.12em;
+}
+
+/* Cluster: reactor gauge, six lanes, the burn decision. */
+.cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reactor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reactorLabel,
+.reactorValue {
+  font-size: 8px;
+  color: var(--panel-label);
+  white-space: nowrap;
+}
+
+.reactorValue {
+  color: var(--arcade-cyan);
+  min-width: 72px;
+  text-align: right;
+}
+
+.reactorTrack {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  height: 10px;
+}
+
+.reactorCell {
+  display: block;
+  border: 1px solid var(--rule-dark);
+  background: rgba(7, 17, 34, 0.6);
+  transition: background 220ms, box-shadow 220ms;
+}
+
+.reactorLit {
+  background: linear-gradient(to right, var(--arcade-cyan), #ffffff);
+  box-shadow: 0 0 12px rgba(79, 241, 255, 0.7);
+  animation: reactorIn 320ms ease-out;
+}
+
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.lane {
+  min-height: 56px;
+  padding: 8px 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.lane .optionText {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.laneGot,
+.laneGot:disabled {
+  border-color: var(--arcade-cyan);
+  background: rgba(79, 241, 255, 0.16);
+  color: var(--arcade-cyan);
+  box-shadow: 0 0 12px rgba(79, 241, 255, 0.35);
+}
+
+.laneGot .optionKey {
+  color: var(--arcade-cyan);
+}
+
+.burnRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.burn {
+  min-height: 48px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 138, 31, 0.6);
+  background: transparent;
+  color: #ff8a1f;
+  cursor: pointer;
+  transition: background 160ms, color 160ms, box-shadow 160ms;
+}
+
+.burn:not(:disabled) {
+  background: #ff8a1f;
+  color: var(--ink);
+  box-shadow: 0 0 18px rgba(255, 138, 31, 0.5);
+}
+
+.burn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.burnHot:not(:disabled) {
+  animation: pulse 900ms ease-in-out infinite;
+}
+
+.burnNext {
+  font-size: 12px;
+  color: var(--panel-label);
+  min-height: 14px;
+}
+
+/* FULL BURN: radial speed lines and a vignette for a beat. */
+.warp {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at center, rgba(255, 138, 31, 0) 30%, rgba(255, 138, 31, 0.28) 100%),
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(255, 255, 255, 0) 0deg 4deg,
+      rgba(255, 255, 255, 0.55) 4deg 4.6deg,
+      rgba(255, 255, 255, 0) 4.6deg 9deg
+    );
+  mask-image: radial-gradient(ellipse at center, transparent 18%, #000 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 18%, #000 70%);
+  animation: warpIn 900ms ease-out forwards;
 }
 
 .anomalyTag {
@@ -354,6 +509,19 @@
   box-shadow: 0 0 30px rgba(255, 59, 42, 0.3);
 }
 
+.toast_burn {
+  border-left-color: #ff8a1f;
+  box-shadow: 0 0 30px rgba(255, 138, 31, 0.3);
+}
+
+.toast_burn .toastKind {
+  color: #ff8a1f;
+}
+
+.toast_full {
+  box-shadow: 0 0 44px rgba(255, 138, 31, 0.55);
+}
+
 .toastHead {
   display: flex;
   align-items: baseline;
@@ -423,6 +591,42 @@
   }
 }
 
+@keyframes reactorIn {
+  from {
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+}
+
+@keyframes warpIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warp {
+    display: none;
+  }
+
+  .reactorLit,
+  .burnHot:not(:disabled) {
+    animation: none;
+  }
+}
+
 @keyframes pulse {
   0%,
   100% {
@@ -456,6 +660,19 @@
 
   .prompt {
     font-size: 16px;
+  }
+
+  .lanes {
+    gap: 6px;
+  }
+
+  .lane {
+    min-height: 52px;
+    padding: 6px 8px;
+  }
+
+  .lane .optionText {
+    font-size: 13px;
   }
 
   .option {
