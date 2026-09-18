@@ -58,7 +58,37 @@ export interface ClusterQuestion {
   fact?: string;
 }
 
-export type Question = McqQuestion | ClusterQuestion | AnomalyQuestion;
+/**
+ * A Vector: a numeric answer aimed on a slider. The ship steers to match and
+ * a beam fires on lock; the alien decloaks at the truth. Error against the
+ * authored `tolerance` decides a direct hit, a glancing hit or a miss.
+ */
+export interface VectorQuestion {
+  id: string;
+  type: "vector";
+  prompt: string;
+  answer: number;
+  min: number;
+  max: number;
+  /** Shown after the value, e.g. "m" or "km". */
+  unit?: string;
+  /** Log-scaled slider for wide ranges. Requires min > 0. */
+  log?: boolean;
+  /** Error in answer units that still counts as a hit. */
+  tolerance: number;
+  fact?: string;
+}
+
+export type Question = McqQuestion | ClusterQuestion | VectorQuestion | AnomalyQuestion;
+
+/** A stage of the run. A waypoint plays after the last encounter of each stage but the final one. */
+export interface Stage {
+  name: string;
+  /** Index of the last encounter in this stage. */
+  after: number;
+  /** Landmark that rises at the waypoint closing this stage. */
+  landmark?: "moon" | "planet";
+}
 
 export interface Round {
   date: string;
@@ -66,6 +96,7 @@ export interface Round {
   seed: number;
   theme: string;
   questions: Question[];
+  stages?: Stage[];
 }
 
 // --------------------------------------------------------------------- run
@@ -77,6 +108,8 @@ export type Phase =
   | "approach"
   /** Cluster: a pick is in flight. Input locked, thrust frozen. */
   | "collecting"
+  /** Between stages: rating card, landmark, alien arrival. No input. */
+  | "waypoint"
   /** Anomaly answer sent, waiting on the scorer. Thrust frozen. */
   | "scanning"
   /** Answer locked, asteroid striking, outcome animating. */
@@ -86,6 +119,32 @@ export type Phase =
   | "finished";
 
 export type NovaKind = "eliminate" | "clue" | "narrow";
+
+/** Live state of a Vector encounter: where the aim is, in slider space 0..1. */
+export interface VectorState {
+  /** Slider position, 0..1. */
+  t: number;
+  /** The aimed value in answer units. */
+  value: number;
+  /** Slider window still open after a NOVA scan, 0..1. */
+  window: [number, number];
+}
+
+/** The card shown between stages. */
+export interface WaypointState {
+  /** Stage just cleared. */
+  stage: string;
+  /** Stage about to begin. */
+  next: string;
+  rating: Rating;
+  plasma: number;
+  shield: boolean;
+  peakVelocity: number;
+  /** Seconds into the waypoint. */
+  t: number;
+}
+
+export type Rating = "S" | "A" | "B" | "C";
 
 /** Live state of a Cluster encounter, while it is open. */
 export interface ClusterState {
@@ -148,6 +207,12 @@ export interface Outcome {
   charge?: number;
   /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
   picks?: number[];
+  /** Vector only: |guess - truth| / tolerance. */
+  error?: number;
+  /** Vector only: the aimed value. */
+  guessValue?: number;
+  /** Vector only: what a direct hit salvaged. */
+  salvage?: "shield" | "nova";
 }
 
 /** Live state the HUD reads each frame. Flat and primitive on purpose. */
@@ -170,6 +235,10 @@ export interface GameState {
   nova: NovaResult | null;
   /** Cluster encounter in progress, or null. */
   cluster: ClusterState | null;
+  /** Vector encounter in progress, or null. */
+  vector: VectorState | null;
+  /** Waypoint card in progress, or null. */
+  waypoint: WaypointState | null;
   /** The run's one shield. Gone after the first Cluster miss. */
   shield: boolean;
   /** Outcome of the most recent encounter, while its toast is up. */
@@ -203,6 +272,8 @@ export interface RunEvent {
   streak: number;
   /** Burn events: plasma banked. */
   charge?: number;
+  /** Set on the event that closed a stage: the rating awarded at the waypoint. */
+  rating?: Rating;
 }
 
 /** Everything the share card and the record need. Serialisable. */
@@ -223,6 +294,8 @@ export interface RunSummary {
   /** Burns that banked the full charge. */
   fullBurns: number;
   shieldLost: boolean;
+  /** One rating per waypoint, in order. */
+  ratings: Rating[];
   anomaly: { score: number; correct: boolean; verdict: string } | null;
   outcomes: Outcome[];
   samples: FlightSample[];

@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Exhaust } from "./Exhaust";
+import { loadLambertModel } from "./gltf";
 import { ENCOUNTER, EXHAUST, FX, SHIP, WORLD } from "./Tuning";
 import type { OutcomeKind, QualityTier } from "./types";
 
@@ -72,46 +72,10 @@ export class Ship {
    * fetch leaves the ship hidden, which is preferable to a stand-in shape.
    */
   async loadModel(url: string = SHIP.modelUrl): Promise<void> {
-    let gltf: Awaited<ReturnType<GLTFLoader["loadAsync"]>>;
-    try {
-      gltf = await new GLTFLoader().loadAsync(url);
-    } catch {
-      return;
-    }
-    if (this.disposed) return;
-
-    const model = gltf.scene;
-    const next: Array<{ dispose(): void }> = [];
-
-    model.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      // The README bans PBR on mobile. Lambert with the same atlas keeps the
-      // authored colours at a fraction of the shader cost.
-      const source = object.material as THREE.MeshStandardMaterial;
-      const material = new THREE.MeshLambertMaterial({
-        map: source.map ?? null,
-        color: source.color,
-      });
-      object.material = material;
-      next.push(object.geometry, material);
-      if (source.map) next.push(source.map);
-      source.dispose();
-    });
-
-    const bounds = new THREE.Box3().setFromObject(model);
-    const size = bounds.getSize(new THREE.Vector3());
-    const centre = bounds.getCenter(new THREE.Vector3());
-    const longest = Math.max(size.x, size.y, size.z, 1e-6);
-    const scale = SHIP.modelLength / longest;
-
-    const wrapper = new THREE.Group();
-    model.position.copy(centre).multiplyScalar(-1);
-    wrapper.add(model);
-    wrapper.scale.setScalar(scale);
-    wrapper.rotation.y = SHIP.modelYaw;
-
-    this.disposables = next;
-    this.body.add(wrapper);
+    const loaded = await loadLambertModel(url, SHIP.modelLength, SHIP.modelYaw);
+    if (!loaded || this.disposed) return;
+    this.disposables = loaded.disposables;
+    this.body.add(loaded.group);
     this.body.visible = true;
   }
 

@@ -1,1 +1,3 @@
 spaceship.glb: "Spaceship" by Quaternius (quaternius.com), released under CC0 1.0.
+
+alien.glb: "Flying saucer" by Poly by Google, from the Poly by Google archive, released under CC-BY 4.0.

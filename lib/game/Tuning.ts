@@ -124,6 +124,69 @@ export const CLUSTER = {
   chargeMultiplier: [0, 1, 1.7, 2.6],
 } as const;
 
+export const VECTOR = {
+  /** Thrust budget per vector, by how many vectors have been flown this run. */
+  thrustSeconds: [20, 16],
+  /** Alien hold Z, by vector number: it comes in closer the second time. */
+  holdFar: [-85, -65],
+  /** Normalised error at or under which a lock is a DIRECT HIT. */
+  perfectBand: 0.15,
+  /** Strength of a glancing hit at the edge of tolerance (1.0 at the perfect band). */
+  glanceFloor: 0.4,
+  /** Seconds the beam takes to reach the alien after lock. */
+  beamSeconds: 0.35,
+  /** Fraction of the slider a NOVA scan leaves open around the truth. */
+  novaWindow: 0.34,
+  /** Slow drift of the cloaked alien, so its rest position is not the answer. */
+  driftAmplitude: 6,
+  driftRate: 0.23,
+} as const;
+
+export const WAYPOINT = {
+  seconds: 4.5,
+  /** When the rating stamps in, and when the "entering" line lands. */
+  ratingAt: 0.8,
+  enteringAt: 2.8,
+  /** Ambient field density during and after the waypoint, 0..1. */
+  fieldDensity: 0.3,
+  /** Plasma thresholds for a rating, checked from the top. S also needs the shield. */
+  ratings: { S: 6, A: 4, B: 2 },
+} as const;
+
+export const LANDMARK = {
+  /** Distance in front of the camera; must be < CAMERA.far. */
+  depth: 300,
+  /** Off to this side (camera X) and above the corridor. Portrait frames are
+   *  narrow, so this sits the disc half in, half out of the right edge. */
+  offsetX: 105,
+  offsetY: 70,
+  /** The sphere radius the model is normalised to. */
+  radius: 55,
+  /** Seconds to rise into view, and to sink out at the next stage. */
+  riseSeconds: 4,
+  sinkSeconds: 6,
+  /** Slow spin, radians per second. */
+  spin: 0.02,
+  moonUrl: "/models/moon.glb",
+  planetUrl: "/models/planet.glb",
+} as const;
+
+export const ALIEN = {
+  modelUrl: "/models/alien.glb",
+  modelLength: 5.2,
+  /** Where the warp-in starts on Z, and how long the run to station takes. */
+  warpFromZ: -400,
+  warpSeconds: 1.6,
+  /** Cloak shimmer: opacity floor and rate. */
+  cloakOpacity: 0.28,
+  cloakRate: 4.5,
+  /** Seconds to decloak at the truth after lock. */
+  decloakSeconds: 0.3,
+  /** Return fire: seconds for the red beam, and the warp-out run. */
+  returnFireSeconds: 0.5,
+  warpOutSeconds: 1.2,
+} as const;
+
 export const NOVA = {
   perRun: 2,
   /** Thrust spent on a scan, as a fraction of full thrust. */
@@ -156,6 +219,16 @@ export const FX = {
     /** Seconds the surge holds before it starts to decay. */
     holdSeconds: 2,
   },
+  /** Vector hits and the alien's return fire. */
+  vector: {
+    directShake: 1.0,
+    glanceShake: 0.45,
+    returnFireShake: 1.3,
+    /** Salvage capsule flight time to the ship. */
+    salvageSeconds: 0.6,
+  },
+  /** The waypoint: rating stamp shake and the alien warp flash. */
+  waypoint: { ratingShake: 0.6, warpFlash: 1.2 },
   /** Collecting a plasma pod on a correct cluster pick. */
   collect: { shake: 0.15, exhaustPulse: 0.8, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
   /** Ship tumble on a collision: full rolls and the seconds they take. */

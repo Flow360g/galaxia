@@ -4,12 +4,13 @@ A daily space run. Seven encounters, each an asteroid; your score is the
 distance you travel. Correct answers accelerate you. Wrong answers do not
 score zero, they physically kill your momentum.
 
-**Phase 4: the Cluster.** The first two encounters are push-your-luck: six
-lanes, three right, charge the reactor with each correct pick and BURN to bank
-it, or keep picking for a bigger burn. One wrong lane is a collision and the
-charge is gone. On top of Phase 3: continuous flight, a real velocity model,
-Boost, NOVA scans, one model-scored AI Anomaly per run, and a share card that
-draws the whole flight as a story.
+**Phase 5: stages, the Waypoint and Vector.** The run is three stages. The
+Cluster Belt (two push-your-luck Clusters), then a waypoint that rates your
+stage as the moon rises and an alien scout warps in, then Alien Contact (two
+Vectors: aim a numeric answer on a slider and fire), then the Deep Field
+(Lock-On MCQs and the Anomaly). On top of everything before: continuous
+flight, a real velocity model, Boost, NOVA scans, one model-scored AI Anomaly
+per run, and a share card that draws the whole flight as a story.
 
 ## Running it
 
@@ -67,6 +68,22 @@ asteroid called -> thrust drains while you think -> answer locks -> the rock str
   wager. Thrust out with plasma unbanked vents it as a timeout.
 - **Shield.** One per run, shown in the top readout. A Cluster miss takes it.
   With the shield gone, every later wrong answer is a wreck, not a collision.
+  A direct hit on a Vector salvages it back.
+- **Waypoint.** Between stages the run pauses for about four seconds: the
+  stage you just flew gets a rating (S needs all six plasma and the shield;
+  A, B, C by plasma banked), the landmark for the next stage rises off one
+  shoulder, and the belt thins out. Before Alien Contact the alien scout
+  warps in and cloaks ahead of you.
+- **Vector.** Encounters three and four. A numeric question with a slider.
+  Drag to aim: the ship slides across the corridor to match and a faint aim
+  line points ahead. LOCK fires the beam and the alien decloaks at the truth.
+  Error is measured against the question's authored tolerance (in slider
+  space when the slider is log-scaled). Within 15% of tolerance is a DIRECT
+  HIT: slingshot burst, the alien shatters and a salvage capsule flies back,
+  restoring the shield or, if it is up, adding a NOVA. Within tolerance is a
+  GLANCING hit with a graded burst. Outside it the alien returns fire: a
+  collision, or a wreck with the shield down. NOVA narrows the slider to a
+  window around the truth. Boost is off on Vectors.
 - **Boost.** Arm it before locking. Confidence, as a button.
 - **NOVA.** Two per run, one tap, costs thrust. Rules out one wrong option,
   reveals an authored clue, or lights the two most plausible options. On a
@@ -142,12 +159,13 @@ canvas inside a container div (a React-supplied canvas would be poisoned by
 ```
 app/                  routes: landing, /play, /api/anomaly, global styles
 components/           GameCanvas (mount boundary), Hud, ShareCard, BestRun, DebugStats
-lib/game/             Engine, Run, Flight, nova, anomaly, share, storage,
-                      Ship, EncounterAsteroid, ClusterField, Debris, Shield, Exhaust, Camera,
+lib/game/             Engine, Run, Flight, nova, anomaly, share, storage, gltf,
+                      Ship, EncounterAsteroid, ClusterField, Alien, Beam, Landmark,
+                      Salvage, Debris, Shield, Exhaust, Camera,
                       Backdrop, AsteroidField, Starfield, quality, Tuning
 lib/content/          round loader
-content/rounds/       one JSON file per daily round (2 cluster + 4 mcq + 1 anomaly)
-public/               spaceship.glb, backdrop, anomaly images
+content/rounds/       one JSON file per daily round (2 cluster + 2 vector + 2 mcq + 1 anomaly)
+public/               spaceship.glb, alien.glb, backdrop, anomaly images
 e2e/                  Playwright full-run test
 ```
 
@@ -158,8 +176,18 @@ clusters: `options` (exactly six), `answers` (three distinct indices) and a
 `fact`. Pick sets where all three are unarguably right and all three wrong
 ones are unarguably wrong; one debatable lane spoils the whole encounter. The
 loader validates the shape at import so a bad round fails the build, not the
-run. MCQ entries carry `options`, `answer` (index), an optional `hint` (what
-a NOVA clue reveals) and a `fact`. The anomaly entry carries `kind` (`open` or `visual`), an optional
+run. Vectors carry a numeric `answer`, `min`, `max`, an optional `unit`, an
+optional `log` flag for wide ranges (needs `min > 0`), a `tolerance` in
+answer units and a `fact`. MCQ entries carry `options`, `answer` (index), an
+optional `hint` (what a NOVA clue reveals) and a `fact`. The round's `stages`
+array names each stage, the index of its last encounter, and the landmark
+that rises at the waypoint closing it (`moon` or `planet`). The rating is
+built for the Cluster stage (plasma and shield); a second waypoint before the
+Anomaly with a planet is a later step and needs its own rating rule.
+
+Models live in `public/models`. `alien.glb` and, when present, `moon.glb` and
+`planet.glb` load through `lib/game/gltf.ts`; a missing or failed model falls
+back to a flat-shaded stand-in so the run never stalls on an asset. The anomaly entry carries `kind` (`open` or `visual`), an optional
 `image` under `/public`, `imageAlt`, a `rubric` the model marks against
 (never shown), `accept` keywords for the offline scorer, and `answerText`.
 

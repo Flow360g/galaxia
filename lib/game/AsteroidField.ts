@@ -39,6 +39,8 @@ export class AsteroidField {
   readonly mesh: THREE.InstancedMesh;
 
   private readonly instances: Instance[] = [];
+  /** Fraction of instances drawn. The rest are scaled to nothing, no realloc. */
+  private density = 1;
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.MeshLambertMaterial;
 
@@ -124,13 +126,19 @@ export class AsteroidField {
     this.writeMatrices();
   }
 
+  /** Thin the belt: 0..1 of the population stays visible. */
+  setDensity(density: number): void {
+    this.density = density < 0 ? 0 : density > 1 ? 1 : density;
+  }
+
   private writeMatrices(): void {
+    const visible = Math.round(this.instances.length * this.density);
     for (let i = 0; i < this.instances.length; i += 1) {
       const instance = this.instances[i]!;
       scratchPosition.set(instance.x, instance.y, instance.z);
       scratchEuler.set(instance.rotX, instance.rotY, instance.rotZ);
       scratchQuaternion.setFromEuler(scratchEuler);
-      scratchScale.setScalar(instance.scale);
+      scratchScale.setScalar(i < visible ? instance.scale : 0);
       scratchMatrix.compose(
         scratchPosition,
         scratchQuaternion,

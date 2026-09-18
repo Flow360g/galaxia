@@ -1,16 +1,20 @@
 import * as THREE from "three";
 import { requestAnomalyScore } from "./anomaly";
+import { Alien } from "./Alien";
 import { AsteroidField } from "./AsteroidField";
+import { Beam } from "./Beam";
 import { Backdrop } from "./Backdrop";
 import { ChaseCamera } from "./Camera";
 import { ClusterField } from "./ClusterField";
 import { Debris } from "./Debris";
 import { EncounterAsteroid } from "./EncounterAsteroid";
+import { Landmark } from "./Landmark";
 import { Run } from "./Run";
+import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
-import { CLUSTER, COLOR, ENCOUNTER, FX, PERF, WORLD } from "./Tuning";
+import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import type {
   DebugInfo,
@@ -20,6 +24,7 @@ import type {
   Question,
   Round,
   RunSummary,
+  WaypointState,
 } from "./types";
 
 export interface EngineOptions {
@@ -58,6 +63,12 @@ export class Engine {
   private readonly stars: Starfield;
   private readonly rock: EncounterAsteroid;
   private readonly cluster: ClusterField;
+  private readonly alien: Alien;
+  private readonly beam: Beam;
+  private readonly returnBeam: Beam;
+  private readonly aimLine: Beam;
+  private readonly landmark: Landmark;
+  private readonly salvage: Salvage;
   private readonly debris: Debris;
   private readonly shield: Shield;
   private readonly backdrop: Backdrop;
@@ -83,6 +94,18 @@ export class Engine {
   private surgeHold = 0;
   /** The current encounter is a cluster; the lone rock stays idle. */
   private inCluster = false;
+  /** The current encounter is a vector; the alien is the target. */
+  private inVector = false;
+  private vectorsFlown = 0;
+  /** Where the aim line points while the player drags. */
+  private aimX = 0;
+  /** Field density, current and target, so the belt thins smoothly. */
+  private density = 1;
+  private densityTarget = 1;
+  /** The waypoint in progress, and which of its beats have fired. */
+  private waypoint: WaypointState | null = null;
+  private waypointBeat = 0;
+  private readonly scratchB = new THREE.Vector3();
 
   private fpsAccumulator = 0;
   private fpsFrames = 0;
@@ -146,6 +169,20 @@ export class Engine {
     this.cluster = new ClusterField(random);
     this.scene.add(this.cluster.group);
 
+    this.alien = new Alien(random);
+    this.scene.add(this.alien.group);
+
+    this.beam = new Beam(0.35);
+    this.returnBeam = new Beam(0.5);
+    this.aimLine = new Beam(0.12);
+    this.scene.add(this.beam.group, this.returnBeam.group, this.aimLine.group);
+
+    this.landmark = new Landmark();
+    this.chase.camera.add(this.landmark.group);
+
+    this.salvage = new Salvage();
+    this.scene.add(this.salvage.mesh);
+
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
 
@@ -155,6 +192,9 @@ export class Engine {
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
         onPick: (lane, correct) => this.onPick(lane, correct),
         onCollect: (lane, charge) => this.onCollect(lane, charge),
+        onAim: (x) => this.onAim(x),
+        onVectorLock: (outcome, aimX, truthX) => this.onVectorLock(outcome, aimX, truthX),
+        onWaypoint: (info) => this.onWaypoint(info),
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
         onFinished: () => this.endRun(),
@@ -197,6 +237,12 @@ export class Engine {
     this.backdrop.dispose();
     this.rock.dispose();
     this.cluster.dispose();
+    this.alien.dispose();
+    this.beam.dispose();
+    this.returnBeam.dispose();
+    this.aimLine.dispose();
+    this.landmark.dispose();
+    this.salvage.dispose();
     this.debris.dispose();
 
     this.scene.traverse((object) => {
@@ -233,6 +279,16 @@ export class Engine {
     this.run.burn();
   }
 
+  /** Vector: move the aim, 0..1 across the slider. */
+  aim(t: number): void {
+    this.run.aim(t);
+  }
+
+  /** Vector: fire on the current aim. */
+  lockVector(): void {
+    this.run.lockVector();
+  }
+
   useNova(): void {
     this.run.useNova();
   }
@@ -252,8 +308,53 @@ export class Engine {
   private onEncounterStart(index: number, question: Question): void {
     this.side = index % 2 === 0 ? 1 : -1;
     this.inCluster = question.type === "cluster";
-    if (this.inCluster) this.cluster.spawn();
-    else this.rock.spawn(question.type === "anomaly");
+    const wasVector = this.inVector;
+    this.inVector = question.type === "vector";
+    this.waypoint = null;
+
+    if (this.inCluster) {
+      this.cluster.spawn();
+    } else if (this.inVector) {
+      const slot = Math.min(this.vectorsFlown, VECTOR.holdFar.length - 1);
+      this.vectorsFlown += 1;
+      this.alien.station(VECTOR.holdFar[slot]!);
+    } else {
+      this.rock.spawn(question.type === "anomaly");
+    }
+
+    // Leaving Stage 2: the alien leaves and the landmark sinks away.
+    if (wasVector && !this.inVector) {
+      this.alien.warpOut();
+      this.landmark.sink();
+      this.densityTarget = 1;
+    }
+    this.aimLine.hide();
+    this.ship.recentre();
+  }
+
+  private onAim(x: number): void {
+    this.aimX = x;
+    this.ship.holdLane(x);
+  }
+
+  private onVectorLock(outcome: Outcome, aimX: number, truthX: number): void {
+    this.alien.decloak(truthX);
+    this.aimLine.hide();
+    // Fire along the aim. The beam lands at the alien's depth whether or not
+    // it is on target; contact() decides what that meant.
+    this.alien.target(this.scratchB);
+    this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+    this.scratchB.x = aimX;
+    this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds);
+    void outcome;
+  }
+
+  private onWaypoint(info: WaypointState): void {
+    this.waypoint = info;
+    this.waypointBeat = 0;
+    this.densityTarget = WAYPOINT.fieldDensity;
+    const stage = this.options.round.stages?.find((s) => s.name === info.stage);
+    this.landmark.rise(stage?.landmark ?? "moon", 1);
     this.ship.recentre();
   }
 
@@ -270,6 +371,12 @@ export class Engine {
   }
 
   private onLock(outcome: Outcome): void {
+    if (this.inVector) {
+      // The beam is already in flight from onVectorLock. A timeout has no
+      // beam: the alien simply fires first.
+      if (outcome.timedOut) this.alien.decloak(this.alien.group.position.x);
+      return;
+    }
     if (this.inCluster) {
       if (outcome.kind === "burn") {
         this.cluster.stream();
@@ -288,6 +395,12 @@ export class Engine {
   private onContact(index: number, outcome: Outcome): void {
     const kind = outcome.kind;
     this.chase.shake(FX.shake[kind]);
+
+    if (this.inVector) {
+      this.onVectorContact(outcome);
+      this.options.onOutcome?.(outcome, index);
+      return;
+    }
 
     if (kind === "burn") {
       const full = (outcome.charge ?? 0) >= CLUSTER.chargeMultiplier.length - 1;
@@ -336,6 +449,35 @@ export class Engine {
     }
 
     this.options.onOutcome?.(outcome, index);
+  }
+
+  private onVectorContact(outcome: Outcome): void {
+    const kind = outcome.kind;
+    this.alien.target(this.scratchB);
+    if (kind === "slingshot") {
+      this.alien.hit("direct");
+      this.debris.burst(this.scratchB, 1.4, COLOR.anomaly);
+      this.chase.burst(FX.pullback.slingshot, FX.fovKick.slingshot);
+      this.chase.shake(FX.vector.directShake);
+      this.ship.pulseExhaust(FX.exhaustPulse.slingshot);
+      this.streakSurge = FX.streakSurge;
+      this.scratch.copy(this.ship.group.position);
+      this.salvage.launch(this.scratchB, this.scratch);
+    } else if (kind === "thread") {
+      this.alien.hit("glance");
+      this.debris.burst(this.scratchB, 0.5, COLOR.anomaly);
+      this.chase.burst(FX.pullback.thread, FX.fovKick.thread);
+      this.chase.shake(FX.vector.glanceShake);
+      this.ship.pulseExhaust(FX.exhaustPulse.thread);
+    } else {
+      // Miss or timeout: the alien fires back.
+      this.alien.returnFire();
+      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+      this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
+      this.chase.shake(FX.vector.returnFireShake);
+      this.shield.flash(kind === "wreck" ? 1.4 : 1, COLOR.neg);
+      this.ship.impact(kind, this.side);
+    }
   }
 
   private endRun(): void {
@@ -406,8 +548,41 @@ export class Engine {
     const open = phase === "approach" || phase === "collecting";
     if (open) {
       if (this.inCluster) this.cluster.setLoom(1 - this.run.thrust);
-      else this.rock.setLoom(1 - this.run.thrust);
+      else if (!this.inVector) this.rock.setLoom(1 - this.run.thrust);
     }
+
+    // The aim line: from the nose to the alien's depth, only while aiming.
+    if (this.inVector && phase === "approach") {
+      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+      this.scratchB.set(this.aimX, ENCOUNTER.offsetY, this.alien.group.position.z);
+      this.aimLine.hold(this.scratch, this.scratchB, COLOR.cyan, 0.16);
+    } else if (phase !== "approach") {
+      this.aimLine.hide();
+    }
+
+    // Waypoint beats: the rating stamp shakes the camera; the alien warps in
+    // as the "entering" line lands.
+    if (phase === "waypoint" && this.waypoint) {
+      const t = this.waypoint.t;
+      if (this.waypointBeat < 1 && t >= WAYPOINT.ratingAt) {
+        this.waypointBeat = 1;
+        this.chase.shake(FX.waypoint.ratingShake);
+      }
+      if (this.waypointBeat < 2 && t >= WAYPOINT.enteringAt) {
+        this.waypointBeat = 2;
+        this.alien.warpIn(VECTOR.holdFar[0]!);
+        this.shield.flash(FX.waypoint.warpFlash, COLOR.anomaly);
+        this.chase.shake(0.4);
+      }
+    }
+
+    this.density += (this.densityTarget - this.density) * (1 - Math.exp(-1.2 * dt));
+    this.field.setDensity(this.density);
+    this.alien.update(dt);
+    this.beam.update(dt);
+    this.returnBeam.update(dt);
+    this.landmark.update(dt);
+    if (this.salvage.update(dt)) this.shield.flash(0.9, COLOR.cyan);
 
     this.ship.update(dt, ratio, open ? this.run.thrust : 1);
     this.shield.update(dt);
@@ -456,6 +631,9 @@ export class Engine {
     this.resize();
   }
 }
+
+/** Z of the ship's nose, where beams leave from. */
+const SHIP_NOSE_Z = -2.6;
 
 /** Streaks start showing a little way above cruise and saturate near the top. */
 function streakIntensity(ratio: number): number {

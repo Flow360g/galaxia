@@ -1,7 +1,7 @@
 import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
-import { resolveClusterNova, resolveNova } from "./nova";
-import { CLUSTER, ENCOUNTER, NOVA } from "./Tuning";
+import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
+import { CLUSTER, ENCOUNTER, NOVA, VECTOR, WAYPOINT } from "./Tuning";
 import type {
   AnomalyQuestion,
   AnomalyVerdict,
@@ -13,9 +13,12 @@ import type {
   Outcome,
   Phase,
   Question,
+  Rating,
   Round,
   RunEvent,
   RunSummary,
+  VectorState,
+  WaypointState,
 } from "./types";
 
 /**
@@ -40,6 +43,12 @@ export interface RunHooks {
   onPick(lane: number, correct: boolean): void;
   /** Cluster: the pick was right. The pod is collected; `charge` is the new total. */
   onCollect(lane: number, charge: number): void;
+  /** Vector: the aim moved. `x` is corridor X for the ship to hold. */
+  onAim(x: number): void;
+  /** Vector: locked. The alien decloaks at `truthX`; the beam fires along the aim. */
+  onVectorLock(outcome: Outcome, aimX: number, truthX: number): void;
+  /** A stage ended. Play the card; the next encounter starts after `WAYPOINT.seconds`. */
+  onWaypoint(info: WaypointState): void;
   /** The answer locked. The rock strikes; the ship reacts to `outcome.kind`. */
   onLock(index: number, outcome: Outcome): void;
   /** Contact. Velocity has just changed; play the burst or the impact. */
@@ -85,6 +94,14 @@ export class Run {
   private shieldLost = false;
   private cluster: ClusterProgress | null = null;
   private pendingPick: { lane: number; correct: boolean } | null = null;
+  /** Vector aim in slider space, and the window a NOVA scan left open. */
+  private vectorT = 0.5;
+  private vectorWindow: [number, number] = [0, 1];
+  private vectorsFlown = 0;
+  private waypoint: WaypointState | null = null;
+  /** Strength of the pending vector lock's burst (glancing hits are partial). */
+  private vectorStrength = 1;
+  private readonly ratings: Rating[] = [];
   /** Bumped on every lock so a late scan result cannot land on a later rock. */
   private scanToken = 0;
 
@@ -118,6 +135,8 @@ export class Run {
       novaLeft: this.novaLeft,
       nova: this.nova,
       cluster: this.clusterState(),
+      vector: this.vectorState(),
+      waypoint: this.phase === "waypoint" ? this.waypoint : null,
       shield: this.shield,
       outcome: this.phase === "aftermath" || this.phase === "finished" ? this.outcome : null,
       running: true,
@@ -134,6 +153,21 @@ export class Run {
       projectedNext: this.burnImpulse(cluster.charge + 1),
       eliminated: cluster.eliminated,
     };
+  }
+
+  private vectorState(): VectorState | null {
+    const question = this.question;
+    if (!question || question.type !== "vector" || !this.answering) return null;
+    return {
+      t: this.vectorT,
+      value: fromSlider(question, this.vectorT),
+      window: this.vectorWindow,
+    };
+  }
+
+  /** Corridor X for a slider position: left edge to right edge. */
+  static aimX(t: number): number {
+    return -CORRIDOR_AIM + 2 * CORRIDOR_AIM * (t < 0 ? 0 : t > 1 ? 1 : t);
   }
 
   /** km/h a burn at `charge` would add with the thrust left right now. */
@@ -208,8 +242,69 @@ export class Run {
     });
   }
 
+  /** Vector: move the aim. Clamped to the NOVA window. Never changes phase. */
+  aim(t: number): void {
+    const question = this.question;
+    if (!this.answering || !question || question.type !== "vector") return;
+    const [lo, hi] = this.vectorWindow;
+    this.vectorT = Math.min(hi, Math.max(lo, Number.isFinite(t) ? t : this.vectorT));
+    this.hooks.onAim(Run.aimX(this.vectorT));
+  }
+
+  /** Vector: fire on the current aim. */
+  lockVector(): void {
+    const question = this.question;
+    if (!this.answering || !question || question.type !== "vector") return;
+
+    const guess = fromSlider(question, this.vectorT);
+    const truthT = toSlider(question, question.answer);
+    // In slider space when log-scaled, so a tolerance authored in answer
+    // units still means "this far either side of the truth on the slider".
+    const error = question.log
+      ? Math.abs(this.vectorT - truthT) /
+        Math.max(toSlider(question, question.answer + question.tolerance) - truthT, 1e-6)
+      : Math.abs(guess - question.answer) / Math.max(question.tolerance, 1e-6);
+
+    let kind: Outcome["kind"];
+    let strength = 1;
+    let salvage: Outcome["salvage"];
+    if (error <= VECTOR.perfectBand) {
+      kind = "slingshot";
+      salvage = this.shield ? "nova" : "shield";
+    } else if (error <= 1) {
+      kind = "thread";
+      const across = (error - VECTOR.perfectBand) / (1 - VECTOR.perfectBand);
+      strength = 1 - across * (1 - VECTOR.glanceFloor);
+    } else {
+      kind = outcomeKind(false, false, false, this.shield);
+    }
+
+    const outcome: Outcome = {
+      kind,
+      correct: error <= 1,
+      boosted: false,
+      timedOut: false,
+      thrustLeft: this.thrust,
+      velocityBefore: this.flight.velocity,
+      velocityAfter: this.flight.velocity,
+      streakBefore: this.flight.streak,
+      streakAfter: this.flight.streak,
+      chosen: null,
+      guessText: formatValue(guess, question.unit),
+      answerText: formatValue(question.answer, question.unit),
+      error,
+      guessValue: guess,
+      ...(salvage ? { salvage } : {}),
+    };
+    this.vectorStrength = strength;
+    this.lock(outcome);
+    this.hooks.onVectorLock(outcome, Run.aimX(this.vectorT), Run.aimX(truthT));
+  }
+
   toggleBoost(): void {
-    if (!this.answering || this.question?.type === "cluster") return;
+    if (!this.answering) return;
+    const type = this.question?.type;
+    if (type === "cluster" || type === "vector") return;
     this.boostArmed = !this.boostArmed;
   }
 
@@ -227,6 +322,11 @@ export class Run {
       const cluster = this.cluster;
       this.nova = resolveClusterNova(question, cluster?.picked ?? [], this.random);
       if (cluster) cluster.eliminated = [...this.nova.eliminated];
+    } else if (question.type === "vector") {
+      const scan = resolveVectorNova(question, this.random);
+      this.vectorWindow = scan.window;
+      this.nova = { kind: "narrow", eliminated: [], highlighted: [], clue: null };
+      this.aim(this.vectorT);
     } else {
       this.nova = resolveNova(question, this.random);
     }
@@ -333,6 +433,14 @@ export class Run {
 
       case "aftermath":
         this.timer -= dt;
+        if (this.timer <= 0) {
+          if (!this.startWaypoint()) this.startEncounter(this.index + 1);
+        }
+        break;
+
+      case "waypoint":
+        this.timer -= dt;
+        if (this.waypoint) this.waypoint.t = WAYPOINT.seconds - this.timer;
         if (this.timer <= 0) this.startEncounter(this.index + 1);
         break;
 
@@ -342,6 +450,37 @@ export class Run {
   }
 
   // -------------------------------------------------------------- internals
+
+  /**
+   * If a stage ends on the encounter just flown, and another follows, play
+   * the waypoint. Returns false when the run should just carry on.
+   */
+  private startWaypoint(): boolean {
+    const stages = this.round.stages ?? [];
+    const stageIndex = stages.findIndex((stage) => stage.after === this.index);
+    const stage = stages[stageIndex];
+    const next = stages[stageIndex + 1];
+    if (!stage || !next || !this.round.questions[this.index + 1]) return false;
+
+    const plasma = this.outcomes.reduce((sum, o) => sum + (o.kind === "burn" ? (o.charge ?? 0) : 0), 0);
+    const rating = rateStage(plasma, this.shield);
+    this.ratings.push(rating);
+    const closing = this.events[this.events.length - 1];
+    if (closing) closing.rating = rating;
+    this.waypoint = {
+      stage: stage.name,
+      next: next.name,
+      rating,
+      plasma,
+      shield: this.shield,
+      peakVelocity: this.flight.peakVelocity,
+      t: 0,
+    };
+    this.phase = "waypoint";
+    this.timer = WAYPOINT.seconds;
+    this.hooks.onWaypoint(this.waypoint);
+    return true;
+  }
 
   private startEncounter(index: number): void {
     const question = this.round.questions[index];
@@ -360,14 +499,22 @@ export class Run {
     this.struck = false;
     this.cluster =
       question.type === "cluster" ? { picked: [], charge: 0, eliminated: [] } : null;
+    this.vectorT = 0.5;
+    this.vectorWindow = [0, 1];
+    this.vectorStrength = 1;
+    const vectorSlot = Math.min(this.vectorsFlown, VECTOR.thrustSeconds.length - 1);
+    if (question.type === "vector") this.vectorsFlown += 1;
     this.thrustSeconds =
       question.type === "anomaly"
         ? ENCOUNTER.anomalyThrustSeconds
         : question.type === "cluster"
           ? CLUSTER.thrustSeconds
-          : ENCOUNTER.thrustSeconds;
+          : question.type === "vector"
+            ? VECTOR.thrustSeconds[vectorSlot]!
+            : ENCOUNTER.thrustSeconds;
 
     this.hooks.onEncounterStart(index, question);
+    if (question.type === "vector") this.hooks.onAim(Run.aimX(this.vectorT));
   }
 
   /** Cluster: the pick's verdict lands. Collect the pod, or hit the rock. */
@@ -428,7 +575,9 @@ export class Run {
         ? (question.options[question.answer] ?? "")
         : question.type === "cluster"
           ? clusterAnswerText(question)
-          : question.answerText;
+          : question.type === "vector"
+            ? formatValue(question.answer, question.unit)
+            : question.answerText;
 
     this.lock({
       kind: "timeout",
@@ -483,7 +632,7 @@ export class Run {
     if (!outcome) return;
     this.struck = true;
 
-    const strength = outcome.anomalyScore ?? 1;
+    const strength = outcome.anomalyScore ?? (outcome.error !== undefined ? this.vectorStrength : 1);
     const multiplier =
       outcome.kind === "burn" ? (CLUSTER.chargeMultiplier[outcome.charge ?? 0] ?? 0) : 1;
     outcome.velocityBefore = this.flight.velocity;
@@ -494,6 +643,13 @@ export class Run {
       multiplier,
     );
     outcome.streakAfter = this.flight.streak;
+
+    // Salvage lands with the burst, so the HUD change and the FX line up.
+    if (outcome.salvage === "shield") {
+      this.shield = true;
+    } else if (outcome.salvage === "nova") {
+      this.novaLeft += 1;
+    }
 
     this.outcome = outcome;
     this.outcomes.push(outcome);
@@ -555,6 +711,7 @@ export class Run {
       fullBurns: this.outcomes.filter((o) => o.kind === "burn" && (o.charge ?? 0) >= fullCharge)
         .length,
       shieldLost: this.shieldLost,
+      ratings: [...this.ratings],
       anomaly: anomaly
         ? {
             score: anomaly.anomalyScore ?? 0,
@@ -568,6 +725,24 @@ export class Run {
       durationSeconds: this.elapsed,
     };
   }
+}
+
+/** How far either side of centre the aim can steer the ship. */
+const CORRIDOR_AIM = 11;
+
+/** Stage rating from plasma banked. S also needs the shield intact. */
+export function rateStage(plasma: number, shield: boolean): Rating {
+  if (plasma >= WAYPOINT.ratings.S && shield) return "S";
+  if (plasma >= WAYPOINT.ratings.A) return "A";
+  if (plasma >= WAYPOINT.ratings.B) return "B";
+  return "C";
+}
+
+/** A number with grouping and its unit, for toasts and the share record. */
+export function formatValue(value: number, unit: string | undefined): string {
+  const rounded = Math.abs(value) >= 100 ? Math.round(value) : Math.round(value * 10) / 10;
+  const text = rounded.toLocaleString("en-AU");
+  return unit ? `${text} ${unit}` : text;
 }
 
 /** The three right answers, for the toast and the share record. */

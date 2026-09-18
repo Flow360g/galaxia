@@ -7,9 +7,14 @@ import type {
   GameState,
   Outcome,
   OutcomeKind,
+  Rating,
   Round,
+  VectorQuestion,
+  VectorState,
+  WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER } from "@/lib/game/Tuning";
+import { CLUSTER, WAYPOINT } from "@/lib/game/Tuning";
+import { formatValue } from "@/lib/game/Run";
 import { formatDelta, formatDistance, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
 
@@ -19,6 +24,8 @@ interface Props {
   onAnswer: (option: number) => void;
   onPick: (lane: number) => void;
   onBurn: () => void;
+  onAim: (t: number) => void;
+  onLockVector: () => void;
   onToggleBoost: () => void;
   onNova: () => void;
   onAnomaly: (text: string) => void;
@@ -57,6 +64,8 @@ export function Hud({
   onAnswer,
   onPick,
   onBurn,
+  onAim,
+  onLockVector,
   onToggleBoost,
   onNova,
   onAnomaly,
@@ -70,8 +79,10 @@ export function Hud({
   const total = round.questions.length;
   const outcome = state?.outcome ?? null;
   const isCluster = question?.type === "cluster";
+  const isVector = question?.type === "vector";
+  const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
 
-  useKeyboard({ state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova });
+  useKeyboard({ state, question, onAnswer, onPick, onBurn, onAim, onLockVector, onToggleBoost, onNova });
   // The overlay's CSS animation ends invisible, so it can simply live as long
   // as the full-burn outcome is current; no timer needed.
   const warp = outcome?.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
@@ -140,7 +151,7 @@ export function Hud({
           <section
             className={`${styles.panel} ${question.type === "anomaly" ? styles.panelAnomaly : ""} ${
               isCluster ? styles.panelCluster : ""
-            }`}
+            } ${isVector ? styles.panelVector : ""}`}
             data-testid="question"
           >
             {question.type === "anomaly" ? (
@@ -149,9 +160,21 @@ export function Hud({
             {isCluster ? (
               <span className={`${styles.clusterTag} arcade`}>CLUSTER · 3 OF 6</span>
             ) : null}
+            {isVector ? (
+              <span className={`${styles.vectorTag} arcade`}>VECTOR · FIRING SOLUTION</span>
+            ) : null}
             <p className={styles.prompt}>{question.prompt}</p>
 
-            {question.type === "cluster" ? (
+            {question.type === "vector" ? (
+              <VectorPanel
+                question={question}
+                vector={state?.vector ?? null}
+                answering={answering}
+                narrowed={!!state?.nova}
+                onAim={onAim}
+                onLock={onLockVector}
+              />
+            ) : question.type === "cluster" ? (
               <ClusterPanel
                 question={question}
                 cluster={state?.cluster ?? null}
@@ -217,7 +240,7 @@ export function Hud({
               >
                 NOVA <span className={styles.pips}>{"◆".repeat(state?.novaLeft ?? 0)}</span>
               </button>
-              {isCluster ? null : (
+              {isCluster || isVector ? null : (
                 <button
                   type="button"
                   className={`${styles.tool} ${styles.boost} ${state?.boostArmed ? styles.boostOn : ""} arcade`}
@@ -234,6 +257,8 @@ export function Hud({
         ) : null}
 
         {outcome ? <OutcomeToast outcome={outcome} fact={question?.fact} /> : null}
+
+        {waypoint ? <WaypointCard waypoint={waypoint} /> : null}
 
         {state?.phase === "intro" ? (
           <p className={`${styles.hint} arcade`}>Answer fast. Thrust is burning.</p>
@@ -331,10 +356,160 @@ function ClusterPanel({
   );
 }
 
+/**
+ * The vector panel: aim on a slider, the ship follows, LOCK fires. The value
+ * is shown live in answer units; the track shows the window a NOVA scan
+ * left open.
+ */
+function VectorPanel({
+  question,
+  vector,
+  answering,
+  narrowed,
+  onAim,
+  onLock,
+}: {
+  question: VectorQuestion;
+  vector: VectorState | null;
+  answering: boolean;
+  narrowed: boolean;
+  onAim: (t: number) => void;
+  onLock: () => void;
+}) {
+  const t = vector?.t ?? 0.5;
+  const [lo, hi] = vector?.window ?? [0, 1];
+  const value = vector?.value ?? (question.min + question.max) / 2;
+  const nudge = (direction: -1 | 1) => onAim(t + direction * NUDGE);
+
+  return (
+    <div className={styles.vector}>
+      <div className={styles.aimReadout}>
+        <span className={`${styles.aimLabel} arcade`}>AIM</span>
+        <span className={`${styles.aimValue} arcade`} data-testid="aim-value">
+          {formatValue(value, question.unit)}
+        </span>
+        {narrowed ? <span className={`${styles.aimNova} arcade`}>NOVA: WINDOW</span> : null}
+      </div>
+      <div className={styles.sliderRow}>
+        <button
+          type="button"
+          className={`${styles.nudge} arcade`}
+          disabled={!answering}
+          onClick={() => nudge(-1)}
+          aria-label="Aim lower"
+        >
+          {"\u2039"}
+        </button>
+        <div className={styles.sliderTrack}>
+          <div
+            className={styles.sliderWindow}
+            style={{ left: `${lo * 100}%`, width: `${(hi - lo) * 100}%` }}
+          />
+          <input
+            className={styles.slider}
+            type="range"
+            min={0}
+            max={1000}
+            step={1}
+            value={Math.round(t * 1000)}
+            disabled={!answering}
+            onChange={(event) => onAim(Number(event.target.value) / 1000)}
+            aria-label={`Aim, ${formatValue(value, question.unit)}`}
+            data-testid="aim"
+          />
+        </div>
+        <button
+          type="button"
+          className={`${styles.nudge} arcade`}
+          disabled={!answering}
+          onClick={() => nudge(1)}
+          aria-label="Aim higher"
+        >
+          {"\u203a"}
+        </button>
+      </div>
+      <div className={styles.sliderEnds}>
+        <span>{formatValue(question.min, question.unit)}</span>
+        <span>{formatValue(question.max, question.unit)}</span>
+      </div>
+      <button
+        type="button"
+        className={`${styles.lock} arcade`}
+        disabled={!answering}
+        onClick={onLock}
+        data-testid="lock"
+      >
+        LOCK &amp; FIRE
+      </button>
+    </div>
+  );
+}
+
+const RATING_TEXT: Record<Rating, string> = {
+  S: "FLAWLESS",
+  A: "SHARP",
+  B: "STEADY",
+  C: "ROUGH",
+};
+
+/** Between stages: what you just flew, the rating, and what is coming. */
+function WaypointCard({ waypoint }: { waypoint: WaypointState }) {
+  const rated = waypoint.t >= WAYPOINT.ratingAt;
+  const entering = waypoint.t >= WAYPOINT.enteringAt;
+  return (
+    <section
+      className={`${styles.waypoint} ${entering ? styles.waypointEntering : ""}`}
+      data-testid="waypoint"
+      data-rating={waypoint.rating}
+    >
+      {!entering ? (
+        <>
+          <span className={`${styles.wpStage} arcade`}>STAGE CLEAR · {waypoint.stage.toUpperCase()}</span>
+          {rated ? (
+            <>
+              <span
+                className={`${styles.wpRating} ${styles[`wpRating_${waypoint.rating}`]} arcade`}
+                data-testid="rating"
+              >
+                {waypoint.rating}
+              </span>
+              <span className={`${styles.wpRatingText} arcade`}>{RATING_TEXT[waypoint.rating]}</span>
+              <ul className={styles.wpTally}>
+                <li>{waypoint.plasma} / 6 PLASMA</li>
+                <li>{waypoint.shield ? "SHIELD INTACT" : "SHIELD DOWN"}</li>
+                <li>PEAK {formatVelocity(waypoint.peakVelocity)} KM/H</li>
+              </ul>
+            </>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <span className={`${styles.wpEntering} arcade`}>ENTERING PHASE 2</span>
+          <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
+          <span className={styles.wpHint}>An alien scout is shadowing you. Aim, lock, fire.</span>
+        </>
+      )}
+    </section>
+  );
+}
+
+const NUDGE = 0.01;
+
 function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | undefined }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
   const full = outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
-  const label = full ? "FULL BURN!" : OUTCOME_LABEL[outcome.kind];
+  const vector = outcome.error !== undefined;
+  const label = full
+    ? "FULL BURN!"
+    : vector
+      ? outcome.kind === "slingshot"
+        ? "DIRECT HIT!"
+        : outcome.kind === "thread"
+          ? "GLANCING HIT"
+          : outcome.timedOut
+            ? "NO SOLUTION"
+            : "MISS"
+      : OUTCOME_LABEL[outcome.kind];
   return (
     <section
       className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${full ? styles.toast_full : ""}`}
@@ -346,7 +521,21 @@ function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | unde
         <span className={`${styles.toastKind} arcade`}>{label}</span>
         <span className={`${styles.toastDelta} arcade`}>{formatDelta(delta)} KM/H</span>
       </div>
-      {outcome.kind === "burn" ? (
+      {vector ? (
+        <span className={styles.toastAnswer}>
+          Truth: <strong>{outcome.answerText}</strong>
+          {!outcome.timedOut ? <> &middot; You aimed {outcome.guessText}</> : null}
+          {outcome.salvage ? (
+            <>
+              {" "}
+              &middot;{" "}
+              <strong data-testid="salvage">
+                SALVAGE: {outcome.salvage === "shield" ? "SHIELD RESTORED" : "+1 NOVA"}
+              </strong>
+            </>
+          ) : null}
+        </span>
+      ) : outcome.kind === "burn" ? (
         <span className={styles.toastAnswer}>
           Banked <strong>{outcome.charge} plasma</strong>
           {(outcome.charge ?? 0) < FULL_CHARGE ? <> &middot; All three: {outcome.answerText}</> : null}
@@ -454,25 +643,57 @@ function useKeyboard({
   onAnswer,
   onPick,
   onBurn,
+  onAim,
+  onLockVector,
   onToggleBoost,
   onNova,
-}: Pick<Props, "state" | "onAnswer" | "onPick" | "onBurn" | "onToggleBoost" | "onNova"> & {
+}: Pick<
+  Props,
+  "state" | "onAnswer" | "onPick" | "onBurn" | "onAim" | "onLockVector" | "onToggleBoost" | "onNova"
+> & {
   question: Round["questions"][number] | undefined;
 }) {
-  const latest = useRef({ state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova });
+  const latest = useRef({
+    state,
+    question,
+    onAnswer,
+    onPick,
+    onBurn,
+    onAim,
+    onLockVector,
+    onToggleBoost,
+    onNova,
+  });
   useEffect(() => {
-    latest.current = { state, question, onAnswer, onPick, onBurn, onToggleBoost, onNova };
+    latest.current = {
+      state,
+      question,
+      onAnswer,
+      onPick,
+      onBurn,
+      onAim,
+      onLockVector,
+      onToggleBoost,
+      onNova,
+    };
   });
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      if (target && target.tagName === "TEXTAREA") return;
+      if (target && target.tagName === "INPUT" && (target as HTMLInputElement).type !== "range") return;
       const current = latest.current;
       if (current.state?.phase !== "approach") return;
       const cluster = current.question?.type === "cluster";
+      const vector = current.question?.type === "vector";
 
-      if (cluster && event.key >= "1" && event.key <= "6") {
+      if (vector && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+        const t = current.state?.vector?.t ?? 0.5;
+        current.onAim(t + (event.key === "ArrowLeft" ? -NUDGE : NUDGE));
+      } else if (vector && event.key === "Enter") {
+        current.onLockVector();
+      } else if (cluster && event.key >= "1" && event.key <= "6") {
         current.onPick(Number(event.key) - 1);
       } else if (cluster && (event.key === "Enter" || event.key === " ")) {
         current.onBurn();

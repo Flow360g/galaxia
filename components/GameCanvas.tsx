@@ -105,6 +105,8 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onAnswer={(option) => engineRef.current?.answer(option)}
           onPick={(lane) => engineRef.current?.pick(lane)}
           onBurn={() => engineRef.current?.burn()}
+          onAim={(t) => engineRef.current?.aim(t)}
+          onLockVector={() => engineRef.current?.lockVector()}
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
           onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}

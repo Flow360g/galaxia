@@ -8,7 +8,7 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${SHOTS}/${name}.png` });
 }
 
-test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, share", async ({
+test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, scan, share", async ({
   page,
 }) => {
   await page.goto("/play?replay=1");
@@ -52,31 +52,48 @@ test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, s
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shield", "false");
   expect(await readVelocity(page)).toBeLessThan(velocityAfterBurn);
 
-  // Encounter 3: MCQ, wrong, no boost. Unshielded, so a WRECK.
-  await expect(question).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId(`option-${wrongOf(2)}`).click();
-  await expect(toast).toHaveAttribute("data-outcome", "wreck", { timeout: 10_000 });
-  await shot(page, "05-wreck");
+  // Waypoint: Stage 1 rated (3 plasma, shield down: B), then ALIEN CONTACT.
+  const waypoint = page.getByTestId("waypoint");
+  await expect(waypoint).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("rating")).toHaveText("B", { timeout: 5_000 });
+  await shot(page, "05-waypoint-rating");
+  await expect(waypoint).toContainText("ALIEN CONTACT", { timeout: 6_000 });
+  await shot(page, "06-waypoint-entering");
 
-  // Encounter 4: NOVA then correct with boost. SLINGSHOT.
+  // Encounter 3: vector. Aim dead on. DIRECT HIT, salvage restores the shield.
+  await expect(question).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("VECTOR")).toBeVisible();
+  await page.getByTestId("aim").fill(String(sliderOf(2)));
+  await expect(page.getByTestId("aim-value")).toContainText("10,9", { timeout: 5_000 });
+  await shot(page, "07-vector-aim");
+  await page.getByTestId("lock").click();
+  await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
+  await expect(page.getByTestId("salvage")).toContainText("SHIELD RESTORED");
+  await shot(page, "08-direct-hit");
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shield", "true");
+
+  // Encounter 4: vector, aim at the far end. MISS, the alien fires back.
+  await expect(question).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("aim").fill("1000");
+  await page.keyboard.press("Enter");
+  await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
+  await expect(toast).toContainText("MISS");
+  await shot(page, "09-miss");
+
+  // Encounter 5: NOVA then correct with boost. SLINGSHOT.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("nova").click();
   await expect(page.getByTestId("nova-result")).toBeVisible();
   await page.getByTestId("boost").click();
   await expect(page.getByTestId("boost")).toHaveAttribute("aria-pressed", "true");
-  await page.getByTestId(`option-${answerOf(3)}`).click();
+  await page.getByTestId(`option-${answerOf(4)}`).click();
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
-  await shot(page, "06-slingshot");
-
-  // Encounter 5: correct via keyboard. THREADED.
-  await expect(question).toBeVisible({ timeout: 15_000 });
-  await page.keyboard.press(String(answerOf(4) + 1));
-  await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 10_000 });
+  await shot(page, "10-slingshot");
 
   // Encounter 6: let thrust run out. THRUST OUT.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(toast).toHaveAttribute("data-outcome", "timeout", { timeout: 30_000 });
-  await shot(page, "07-timeout");
+  await shot(page, "11-timeout");
 
   // Encounter 7: the anomaly. No API key, so the local scorer marks it.
   await expect(question).toBeVisible({ timeout: 15_000 });
@@ -86,7 +103,8 @@ test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, s
   await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 20_000 });
   await expect(toast).toContainText("100%");
 
-  // Share card.
+  // Share card, with the stage rating in the text strip.
+
   const card = page.getByTestId("share-card");
   await expect(card).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("share-image")).toHaveAttribute("src", /blob:|data:/, {
@@ -94,7 +112,7 @@ test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, s
   });
   const distance = await page.getByTestId("final-distance").innerText();
   expect(Number(distance.replace(/[^0-9]/g, ""))).toBeGreaterThan(1000);
-  await shot(page, "08-share");
+  await shot(page, "12-share");
 
   // The run is persisted: a reload shows the card, not a fresh run.
   await page.goto("/play");
@@ -137,8 +155,15 @@ function answerOf(index: number): number {
   return question.answer as number;
 }
 
-function wrongOf(index: number): number {
-  return (answerOf(index) + 1) % 4;
+/** Slider position (0..1000) that lands exactly on a vector's answer. */
+function sliderOf(index: number): number {
+  const question = round.questions[index];
+  if (!question || question.type !== "vector") throw new Error(`no vector at ${index}`);
+  const { min, max, answer } = question as { min: number; max: number; answer: number; log?: boolean };
+  const t = (question as { log?: boolean }).log
+    ? (Math.log(answer) - Math.log(min)) / (Math.log(max) - Math.log(min))
+    : (answer - min) / (max - min);
+  return Math.round(t * 1000);
 }
 
 function answersOf(index: number): number[] {

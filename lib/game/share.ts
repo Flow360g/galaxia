@@ -134,6 +134,9 @@ export function shareText(summary: RunSummary): string {
   if (summary.fullBurns > 0) {
     stats.push(`Full burn${summary.fullBurns > 1 ? "s" : ""} ${summary.fullBurns}`);
   }
+  if (summary.ratings?.length) {
+    stats.push(`Stage ${summary.ratings.join(" · ")}`);
+  }
   if (summary.anomaly) {
     stats.push(`Anomaly ${percent(summary.anomaly.score)}%`);
   }
@@ -472,6 +475,7 @@ function drawChart(ctx: Ctx, summary: RunSummary, arcade: string): void {
 
   // Streak underlines first, so markers and numbers sit on top.
   drawStreakBars(ctx, events, scale);
+  drawRatings(ctx, summary, scale, arcade);
 
   for (const event of events) {
     const x = scale.x(event.t);
@@ -488,6 +492,23 @@ function drawChart(ctx: Ctx, summary: RunSummary, arcade: string): void {
         "center",
       );
     }
+  }
+}
+
+/** Stage-rating stamps on the timeline, beside the encounter that closed each stage. */
+function drawRatings(ctx: Ctx, summary: RunSummary, scale: Scale, arcade: string): void {
+  for (const event of summary.events) {
+    const rating = event.rating;
+    if (!rating) continue;
+    const x = scale.x(event.t) + 30;
+    const y = CHART_TOP + 22;
+    const color = rating === "S" ? YELLOW : rating === "A" ? CYAN : rating === "B" ? WHITE : RED;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 15, y - 15, 30, 30);
+    text(ctx, rating, x, y + 6, arcadeFont(16, arcade), color, "center");
+    ctx.restore();
   }
 }
 
