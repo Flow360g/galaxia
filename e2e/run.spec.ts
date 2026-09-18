@@ -37,25 +37,31 @@ test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, s
   await shot(page, "03-burn");
   const velocityAfterBurn = await readVelocity(page);
   expect(velocityAfterBurn).toBeGreaterThan(4000);
-  await expect(page.getByTestId("shield")).toHaveAttribute("data-shield", "true");
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
 
-  // Encounter 2: cluster. One correct, then a wrong lane. Collision, shield gone.
+  // Encounter 2: cluster. One correct, then a wrong lane. A boulder in the
+  // lane: COLLISION, and one of the three shields is gone.
   await expect(question).toBeVisible({ timeout: 15_000 });
   const [right] = answersOf(1);
   await page.getByTestId(`option-${right}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
   await page.getByTestId(`option-${wrongLaneOf(1)}`).click();
+  await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "shield", {
+    timeout: 5_000,
+  });
   await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
   await expect(toast).toContainText("1 plasma lost");
   await shot(page, "04-cluster-miss");
   await expect(page.getByTestId("streak")).toHaveText(/^\s*$/);
-  await expect(page.getByTestId("shield")).toHaveAttribute("data-shield", "false");
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
   expect(await readVelocity(page)).toBeLessThan(velocityAfterBurn);
 
-  // Encounter 3: MCQ, wrong, no boost. Unshielded, so a WRECK.
+  // Encounter 3: MCQ, wrong, with boost armed. Boosted misses always WRECK.
   await expect(question).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("boost").click();
   await page.getByTestId(`option-${wrongOf(2)}`).click();
   await expect(toast).toHaveAttribute("data-outcome", "wreck", { timeout: 10_000 });
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "1");
   await shot(page, "05-wreck");
 
   // Encounter 4: NOVA then correct with boost. SLINGSHOT.
@@ -65,15 +71,18 @@ test("a full run: burn, cluster miss, wreck, slingshot, thread, timeout, scan, s
   await page.getByTestId("boost").click();
   await expect(page.getByTestId("boost")).toHaveAttribute("aria-pressed", "true");
   await page.getByTestId(`option-${answerOf(3)}`).click();
+  await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "plasma", {
+    timeout: 5_000,
+  });
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
   await shot(page, "06-slingshot");
 
-  // Encounter 5: correct via keyboard. THREADED.
+  // Encounter 5: correct via keyboard. LANE CLEAR.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await page.keyboard.press(String(answerOf(4) + 1));
   await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 10_000 });
 
-  // Encounter 6: let thrust run out. THRUST OUT.
+  // Encounter 6: let the five seconds run out. TOO SLOW.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(toast).toHaveAttribute("data-outcome", "timeout", { timeout: 30_000 });
   await shot(page, "07-timeout");

@@ -1,5 +1,6 @@
-/* HUD sits over the scene. Readouts at the top, one tappable panel at the
-   bottom, the middle left clear for the rock. Hairlines and dark panels only. */
+/* The HUD is a band across the TOP of the screen and nothing else. Readouts,
+   question, the row of answer squares, the reactor, the tools: all of it above
+   the fold. Everything below that band belongs to the ship. */
 
 .hud {
   position: absolute;
@@ -7,10 +8,18 @@
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  padding-top: max(20px, env(safe-area-inset-top));
-  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  --pad: 16px;
+}
+
+/* The top band. Sized by its contents, capped so it can never creep down over
+   the ship however long a question runs. */
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--pad);
+  padding-top: max(var(--pad), env(safe-area-inset-top));
+  max-height: 62vh;
 }
 
 .top {
@@ -24,7 +33,7 @@
 .readoutRight {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .readoutRight {
@@ -69,13 +78,27 @@
   min-height: 11px;
 }
 
+/* Shields, as pips. Spent ones stay in place, dimmed, so the cost of a miss
+   is visible rather than merely counted. */
 .shield {
-  font-size: 8px;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  display: flex;
+  gap: 2px;
+}
+
+.pipUp {
   color: var(--arcade-cyan);
-  opacity: 0.85;
+  text-shadow: 0 0 10px rgba(79, 241, 255, 0.7);
+}
+
+.pipOut {
+  color: rgba(154, 163, 178, 0.35);
 }
 
 .shieldDown {
+  font-size: 8px;
+  letter-spacing: var(--track-label);
   color: #ff6b5c;
   text-shadow: 0 0 10px rgba(255, 107, 92, 0.6);
 }
@@ -87,16 +110,74 @@
   color: var(--panel-label);
 }
 
-/* Thrust bar. */
-.thrustRow {
+/* The question panel. Deliberately shallow: prompt, clock, lanes, tools. */
+.panel,
+.toast {
+  pointer-events: auto;
+  width: 100%;
+  background: rgba(7, 17, 34, 0.86);
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  padding: 12px 12px 14px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
+  animation: panelIn 200ms ease-out;
+  backdrop-filter: blur(2px);
 }
 
+.panelAnomaly {
+  border-color: rgba(178, 140, 255, 0.55);
+  box-shadow: 0 0 28px rgba(178, 140, 255, 0.25);
+}
+
+.panelCluster {
+  border-color: rgba(79, 241, 255, 0.45);
+}
+
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.clusterTag {
+  font-size: 9px;
+  color: var(--arcade-cyan);
+  letter-spacing: 0.12em;
+}
+
+.anomalyTag {
+  font-size: 9px;
+  color: #b28cff;
+  letter-spacing: var(--track-eyebrow);
+}
+
+/* The countdown, in seconds. Five of them, so it is worth a number. */
+.clock {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--arcade-cyan);
+}
+
+.clockLow {
+  color: #ff6b5c;
+  animation: tick 500ms steps(2) infinite;
+}
+
+.prompt {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+/* Thrust: the clock drawn as fuel draining. */
 .thrustTrack {
-  flex: 1;
-  height: 6px;
+  height: 4px;
   border: 1px solid var(--rule-dark);
   background: rgba(7, 17, 34, 0.6);
   overflow: hidden;
@@ -116,52 +197,89 @@
   box-shadow: 0 0 10px rgba(255, 107, 92, 0.7);
 }
 
-/* Bottom panel. The only pointer-enabled region. */
-.bottom {
-  margin-top: auto;
+/* The lane row. One square per lane, in lane order, evenly spread: this row
+   IS the lane map, and the engine measures it to know where to fly. */
+.lanes {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 5px;
+}
+
+.lane {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-}
-
-.panel,
-.toast {
-  pointer-events: auto;
-  width: 100%;
-  max-width: 480px;
-  background: rgba(7, 17, 34, 0.9);
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 6px 3px;
+  background: rgba(13, 27, 46, 0.92);
   border: 1px solid var(--rule-dark);
-  border-radius: 4px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  animation: panelIn 220ms ease-out;
+  color: #ffffff;
+  text-align: center;
+  transition: background 120ms, border-color 120ms, opacity 160ms, transform 120ms;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.panelAnomaly {
-  border-color: rgba(178, 140, 255, 0.55);
-  box-shadow: 0 0 28px rgba(178, 140, 255, 0.25);
+.laneKey {
+  font-size: 8px;
+  color: var(--panel-label);
 }
 
-.panelCluster {
-  border-color: rgba(79, 241, 255, 0.45);
+.laneText {
+  font-size: 12px;
+  line-height: 1.15;
+  /* Long labels in a sixth of a phone are the normal case, not the edge. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
-.clusterTag {
-  font-size: 9px;
+.lane:not(:disabled):hover,
+.lane:not(:disabled):focus-visible {
+  border-color: var(--arcade-yellow);
+  outline: none;
+}
+
+.lane:not(:disabled):active {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+  transform: translateY(1px);
+}
+
+.lane:not(:disabled):active .laneKey {
+  color: var(--ink);
+}
+
+.lane:disabled {
+  cursor: default;
+}
+
+.laneOut {
+  opacity: 0.28;
+  text-decoration: line-through;
+}
+
+.laneLit {
+  border-color: var(--arcade-cyan);
+  box-shadow: 0 0 12px rgba(79, 241, 255, 0.35);
+}
+
+.laneGot,
+.laneGot:disabled {
+  border-color: var(--arcade-cyan);
+  background: rgba(79, 241, 255, 0.16);
   color: var(--arcade-cyan);
-  letter-spacing: 0.12em;
+  box-shadow: 0 0 12px rgba(79, 241, 255, 0.35);
+  opacity: 1;
 }
 
-/* Cluster: reactor gauge, six lanes, the burn decision. */
-.cluster {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.laneGot .laneKey {
+  color: var(--arcade-cyan);
 }
 
+/* Reactor: plasma aboard, and what banking it is worth right now. */
 .reactor {
   display: flex;
   align-items: center;
@@ -177,7 +295,7 @@
 
 .reactorValue {
   color: var(--arcade-cyan);
-  min-width: 72px;
+  min-width: 86px;
   text-align: right;
 }
 
@@ -186,7 +304,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  height: 10px;
+  height: 9px;
 }
 
 .reactorCell {
@@ -202,112 +320,10 @@
   animation: reactorIn 320ms ease-out;
 }
 
-.lanes {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.lane {
-  min-height: 56px;
-  padding: 8px 10px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.lane .optionText {
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-.laneGot,
-.laneGot:disabled {
-  border-color: var(--arcade-cyan);
-  background: rgba(79, 241, 255, 0.16);
-  color: var(--arcade-cyan);
-  box-shadow: 0 0 12px rgba(79, 241, 255, 0.35);
-}
-
-.laneGot .optionKey {
-  color: var(--arcade-cyan);
-}
-
-.burnRow {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.burn {
-  min-height: 48px;
-  font-size: 11px;
-  border: 1px solid rgba(255, 138, 31, 0.6);
-  background: transparent;
-  color: #ff8a1f;
-  cursor: pointer;
-  transition: background 160ms, color 160ms, box-shadow 160ms;
-}
-
-.burn:not(:disabled) {
-  background: #ff8a1f;
-  color: var(--ink);
-  box-shadow: 0 0 18px rgba(255, 138, 31, 0.5);
-}
-
-.burn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.burnHot:not(:disabled) {
-  animation: pulse 900ms ease-in-out infinite;
-}
-
-.burnNext {
-  font-size: 12px;
-  color: var(--panel-label);
-  min-height: 14px;
-}
-
-/* FULL BURN: radial speed lines and a vignette for a beat. */
-.warp {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background:
-    radial-gradient(ellipse at center, rgba(255, 138, 31, 0) 30%, rgba(255, 138, 31, 0.28) 100%),
-    repeating-conic-gradient(
-      from 0deg at 50% 50%,
-      rgba(255, 255, 255, 0) 0deg 4deg,
-      rgba(255, 255, 255, 0.55) 4deg 4.6deg,
-      rgba(255, 255, 255, 0) 4.6deg 9deg
-    );
-  mask-image: radial-gradient(ellipse at center, transparent 18%, #000 70%);
-  -webkit-mask-image: radial-gradient(ellipse at center, transparent 18%, #000 70%);
-  animation: warpIn 900ms ease-out forwards;
-}
-
-.anomalyTag {
-  font-size: 9px;
-  color: #b28cff;
-  letter-spacing: var(--track-eyebrow);
-}
-
-.prompt {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  color: #ffffff;
-}
-
 .novaLine {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.35;
   color: #ffffff;
   border-left: 3px solid var(--arcade-cyan);
   padding-left: 10px;
@@ -318,77 +334,15 @@
   color: var(--arcade-cyan);
 }
 
-.options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 10px 12px;
-  background: rgba(13, 27, 46, 0.9);
-  border: 1px solid var(--rule-dark);
-  color: #ffffff;
-  text-align: left;
-  font-size: 15px;
-  line-height: 1.25;
-  transition: background 120ms, border-color 120ms, opacity 160ms;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.option:not(:disabled):hover,
-.option:not(:disabled):focus-visible {
-  border-color: var(--arcade-yellow);
-  outline: none;
-}
-
-.option:not(:disabled):active {
-  background: var(--arcade-yellow);
-  color: var(--ink);
-}
-
-.option:disabled {
-  cursor: default;
-}
-
-.optionOut {
-  opacity: 0.28;
-  text-decoration: line-through;
-}
-
-.optionLit {
-  border-color: var(--arcade-cyan);
-  box-shadow: 0 0 12px rgba(79, 241, 255, 0.35);
-}
-
-.optionKey {
-  flex: none;
-  font-size: 9px;
-  color: var(--panel-label);
-  width: 14px;
-}
-
-.option:not(:disabled):active .optionKey {
-  color: var(--ink);
-}
-
-.optionText {
-  flex: 1;
-}
-
 .tools {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .tool {
   flex: 1;
-  min-height: 44px;
-  font-size: 10px;
+  min-height: 38px;
+  font-size: 9px;
   border: 1px solid var(--rule-dark);
   background: transparent;
   color: #ffffff;
@@ -418,30 +372,39 @@
   letter-spacing: 0.2em;
 }
 
-.boost {
+.boost,
+.burn {
   border-color: rgba(255, 138, 31, 0.6);
   color: #ff8a1f;
 }
 
-.boostOn {
+.boostOn,
+.burn:not(:disabled) {
   background: #ff8a1f;
   color: var(--ink);
   border-color: #ff8a1f;
   box-shadow: 0 0 18px rgba(255, 138, 31, 0.6);
-  animation: pulse 900ms ease-in-out infinite;
+}
+
+.burnHot:not(:disabled) {
+  animation: pulseGlow 900ms ease-in-out infinite;
+}
+
+.boostOn {
+  animation: pulseGlow 900ms ease-in-out infinite;
 }
 
 /* Anomaly form. */
 .anomaly {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .anomalyImage {
   display: block;
   width: 100%;
-  max-width: 220px;
+  max-width: 170px;
   height: auto;
   align-self: center;
   border: 1px solid rgba(178, 140, 255, 0.4);
@@ -455,7 +418,7 @@
 .anomalyInput {
   flex: 1;
   min-width: 0;
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 14px;
   font: inherit;
   font-size: 16px;
@@ -472,7 +435,7 @@
 
 .transmit {
   flex: none;
-  min-height: 48px;
+  min-height: 44px;
   padding: 0 16px;
   font-size: 10px;
   background: #b28cff;
@@ -484,10 +447,11 @@
   opacity: 0.5;
 }
 
-/* Outcome toast. */
+/* Outcome toast. Sits in the same band as the question it replaces, so the
+   ship is never covered by it either. */
 .toast {
   border-left-width: 4px;
-  gap: 8px;
+  gap: 6px;
 }
 
 .toast_thread {
@@ -554,7 +518,7 @@
 }
 
 .toastAnswer {
-  font-size: 14px;
+  font-size: 13px;
   color: #ffffff;
 }
 
@@ -568,8 +532,8 @@
 }
 
 .toastFact {
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--panel-label);
 }
 
@@ -580,10 +544,86 @@
   opacity: 0.8;
 }
 
+/* The pulse: what just happened to the ship, over the ship, once. Sits in the
+   clear band below the question, so it never fights the question for space. */
+.pulse {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 64%;
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  animation: pulseIn 1400ms ease-out forwards;
+}
+
+.pulseLabel {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.pulseDetail {
+  font-size: 10px;
+  color: #ffffff;
+  opacity: 0.85;
+}
+
+.pulse_plasma .pulseLabel {
+  color: var(--arcade-cyan);
+  text-shadow: 0 0 22px rgba(79, 241, 255, 0.9);
+}
+
+.pulse_boost .pulseLabel {
+  color: #ff8a1f;
+  text-shadow: 0 0 22px rgba(255, 138, 31, 0.9);
+}
+
+.pulse_shield .pulseLabel {
+  color: #ff6b5c;
+  text-shadow: 0 0 22px rgba(255, 107, 92, 0.9);
+}
+
+/* The shield taking the hit: a ring that snaps out around the ship and dies. */
+.pulseRing {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60vmin;
+  height: 60vmin;
+  margin: -30vmin 0 0 -30vmin;
+  border: 2px solid rgba(111, 214, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 40px rgba(111, 214, 255, 0.6), inset 0 0 40px rgba(111, 214, 255, 0.4);
+  animation: ringOut 700ms ease-out forwards;
+}
+
+/* FULL BURN: radial speed lines and a vignette for a beat. */
+.warp {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at center, rgba(255, 138, 31, 0) 30%, rgba(255, 138, 31, 0.28) 100%),
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(255, 255, 255, 0) 0deg 4deg,
+      rgba(255, 255, 255, 0.55) 4deg 4.6deg,
+      rgba(255, 255, 255, 0) 4.6deg 9deg
+    );
+  mask-image: radial-gradient(ellipse at center, transparent 18%, #000 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 18%, #000 70%);
+  animation: warpIn 900ms ease-out forwards;
+}
+
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -602,6 +642,38 @@
   }
 }
 
+@keyframes pulseIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  26% {
+    transform: scale(1);
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) translateY(-18px);
+  }
+}
+
+@keyframes ringOut {
+  from {
+    opacity: 0.95;
+    transform: scale(0.25);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
 @keyframes warpIn {
   0% {
     opacity: 0;
@@ -616,18 +688,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .warp {
-    display: none;
-  }
-
-  .reactorLit,
-  .burnHot:not(:disabled) {
-    animation: none;
-  }
-}
-
-@keyframes pulse {
+@keyframes pulseGlow {
   0%,
   100% {
     box-shadow: 0 0 12px rgba(255, 138, 31, 0.5);
@@ -637,11 +698,43 @@
   }
 }
 
+@keyframes tick {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .warp,
+  .pulseRing {
+    display: none;
+  }
+
+  .reactorLit,
+  .burnHot:not(:disabled),
+  .boostOn,
+  .clockLow {
+    animation: none;
+  }
+
+  .pulse {
+    animation: none;
+  }
+}
+
+/* Phones: the band has to stay clear of the ship, so everything tightens. */
 @media (max-width: 720px) {
   .hud {
-    padding: 14px;
-    padding-top: max(14px, env(safe-area-inset-top));
-    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    --pad: 11px;
+  }
+
+  .board {
+    gap: 8px;
+    max-height: 58vh;
   }
 
   .distance {
@@ -654,39 +747,56 @@
 
   .panel,
   .toast {
-    padding: 12px 14px;
-    gap: 10px;
+    padding: 10px 10px 12px;
+    gap: 8px;
   }
 
   .prompt {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .lanes {
-    gap: 6px;
+    gap: 4px;
   }
 
   .lane {
-    min-height: 52px;
-    padding: 6px 8px;
+    min-height: 50px;
+    padding: 5px 2px;
   }
 
-  .lane .optionText {
-    font-size: 13px;
+  .laneText {
+    font-size: 11px;
   }
 
-  .option {
-    font-size: 14px;
-    min-height: 48px;
+  .pulseLabel {
+    font-size: 17px;
   }
 
   .anomalyImage {
-    max-width: 140px;
+    max-width: 130px;
   }
 }
 
-@media (max-height: 640px) {
+/* Landscape phones and short windows: the band gets shorter still. */
+@media (max-height: 620px) {
+  .board {
+    max-height: 66vh;
+    gap: 6px;
+  }
+
+  .prompt {
+    font-size: 14px;
+  }
+
+  .lane {
+    min-height: 44px;
+  }
+
   .anomalyImage {
-    max-width: 120px;
+    max-width: 100px;
+  }
+
+  .pulse {
+    top: 70%;
   }
 }
