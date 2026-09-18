@@ -5,23 +5,24 @@
  * magnitude and precision, never padding.
  */
 
-/** World units read as kilometres. 1 unit = 1km keeps the numbers legible. */
-export function formatDistance(units: number): string {
-  const km = Math.floor(units);
-  if (km < 1000) return `${km}`;
-  return km.toLocaleString("en-AU");
+/** Distance in km, grouped. */
+export function formatDistance(km: number): string {
+  return Math.floor(Math.max(0, km)).toLocaleString("en-AU");
 }
 
-export function formatSpeed(speed: number): string {
-  return `${Math.round(speed)}`;
+/** Velocity in km/h, grouped. */
+export function formatVelocity(kmh: number): string {
+  return Math.round(Math.max(0, kmh)).toLocaleString("en-AU");
+}
+
+/** Signed velocity change, e.g. +1,240 or -3,900. */
+export function formatDelta(kmh: number): string {
+  const rounded = Math.round(kmh);
+  const sign = rounded < 0 ? "-" : "+";
+  return `${sign}${Math.abs(rounded).toLocaleString("en-AU")}`;
 }
 
 /** Round number as a zero-padded sequence, e.g. 001. */
 export function formatRoundNumber(round: number): string {
   return `${round}`.padStart(3, "0");
-}
-
-/** Score as a six-digit arcade counter, e.g. 004250. */
-export function formatScore(score: number): string {
-  return `${Math.max(0, Math.round(score))}`.padStart(6, "0");
 }

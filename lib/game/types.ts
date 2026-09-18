@@ -3,33 +3,46 @@
 /** Rendering quality tier. 0 = high, 1 = mid, 2 = low. Indexes Tuning arrays. */
 export type QualityTier = 0 | 1 | 2;
 
-/** A question as authored in content/rounds/*.json. */
-export type QuestionType = "numeric" | "ordinal" | "mcq";
+// ------------------------------------------------------------------ content
 
-export interface QuestionOption {
-  label: string;
-  /**
-   * How close this option is to correct, 0..1. 1 is the right answer.
-   * Present for `mcq`; the gradient mechanic consumes it.
-   */
-  proximity: number;
-}
-
-export interface Question {
+/** A normal trivia encounter: four options, one right. */
+export interface McqQuestion {
   id: string;
-  type: QuestionType;
+  type: "mcq";
   prompt: string;
-  /** Numeric/ordinal: the true value. MCQ: index of the correct option. */
+  options: string[];
+  /** Index into `options`. */
   answer: number;
-  /** Display unit for numeric answers, e.g. "year", "%", "million". */
-  unit?: string;
-  /** Numeric: the [min, max] band the gates span. */
-  range?: [number, number];
-  /** MCQ: the four answer asteroids, pre-ranked by proximity. */
-  options?: QuestionOption[];
-  /** Shown after the answer resolves. */
+  /** Optional authored clue a NOVA scan can reveal. */
+  hint?: string;
+  /** Shown after the encounter resolves. */
   fact?: string;
 }
+
+/**
+ * The AI Anomaly: one per run. An open-ended text answer, optionally about an
+ * image, scored by a model on the server. `accept` keeps the run playable
+ * when no model is configured.
+ */
+export interface AnomalyQuestion {
+  id: string;
+  type: "anomaly";
+  kind: "open" | "visual";
+  prompt: string;
+  /** Visual anomalies: image path under /public. PNG or JPEG. */
+  image?: string;
+  /** Description of the image for screen readers and the text-only fallback. */
+  imageAlt?: string;
+  /** What a full-marks answer must contain. Read by the model, never shown. */
+  rubric: string;
+  /** Keywords for the offline scorer. Case-insensitive substring match. */
+  accept: string[];
+  /** The answer, as shown to the player afterwards. */
+  answerText: string;
+  fact?: string;
+}
+
+export type Question = McqQuestion | AnomalyQuestion;
 
 export interface Round {
   date: string;
@@ -39,76 +52,145 @@ export interface Round {
   questions: Question[];
 }
 
-export type Band = "pinpoint" | "close" | "off" | "miss";
+// --------------------------------------------------------------------- run
 
-/** Live state the HUD reads each frame. Kept flat and primitive on purpose. */
+export type Phase =
+  /** Engines lighting, first asteroid not yet called. */
+  | "intro"
+  /** Asteroid looming, thrust draining, answer open. */
+  | "approach"
+  /** Anomaly answer sent, waiting on the scorer. Thrust frozen. */
+  | "scanning"
+  /** Answer locked, asteroid striking, outcome animating. */
+  | "resolving"
+  /** Outcome toast up, velocity settling, next asteroid queued. */
+  | "aftermath"
+  | "finished";
+
+export type NovaKind = "eliminate" | "clue" | "narrow";
+
+export interface NovaResult {
+  kind: NovaKind;
+  /** Option indices the scan ruled out. */
+  eliminated: number[];
+  /** Option indices the scan flagged as plausible. */
+  highlighted: number[];
+  clue: string | null;
+}
+
+export type OutcomeKind =
+  /** Correct: threaded past the rock. */
+  | "thread"
+  /** Correct with boost armed: gravity-assist slingshot. */
+  | "slingshot"
+  /** Wrong: flew into it. */
+  | "collision"
+  /** Wrong with boost armed: hit it at speed. */
+  | "wreck"
+  /** Thrust ran out before an answer locked. Treated as a collision. */
+  | "timeout";
+
+export interface Outcome {
+  kind: OutcomeKind;
+  correct: boolean;
+  boosted: boolean;
+  timedOut: boolean;
+  /** Thrust remaining at lock, 0..1. Drives the size of the burst. */
+  thrustLeft: number;
+  /** km/h at lock. */
+  velocityBefore: number;
+  /** km/h immediately after the impulse or collision. */
+  velocityAfter: number;
+  streakBefore: number;
+  streakAfter: number;
+  /** MCQ: chosen option index. Anomaly and timeout: null. */
+  chosen: number | null;
+  guessText: string;
+  answerText: string;
+  /** Anomaly only: model score 0..1 and its one-line verdict. */
+  anomalyScore?: number;
+  anomalyVerdict?: string;
+}
+
+/** Live state the HUD reads each frame. Flat and primitive on purpose. */
 export interface GameState {
-  /** Total distance travelled this round, world units. */
+  phase: Phase;
+  /** Index of the encounter in progress, or -1. */
+  encounter: number;
+  /** Encounters resolved so far. */
+  resolved: number;
+  /** Total distance this run, km. The score. */
   distance: number;
-  /** Current world speed, world units/sec. */
-  speed: number;
-  /** Continuous lane position, e.g. 2.4 = 40% from lane 2 toward lane 3. */
-  lanePosition: number;
-  /** Nearest whole lane the ship currently occupies. */
-  currentLane: number;
-  /** Hull integrity 0..1. */
-  hull: number;
-  /** Points accumulated this round. */
-  score: number;
-  /** Index of the question currently approaching, or -1 between sets. */
-  activeQuestion: number;
-  /** Whether the approaching set is still steerable (not yet committed). */
-  answering: boolean;
-  /** Value the ship's current X maps to for a numeric question, else null. */
-  liveGuess: number | null;
-  /** Questions resolved so far. */
-  questionsAnswered: number;
+  /** Current velocity, km/h. */
+  velocity: number;
+  peakVelocity: number;
+  streak: number;
+  /** Thrust remaining for the current encounter, 0..1. */
+  thrust: number;
+  boostArmed: boolean;
+  novaLeft: number;
+  nova: NovaResult | null;
+  /** Outcome of the most recent encounter, while its toast is up. */
+  outcome: Outcome | null;
   running: boolean;
 }
 
-/** What the engine hands the scoring layer. */
-export interface AnswerInput {
-  question: Question;
-  /** Continuous lane position at the moment of commit. */
-  lanePosition: number;
-  /** Whole lane at the moment of commit. */
-  lane: number;
-  /** Seconds between the question appearing and the commit. */
-  elapsed: number;
-  /** Seconds the player had in total before the commit line. */
-  window: number;
+/** One point on the flight path, recorded for the share card. */
+export interface FlightSample {
+  /** Seconds since the run began. */
+  t: number;
+  /** km/h. */
+  v: number;
+  /** km. */
+  d: number;
 }
 
-export interface AnswerResult {
-  /** 0..1. How right the answer was. The gradient. */
-  accuracy: number;
-  /** Points awarded. */
-  points: number;
-  /** Speed multiplier to apply as a consequence. 1 = no change. */
-  speedMultiplier: number;
-  /** Hull delta, negative for damage. */
-  hullDelta: number;
-  /** Bucket for the share grid. */
-  band: Band;
-  /** What the player effectively answered, formatted for the HUD. */
-  guessText: string;
-  /** The correct answer, formatted for the HUD. */
-  answerText: string;
+/** Something that happened on the flight path. */
+export interface RunEvent {
+  t: number;
+  /** Encounter index. */
+  index: number;
+  kind: OutcomeKind;
+  correct: boolean;
+  boosted: boolean;
+  anomaly: boolean;
+  /** Distance and velocity at the moment it happened. */
+  d: number;
+  v: number;
+  /** Streak after the event. */
+  streak: number;
 }
 
-/** Emitted when a question resolves. */
-export interface AnswerEvent {
-  questionIndex: number;
-  question: Question;
-  result: AnswerResult;
-}
-
-/** Emitted once every question in the round has resolved. */
-export interface RoundSummary {
-  score: number;
+/** Everything the share card and the record need. Serialisable. */
+export interface RunSummary {
+  date: string;
+  roundNumber: number;
+  theme: string;
   distance: number;
-  hull: number;
-  bands: Band[];
+  peakVelocity: number;
+  bestStreak: number;
+  correct: number;
+  total: number;
+  /** Boosts armed, and how many of those paid off. */
+  boosts: number;
+  boostHits: number;
+  collisions: number;
+  novasUsed: number;
+  anomaly: { score: number; correct: boolean; verdict: string } | null;
+  outcomes: Outcome[];
+  samples: FlightSample[];
+  events: RunEvent[];
+  durationSeconds: number;
+}
+
+/** What the anomaly scorer returns, on the server and from the fallback. */
+export interface AnomalyVerdict {
+  /** 0..1. */
+  score: number;
+  /** One short line the player sees. */
+  verdict: string;
+  /** "model" when a model scored it, "local" for the keyword fallback. */
+  source: "model" | "local";
 }
 
 /** Debug counters surfaced by ?debug=1. */

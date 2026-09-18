@@ -1,0 +1,269 @@
+/* End-of-run overlay. Sits over a HUD that is pointer-events: none, so the
+   overlay switches them back on for its buttons. Same dark panel, hairlines
+   and square yellow button as the rest of the cabinet. */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(7, 17, 34, 0.72);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: fadeIn 320ms ease-out;
+}
+
+.panel {
+  width: 100%;
+  max-width: 460px;
+  margin: auto;
+  background: rgba(7, 17, 34, 0.94);
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  padding: 18px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: #ffffff;
+  animation: rise 360ms ease-out;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rule-dark);
+  padding-bottom: 12px;
+}
+
+.theme {
+  font-size: 9px;
+  color: var(--panel-label);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-shadow:
+    0 0 14px rgba(79, 241, 255, 0.7),
+    3px 3px 0 rgba(31, 69, 229, 0.9);
+}
+
+.distance {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.distanceValue {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--arcade-yellow);
+  text-shadow: 0 0 14px rgba(255, 224, 61, 0.5);
+}
+
+.unit {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: var(--track-label);
+  color: var(--panel-label);
+}
+
+/* The card keeps its 4:5 print aspect at every width. On a short phone the
+   height cap wins and the width follows. */
+.frame {
+  width: 100%;
+  max-width: 420px;
+  max-height: 60vh;
+  aspect-ratio: 4 / 5;
+  margin: 0 auto;
+  border: 1px solid var(--rule-dark);
+  background: var(--space);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.placeholder {
+  opacity: 0.6;
+  animation: blink 1.2s steps(1, end) infinite;
+}
+
+.actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 14px 12px;
+  font-size: 11px;
+  text-decoration: none;
+  text-align: center;
+  color: #ffffff;
+  background: transparent;
+  border: 1px solid rgba(228, 231, 236, 0.32);
+  border-radius: 0;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.button:hover,
+.button:focus-visible {
+  border-color: var(--arcade-cyan);
+  color: var(--arcade-cyan);
+  outline: none;
+}
+
+.button:active {
+  background: rgba(79, 241, 255, 0.12);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.primary {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+  border-color: var(--arcade-yellow);
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 0 0 3px var(--arcade-yellow),
+    0 0 20px rgba(255, 224, 61, 0.35);
+}
+
+.primary:hover,
+.primary:focus-visible {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: var(--ink);
+}
+
+.primary:active {
+  background: #ffffff;
+}
+
+.small {
+  grid-column: 1 / -1;
+  min-height: 40px;
+  padding: 10px 12px;
+  font-size: 9px;
+  color: var(--panel-label);
+}
+
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.back {
+  pointer-events: auto;
+  font-size: 9px;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--arcade-cyan);
+  text-decoration: none;
+  padding: 8px 4px;
+  border-bottom: 1px solid transparent;
+}
+
+.back:hover,
+.back:focus-visible {
+  border-bottom-color: var(--arcade-cyan);
+  outline: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@media (min-width: 480px) {
+  .panel {
+    padding: 22px 24px 24px;
+    gap: 16px;
+  }
+
+  .heading {
+    font-size: 22px;
+  }
+
+  .distanceValue {
+    font-size: 32px;
+  }
+
+  .button {
+    font-size: 12px;
+  }
+}
+
+@media (max-height: 640px) {
+  .frame {
+    max-height: 48vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel,
+  .placeholder {
+    animation: none;
+  }
+}

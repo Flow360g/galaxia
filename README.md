@@ -1,18 +1,19 @@
 # Galaxia
 
-A daily quiz flight. Questions come at you as asteroids; how close you get
-decides how far you travel.
+A daily space run. Seven questions, each an asteroid encounter; your score is
+the distance you travel. Correct answers accelerate you. Wrong answers do not
+score zero, they physically kill your momentum.
 
-**Phase 2: a playable round.** The Quaternius spaceship with burning exhausts,
-a painted nebula backdrop, an arcade title screen, and a working quiz: steer
-into your answer, the rock you hit scores you, ten questions then a results
-grid.
+**Phase 3: the run.** Continuous flight, a real velocity model, Boost, NOVA
+scans, one model-scored AI Anomaly per run, and a share card that draws the
+whole flight as a story.
 
 ## Running it
 
 ```bash
 npm install
-npm run dev            # http://localhost:3000
+cp .env.example .env.local   # optional: add ANTHROPIC_API_KEY for the anomaly scorer
+npm run dev                  # http://localhost:3000
 ```
 
 Test the feel on a real phone, not an emulator:
@@ -21,7 +22,8 @@ Test the feel on a real phone, not an emulator:
 npm run dev -- -H 0.0.0.0    # then open http://<your-lan-ip>:3000 on the phone
 ```
 
-Add `?debug=1` to `/play` for the FPS, draw call, triangle, tier and DPR overlay.
+`/play?replay=1` skips today's stored run. `?debug=1` adds the FPS, draw
+call, triangle, tier and DPR overlay.
 
 | Script | Does |
 | --- | --- |
@@ -29,87 +31,123 @@ Add `?debug=1` to `/play` for the FPS, draw call, triangle, tier and DPR overlay
 | `npm run build` | Production build |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
+| `npm run test:e2e` | Playwright: flies a whole run in headless Chromium (set `CHROMIUM_PATH` if the bundled browser is not installed) |
+
+## The loop
+
+```
+asteroid called -> thrust drains while you think -> answer locks -> the rock strikes
+```
+
+- **Thrust is the timer.** Every encounter starts at full thrust and drains
+  over `ENCOUNTER.thrustSeconds`. The rock looms closer as it drains. Thrust
+  left at lock scales the burst, so fast right answers go further. Empty
+  thrust is a timeout, which is a collision.
+- **Correct: THREADED.** The ship swerves past, engines flare, the camera
+  drops back, velocity jumps and the distance counter climbs.
+- **Correct + Boost: SLINGSHOT.** A tighter skim, a bigger burst, shield heat,
+  screen shake, speed lines.
+- **Wrong: COLLISION.** Shield flash, fragments, the hull tumbles, velocity
+  halves and the streak resets.
+- **Wrong + Boost: WRECKED.** Two rolls and a much heavier slowdown.
+- **Streak.** Each consecutive correct answer lifts the cruise floor, the
+  velocity the ship idles back to. Stars streak more, rocks fly past faster.
+  Losing a streak drops you from screaming through space to cruise in one hit.
+- **Boost.** Arm it before locking. Confidence, as a button.
+- **NOVA.** Two per run, one tap, costs thrust. Rules out one wrong option,
+  reveals an authored clue, or lights the two most plausible options. The
+  pick is seeded per question so everyone gets the same help on the same rock.
+- **AI Anomaly.** One per run, an open or visual question answered in text.
+  `/api/anomaly` scores it with a model (rubric stays server-side); with no key
+  or on any failure a keyword scorer marks it locally so the run never stalls.
+  A partial score earns a partial burst.
+- **Share card.** A 1080x1350 PNG: velocity over time as a glowing flight
+  path, every encounter marked (thread, slingshot, collision, wreck, timeout,
+  anomaly), streak bars, stats, and the total distance. Web Share where
+  available, otherwise download or copy the text strip.
+
+Distance is a speedometer integrated over the run, not seven point awards.
+`Flight.ts` owns that: cruise, streak floor, impulse, collision retain and
+the relaxation rates, all constants in `Tuning.ts`.
 
 ## The one file worth knowing
 
 `lib/game/Tuning.ts` holds every constant that decides how the game feels:
-speed ramp, steering response, bank angle, camera damping and offsets, field
-density, star counts, performance budgets. Nothing else hardcodes a magic
-number, so changing the feel means changing that file and nothing else.
+`FLIGHT` (the velocity model), `ENCOUNTER` (timers, hold distances, swerve
+offsets), `NOVA`, `FX` (shake, pull-back, tumble, debris), plus the camera,
+ship, exhaust, field and star constants. Nothing else hardcodes a magic
+number.
 
 ## How it works
 
-**The treadmill.** The ship never travels along Z. It steers on X and Y inside
-a corridor while the world is translated past it. That keeps float precision
-constant no matter how far a player gets, makes geometry a fixed recycled pool
-rather than something spawned forever, and leaves distance as a plain scalar
-that scoring can own independently of the scene graph.
+**The treadmill.** The ship never travels along Z. It flies on autopilot on X
+and Y while the world is translated past it at the Flight model's world
+speed. Float precision stays constant however far a player gets, geometry is
+a fixed recycled pool, and distance is a plain scalar the run owns.
 
-**Lanes are the seam for scoring.** The corridor divides into N lanes (default
-4). The engine always exposes both a discrete `currentLane` and a continuous
-`lanePosition` (2.4 means 40% of the way from lane 2 toward lane 3).
-`lib/game/scoring.ts` reads the continuous position for numeric questions
-(flight path as answer: distance from the truth is the gradient) and the whole
-lane for multiple choice (the option's authored `proximity` is the gradient).
+**Pure core, imperative shell.** `Run.ts` is the state machine
+(`intro -> approach -> scanning -> resolving -> aftermath`) and `Flight.ts`
+the physics; neither imports three.js or React. `Engine.ts` subscribes
+through `RunHooks`: it spawns the rock when a question is called, plays the
+strike when the answer locks, and fires the burst or the impact on contact.
+React reads `GameState` at about 12Hz and calls `answer`, `toggleBoost`,
+`useNova`, `submitAnomaly` on the engine.
 
-**The round.** `lib/game/Quiz.ts` announces each question on the HUD, waits a
-preview so the player can read and pre-steer, then spawns four labelled rocks,
-one per lane. When the lead rock crosses the commit line the ship's X locks the
-answer in: the chosen rock turns green or red, the ship boosts or brakes, a
-miss costs hull, and the rock shatters as the ship flies through it. After the
-last question the engine freezes and the results panel shows the share grid.
+**The encounter rock** (`EncounterAsteroid.ts`) does not fly at world speed
+while the answer is open. It hangs ahead and creeps in as thrust drains, then
+strikes on lock. The anomaly is the same mesh in violet with a pulse.
 
-**The ship** is `public/models/spaceship.glb` (Quaternius, CC0), loaded with
-`GLTFLoader` and re-materialised as Lambert so the PBR ban holds. Nozzle
-positions and flame size live in `Tuning.SHIP.nozzles` and `Tuning.EXHAUST`.
+**The ship** (`Ship.ts`) is the Quaternius GLB, re-materialised as Lambert.
+The autopilot weaves at cruise, swerves on a correct lock and tumbles on
+contact, all as a target position the old damped steering chases, so bank and
+yaw still fall out of lateral velocity.
 
-**The backdrop** is one textured plane parented to the camera, sized to cover
-the frustum at any aspect. Fog and clear colour are the image's dominant tone
-so distant rocks fade into it.
+**Effects.** `Debris.ts` is one InstancedMesh of fragments. `Shield.ts` is an
+additive wireframe bubble that rings out. The camera pulls back and kicks FOV
+on a burst; streaks surge on a slingshot.
 
-**React owns the DOM, three.js owns the canvas.** The engine runs its own
-`requestAnimationFrame` loop and never touches the React scheduler. State flows
-one way, engine to React, sampled at about 10Hz for the HUD. three.js is used
-imperatively rather than through react-three-fiber, because the frame loop
-needs allocation-free control over an object pool.
+**React owns the DOM, three.js owns the canvas.** The engine creates its own
+canvas inside a container div (a React-supplied canvas would be poisoned by
+`forceContextLoss()` on the StrictMode remount).
 
-**The engine creates its own canvas.** `forceContextLoss()` on teardown
-permanently poisons a canvas element, so a canvas supplied by React would be
-dead on the second mount, which StrictMode guarantees. The engine mounts a
-fresh canvas into a container div instead.
+**Persistence.** Today's run and the best distance live in localStorage.
+`/play` shows the stored card if you already flew; FLY AGAIN clears it.
 
 ### Layout
 
 ```
-app/                  routes: landing, /play, global styles
-components/           GameCanvas (mount boundary), Hud, RoundEnd, DebugStats
-lib/game/             Engine, Quiz, scoring, Ship, Exhaust, Backdrop, Camera,
-                      Input, AsteroidField, QuestionAsteroid, Starfield,
-                      quality, Tuning
-public/               spaceship.glb, backdrop image
+app/                  routes: landing, /play, /api/anomaly, global styles
+components/           GameCanvas (mount boundary), Hud, ShareCard, BestRun, DebugStats
+lib/game/             Engine, Run, Flight, nova, anomaly, share, storage,
+                      Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera,
+                      Backdrop, AsteroidField, Starfield, quality, Tuning
 lib/content/          round loader
-content/rounds/       one JSON file per daily round
+content/rounds/       one JSON file per daily round (6 mcq + 1 anomaly)
+public/               spaceship.glb, backdrop, anomaly images
+e2e/                  Playwright full-run test
 ```
+
+## Authoring a round
+
+Each `content/rounds/YYYY-MM-DD.json` has seven questions. MCQ entries carry
+`options`, `answer` (index), an optional `hint` (what a NOVA clue reveals) and
+a `fact`. The anomaly entry carries `kind` (`open` or `visual`), an optional
+`image` under `/public`, `imageAlt`, a `rubric` the model marks against
+(never shown), `accept` keywords for the offline scorer, and `answerText`.
 
 ## Performance rules
 
-These are not optional; they are what decides whether the game is playable on
-a mid-range Android.
-
-- Zero allocation in the frame loop. Scratch vectors and matrices are
-  module-level and reused.
-- `InstancedMesh` for anything above about 20 copies. The whole ambient debris
-  field is one draw call.
-- `MeshLambertMaterial` with flat shading. No PBR, no shadow maps, no
+- Zero allocation in the frame loop. Scratch vectors are module-level.
+- `InstancedMesh` for anything above about 20 copies (field, debris).
+- `MeshLambertMaterial`, flat shading. No PBR, no shadow maps, no
   post-processing. Glow is faked additively.
-- DPR capped at 2, never raw `devicePixelRatio`: a 3x phone would otherwise
-  render 9x the pixels.
-- Budget: under 60 draw calls and 60k triangles. Currently ~26 and ~16k.
+- DPR capped at 2, never raw `devicePixelRatio`.
+- Budget: under 60 draw calls and 60k triangles.
 - Quality tier is picked from device hints, then downgraded if measured frame
   time misses the budget.
 
 ## What is deliberately not done
 
-Share cards, group leaderboards, sound, persistence (the title screen's
-hi-score is a placeholder), and time-decay on scoring (`AnswerInput` still
-carries `elapsed` and `window` for it).
+Sound, group leaderboards, server-side persistence, more than one authored
+round, and haptics. The anomaly scorer is a single unstructured call; a
+structured-output tool call would be the next hardening step.

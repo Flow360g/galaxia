@@ -12,10 +12,16 @@ import { getRound } from "@/lib/content/round";
 export default async function PlayPage({
   searchParams,
 }: {
-  searchParams: Promise<{ debug?: string }>;
+  searchParams: Promise<{ debug?: string; replay?: string }>;
 }) {
   const params = await searchParams;
   const round = getRound();
 
-  return <GameCanvas round={round} debug={params.debug === "1"} />;
+  return (
+    <GameCanvas
+      round={round}
+      debug={params.debug === "1"}
+      replay={params.replay === "1"}
+    />
+  );
 }

@@ -1,21 +1,24 @@
 import * as THREE from "three";
+import { requestAnomalyScore } from "./anomaly";
 import { AsteroidField } from "./AsteroidField";
 import { Backdrop } from "./Backdrop";
-import { ChaseCamera, speedRatio } from "./Camera";
-import { Input } from "./Input";
-import { QuestionAsteroid } from "./QuestionAsteroid";
-import { Quiz } from "./Quiz";
+import { ChaseCamera } from "./Camera";
+import { Debris } from "./Debris";
+import { EncounterAsteroid } from "./EncounterAsteroid";
+import { Run } from "./Run";
+import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
-import { COLOR, PERF, QUESTION, SPEED, WORLD } from "./Tuning";
+import { COLOR, ENCOUNTER, FX, PERF, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import type {
-  AnswerEvent,
   DebugInfo,
   GameState,
+  Outcome,
   QualityTier,
+  Question,
   Round,
-  RoundSummary,
+  RunSummary,
 } from "./types";
 
 export interface EngineOptions {
@@ -29,63 +32,57 @@ export interface EngineOptions {
   round: Round;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
-  onLabels?: (labels: LabelPlacement[]) => void;
-  onAnswer?: (event: AnswerEvent) => void;
-  onRoundEnd?: (summary: RoundSummary) => void;
-}
-
-export interface LabelPlacement {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-  scale: number;
-  opacity: number;
+  onOutcome?: (outcome: Outcome, index: number) => void;
+  onRunEnd?: (summary: RunSummary) => void;
 }
 
 /**
  * Owns the renderer, the scene graph, the frame loop and the lifecycle.
  *
  * The core model is a treadmill: the ship never travels on Z, the world is
- * translated past it. That keeps float precision constant no matter how far
- * the player gets, makes geometry a fixed recycled pool, and leaves distance
- * as a plain scalar the scoring layer can own independently of the scene.
+ * translated past it at the Flight model's world speed. That keeps float
+ * precision constant however far the player gets, makes geometry a fixed
+ * recycled pool, and leaves distance as a plain scalar the run owns.
+ *
+ * The engine is the glue between the pure `Run` and everything that moves:
+ * it spawns the rock when a question is called, plays the strike when the
+ * answer locks, and fires the burst or the impact on contact.
  */
 export class Engine {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
   private readonly chase: ChaseCamera;
-  private readonly input: Input;
   private readonly ship: Ship;
   private readonly field: AsteroidField;
   private readonly stars: Starfield;
-  private readonly questions: QuestionAsteroid[] = [];
-  private readonly quiz: Quiz;
+  private readonly rock: EncounterAsteroid;
+  private readonly debris: Debris;
+  private readonly shield: Shield;
   private readonly backdrop: Backdrop;
   private readonly governor: QualityGovernor;
+  private readonly run: Run;
 
   private readonly clock = new THREE.Clock();
   private frameHandle: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private disposed = false;
+  private ended = false;
 
   private readonly canvas: HTMLCanvasElement;
   private tier: QualityTier;
   private width = 1;
   private height = 1;
 
-  private elapsed = 0;
-  private distance = 0;
-  private speed: number = SPEED.base;
-  private speedMultiplier = 1;
-  private targetMultiplier = 1;
-  private ended = false;
+  /** Which side the ship swerves to for this encounter, alternating. */
+  private side: 1 | -1 = 1;
+  /** Extra streak intensity from a slingshot, decaying. */
+  private streakSurge = 0;
 
   private fpsAccumulator = 0;
   private fpsFrames = 0;
   private lastDebugEmit = 0;
 
-  private readonly labelBuffer: LabelPlacement[] = [];
+  private readonly scratch = new THREE.Vector3();
 
   constructor(private readonly options: EngineOptions) {
     const reducedMotion = prefersReducedMotion();
@@ -98,8 +95,6 @@ export class Engine {
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      // Antialiasing is the first thing to go on weak devices. Flat shading
-      // plus fog hides most of the cost of losing it.
       antialias: this.tier === 0,
       powerPreference: "high-performance",
       alpha: false,
@@ -110,8 +105,6 @@ export class Engine {
     this.renderer.setPixelRatio(dprForTier(this.tier));
 
     this.scene.background = new THREE.Color(COLOR.space);
-    // Fog in the backdrop's dominant tone means recycled geometry fades into
-    // the painted sky rather than popping at the spawn plane.
     this.scene.fog = new THREE.Fog(COLOR.space, WORLD.fogNear, WORLD.fogFar);
 
     this.chase = new ChaseCamera(1, reducedMotion);
@@ -121,15 +114,10 @@ export class Engine {
     this.chase.camera.add(this.backdrop.mesh);
     void this.backdrop.load();
 
-    // One directional key light and one hemisphere fill. No shadow maps:
-    // shadows are the single most expensive thing a mobile GPU can be asked
-    // for, and flat-shaded rock does not need them to read.
     const key = new THREE.DirectionalLight(COLOR.white, 2.1);
     key.position.set(-6, 9, 4);
     this.scene.add(key);
-    this.scene.add(
-      new THREE.HemisphereLight(COLOR.white, COLOR.accent, 0.85),
-    );
+    this.scene.add(new THREE.HemisphereLight(COLOR.white, COLOR.accent, 0.85));
 
     const random = createRandom(options.round.seed);
 
@@ -137,29 +125,33 @@ export class Engine {
     this.scene.add(this.ship.group);
     void this.ship.loadModel();
 
+    this.shield = new Shield();
+    this.ship.group.add(this.shield.mesh);
+
     this.stars = new Starfield(this.tier, random);
     this.scene.add(this.stars.group);
 
     this.field = new AsteroidField(this.tier, random);
     this.scene.add(this.field.mesh);
 
-    for (let i = 0; i < QUESTION.poolSize; i += 1) {
-      const asteroid = new QuestionAsteroid(random);
-      this.questions.push(asteroid);
-      this.scene.add(asteroid.group);
-    }
+    this.rock = new EncounterAsteroid(random);
+    this.scene.add(this.rock.group);
 
-    this.quiz = new Quiz(options.round, this.questions, {
-      lanePosition: () => this.ship.lanePosition,
-      lane: () => this.ship.currentLane,
-      setSpeedMultiplier: (multiplier) => this.setSpeedMultiplier(multiplier),
-      shake: (intensity) => this.shake(intensity),
-      pulseExhaust: (strength) => this.ship.pulseExhaust(strength),
-      onAnswer: (event) => options.onAnswer?.(event),
-      onRoundEnd: () => this.endRound(),
-    });
+    this.debris = new Debris(this.tier, random);
+    this.scene.add(this.debris.mesh);
 
-    this.input = new Input(this.canvas);
+    this.run = new Run(
+      options.round,
+      {
+        onEncounterStart: (index, question) => this.onEncounterStart(index, question),
+        onLock: (index, outcome) => this.onLock(outcome),
+        onContact: (index, outcome) => this.onContact(index, outcome),
+        onFinished: () => this.endRun(),
+        scoreAnomaly: (question, answer) => requestAnomalyScore(question, answer),
+      },
+      random,
+    );
+
     this.observeResize();
   }
 
@@ -187,13 +179,13 @@ export class Engine {
     this.resizeObserver = null;
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
 
-    this.input.dispose();
     this.ship.dispose();
+    this.shield.dispose();
     this.field.dispose();
     this.stars.dispose();
     this.backdrop.dispose();
-    this.questions.forEach((asteroid) => asteroid.dispose());
-    this.questions.length = 0;
+    this.rock.dispose();
+    this.debris.dispose();
 
     this.scene.traverse((object) => {
       if (object instanceof THREE.Light) object.dispose?.();
@@ -209,48 +201,78 @@ export class Engine {
     this.canvas.remove();
   }
 
-  // ------------------------------------------------------------- external API
+  // ------------------------------------------------------------- player input
 
-  /**
-   * Nudge world speed. This is the hook the scoring layer uses to reward a
-   * right answer with a boost or punish a wrong one with a brake.
-   */
-  setSpeedMultiplier(multiplier: number): void {
-    this.targetMultiplier = Math.max(0.2, multiplier);
+  answer(option: number): void {
+    this.run.answer(option);
   }
 
-  /** Camera kick, for impacts and near misses. */
-  shake(intensity = 1): void {
-    this.chase.shake(intensity);
+  toggleBoost(): void {
+    this.run.toggleBoost();
+  }
+
+  useNova(): void {
+    this.run.useNova();
+  }
+
+  submitAnomaly(text: string): void {
+    this.run.submitAnomaly(text);
   }
 
   get state(): GameState {
-    return {
-      distance: this.distance,
-      speed: this.speed,
-      lanePosition: this.ship.lanePosition,
-      currentLane: this.ship.currentLane,
-      hull: this.quiz.hull,
-      score: this.quiz.score,
-      activeQuestion: this.quiz.activeQuestion,
-      answering: this.quiz.answering,
-      liveGuess: this.quiz.liveGuess(this.ship.lanePosition),
-      questionsAnswered: this.quiz.questionsAnswered,
-      running: this.frameHandle !== null,
-    };
+    const state = this.run.state;
+    state.running = this.frameHandle !== null;
+    return state;
   }
 
-  private endRound(): void {
+  // ---------------------------------------------------------------- run hooks
+
+  private onEncounterStart(index: number, question: Question): void {
+    this.side = index % 2 === 0 ? 1 : -1;
+    this.rock.spawn(question.type === "anomaly");
+    this.ship.recentre();
+  }
+
+  private onLock(outcome: Outcome): void {
+    this.rock.strike(ENCOUNTER.strikeSeconds, outcome.correct);
+    this.ship.manoeuvre(outcome.kind, this.side);
+  }
+
+  private onContact(index: number, outcome: Outcome): void {
+    const kind = outcome.kind;
+    this.chase.shake(FX.shake[kind]);
+
+    if (outcome.correct) {
+      this.rock.contact(false);
+      const burst = kind === "slingshot" ? "slingshot" : "thread";
+      this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
+      this.ship.pulseExhaust(FX.exhaustPulse[burst]);
+      if (kind === "slingshot") {
+        this.shield.flash(0.8, COLOR.boost);
+        this.streakSurge = FX.streakSurge;
+      }
+    } else {
+      this.rock.contact(true);
+      this.scratch.copy(this.rock.group.position);
+      const strength = kind === "wreck" ? 1.6 : 1;
+      this.debris.burst(
+        this.scratch,
+        strength,
+        this.rock.anomaly ? COLOR.anomaly : COLOR.panelLabel,
+      );
+      this.shield.flash(kind === "wreck" ? 1.4 : 1);
+      this.ship.impact(kind, this.side);
+    }
+
+    this.options.onOutcome?.(outcome, index);
+  }
+
+  private endRun(): void {
     if (this.ended) return;
     this.ended = true;
-    this.options.onRoundEnd?.({
-      score: this.quiz.score,
-      distance: this.distance,
-      hull: this.quiz.hull,
-      bands: [...this.quiz.bands],
-    });
-    // Freeze on the final frame; the results panel sits over it.
-    this.stop();
+    this.options.onRunEnd?.(this.run.summary());
+    // Keep flying under the share card: the ship coasting on is the story's
+    // last frame. State updates stop mattering, the loop just renders.
   }
 
   // ------------------------------------------------------------------ resize
@@ -280,7 +302,7 @@ export class Engine {
     // Pause when backgrounded: rAF is throttled anyway, and resuming from a
     // stale clock would otherwise jump the world forward.
     if (document.hidden) this.stop();
-    else if (!this.disposed && !this.ended) this.start();
+    else if (!this.disposed) this.start();
   };
 
   // -------------------------------------------------------------- frame loop
@@ -299,63 +321,28 @@ export class Engine {
   };
 
   private update(dt: number): void {
-    this.elapsed += dt;
+    if (!this.ended) this.run.update(dt);
+    else this.run.flight.update(dt);
 
-    this.input.update();
-    this.advanceSpeed(dt);
+    const flight = this.run.flight;
+    const speed = flight.worldSpeed;
+    const ratio = flight.visualRatio;
 
-    this.distance += this.speed * dt;
+    this.streakSurge *= Math.exp(-FX.pullbackDecay * dt);
 
-    const ratio = speedRatio(this.speed);
-    this.ship.update(dt, this.input, ratio);
+    const phase = this.run.phase;
+    if (phase === "approach") this.rock.setLoom(1 - this.run.thrust);
+
+    this.ship.update(dt, ratio, phase === "approach" ? this.run.thrust : 1);
+    this.shield.update(dt);
     this.chase.update(dt, this.ship, ratio);
-    this.stars.update(dt, this.speed);
-    this.field.update(dt, this.speed);
+    this.stars.update(dt, speed, streakIntensity(ratio) + this.streakSurge);
+    this.field.update(dt, speed);
+    this.rock.update(dt, speed);
+    this.debris.update(dt, speed);
     this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 
-    this.quiz.update(dt, this.speed, this.distance, this.elapsed);
-    this.emitLabels();
-
-    this.options.onState?.(this.state);
-  }
-
-  private advanceSpeed(dt: number): void {
-    // Asymptotic ramp: fast early progress, never actually reaching max, so
-    // a long run keeps gaining without the speed becoming unplayable.
-    const progress = 1 - Math.exp(-this.elapsed / SPEED.rampSeconds);
-    const base = SPEED.base + (SPEED.max - SPEED.base) * progress;
-
-    const lerp = 1 - Math.exp(-SPEED.multiplierLerp * dt);
-    this.speedMultiplier +=
-      (this.targetMultiplier - this.speedMultiplier) * lerp;
-
-    this.speed = base * this.speedMultiplier;
-  }
-
-  private emitLabels(): void {
-    if (!this.options.onLabels) return;
-
-    this.labelBuffer.length = 0;
-    for (let i = 0; i < this.questions.length; i += 1) {
-      const asteroid = this.questions[i]!;
-      const placement = asteroid.projectToScreen(
-        this.chase.camera,
-        this.width,
-        this.height,
-      );
-      if (!placement || !asteroid.label) continue;
-
-      this.labelBuffer.push({
-        id: `lane-${i}`,
-        text: asteroid.label,
-        x: placement.x,
-        y: placement.y,
-        scale: placement.scale,
-        opacity: placement.opacity,
-      });
-    }
-
-    this.options.onLabels(this.labelBuffer);
+    if (!this.ended) this.options.onState?.(this.state);
   }
 
   private emitDebug(rawDelta: number): void {
@@ -368,8 +355,6 @@ export class Engine {
     const downgraded = this.governor.sample(frameMs);
     if (downgraded !== null) this.applyTier(downgraded);
 
-    // Emit at ~4Hz. A per-frame React setState for debug text would itself
-    // be the thing slowing the frame down.
     this.lastDebugEmit += frameMs;
     if (this.lastDebugEmit < 250) return;
 
@@ -388,11 +373,6 @@ export class Engine {
     this.lastDebugEmit = 0;
   }
 
-  /**
-   * Adaptive downgrade. Only the cheap, non-structural knobs are touched at
-   * runtime: rebuilding the instanced field mid-flight would stutter worse
-   * than the framerate we are trying to fix.
-   */
   private applyTier(tier: QualityTier): void {
     this.tier = tier;
     this.renderer.setPixelRatio(dprForTier(tier));
@@ -400,11 +380,17 @@ export class Engine {
   }
 }
 
+/** Streaks start showing a little way above cruise and saturate near the top. */
+function streakIntensity(ratio: number): number {
+  const t = (ratio - 0.15) / 0.7;
+  return t < 0 ? 0 : t > 1 ? 1 : t;
+}
+
 /**
  * Deterministic PRNG (mulberry32), seeded from the round.
  *
- * Every player on a given day must get an identical field, or comparing
- * results is meaningless and the share loop falls apart.
+ * Every player on a given day must get an identical field and identical NOVA
+ * scans, or comparing results is meaningless and the share loop falls apart.
  */
 export function createRandom(seed: number): () => number {
   let state = seed >>> 0;

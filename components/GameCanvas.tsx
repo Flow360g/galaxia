@@ -1,22 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Engine, type LabelPlacement } from "@/lib/game/Engine";
-import type {
-  AnswerEvent,
-  DebugInfo,
-  GameState,
-  Round,
-  RoundSummary,
-} from "@/lib/game/types";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Engine } from "@/lib/game/Engine";
+import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
+import { clearRun, loadRun, saveRun } from "@/lib/game/storage";
 import { Hud } from "./Hud";
-import { RoundEnd } from "./RoundEnd";
+import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
 import styles from "./GameCanvas.module.css";
 
 interface Props {
   round: Round;
   debug: boolean;
+  /** Skip the stored run and fly again regardless. */
+  replay?: boolean;
 }
 
 /**
@@ -25,51 +22,56 @@ interface Props {
  * React owns the DOM overlay and nothing else. The engine owns the canvas and
  * runs its own loop, so the render loop never touches the React scheduler.
  * State flows one way, engine to React, throttled, and only for the HUD.
+ * Input flows the other way as plain method calls on the engine.
  */
-export function GameCanvas({ round, debug }: Props) {
+export function GameCanvas({ round, debug, replay = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
 
   const [state, setState] = useState<GameState | null>(null);
-  const [labels, setLabels] = useState<LabelPlacement[]>([]);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
-  const [lastAnswer, setLastAnswer] = useState<AnswerEvent | null>(null);
-  const [summary, setSummary] = useState<RoundSummary | null>(null);
+  const [summary, setSummary] = useState<RunSummary | null>(null);
+  /** Bumped to remount the engine for a fresh run. */
+  const [attempt, setAttempt] = useState(0);
+  /**
+   * Today's stored run, if any. `undefined` on the server and until hydration
+   * so the engine never starts before storage has been checked.
+   */
+  const stored = useSyncExternalStore(
+    subscribeStorage,
+    () => (replay ? null : storedRun(round.date)),
+    () => undefined,
+  );
 
   // The engine emits state every frame. Re-rendering React at 60fps would
-  // cost more than the scene does, so the HUD is sampled at ~10Hz instead.
+  // cost more than the scene does, so the HUD is sampled at ~12Hz instead.
   const lastStateEmit = useRef(0);
-
   const handleState = useCallback((next: GameState) => {
     const now = performance.now();
-    if (now - lastStateEmit.current < 100) return;
+    if (now - lastStateEmit.current < 80) return;
     lastStateEmit.current = now;
     setState(next);
   }, []);
 
-  const handleLabels = useCallback((next: LabelPlacement[]) => {
-    // The engine reuses its label buffer between frames, so this must copy;
-    // storing the array itself would give React a reference that mutates
-    // underneath it and never re-renders.
-    setLabels(next.map((label) => ({ ...label })));
+  const handleRunEnd = useCallback((result: RunSummary) => {
+    saveRun(result);
+    storedCache.set(result.date, result);
+    setSummary(result);
   }, []);
+
+  const playing = stored === null && summary === null;
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || stored !== null) return;
 
     const engine = new Engine({
       container,
       round,
       onState: handleState,
-      onLabels: handleLabels,
-      onAnswer: setLastAnswer,
-      onRoundEnd: setSummary,
+      onRunEnd: handleRunEnd,
       onDebug: debug ? setDebugInfo : undefined,
     });
-    setLastAnswer(null);
-    setSummary(null);
-
     engineRef.current = engine;
     engine.start();
 
@@ -77,7 +79,18 @@ export function GameCanvas({ round, debug }: Props) {
       engine.dispose();
       engineRef.current = null;
     };
-  }, [round, debug, handleState, handleLabels]);
+    // `attempt` is a deliberate dependency: bumping it remounts the engine.
+  }, [round, debug, stored, attempt, handleState, handleRunEnd]);
+
+  const replayRun = useCallback(() => {
+    clearRun(round.date);
+    storedCache.set(round.date, null);
+    setSummary(null);
+    setState(null);
+    setAttempt((n) => n + 1);
+  }, [round.date]);
+
+  const shown = summary ?? stored ?? null;
 
   return (
     <div className={styles.shell}>
@@ -85,26 +98,35 @@ export function GameCanvas({ round, debug }: Props) {
           EngineOptions.container for why React must not supply it. */}
       <div ref={containerRef} className={styles.stage} />
 
-      {/* Answer labels, projected from world space each frame. */}
-      <div className={styles.labels} aria-hidden="true">
-        {labels.map((label) => (
-          <span
-            key={label.id}
-            data-testid="answer-label"
-            className={`${styles.label} mono`}
-            style={{
-              transform: `translate3d(${label.x}px, ${label.y}px, 0) translate(-50%, -50%) scale(${label.scale})`,
-              opacity: label.opacity,
-            }}
-          >
-            {label.text}
-          </span>
-        ))}
-      </div>
+      {playing ? (
+        <Hud
+          state={state}
+          round={round}
+          onAnswer={(option) => engineRef.current?.answer(option)}
+          onToggleBoost={() => engineRef.current?.toggleBoost()}
+          onNova={() => engineRef.current?.useNova()}
+          onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+        />
+      ) : null}
 
-      <Hud state={state} round={round} lastAnswer={lastAnswer} />
-      {summary ? <RoundEnd round={round} summary={summary} /> : null}
+      {shown ? <ShareCard round={round} summary={shown} onReplay={replayRun} /> : null}
       {debug && debugInfo ? <DebugStats info={debugInfo} /> : null}
     </div>
   );
+}
+
+/**
+ * Snapshot cache for `useSyncExternalStore`: the store must hand back the
+ * same object for the same state or React will loop. Storage itself is only
+ * ever written by this component, so the cache is the truth once warm.
+ */
+const storedCache = new Map<string, RunSummary | null>();
+
+function storedRun(date: string): RunSummary | null {
+  if (!storedCache.has(date)) storedCache.set(date, loadRun(date));
+  return storedCache.get(date) ?? null;
+}
+
+function subscribeStorage(): () => void {
+  return () => {};
 }

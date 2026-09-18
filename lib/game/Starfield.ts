@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { COLOR, SPEED, STARS, WORLD } from "./Tuning";
+import { COLOR, STARS, WORLD } from "./Tuning";
 import type { QualityTier } from "./types";
 
 /**
@@ -115,7 +115,12 @@ export class Starfield {
     this.disposables.push(geometry, material);
   }
 
-  update(dt: number, speed: number): void {
+  /**
+   * @param dt         clamped frame delta
+   * @param speed      world units per second
+   * @param intensity  0..1 streak strength (visual speed ratio plus surges)
+   */
+  update(dt: number, speed: number, intensity: number): void {
     for (const layer of this.layers) {
       const travel = speed * layer.parallax * dt;
       const positions = layer.positions;
@@ -131,16 +136,13 @@ export class Starfield {
       layer.points.geometry.getAttribute("position").needsUpdate = true;
     }
 
-    this.updateStreaks(dt, speed);
+    this.updateStreaks(dt, speed, clamp01(intensity));
   }
 
-  private updateStreaks(dt: number, speed: number): void {
+  private updateStreaks(dt: number, speed: number, intensity: number): void {
     if (!this.streaks || !this.streakPositions || !this.streakMaterial) return;
 
-    // Fade in across the band above the threshold rather than snapping on.
-    const range = Math.max(SPEED.max - SPEED.streakThreshold, 1);
-    const intensity = clamp01((speed - SPEED.streakThreshold) / range);
-    this.streakMaterial.opacity = intensity * 0.55;
+    this.streakMaterial.opacity = intensity * 0.6;
     this.streaks.visible = intensity > 0.01;
     if (!this.streaks.visible) return;
 

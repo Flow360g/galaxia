@@ -1,20 +1,19 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Exhaust } from "./Exhaust";
-import { EXHAUST, SHIP, WORLD } from "./Tuning";
-import type { Input } from "./Input";
-import type { QualityTier } from "./types";
+import { ENCOUNTER, EXHAUST, FX, SHIP, WORLD } from "./Tuning";
+import type { OutcomeKind, QualityTier } from "./types";
 
 /**
- * The player ship.
+ * The player ship, on autopilot.
  *
- * The Quaternius GLB hull. The ship stays invisible until the model has
- * loaded rather than showing a stand-in: a hull that swaps shape half a
- * second into the run reads as a glitch. Two exhausts burn off the back and
- * stretch with speed.
+ * The player answers; the ship flies. It weaves gently while cruising, swerves
+ * aside to thread a rock on a correct answer, skims it on a slingshot, and
+ * tumbles when it hits one. All of that is a target X/Y the hull chases with
+ * the same damped steering the old manual controls used, so bank, pitch and
+ * yaw still fall out of lateral velocity and the ship still reads as flown.
  *
- * The ship never moves on Z. It steers on X and Y inside the corridor while
- * the world is translated past it.
+ * The ship never moves on Z. The world is translated past it.
  */
 export class Ship {
   readonly group = new THREE.Group();
@@ -23,7 +22,7 @@ export class Ship {
   velocityX = 0;
   velocityY = 0;
 
-  /** Everything that bobs: hull and exhausts together. */
+  /** Everything that bobs and tumbles: hull and exhausts together. */
   private readonly body = new THREE.Group();
   private readonly exhausts: Exhaust[] = [];
   private roll = 0;
@@ -31,6 +30,18 @@ export class Ship {
   private bobPhase = 0;
   private elapsed = 0;
   private disposed = false;
+
+  /** Autopilot target, and how long the current swerve holds. */
+  private targetX = 0;
+  private targetY = 0;
+  private swerveTimer = 0;
+  private weaving = true;
+
+  /** Tumble state: extra roll applied on top of the bank. */
+  private tumbleT = 0;
+  private tumbleSeconds = 0;
+  private tumbleRolls = 0;
+  private tumbleSign = 1;
 
   private disposables: Array<{ dispose(): void }> = [];
 
@@ -87,8 +98,6 @@ export class Ship {
       source.dispose();
     });
 
-    // Normalise: centre on the bounding box, scale to a known length, and
-    // turn the nose down -Z.
     const bounds = new THREE.Box3().setFromObject(model);
     const size = bounds.getSize(new THREE.Vector3());
     const centre = bounds.getCenter(new THREE.Vector3());
@@ -112,27 +121,81 @@ export class Ship {
   }
 
   /**
-   * @param dt          clamped frame delta, seconds
-   * @param input       steering axes
-   * @param speedRatio  0..1 across the speed band, drives exhaust length
+   * React to a locked answer. Correct outcomes swerve; wrong ones hold course
+   * into the rock. The tumble itself is triggered on contact, see `impact`.
    */
-  update(dt: number, input: Input, speedRatio: number): void {
+  manoeuvre(kind: OutcomeKind, side: 1 | -1): void {
+    this.weaving = false;
+    switch (kind) {
+      case "thread":
+        this.setSwerve(side * ENCOUNTER.threadOffsetX, 1.2);
+        break;
+      case "slingshot":
+        this.setSwerve(side * ENCOUNTER.skimOffsetX, -0.4);
+        break;
+      default:
+        // Line up on the rock. The autopilot flies straight into it.
+        this.setSwerve(0, 0);
+        break;
+    }
+  }
+
+  /** Contact with a rock. Roll the hull over, once or twice. */
+  impact(kind: OutcomeKind, side: 1 | -1): void {
+    if (this.reducedMotion) return;
+    const spec = kind === "wreck" ? FX.tumble.wreck : FX.tumble.collision;
+    this.tumbleT = 0;
+    this.tumbleSeconds = spec.seconds;
+    this.tumbleRolls = spec.rolls;
+    this.tumbleSign = side;
+    // Knocked sideways, then the autopilot recovers.
+    this.setSwerve(-side * 4.5, 1.5);
+  }
+
+  /** Back to the lazy cruise weave. */
+  recentre(): void {
+    this.weaving = true;
+    this.swerveTimer = 0;
+  }
+
+  private setSwerve(x: number, y: number): void {
+    this.targetX = x;
+    this.targetY = y;
+    this.swerveTimer = SHIP.swerveHoldSeconds;
+  }
+
+  /**
+   * @param dt          clamped frame delta, seconds
+   * @param speedRatio  0..1 across the visual speed band, drives exhaust
+   * @param thrust      0..1 thrust remaining, shortens the flame as it drains
+   */
+  update(dt: number, speedRatio: number, thrust: number): void {
     this.elapsed += dt;
 
-    // Soft walls: as the ship nears the edge of the corridor, steering into
-    // the wall is eased off over `SHIP.wallSoftZone` rather than clamped
-    // dead at the boundary, so the edge feels like a cushion, not a kerb.
-    const targetVX =
-      input.axis.x *
-      SHIP.lateralSpeed *
-      wallEase(this.group.position.x, input.axis.x, WORLD.corridorHalfWidth);
-    const targetVY =
-      -input.axis.y *
-      SHIP.verticalSpeed *
-      wallEase(this.group.position.y, -input.axis.y, WORLD.corridorHalfHeight);
+    if (this.swerveTimer > 0) {
+      this.swerveTimer -= dt;
+      if (this.swerveTimer <= 0) this.weaving = true;
+    }
+    if (this.weaving) {
+      const phase = this.elapsed * SHIP.weaveRate * Math.PI * 2;
+      this.targetX = Math.sin(phase) * SHIP.weaveAmplitudeX;
+      this.targetY = Math.sin(phase * 0.7 + 1.3) * SHIP.weaveAmplitudeY;
+    }
 
-    // Exponential smoothing, framerate-independent. Using 1-exp(-k*dt) rather
-    // than a raw lerp factor keeps the feel identical at 30fps and 120fps.
+    // The autopilot asks for a lateral velocity proportional to the error,
+    // capped at the ship's lateral speed; the hull then chases that velocity
+    // with the same smoothing manual steering had, so nothing snaps.
+    const targetVX = clamp(
+      (this.targetX - this.group.position.x) * SHIP.autopilotResponse,
+      -SHIP.lateralSpeed,
+      SHIP.lateralSpeed,
+    );
+    const targetVY = clamp(
+      (this.targetY - this.group.position.y) * SHIP.autopilotResponse,
+      -SHIP.verticalSpeed,
+      SHIP.verticalSpeed,
+    );
+
     const response = 1 - Math.exp(-SHIP.steerResponse * dt);
     this.velocityX += (targetVX - this.velocityX) * response;
     this.velocityY += (targetVY - this.velocityY) * response;
@@ -148,19 +211,6 @@ export class Ship {
       WORLD.corridorHalfHeight,
     );
 
-    // The clamp above is a backstop only; at the wall any residual push into
-    // it is bled off gently so bank and yaw unwind instead of snapping.
-    if (Math.abs(this.group.position.x) >= WORLD.corridorHalfWidth) {
-      if (Math.sign(this.velocityX) === Math.sign(this.group.position.x)) {
-        this.velocityX *= Math.exp(-SHIP.wallBleed * dt);
-      }
-    }
-    if (Math.abs(this.group.position.y) >= WORLD.corridorHalfHeight) {
-      if (Math.sign(this.velocityY) === Math.sign(this.group.position.y)) {
-        this.velocityY *= Math.exp(-SHIP.wallBleed * dt);
-      }
-    }
-
     // Bank into the turn. Roll is the single biggest contributor to the ship
     // feeling like a vehicle rather than a sprite.
     const rollResponse = 1 - Math.exp(-SHIP.rollResponse * dt);
@@ -173,6 +223,21 @@ export class Ship {
     this.group.rotation.x = this.pitch;
     this.group.rotation.y = (this.velocityX / SHIP.lateralSpeed) * SHIP.maxYaw;
 
+    // Tumble: a full roll (or two) on top of the bank, eased so it starts
+    // violently and settles.
+    if (this.tumbleSeconds > 0) {
+      this.tumbleT += dt / this.tumbleSeconds;
+      if (this.tumbleT >= 1) {
+        this.tumbleSeconds = 0;
+        this.body.rotation.z = 0;
+        this.body.rotation.x = 0;
+      } else {
+        const eased = 1 - Math.pow(1 - this.tumbleT, 3);
+        this.body.rotation.z = this.tumbleSign * eased * Math.PI * 2 * this.tumbleRolls;
+        this.body.rotation.x = Math.sin(this.tumbleT * Math.PI) * 0.35;
+      }
+    }
+
     // Idle bob, so a stationary ship still reads as flying. Suppressed for
     // players who asked for reduced motion.
     if (!this.reducedMotion) {
@@ -180,21 +245,12 @@ export class Ship {
       this.body.position.y = Math.sin(this.bobPhase) * SHIP.bobAmplitude;
     }
 
+    // Thrust drains the flame: at a quarter thrust the plume is visibly
+    // shorter, which is the timer made physical.
+    const flame = speedRatio * (0.55 + 0.45 * thrust);
     for (const exhaust of this.exhausts) {
-      exhaust.update(dt, this.elapsed, speedRatio);
+      exhaust.update(dt, this.elapsed, flame);
     }
-  }
-
-  /** Continuous lane position, e.g. 2.4 = 40% from lane 2 toward lane 3. */
-  get lanePosition(): number {
-    const normalised =
-      (this.group.position.x + WORLD.corridorHalfWidth) /
-      (WORLD.corridorHalfWidth * 2);
-    return normalised * (WORLD.laneCount - 1);
-  }
-
-  get currentLane(): number {
-    return Math.round(this.lanePosition);
   }
 
   dispose(): void {
@@ -208,18 +264,6 @@ export class Ship {
   }
 }
 
-/**
- * 1 in open corridor, easing to 0 at the wall, but only when steering toward
- * that wall. Steering away is never damped.
- */
-function wallEase(position: number, axis: number, halfExtent: number): number {
-  if (axis === 0 || Math.sign(axis) !== Math.sign(position)) return 1;
-  const margin = halfExtent - Math.abs(position);
-  const t = margin / SHIP.wallSoftZone;
-  const clamped = t < 0 ? 0 : t > 1 ? 1 : t;
-  // Smoothstep, so the cushion builds gradually rather than kicking in.
-  return clamped * clamped * (3 - 2 * clamped);
-}
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;

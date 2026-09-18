@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CAMERA, SPEED } from "./Tuning";
+import { CAMERA, FX } from "./Tuning";
 import type { Ship } from "./Ship";
 
 /**
@@ -23,6 +23,9 @@ export class ChaseCamera {
   private shakeAmount = 0;
   private shakeX = 0;
   private shakeY = 0;
+  /** Burst pull-back and FOV kick, both decaying together. */
+  private pullback = 0;
+  private fovKick = 0;
 
   constructor(
     aspect: number,
@@ -52,19 +55,30 @@ export class ChaseCamera {
     );
   }
 
+  /** A burst of acceleration: drop back and widen, then ease back in. */
+  burst(pullback: number, fovKick: number): void {
+    if (this.reducedMotion) return;
+    this.pullback = Math.max(this.pullback, pullback);
+    this.fovKick = Math.max(this.fovKick, fovKick);
+  }
+
   /**
    * @param dt          clamped frame delta, seconds
    * @param ship        the ship to chase
-   * @param speedRatio  0..1 across the speed band
+   * @param speedRatio  0..1 across the visual speed band
    */
   update(dt: number, ship: Ship, speedRatio: number): void {
+    const decay = Math.exp(-FX.pullbackDecay * dt);
+    this.pullback *= decay;
+    this.fovKick *= decay;
+
     // Only partially follow the ship's X. At lateralFollow < 1 the ship slides
     // toward the edge of frame as it steers, which is what makes a hard turn
     // feel committed instead of the world merely sliding underneath.
     scratchTarget.set(
       ship.group.position.x * CAMERA.lateralFollow,
-      ship.group.position.y * 0.55 + CAMERA.offsetY,
-      CAMERA.offsetZ,
+      ship.group.position.y * 0.55 + CAMERA.offsetY + this.pullback * 0.3,
+      CAMERA.offsetZ + this.pullback,
     );
 
     // Framerate-independent damping. Same feel at 30fps and 120fps.
@@ -88,7 +102,9 @@ export class ChaseCamera {
     this.camera.rotation.z += ship.group.rotation.z * 0.18;
 
     const fov =
-      CAMERA.fov + (CAMERA.fovAtMaxSpeed - CAMERA.fov) * easeOut(speedRatio);
+      CAMERA.fov +
+      (CAMERA.fovAtMaxSpeed - CAMERA.fov) * easeOut(speedRatio) +
+      this.fovKick;
     if (Math.abs(this.camera.fov - fov) > 0.01) {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
@@ -113,11 +129,4 @@ export class ChaseCamera {
 function easeOut(t: number): number {
   const clamped = t < 0 ? 0 : t > 1 ? 1 : t;
   return clamped * clamped;
-}
-
-/** Map an absolute speed onto 0..1 across the playable band. */
-export function speedRatio(speed: number): number {
-  const range = Math.max(SPEED.max - SPEED.base, 1);
-  const ratio = (speed - SPEED.base) / range;
-  return ratio < 0 ? 0 : ratio > 1 ? 1 : ratio;
 }

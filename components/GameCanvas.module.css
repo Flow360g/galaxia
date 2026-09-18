@@ -15,31 +15,9 @@
   display: block;
   width: 100%;
   height: 100%;
-  /* Without this the browser claims the drag for scroll/pull-to-refresh and
-     steering dies the moment the thumb moves more than a few pixels. */
+  /* Without this the browser claims a swipe for pull-to-refresh mid-run. */
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-}
-
-.labels {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.label {
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #ffffff;
-  background: rgba(7, 17, 34, 0.88);
-  border: 1px solid var(--rule-dark);
-  padding: 4px 7px;
-  white-space: nowrap;
-  will-change: transform;
 }

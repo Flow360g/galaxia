@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { BestRun } from "@/components/BestRun";
 import { getRound } from "@/lib/content/round";
-import { formatRoundNumber, formatScore } from "@/lib/game/format";
+import { formatRoundNumber } from "@/lib/game/format";
 import styles from "./page.module.css";
 
 /**
@@ -10,6 +11,7 @@ import styles from "./page.module.css";
  */
 export default function Home() {
   const round = getRound();
+  const encounters = round.questions.length;
 
   return (
     <main className={styles.main}>
@@ -17,7 +19,7 @@ export default function Home() {
 
       <header className={styles.header}>
         <span className="eyebrow">
-          {formatRoundNumber(round.roundNumber)} / DAILY ROUND
+          {formatRoundNumber(round.roundNumber)} / DAILY RUN
         </span>
         <span className={`${styles.mark} arcade`}>{round.date}</span>
       </header>
@@ -31,8 +33,9 @@ export default function Home() {
         </h1>
 
         <p className={styles.lede}>
-          Answer the asteroids. Steer into the right one and fly as far as you
-          can. One round a day.
+          {encounters} asteroids, one run a day. Answer fast to keep your
+          thrust, arm Boost when you are sure, and fly as far as you can.
+          Wrong answers hit hard.
         </p>
 
         <Link href="/play" className={`${styles.start} arcade`}>
@@ -46,21 +49,14 @@ export default function Home() {
           <span className={`${styles.metaValue} arcade`}>{round.theme}</span>
         </div>
         <div className={styles.meta}>
-          <span className="label">Questions</span>
-          <span className={`${styles.metaValue} arcade`}>
-            {round.questions.length}
-          </span>
+          <span className="label">Encounters</span>
+          <span className={`${styles.metaValue} arcade`}>{encounters}</span>
         </div>
         <div className={styles.meta}>
           <span className="label">Run time</span>
-          <span className={`${styles.metaValue} arcade`}>3-5 MIN</span>
+          <span className={`${styles.metaValue} arcade`}>2-3 MIN</span>
         </div>
-        <div className={styles.meta}>
-          <span className="label">Hi-score</span>
-          <span className={`${styles.metaValue} ${styles.hiScore} arcade`}>
-            {formatScore(0)}
-          </span>
-        </div>
+        <BestRun date={round.date} className={styles.meta ?? ""} />
       </footer>
     </main>
   );

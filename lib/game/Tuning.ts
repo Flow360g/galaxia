@@ -10,16 +10,10 @@
  */
 
 export const WORLD = {
-  /** Half-width of the playable corridor on X. Ship is clamped to this. */
+  /** Half-width of the corridor on X. The autopilot swerves within this. */
   corridorHalfWidth: 13,
-  /** Half-height of the playable corridor on Y. */
+  /** Half-height of the corridor on Y. */
   corridorHalfHeight: 5.5,
-  /**
-   * Number of lanes the corridor divides into. The quiz mechanic reads lane
-   * index / continuous lane position, so this is the seam every candidate
-   * scoring model plugs into. 4 suits a 4-option question.
-   */
-  laneCount: 4,
   /** Where world objects are born, on -Z. */
   spawnDistance: 420,
   /** Once an object passes this +Z it is recycled to the back of the pool. */
@@ -29,26 +23,134 @@ export const WORLD = {
   fogFar: 400,
 } as const;
 
-export const SPEED = {
-  /** Speed at the very start of a round. */
-  base: 58,
-  /** Speed the ramp asymptotes toward over a round. */
-  max: 165,
-  /** Seconds to travel most of the way from base to max. Higher = gentler. */
-  rampSeconds: 150,
-  /** How fast an externally-set multiplier (boost/brake) eases in. */
-  multiplierLerp: 2.2,
-  /** Speed above which the streak layer starts to show. */
-  streakThreshold: 95,
+export const FLIGHT = {
+  /** Cruise velocity, km/h, with no streak. The floor velocity relaxes to. */
+  cruise: 1800,
+  /**
+   * Each consecutive correct answer lifts the cruise floor by this fraction
+   * of base cruise. The streak is the "underlying velocity": at streak 4 the
+   * ship idles at 1800 * (1 + 0.3 * 4) = 4,000 km/h.
+   */
+  streakCruiseGain: 0.3,
+  /** Streak steps counted toward cruise. Beyond this, the floor stops rising. */
+  streakCap: 6,
+  /** km/h added by a correct answer with zero thrust left. */
+  impulseBase: 900,
+  /** Extra km/h added at full thrust. Answer fast, burst harder. */
+  impulseThrust: 1700,
+  /** Impulse grows with the streak you had going in. */
+  impulseStreakGain: 0.15,
+  /** Boost multiplies the impulse on a correct answer. */
+  boostImpulse: 1.85,
+  /** Fraction of velocity kept through a collision, and through a wreck. */
+  collisionRetain: 0.5,
+  wreckRetain: 0.28,
+  /** Velocity never drops below this, so the ship is always moving. */
+  minVelocity: 700,
+  maxVelocity: 16000,
+  /** Per second. How fast velocity above cruise bleeds back down to it. */
+  decayRate: 0.16,
+  /** Per second. How fast velocity below cruise climbs back up to it. */
+  recoveryRate: 0.4,
+  /**
+   * Velocity mapped onto 0..1 for everything visual (FOV, streaks, exhaust)
+   * between cruise and this. Above it the visuals are pinned at max.
+   */
+  visualMaxVelocity: 9000,
+  /** km/h to world units per second. 1800 km/h cruises at about 45 u/s. */
+  worldScale: 0.025,
+  /**
+   * One real second is this many flight seconds for the distance counter.
+   * Keeps a three-minute run in the thousands of kilometres.
+   */
+  distanceTimeScale: 90,
+} as const;
+
+export const ENCOUNTER = {
+  /** Engines lighting before the first asteroid is called. */
+  introSeconds: 1.6,
+  /** Seconds of thrust per normal encounter. Thrust is the answer timer. */
+  thrustSeconds: 14,
+  /** The anomaly needs typing time. */
+  anomalyThrustSeconds: 40,
+  /** Asteroid Z at full thrust and at empty thrust. It looms as you think. */
+  holdFar: -170,
+  holdNear: -48,
+  /** Seconds from lock to contact. */
+  strikeSeconds: 0.7,
+  /** Seconds the outcome animation owns the screen after contact. */
+  resolveSeconds: 1.0,
+  /** Seconds the outcome toast holds before the next asteroid is called. */
+  aftermathSeconds: 2.8,
+  aftermathSecondsAnomaly: 3.8,
+  /** Radius of an encounter asteroid, and of the anomaly. */
+  radius: 4.6,
+  anomalyRadius: 5.2,
+  /** Vertical offset of the encounter rock so it sits in the ship's eyeline. */
+  offsetY: 0.6,
+  /** Lateral swerve when threading past, and the tighter skim on a slingshot. */
+  threadOffsetX: 9.5,
+  skimOffsetX: 6.6,
+  /** How long the scorer may take before the anomaly is marked locally. */
+  scanTimeoutSeconds: 9,
+} as const;
+
+export const NOVA = {
+  perRun: 2,
+  /** Thrust spent on a scan, as a fraction of full thrust. */
+  thrustCost: 0.22,
+  /** How many options a narrow scan keeps lit (always including the answer). */
+  narrowKeep: 2,
+} as const;
+
+/** Visual and haptic consequences per outcome. */
+export const FX = {
+  shake: {
+    thread: 0.25,
+    slingshot: 1.1,
+    collision: 1.3,
+    wreck: 2.2,
+    timeout: 1.1,
+  },
+  /** Camera pull-back (extra +Z offset) on a burst, and its decay per second. */
+  pullback: { thread: 2.2, slingshot: 5.5 },
+  pullbackDecay: 1.6,
+  /** Extra FOV degrees kicked in on a burst, decaying with pullback. */
+  fovKick: { thread: 4, slingshot: 12 },
+  /** Ship tumble on a collision: full rolls and the seconds they take. */
+  tumble: { collision: { rolls: 1, seconds: 1.1 }, wreck: { rolls: 2, seconds: 1.5 } },
+  /** Shield flash hold time. */
+  shieldSeconds: 0.6,
+  /** Debris fragments per burst, per quality tier. */
+  debrisCount: [56, 36, 20],
+  debrisSeconds: 1.4,
+  debrisSpeed: 26,
+  /** Exhaust pulse strength on a burst. */
+  exhaustPulse: { thread: 1.2, slingshot: 2.4 },
+  /** Extra speed-streak intensity on a slingshot, decaying like pullback. */
+  streakSurge: 0.9,
+} as const;
+
+export const SHARE = {
+  width: 1080,
+  height: 1350,
 } as const;
 
 export const SHIP = {
-  /** Peak lateral speed on X at full steering input. */
+  /** Peak lateral speed on X the autopilot will swerve at. */
   lateralSpeed: 32,
-  /** Peak vertical speed on Y at full steering input. */
+  /** Peak vertical speed on Y. */
   verticalSpeed: 16,
-  /** How sharply the ship reaches target lateral velocity. Higher = twitchier. */
+  /** How sharply the ship reaches its target lateral velocity. */
   steerResponse: 7.5,
+  /** How quickly the autopilot converges on its target X/Y. */
+  autopilotResponse: 3.2,
+  /** Slow weave while cruising, so the ship never flies a ruler line. */
+  weaveAmplitudeX: 1.8,
+  weaveAmplitudeY: 0.7,
+  weaveRate: 0.35,
+  /** Seconds a swerve target holds before the autopilot recentres. */
+  swerveHoldSeconds: 0.9,
   /** Max bank angle, radians, reached at full lateral velocity. */
   maxRoll: 0.62,
   /** How quickly roll catches up to lateral velocity. */
@@ -60,10 +162,6 @@ export const SHIP = {
   /** Idle bob amplitude and rate, so the ship never looks frozen. */
   bobAmplitude: 0.09,
   bobRate: 1.6,
-  /** Distance from a corridor wall over which steering into it eases off. */
-  wallSoftZone: 3.5,
-  /** How fast residual velocity into a wall bleeds away, per second. */
-  wallBleed: 12,
   /** Fixed Z the ship sits at. The world moves past it. */
   z: 0,
   /** URL of the hull model. Served from /public. */
@@ -176,60 +274,9 @@ export const STARS = {
   layerParallax: [0.55, 0.26, 0.09],
   layerSize: [1.5, 1.1, 0.8],
   spreadRadius: 260,
-  /** Speed streaks (drawn only above SPEED.streakThreshold). */
+  /** Speed streaks. Fade in with the visual speed ratio, see Starfield. */
   streakCount: [180, 110, 0],
   streakLength: 14,
-} as const;
-
-export const QUESTION = {
-  /** How many question asteroids are live at once. */
-  poolSize: 4,
-  /** Radius of a question asteroid. Big enough to carry a label. */
-  radius: 2.9,
-  /** Z at which a question set becomes "committed" (answer locks in). */
-  commitZ: -6,
-  /** Distance travelled between one set retiring and the next spawning. */
-  gapDistance: 260,
-  /** Distance travelled before the very first set spawns. */
-  firstGapDistance: 60,
-  /**
-   * Seconds the prompt is shown (and the ship can pre-steer) before the rocks
-   * spawn. Keeps the answer window sane at top speed, when the flight from
-   * spawn plane to commit line is under three seconds.
-   */
-  previewSeconds: 4,
-  /** Per-lane depth stagger so the four never arrive as a flat wall. */
-  laneStaggerZ: 18,
-  /** Alternating vertical offset per lane, keeps labels apart on screen. */
-  laneOffsetY: 4.5,
-  /** Depth at which a label reaches full opacity / first appears. */
-  labelFadeNear: 40,
-  labelFadeFar: 120,
-  /** How far above the rock's centre (in radii) the label floats. */
-  labelLift: 1.45,
-  /** Seconds for a hit asteroid to shatter down to nothing. */
-  shatterSeconds: 0.28,
-} as const;
-
-export const SCORING = {
-  /** Points for a perfect answer. Scaled by accuracy^pointCurve. */
-  maxPoints: 1000,
-  pointCurve: 1.5,
-  /** Numeric: error as a fraction of the band beyond which accuracy is 0. */
-  numericTolerance: 0.4,
-  /** Speed multiplier at accuracy 0 and the extra at accuracy 1. */
-  multiplierFloor: 0.8,
-  multiplierRange: 0.5,
-  /** Seconds a boost/brake holds before easing back to 1. */
-  boostSeconds: 3,
-  /** Hull lost on a miss. */
-  missHullDamage: 0.2,
-  /** Accuracy thresholds for the share-grid bands. */
-  pinpoint: 0.9,
-  close: 0.65,
-  off: 0.35,
-  /** Seconds the resolve toast stays on the HUD. */
-  toastSeconds: 3.2,
 } as const;
 
 /** Palette, lifted straight from the design system. */
@@ -245,6 +292,15 @@ export const COLOR = {
   rule: 0xe4e7ec,
   pos: 0x0f7a4d,
   neg: 0xb3261e,
+  /** Arcade signal colours. */
+  yellow: 0xffe03d,
+  cyan: 0x4ff1ff,
+  /** The anomaly glows violet, unlike any normal rock. */
+  anomaly: 0xb28cff,
+  /** Shield flash. */
+  shield: 0x6fd6ff,
+  /** Boost / slingshot heat. */
+  boost: 0xff8a1f,
 } as const;
 
 export const PERF = {

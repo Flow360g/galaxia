@@ -6,105 +6,101 @@
   "questions": [
     {
       "id": "q1",
-      "type": "numeric",
+      "type": "mcq",
       "prompt": "In what year did humans first land on the Moon?",
-      "answer": 1969,
-      "unit": "year",
-      "range": [1940, 2000],
+      "options": [
+        "1961",
+        "1969",
+        "1972",
+        "1975"
+      ],
+      "answer": 1,
+      "hint": "Same year as Woodstock.",
       "fact": "Apollo 11 touched down on 20 July 1969."
     },
     {
       "id": "q2",
-      "type": "numeric",
-      "prompt": "How many bones are there in an adult human body?",
-      "answer": 206,
-      "unit": "bones",
-      "range": [100, 400],
-      "fact": "Babies are born with about 270; many fuse as they grow."
+      "type": "mcq",
+      "prompt": "How many bones are in an adult human body?",
+      "options": [
+        "106",
+        "206",
+        "306",
+        "406"
+      ],
+      "answer": 1,
+      "hint": "Babies have about 270, and many of them fuse.",
+      "fact": "206. Babies are born with about 270; many fuse as they grow."
     },
     {
       "id": "q3",
       "type": "mcq",
       "prompt": "Which of these is the deepest ocean?",
-      "answer": 0,
       "options": [
-        { "label": "Pacific", "proximity": 1 },
-        { "label": "Atlantic", "proximity": 0.6 },
-        { "label": "Indian", "proximity": 0.35 },
-        { "label": "Arctic", "proximity": 0.1 }
+        "Pacific",
+        "Atlantic",
+        "Indian",
+        "Arctic"
       ],
-      "fact": "The Mariana Trench in the Pacific reaches about 10,935m."
+      "answer": 0,
+      "fact": "The Mariana Trench in the Pacific reaches about 10,935 m."
     },
     {
       "id": "q4",
-      "type": "numeric",
-      "prompt": "What percentage of the Earth's surface is covered by water?",
-      "answer": 71,
-      "unit": "%",
-      "range": [0, 100],
-      "fact": "About 71%, and the Pacific alone holds a third of it."
+      "type": "mcq",
+      "prompt": "Which country has the most time zones?",
+      "options": [
+        "Russia",
+        "USA",
+        "France",
+        "Australia"
+      ],
+      "answer": 2,
+      "hint": "Count the overseas territories.",
+      "fact": "France has 12, counting its overseas territories. Russia has 11."
     },
     {
       "id": "q5",
-      "type": "numeric",
-      "prompt": "How many minutes does sunlight take to reach Earth?",
-      "answer": 8,
-      "unit": "minutes",
-      "range": [0, 40],
-      "fact": "Roughly 8 minutes 20 seconds at the speed of light."
+      "type": "mcq",
+      "prompt": "Which planet has the shortest day?",
+      "options": [
+        "Mars",
+        "Jupiter",
+        "Saturn",
+        "Neptune"
+      ],
+      "answer": 1,
+      "hint": "The biggest one spins the fastest.",
+      "fact": "Jupiter spins once every 9 hours 56 minutes."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "prompt": "Which country has the most time zones?",
-      "answer": 0,
+      "prompt": "How long does sunlight take to reach Earth?",
       "options": [
-        { "label": "France", "proximity": 1 },
-        { "label": "Russia", "proximity": 0.75 },
-        { "label": "USA", "proximity": 0.5 },
-        { "label": "Australia", "proximity": 0.15 }
+        "8 seconds",
+        "8 minutes",
+        "8 hours",
+        "8 days"
       ],
-      "fact": "France has 12, counting its overseas territories. Russia has 11."
+      "answer": 1,
+      "fact": "Roughly 8 minutes 20 seconds at the speed of light."
     },
     {
       "id": "q7",
-      "type": "numeric",
-      "prompt": "How tall is Mount Everest, in metres?",
-      "answer": 8849,
-      "unit": "m",
-      "range": [6000, 11000],
-      "fact": "8,849m, revised upward by Nepal and China in 2020."
-    },
-    {
-      "id": "q8",
-      "type": "numeric",
-      "prompt": "In what year was the first iPhone released?",
-      "answer": 2007,
-      "unit": "year",
-      "range": [1995, 2015],
-      "fact": "Announced January 2007, on sale that June."
-    },
-    {
-      "id": "q9",
-      "type": "mcq",
-      "prompt": "Which planet has the shortest day?",
-      "answer": 0,
-      "options": [
-        { "label": "Jupiter", "proximity": 1 },
-        { "label": "Saturn", "proximity": 0.8 },
-        { "label": "Neptune", "proximity": 0.4 },
-        { "label": "Mars", "proximity": 0.05 }
+      "type": "anomaly",
+      "kind": "visual",
+      "image": "/anomaly/orion.png",
+      "imageAlt": "A star map on a dark navy sky. Seven bright stars form an hourglass shape: an orange-tinted star at the upper left shoulder, a white star at the upper right shoulder, three evenly spaced stars in a short straight diagonal line across the middle, a faint vertical trio of stars hanging just below that line, a white star at the lower left, and a large blue-white star at the lower right. Faint lines connect them into a stick figure.",
+      "prompt": "ANOMALY DETECTED. Our long-range scanner captured this star pattern. Name the constellation.",
+      "rubric": "The player must identify the constellation as Orion. Accept Orion, Orion the Hunter, or The Hunter. Naming only a part of it (Orion's Belt, the belt, the sword) or a star in it (Betelgeuse, Rigel) earns partial credit at most. Any other constellation is wrong.",
+      "accept": [
+        "orion",
+        "orion the hunter",
+        "hunter"
       ],
-      "fact": "Jupiter spins once every 9 hours 56 minutes."
-    },
-    {
-      "id": "q10",
-      "type": "numeric",
-      "prompt": "How many keys are there on a standard piano?",
-      "answer": 88,
-      "unit": "keys",
-      "range": [40, 140],
-      "fact": "88 keys: 52 white and 36 black."
+      "answerText": "Orion",
+      "fact": "Orion's three belt stars, Alnitak, Alnilam and Mintaka, lie 700 to 2,000 light-years away yet line up almost perfectly from Earth."
     }
   ]
 }
