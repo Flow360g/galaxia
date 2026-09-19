@@ -13,6 +13,11 @@ import round from "../content/rounds/2026-09-18.json";
 
 declare global {
   interface Window {
+    /** The engine's audio, exposed under ?debug=1 for tuning and for this. */
+    galaxiaAudio: {
+      musicBus: GainNode;
+      pick?: unknown;
+    };
     __peak: number;
     /** Brightness of the mix right now, as a spectral centroid in hertz. */
     __centroid: number;
@@ -73,20 +78,23 @@ function probe(): void {
   } as typeof AudioNode.prototype.connect;
 }
 
-/** Highest amplitude seen over `ms`, measured from a clean slate. */
-async function peakOver(page: Page, ms: number): Promise<number> {
+/** Highest amplitude and brightness over `ms`, measured from a clean slate. */
+async function measure(page: Page, ms: number): Promise<{ peak: number; brightest: number }> {
   await page.evaluate(() => {
     window.__peak = 0;
+    window.__brightest = 0;
   });
   await page.waitForTimeout(ms);
-  return page.evaluate(() => window.__peak);
+  return page.evaluate(() => ({ peak: window.__peak, brightest: window.__brightest }));
 }
 
 test("sound: the flight has a bed, a hit rises above it, and mute silences it", async ({
   page,
 }) => {
   await page.addInitScript(probe);
-  await page.goto("/play?replay=1");
+  // ?debug=1 puts the audio engine on the window, which is the only way to
+  // ask what one layer of the mix is contributing.
+  await page.goto("/play?replay=1&debug=1");
 
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
   // Browsers hold a context suspended until a gesture; the toggle is one.
@@ -100,14 +108,31 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   await expect.poll(() => page.evaluate(() => window.__audioState())).toBe("running");
 
   // The engine drone and the music: always there, never loud.
-  const bed = await peakOver(page, 1200);
+  const bed = (await measure(page, 1200)).peak;
   expect(bed).toBeGreaterThan(0.01);
   expect(bed).toBeLessThan(0.5);
 
+  // The music is half the bed, not a rumour under it. It went inaudible once
+  // by being mixed at a twentieth of the engine and by having its bass
+  // routed off its own bus, and neither shows up in a test of the total.
+  const musicLevel = await page.evaluate(() => window.galaxiaAudio.musicBus.gain.value);
+  await page.evaluate(() => {
+    window.galaxiaAudio.musicBus.gain.value = 0;
+  });
+  const engineOnly = await measure(page, 1600);
+  expect(engineOnly.peak).toBeLessThan(bed * 0.8);
+
+  // Choosing a lane makes no sound of its own: the verdict riding in is the
+  // sound, and a click on top of it was noise.
+  expect(await page.evaluate(() => typeof window.galaxiaAudio.pick)).toBe("undefined");
+
   // A collision: the loudest thing that can happen to the hull, and clearly
   // above the bed it lands on.
-  // Measured across the whole encounter rather than after it: the slam is a
-  // transient, and a window opened once the toast is up has already missed it.
+  //
+  // Measured across the whole encounter rather than after it, because the
+  // slam is a transient and a window opened once the toast is up has already
+  // missed it, and measured with the music still down, so the shape below is
+  // the cue's own and not the loop's hats and sparkle.
   await page.evaluate(() => {
     window.__peak = 0;
     window.__brightest = 0;
@@ -118,25 +143,31 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   });
   await page.waitForTimeout(700);
   // The crack is over in under a tenth of a second, far quicker than a poll
-  // can be aimed at it, so the onset is taken as the brightest moment of the
-  // whole encounter rather than a reading at one instant.
+  // can be aimed at it, so both readings are taken as the loudest and the
+  // brightest moment of the whole encounter rather than at one instant.
   const onset = await page.evaluate(() => window.__brightest);
   const hit = await page.evaluate(() => window.__peak);
-  expect(hit).toBeGreaterThan(bed * 1.5);
+  expect(hit).toBeGreaterThan(engineOnly.peak * 2);
   // Nothing anywhere in the mix may clip.
   expect(hit).toBeLessThan(1);
 
-  // A crash is a shape, not a level: bright contact collapsing into a low
-  // tail of hull and debris. A beep would hold its brightness instead.
-  const tail = await page.evaluate(() => window.__centroid);
+  // A crash is a shape, not a level: contact is a bright transient, far
+  // brighter than anything the bed does, where a beep would sit at one
+  // brightness for as long as it lasts. (How fast it then decays is not
+  // asserted here: the next encounter is called a beat later and its own cue
+  // lands inside any window long enough to measure the tail.)
   expect(onset).toBeGreaterThan(2500);
-  expect(tail).toBeLessThan(onset * 0.6);
+  expect(onset).toBeGreaterThan(engineOnly.brightest * 1.4);
+
+  await page.evaluate((level) => {
+    window.galaxiaAudio.musicBus.gain.value = level;
+  }, musicLevel);
 
   // Muted: the master fades to silence and stays there.
   await toggle.click();
   await expect(toggle).toHaveAttribute("data-muted", "true");
   await page.waitForTimeout(600);
-  expect(await peakOver(page, 1000)).toBeLessThan(0.005);
+  expect((await measure(page, 1000)).peak).toBeLessThan(0.005);
 
   // And the choice survives a reload.
   await page.goto("/play?replay=1");

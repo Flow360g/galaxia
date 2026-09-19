@@ -154,6 +154,14 @@ codebase: the engine calls cues, nothing else makes a noise.
 - **The bed rides the flight.** The engine drone, the rushing-air noise and
   the music tempo all track the same 0..1 speed ratio the FOV and the
   streaks use, so the ship sounds as fast as it looks.
+- **Music and engine are partners.** The drone is wide-band noise and will
+  swamp a melody at anything like equal gain, so it sits well under the
+  music bus. The loop's parts are pitched an octave or two above where the
+  theory wants them, because a phone speaker reproduces almost nothing below
+  about 400Hz: a bass at 55Hz is a bass nobody hears. Check a mix change by
+  muting one bus and measuring the other, not by ear on a laptop.
+- **Tapping a lane is silent.** The verdict riding in is the sound of a
+  choice. A click on top of it was noise, and it is not coming back.
 - **Never load-bearing.** Browsers hold the context suspended until a
   gesture, some devices have no output and `AudioContext` can throw. Every
   entry point is a no-op without a context, and a run plays out in silence

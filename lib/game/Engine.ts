@@ -300,7 +300,6 @@ export class Engine {
   }
 
   private onPick(lane: number, correct: boolean): void {
-    this.audio.pick();
     const x = this.worldXForLane(lane);
     this.ship.holdLane(x);
     this.chase.lockLane(LANE.lockSeconds);

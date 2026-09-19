@@ -214,11 +214,17 @@ export const FX = {
  * the feel. Gains are linear, frequencies hertz, times seconds.
  */
 export const AUDIO = {
-  /** Bus levels. Master is what the mute toggle rides. */
-  master: 0.8,
-  musicBus: 0.38,
+  /**
+   * Bus levels. Master is what the mute toggle rides.
+   *
+   * Music and engine are partners, not a foreground and a hum: the drone is
+   * wide-band noise and swamps a melody at anything like equal gain, so it
+   * sits well under the music bus and the cues sit over both.
+   */
+  master: 0.72,
+  musicBus: 0.68,
   sfxBus: 0.9,
-  engineBus: 0.5,
+  engineBus: 0.34,
   /** Seconds the master fades over on mute, pause and resume. */
   fadeSeconds: 0.25,
 
@@ -242,7 +248,7 @@ export const AUDIO = {
    * Sidechain. A big hit dips the music and the engine for a moment so it
    * lands in a hole of its own rather than fighting the bed.
    */
-  duck: { impact: 0.32, burn: 0.55, attack: 0.04, release: 0.6 },
+  duck: { impact: 0.26, burn: 0.38, attack: 0.012, release: 0.6 },
 
   engine: {
     /** Drone pitch at cruise and at the top of the visual band. */
@@ -254,9 +260,9 @@ export const AUDIO = {
     filterHz: [220, 1500],
     /** Rushing-air layer: bandpass over noise, also opening with speed. */
     airHz: [320, 2100],
-    airGain: [0.05, 0.22],
+    airGain: [0.05, 0.2],
     /** Drone gain at cruise and at max speed. */
-    gain: [0.1, 0.26],
+    gain: [0.09, 0.24],
     /** Seconds the drone takes to follow a change in speed. */
     glide: 0.28,
   },
@@ -272,12 +278,20 @@ export const AUDIO = {
     /** Minor pentatonic, semitone offsets from the root. */
     scale: [0, 3, 5, 7, 10, 12, 15],
     steps: 8,
-    bassGain: 0.26,
-    padGain: 0.055,
-    arpGain: [0.03, 0.07],
-    hatGain: [0.01, 0.035],
+    /**
+     * Octave of each part above the bar root. A phone speaker reproduces
+     * almost nothing below about 400Hz, so the parts sit an octave or two
+     * higher than the theory wants: a bass at 55Hz is a bass nobody hears.
+     */
+    octaves: { bass: 2, pad: 4, arp: 8, sparkle: 16 },
+    bassGain: 0.24,
+    padGain: 0.07,
+    arpGain: [0.075, 0.13],
+    /** The octave above the arp, added as the run gets fast. */
+    sparkleGain: 0.045,
+    hatGain: [0.016, 0.045],
     /** How much of the music goes to the tail. */
-    send: 0.22,
+    send: 0.26,
   },
 
   /**
@@ -287,9 +301,9 @@ export const AUDIO = {
    */
   impact: {
     /** Contact. Bright, and over before you can think about it. */
-    crack: { seconds: 0.085, gain: 0.5, from: 3200, to: 800 },
+    crack: { seconds: 0.085, gain: 0.4, from: 3200, to: 800 },
     /** The mass: a noise slam collapsing into a sub thump, both driven. */
-    body: { seconds: 0.7, gain: 0.55, from: 1800, to: 70, subFrom: 155, subTo: 33, subGain: 0.6 },
+    body: { seconds: 0.7, gain: 0.48, from: 1800, to: 70, subFrom: 155, subTo: 33, subGain: 0.6 },
     /**
      * The hull. Inharmonic ratios, not a chord: harmonic partials read as a
      * note being played, these read as metal being struck.
