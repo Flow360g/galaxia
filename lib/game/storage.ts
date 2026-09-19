@@ -82,7 +82,7 @@ export function saveRun(summary: RunSummary): void {
 /**
  * Best means highest score, because the score is what the run is played for.
  * Distance only breaks a tie, which it does often: two clean runs can score
- * the same 1,500 and the faster flight is the better one.
+ * the same 2,400 and the faster flight is the better one.
  *
  * A record from before the score existed scores 0 here, so the first scored
  * run replaces it. That is the honest outcome: the two are not comparable,

@@ -41,7 +41,30 @@ export interface EarthQuestion {
   options: string[];
   /** Index into `options`; `options[answer] === name`. */
   answer: number;
+  /**
+   * The rest is filled from the site pool at load, not authored per round, so
+   * a day's pair can be generated rather than written out by hand. See
+   * `lib/content/sites.ts`.
+   */
+  /** Free from the start: continent, climate, terrain. Never enough alone. */
+  opener: string;
+  /** Bought. Strong by design, which is why it is not given away. */
+  clue: string;
+  /** Bought: a structure pinned in the feed, described without naming it. */
+  landmark?: { name: string; lat: number; lon: number };
+  /** Bought: an ordinary road, then the structure itself. */
+  street?: EarthShot;
+  structure?: EarthShot;
+  /** Typed answers: lowercase substrings that count as correct. */
+  accept: string[];
   fact?: string;
+}
+
+/** One Commons photograph. `file` is the "File:" name and is never rendered. */
+export interface EarthShot {
+  file: string;
+  credit: string;
+  licence: string;
 }
 
 /**
@@ -249,6 +272,9 @@ export interface Outcome {
   guessValue?: number;
   /** Vector only: what a direct hit salvaged. */
   salvage?: "shield" | "nova";
+  /** WHERE ON EARTH: intel drops bought, and optics levels paid for. */
+  earthIntel?: number;
+  earthOptics?: number;
   /**
    * How hard a wrong answer lands, 0..1. A vector miss scales it by HOW wrong
    * the shot was, so grazing the tolerance costs a fraction of what a wild
@@ -301,6 +327,13 @@ export interface GameState {
   maxScore: number;
   /** Total distance this run, km. Tracked and shared, but not the score. */
   distance: number;
+  /** WHERE ON EARTH: the feed's imagery has arrived and the clock is running. */
+  feedReady: boolean;
+  /** WHERE ON EARTH: seconds left to name this site. */
+  feedSeconds: number;
+  /** WHERE ON EARTH: intel rungs bought, and optics levels paid for, this site. */
+  earthIntel: number;
+  earthOptics: number[];
   /** Current velocity, km/h. */
   velocity: number;
   peakVelocity: number;

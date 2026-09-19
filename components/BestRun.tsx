@@ -51,7 +51,7 @@ export function BestRun({ date, className }: { date: string; className: string }
   );
 }
 
-/** "1,180 / 1,500 · 12,480 KM", or just the distance for a pre-score run. */
+/** "1,880 / 2,400 · 12,480 KM", or just the distance for a pre-score run. */
 function line(figures: Figures): string {
   const distance = `${formatDistance(figures.distance)} KM`;
   if (figures.score === null || figures.max === null || figures.max <= 0) {

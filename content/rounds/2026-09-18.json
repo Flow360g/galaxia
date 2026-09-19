@@ -96,20 +96,12 @@
     {
       "id": "q7",
       "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed.",
-      "name": "Dubai",
-      "country": "United Arab Emirates",
-      "lat": 25.117,
-      "lon": 55.138,
-      "zoom": 13,
-      "options": [
-        "Doha",
-        "Dubai",
-        "Abu Dhabi",
-        "Jeddah"
-      ],
-      "answer": 1,
-      "fact": "Palm Jumeirah used 94 million cubic metres of dredged sand and no steel reinforcement in its breakwater."
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [
@@ -125,7 +117,7 @@
     },
     {
       "name": "Where on Earth",
-      "after": 6,
+      "after": 7,
       "phase": 4
     }
   ]

@@ -26,7 +26,7 @@ const HERO_Y = 338;
 const HERO_FONT = 104;
 const HERO_UNIT_FONT = 26;
 const HERO_UNIT_GAP = 22;
-/** The "/ 1,500" anchor, set under the hero figure rather than beside it: at
+/** The "/ 2,400" anchor, set under the hero figure rather than beside it: at
  *  four digits the score already runs half the card wide. */
 const HERO_MAX_Y = 380;
 const HERO_MAX_FONT = 26;
@@ -330,7 +330,7 @@ function drawHeader(ctx: Ctx, summary: RunSummary, arcade: string): void {
  * The hero band: SCORE out of a perfect run, with distance beside it.
  *
  * The score leads because it is the figure the run is played for and the only
- * one that means anything on its own: "1,180 / 1,500" is legible to somebody
+ * one that means anything on its own: "1,880 / 2,400" is legible to somebody
  * who has never flown. The maximum is never dropped, because the score without
  * its anchor is just another number nobody can place. Distance keeps a real
  * figure on the right, since the chart below it is a distance and velocity

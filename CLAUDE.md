@@ -3,7 +3,7 @@
 # Galaxia
 
 A daily quiz flight. Seven encounters, one run a day, scored out of a fixed
-1,500. Distance is still flown and still tracked; the score is what the run
+2,400. Distance is still flown and still tracked; the score is what the run
 is played for. Every answer is a lane: tap a square, the ship veers into
 that lane, and the verdict rides in on it. A right lane sends a plasma pod
 the ship flies through and accelerates; a wrong lane sends a boulder that
@@ -29,7 +29,7 @@ things that make those games sticky:
 - **A score you can hold in your head.** Every encounter is worth the same
   base, the streak multiplies it in whole steps, and a wrong answer docks a
   flat amount. A run is quoted out of what a perfect run would have scored,
-  so "1,180 of 1,500" means the same to everyone comparing. Distance is a
+  so "1,880 of 2,400" means the same to everyone comparing. Distance is a
   speedometer reading and makes a poor anchor: nobody knows whether 12,000 km
   is a good day. See `SCORE` in `Tuning.ts` and `lib/game/Score.ts`; the end
   of the run tallies it line by line before the share card.

@@ -181,13 +181,25 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await enter.click();
 
   // Aboard: the station screen owns the display; the HUD is gone under it.
+  // Two sites are flown on one dock, the second starting where the first was
+  // answered rather than back at the approach.
   const station = page.getByTestId("station");
   await expect(station).toBeVisible();
-  await expect(station).toContainText("SATELLITE FEED");
-  await expect(station).toContainText("STANDING BY");
+  await expect(station).toContainText(/satellite feed/i);
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
-  await page.getByTestId("end-transmission").click();
+
+  for (const [index, site] of ["Dubai", "Cape Town"].entries()) {
+    // The clock is held until the imagery settles, so the box is disabled
+    // until the feed is up. The grace timeout guarantees it opens regardless.
+    const box = page.getByTestId("site-answer");
+    await expect(box).toBeEnabled({ timeout: 20_000 });
+    await box.fill(site);
+    await page.getByTestId("site-submit").click();
+    await expect(station).toContainText(/site identified/i);
+    if (index === 0) await shot(page, "15-station-site");
+    await page.getByTestId("next-site").click();
+  }
 
   // The scorecard: one line per encounter, then the total out of the perfect
   // run. It is the beat before the share card, and it waits for a tap.
@@ -195,12 +207,12 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(tally).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("tally-line-0")).toContainText("2 PLASMA BANKED");
   await expect(page.getByTestId("tally-line-6")).toContainText("WHERE ON EARTH");
-  await expect(page.getByTestId("tally-line-6")).toContainText("FEED STANDING BY");
+  await expect(page.getByTestId("tally-line-7")).toContainText("WHERE ON EARTH");
   // The lines land one at a time and the total lands after them. Text is in
   // the DOM the whole time, so the reveal is asserted on the class that
   // actually makes a line visible rather than on its content.
-  await expect(page.getByTestId("tally-line-6")).toHaveClass(/lineIn/, { timeout: 10_000 });
-  await expect(page.getByTestId("tally-total")).toContainText("/ 1,500");
+  await expect(page.getByTestId("tally-line-7")).toHaveClass(/lineIn/, { timeout: 10_000 });
+  await expect(page.getByTestId("tally-total")).toContainText("/ 2,400");
   await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE");
   // The total stamps in a beat after the last line.
   await expect(page.getByTestId("tally-total")).toBeVisible();
@@ -210,9 +222,11 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     (await page.getByTestId("tally-total").innerText()).split("/")[0]!.replace(/[^0-9]/g, ""),
   );
   expect(scored).toBeGreaterThan(0);
-  expect(scored).toBeLessThan(1500);
-  // Docking is neutral until the feed scores: the total is the HUD's last figure.
-  expect(scored).toBe(Number(scoreBefore.split("/")[0]!.replace(/[^0-9]/g, "")));
+  expect(scored).toBeLessThan(2400);
+  // The station is an encounter now, not a cutscene: two sites named correctly
+  // add the finale's double base on top of whatever the flight had banked.
+  const beforeDock = Number(scoreBefore.split("/")[0]!.replace(/[^0-9]/g, ""));
+  expect(scored).toBeGreaterThan(beforeDock);
   await page.getByTestId("tally-continue").click();
 
   // Share card.

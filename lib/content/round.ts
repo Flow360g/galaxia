@@ -1,5 +1,6 @@
 import sampleRound from "@/content/rounds/2026-09-18.json";
-import type { Round } from "@/lib/game/types";
+import { pickSites } from "@/lib/content/sites";
+import type { EarthQuestion, Round } from "@/lib/game/types";
 
 /**
  * Round loading.
@@ -11,8 +12,67 @@ import type { Round } from "@/lib/game/types";
  */
 
 const ROUNDS: Record<string, Round> = {
-  [sampleRound.date]: validate(sampleRound as Round),
+  [sampleRound.date]: validate(hydrateEarth(sampleRound as unknown as Round)),
 };
+
+/**
+ * WHERE ON EARTH slots carry only an id and a prompt; the site itself comes
+ * from the pool, seeded by the round's own date. That is what lets a day be
+ * generated rather than authored, and it keeps the pair identical for every
+ * player on that date, which is the basis of comparing two runs.
+ *
+ * Seeded on `round.date` rather than on today, so a round is the same round
+ * whenever it is loaded: replays, tests and the fallback all agree.
+ */
+function hydrateEarth(round: Round): Round {
+  const sites = pickSites(round.date);
+  let next = 0;
+  const questions = round.questions.map((question) => {
+    if (question.type !== "earth") return question;
+    const site = sites[Math.min(next, sites.length - 1)];
+    next += 1;
+    if (!site) return question;
+    // Lane order is seeded on the site id, so two players comparing runs saw
+    // the same four names in the same order.
+    const options = seededShuffle([site.name, ...site.decoys], site.id);
+    const filled: EarthQuestion = {
+      ...question,
+      name: site.name,
+      country: site.country,
+      lat: site.lat,
+      lon: site.lon,
+      zoom: site.zoom,
+      options,
+      answer: options.indexOf(site.name),
+      opener: site.opener,
+      clue: site.clue,
+      landmark: site.landmark,
+      street: site.street,
+      structure: site.structure,
+      accept: site.accept,
+      fact: site.fact,
+    };
+    return filled;
+  });
+  return { ...round, questions };
+}
+
+/** Stable shuffle: the same seed always gives the same order. */
+function seededShuffle(items: string[], seed: string): string[] {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
+    const j = hash % (i + 1);
+    const a = out[i] as string;
+    out[i] = out[j] as string;
+    out[j] = a;
+  }
+  return out;
+}
 
 /**
  * A malformed round should fail at import, in the build, not mid-flight for
@@ -103,9 +163,12 @@ export function todayKey(now: Date = new Date()): string {
  * someone who followed a shared link.
  */
 export function getRound(date: string = todayKey()): Round {
-  return ROUNDS[date] ?? (sampleRound as Round);
+  // The fallback must be the hydrated round, not the raw JSON: the earth slots
+  // carry no site of their own, so an unhydrated round reaches the station with
+  // nothing to show.
+  return ROUNDS[date] ?? (ROUNDS[sampleRound.date] as Round);
 }
 
 export function getSampleRound(): Round {
-  return sampleRound as Round;
+  return ROUNDS[sampleRound.date] as Round;
 }

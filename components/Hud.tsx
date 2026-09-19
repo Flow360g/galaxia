@@ -203,7 +203,7 @@ export function Hud({
             </span>
             {/* The score leads. Distance is still tracked and still the story
                 the share card tells, but a speedometer reading is a poor
-                anchor: "1,180 of 1,500" tells you how the run went. */}
+                anchor: "1,880 of 2,400" tells you how the run went. */}
             <span className={`${styles.score} arcade`} data-testid="score">
               {formatScore(state?.score ?? 0)}
               <span className={styles.outOf}>/ {formatScore(state?.maxScore ?? 0)}</span>

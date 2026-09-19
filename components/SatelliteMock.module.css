@@ -16,7 +16,10 @@
   -webkit-overflow-scrolling: touch;
   padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px
     calc(env(safe-area-inset-bottom, 0px) + 24px);
-  background: var(--space);
+  /* Near-black, not the game's --space. Darkness here is relative: the optic
+     interior has to stay darker than this or the aperture stops reading as a
+     hole cut in the page. Move one, move the chain. */
+  background: #03070e;
   color: #e8ecf3;
   display: flex;
   flex-direction: column;
@@ -43,7 +46,7 @@
   justify-content: space-between;
   gap: 8px;
   border: 1px solid var(--rule-dark);
-  background: rgba(5, 13, 26, 0.86);
+  background: rgba(2, 6, 12, 0.86);
   padding: 8px 10px;
 }
 
@@ -105,13 +108,229 @@
 
 /* --------------------------------------------------------------------- feed */
 
-.frame {
+/* ------------------------------------------------------------------ optic */
+
+/* The feed is an instrument, not a picture box. The square is the housing; the
+   circle inside it is the aperture. Diameter equals the old square's width, so
+   the ground covered across the widest axis is unchanged and only the corners
+   are given up to the bezel. */
+.scope {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
+}
+
+.optic {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   overflow: hidden;
-  border: 1px solid var(--rule-dark);
-  background: #04080f;
+  background: #01040a;
+  /* Safari still needs a paint hint to clip the scaled mosaic to the radius. */
+  transform: translateZ(0);
+}
+
+/* Faint horizontal raster, the giveaway that this is a sensor and not a photo. */
+.raster {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(4, 12, 22, 0.16) 0px,
+    rgba(4, 12, 22, 0.16) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* One bright line travelling down the glass. Transform only, so it is free. */
+.sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 11%;
+  top: -11%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(79, 241, 255, 0.05) 60%,
+    rgba(79, 241, 255, 0.13) 92%,
+    rgba(162, 250, 255, 0.34)
+  );
+  animation: sweep 4.6s linear infinite;
+}
+
+@keyframes sweep {
+  to {
+    transform: translateY(1010%);
+  }
+}
+
+/* Lens falloff. Sells the glass more than any other single layer. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 58%,
+    rgba(1, 4, 10, 0.22) 78%,
+    rgba(1, 4, 10, 0.6) 91%,
+    rgba(1, 4, 10, 0.93) 98%,
+    rgba(1, 4, 10, 1) 100%
+  );
+}
+
+/* Crosshair across the full aperture, broken either side of centre so the
+   target itself is never covered. */
+.graticule {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to right,
+      transparent 6%,
+      rgba(79, 241, 255, 0.16) 6%,
+      rgba(79, 241, 255, 0.16) 42%,
+      transparent 42%,
+      transparent 58%,
+      rgba(79, 241, 255, 0.16) 58%,
+      rgba(79, 241, 255, 0.16) 94%,
+      transparent 94%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 6%,
+      rgba(79, 241, 255, 0.16) 6%,
+      rgba(79, 241, 255, 0.16) 42%,
+      transparent 42%,
+      transparent 58%,
+      rgba(79, 241, 255, 0.16) 58%,
+      rgba(79, 241, 255, 0.16) 94%,
+      transparent 94%
+    );
+  background-size:
+    100% 1px,
+    1px 100%;
+  background-position:
+    center center,
+    center center;
+  background-repeat: no-repeat;
+}
+
+/* Tick ring: short marks every 6 degrees, longer every 30, masked to a band
+   just inside the bezel. */
+.bezel {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(120, 245, 255, 0.85) 0deg 0.45deg,
+    transparent 0.45deg 6deg
+  );
+  -webkit-mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 11px),
+    #000 calc(100% - 11px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+  mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 11px),
+    #000 calc(100% - 11px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+}
+
+/* Longer marks every 30 degrees. Separate element because a CSS mask applies to
+   the whole box, not to one background layer. */
+.bezelMajor {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(162, 250, 255, 0.95) 0deg 0.7deg,
+    transparent 0.7deg 30deg
+  );
+  -webkit-mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 19px),
+    #000 calc(100% - 19px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+  mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 19px),
+    #000 calc(100% - 19px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+}
+
+.rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1px solid rgba(79, 241, 255, 0.4);
+  box-shadow:
+    inset 0 0 0 3px rgba(2, 6, 13, 0.9),
+    inset 0 0 22px rgba(79, 241, 255, 0.16),
+    0 0 26px rgba(79, 241, 255, 0.09);
+}
+
+/* Corner brackets, in the square the circle leaves empty. */
+.brackets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--arcade-cyan) 0 14px, transparent 14px) 0 0 / 14px 1px no-repeat,
+    linear-gradient(to bottom, var(--arcade-cyan) 0 14px, transparent 14px) 0 0 / 1px 14px no-repeat,
+    linear-gradient(to left, var(--arcade-cyan) 0 14px, transparent 14px) 100% 0 / 14px 1px no-repeat,
+    linear-gradient(to bottom, var(--arcade-cyan) 0 14px, transparent 14px) 100% 0 / 1px 14px no-repeat,
+    linear-gradient(to right, var(--arcade-cyan) 0 14px, transparent 14px) 0 100% / 14px 1px no-repeat,
+    linear-gradient(to top, var(--arcade-cyan) 0 14px, transparent 14px) 0 100% / 1px 14px no-repeat,
+    linear-gradient(to left, var(--arcade-cyan) 0 14px, transparent 14px) 100% 100% / 14px 1px no-repeat,
+    linear-gradient(to top, var(--arcade-cyan) 0 14px, transparent 14px) 100% 100% / 1px 14px no-repeat;
+  opacity: 0.8;
+}
+
+.opticTop,
+.opticBottom {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--arcade-cyan);
+  opacity: 0.75;
+  pointer-events: none;
+  text-shadow: 0 0 6px rgba(4, 8, 15, 0.95);
+  white-space: nowrap;
+}
+
+.opticTop {
+  top: 7%;
+}
+
+.opticBottom {
+  bottom: 7%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    animation: none;
+    opacity: 0.25;
+    top: 40%;
+  }
 }
 
 /* The landmark pin. Cyan, like every other piece of intel, and sized in frame
@@ -162,7 +381,10 @@
   }
 }
 
+/* Slight contrast lift so the picture reads as a sensor feed, not a snapshot.
+   Deliberately small: anything stronger starts hiding terrain the player needs. */
 .mosaic {
+  filter: contrast(1.07) saturate(1.04);
   position: absolute;
   inset: 0;
   transform-origin: 0 0;
@@ -178,15 +400,32 @@
   user-select: none;
 }
 
+/* Centre mark. A ranging box that breathes, so the instrument reads live. */
 .reticle {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
-  border: 1px solid rgba(79, 241, 255, 0.55);
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
   pointer-events: none;
+  border: 1px solid rgba(79, 241, 255, 0.75);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(79, 241, 255, 0.35);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    transform: scale(1.14);
+    border-color: rgba(162, 250, 255, 0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reticle {
+    animation: none;
+  }
 }
 
 .reticle::before,
@@ -208,17 +447,6 @@
   left: -10px;
   right: -10px;
   height: 1px;
-}
-
-.frameTag {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  font-size: 9px;
-  padding: 3px 5px;
-  background: rgba(7, 17, 34, 0.8);
-  color: var(--arcade-cyan);
-  border: 1px solid var(--rule-dark);
 }
 
 /* The feed is a third party service over the phone's wifi, so say plainly that
@@ -252,6 +480,136 @@
 .input:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* The framing line. Loud, present tense, and gone for good once dismissed. */
+.brief {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid rgba(79, 241, 255, 0.35);
+  border-left-width: 3px;
+  background: rgba(79, 241, 255, 0.07);
+  padding: 9px 10px;
+}
+
+.briefLine {
+  margin: 0;
+  flex: 1;
+  font-size: 9px;
+  line-height: 1.7;
+  color: var(--arcade-cyan);
+}
+
+.briefClose {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  font-size: 17px;
+  line-height: 1;
+  color: #9fb0c6;
+  background: none;
+  border: 1px solid var(--rule-dark);
+  cursor: pointer;
+}
+
+/* The optics dial. Separate from intel by design: intel is a clue bought from
+   someone else, this is the player working their own instrument. */
+.optics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opticsLabel {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: #6f7a8c;
+  flex-shrink: 0;
+}
+
+.opticsDial {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+
+.opticsStep {
+  flex: 1;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #c3cad6;
+  background: rgba(2, 6, 12, 0.86);
+  border: 1px solid var(--rule-dark);
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+.opticsOn {
+  color: #03070e;
+  background: var(--arcade-cyan);
+  border-color: var(--arcade-cyan);
+}
+
+.opticsStep:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The price, shown only while it is still owed. */
+.opticsCost {
+  font-size: 8px;
+  color: var(--arcade-yellow);
+}
+
+.opticsOn .opticsCost {
+  color: #03070e;
+}
+
+/* Ground photography, framed like the rest of the kit. 16:9 so a tall portrait
+   shot cannot push the answer lanes off a phone screen. */
+.ground {
+  margin: 0;
+  border: 1px solid var(--rule-dark);
+  background: rgba(2, 6, 12, 0.86);
+  padding: 6px;
+}
+
+.groundLabel {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--arcade-cyan);
+  margin-bottom: 5px;
+}
+
+.groundImg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #01040a;
+  border: 1px solid rgba(79, 241, 255, 0.22);
+}
+
+.groundCap {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #c3cad6;
+}
+
+/* Attribution is not decoration: CC BY and BY-SA both require it. */
+.groundCredit {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #6f7a8c;
 }
 
 /* The free opener. Present but quieter than anything that was paid for. */
@@ -582,7 +940,7 @@
   font-size: 11px;
   line-height: 1.5;
   color: #9aa3b2;
-  background: rgba(5, 13, 26, 0.86);
+  background: rgba(2, 6, 12, 0.86);
   border: 1px solid var(--rule-dark);
   overflow-x: auto;
   white-space: pre;

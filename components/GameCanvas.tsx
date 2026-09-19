@@ -137,7 +137,13 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   }, []);
 
   const launch = useCallback(() => setLaunched(true), []);
-  const endTransmission = useCallback(() => engineRef.current?.endTransmission(), []);
+  // WHERE ON EARTH, played at the station. The engine is parked while docked,
+  // so each of these pushes a fresh state frame of its own.
+  const feedReady = useCallback(() => engineRef.current?.feedArrived(), []);
+  const buyIntel = useCallback(() => engineRef.current?.buyIntel(), []);
+  const setOptics = useCallback((step: number) => engineRef.current?.setOptics(step), []);
+  const submitSite = useCallback((text: string) => engineRef.current?.submitSite(text), []);
+  const nextSite = useCallback(() => engineRef.current?.nextSite(), []);
 
   /**
    * WHERE ON EARTH: aboard the station. Gated on the run's phase rather than
@@ -146,6 +152,11 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
    * the engine emits is the docked one.
    */
   const docked = state?.phase === "docked";
+  const current = state ? round.questions[state.encounter] : undefined;
+  const earthQuestion = current?.type === "earth" ? current : null;
+  /** Whether a second site follows this one, for the continue button's wording. */
+  const moreSites =
+    state !== null && round.questions[state.encounter + 1]?.type === "earth";
   const stages = round.stages ?? [];
   const stationPhase = stages[stages.length - 1]?.phase ?? stages.length;
 
@@ -227,7 +238,18 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
       ) : null}
 
       {docked ? (
-        <Station phase={stationPhase} showPanel={summary === null} onEnd={endTransmission} />
+        <Station
+          phase={stationPhase}
+          showPanel={summary === null}
+          question={earthQuestion}
+          state={state}
+          more={moreSites}
+          onFeedReady={feedReady}
+          onBuyIntel={buyIntel}
+          onOptics={setOptics}
+          onSubmit={submitSite}
+          onNext={nextSite}
+        />
       ) : null}
 
       {briefing ? (
