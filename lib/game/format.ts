@@ -22,6 +22,17 @@ export function formatDelta(kmh: number): string {
   return `${sign}${Math.abs(rounded).toLocaleString("en-AU")}`;
 }
 
+/** A score, grouped. Whole points only; the score is never fractional. */
+export function formatScore(points: number): string {
+  return Math.round(Math.max(0, points)).toLocaleString("en-AU");
+}
+
+/** Signed points, e.g. +200 or -25. What an encounter was worth. */
+export function formatPoints(points: number): string {
+  const rounded = Math.round(points);
+  return `${rounded < 0 ? "-" : "+"}${Math.abs(rounded).toLocaleString("en-AU")}`;
+}
+
 /** Round number as a zero-padded sequence, e.g. 001. */
 export function formatRoundNumber(round: number): string {
   return `${round}`.padStart(3, "0");

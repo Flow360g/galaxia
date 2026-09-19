@@ -66,6 +66,27 @@
     3px 3px 0 rgba(31, 69, 229, 0.9);
 }
 
+/* The score leads; distance is the supporting flight stat under it. */
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.scoreValue {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--arcade-yellow);
+  text-shadow: 0 0 16px rgba(255, 224, 61, 0.5);
+}
+
+.outOf {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: var(--track-label);
+  color: var(--panel-label);
+}
+
 .distance {
   display: flex;
   align-items: baseline;
@@ -73,10 +94,10 @@
 }
 
 .distanceValue {
-  font-size: 26px;
+  font-size: 15px;
   line-height: 1;
-  color: var(--arcade-yellow);
-  text-shadow: 0 0 14px rgba(255, 224, 61, 0.5);
+  color: #ffffff;
+  opacity: 0.8;
 }
 
 .unit {
@@ -243,6 +264,10 @@
 
   .heading {
     font-size: 22px;
+  }
+
+  .scoreValue {
+    font-size: 26px;
   }
 
   .distanceValue {

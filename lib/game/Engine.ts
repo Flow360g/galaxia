@@ -15,6 +15,7 @@ import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
+import { isMaxThrust } from "./Flight";
 import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import { DEFAULT_SHIP, type ShipSpec } from "./ships";
@@ -100,8 +101,14 @@ export class Engine {
   private side: 1 | -1 = 1;
   /** Extra streak intensity from a slingshot or a burn, decaying. */
   private streakSurge = 0;
-  /** Seconds the surge holds before it decays. A FULL BURN sets this. */
+  /** Seconds the surge holds before it decays. A MAXIMUM THRUST sets this. */
   private surgeHold = 0;
+  /**
+   * Seconds left of MAXIMUM THRUST. While it runs, the reactor's whole charge
+   * is going through the engines: the plume is huge and violet and the rig
+   * will not sit still.
+   */
+  private overdriveLeft = 0;
   /**
    * Horizontal screen fractions of the answer squares, measured by the HUD.
    * Lane i's world X is whatever projects to `laneFractions[i]`, so the ship
@@ -334,6 +341,11 @@ export class Engine {
     this.run.lockVector();
   }
 
+  /** The player tapped to move past a verdict or a waypoint card. */
+  confirm(): void {
+    this.run.confirm();
+  }
+
   useNova(): void {
     if (this.run.canNova) this.audio.nova();
     this.run.useNova();
@@ -498,14 +510,20 @@ export class Engine {
     }
 
     if (kind === "burn") {
-      const full = (outcome.charge ?? 0) >= CLUSTER.chargeMultiplier.length - 1;
+      const full = isMaxThrust(outcome);
       this.audio.contact(kind, outcome.charge ?? 0, full);
       if (full) {
         this.chase.burst(FX.warp.pullback, FX.warp.fovKick);
         this.chase.shake(FX.warp.shake);
+        this.chase.rumble(
+          FX.overdrive.seconds,
+          FX.overdrive.rumble,
+          FX.overdrive.rumbleRoll,
+        );
+        this.overdriveLeft = FX.overdrive.seconds;
         this.streakSurge = FX.warp.streakSurge;
         this.surgeHold = FX.warp.holdSeconds;
-        this.shield.flash(1, COLOR.boost);
+        this.shield.flash(1, COLOR.plasma);
       } else {
         const charge = outcome.charge ?? 1;
         const scale = charge >= 2 ? 1 : 0.6;
@@ -646,6 +664,11 @@ export class Engine {
     if (this.surgeHold > 0) this.surgeHold -= dt;
     else this.streakSurge *= Math.exp(-FX.pullbackDecay * dt);
 
+    // MAXIMUM THRUST: hold the plume at full, then ease it back down on the
+    // same curve the camera rumble uses, so flame and shake end together.
+    if (this.overdriveLeft > 0) this.overdriveLeft = Math.max(this.overdriveLeft - dt, 0);
+    this.ship.setOverdrive(overdriveLevel(this.overdriveLeft));
+
     const phase = this.run.phase;
     const open = phase === "approach" || phase === "collecting";
     // Only the anomaly still has a rock hanging ahead of the ship to loom as
@@ -736,6 +759,18 @@ export class Engine {
 
 /** Z of the ship's nose, where beams leave from. */
 const SHIP_NOSE_Z = -2.6;
+
+/**
+ * MAXIMUM THRUST intensity from the seconds left on it: full through the
+ * hold, then eased to nothing. Matches `ChaseCamera.rumbleLevel` so the plume
+ * and the shake die together.
+ */
+function overdriveLevel(secondsLeft: number): number {
+  if (secondsLeft <= 0) return 0;
+  const left = secondsLeft / FX.overdrive.seconds;
+  const tail = FX.overdrive.hold;
+  return left >= 1 - tail ? 1 : left / (1 - tail);
+}
 
 /** Streaks start showing a little way above cruise and saturate near the top. */
 function streakIntensity(ratio: number): number {

@@ -1,6 +1,7 @@
 import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
 import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
+import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
 import { CLUSTER, ENCOUNTER, LANE, NOVA, SHIELDS, VECTOR, WAYPOINT } from "./Tuning";
 import type {
   AnomalyQuestion,
@@ -95,6 +96,16 @@ export class Run {
   outcome: Outcome | null = null;
   /** The last collect or hit, for the HUD to flash over the scene. */
   pulse: Pulse | null = null;
+  /** The score. Distance is still tracked; this is what the run is played for. */
+  score = 0;
+  /** What a perfect run would score. Fixed by the round. */
+  readonly maxScore: number;
+  /**
+   * The run is parked on a toast or a waypoint card, waiting to be tapped on.
+   * Nothing advances on a timer once a verdict is up: the player reads it and
+   * says when they are done with it.
+   */
+  awaitingTap = false;
 
   elapsed = 0;
   private timer: number = ENCOUNTER.introSeconds;
@@ -128,6 +139,7 @@ export class Run {
     private readonly hooks: RunHooks,
     private readonly random: () => number,
   ) {
+    this.maxScore = maxScoreFor(round);
     this.sample();
   }
 
@@ -151,6 +163,8 @@ export class Run {
       phase: this.phase,
       encounter: this.index,
       resolved: this.outcomes.length,
+      score: this.score,
+      maxScore: this.maxScore,
       distance: this.flight.distance,
       velocity: this.flight.velocity,
       peakVelocity: this.flight.peakVelocity,
@@ -167,6 +181,7 @@ export class Run {
       maxShields: SHIELDS.perRun,
       pulse: this.pulse,
       outcome: this.phase === "aftermath" || this.phase === "finished" ? this.outcome : null,
+      awaitingTap: this.awaitingTap,
       running: true,
     };
   }
@@ -336,6 +351,22 @@ export class Run {
     this.hooks.onVectorLock(outcome, this.vectorT, truthT);
   }
 
+  /**
+   * The player tapped to move on. Only ever called while `awaitingTap`, and
+   * the one thing that advances a toast or a waypoint card.
+   */
+  confirm(): void {
+    if (!this.awaitingTap) return;
+    this.awaitingTap = false;
+    if (this.phase === "waypoint") {
+      this.startEncounter(this.index + 1);
+      return;
+    }
+    if (this.phase === "aftermath") {
+      if (!this.startWaypoint()) this.startEncounter(this.index + 1);
+    }
+  }
+
   toggleBoost(): void {
     if (!this.answering) return;
     const type = this.question?.type;
@@ -462,24 +493,23 @@ export class Run {
         if (!this.struck && this.timer <= ENCOUNTER.resolveSeconds) this.contact();
         if (this.timer <= 0) {
           this.phase = "aftermath";
-          this.timer =
-            this.question?.type === "anomaly"
-              ? ENCOUNTER.aftermathSecondsAnomaly
-              : ENCOUNTER.aftermathSeconds;
+          this.timer = ENCOUNTER.confirmArmSeconds;
         }
         break;
 
       case "aftermath":
+        // A short beat so the tap that answered cannot skip its own verdict,
+        // then it sits here until the player taps. No timer takes it away.
+        if (this.awaitingTap) break;
         this.timer -= dt;
-        if (this.timer <= 0) {
-          if (!this.startWaypoint()) this.startEncounter(this.index + 1);
-        }
+        if (this.timer <= 0) this.awaitingTap = true;
         break;
 
       case "waypoint":
+        if (this.awaitingTap) break;
         this.timer -= dt;
         if (this.waypoint) this.waypoint.t = WAYPOINT.seconds - this.timer;
-        if (this.timer <= 0) this.startEncounter(this.index + 1);
+        if (this.timer <= 0) this.awaitingTap = true;
         break;
 
       case "finished":
@@ -516,6 +546,7 @@ export class Run {
     };
     this.pulse = null;
     this.phase = "waypoint";
+    this.awaitingTap = false;
     this.timer = WAYPOINT.seconds;
     this.hooks.onWaypoint(this.waypoint);
     return true;
@@ -530,6 +561,7 @@ export class Run {
 
     this.index = index;
     this.phase = "approach";
+    this.awaitingTap = false;
     this.thrust = 1;
     this.boostArmed = false;
     this.nova = null;
@@ -591,17 +623,24 @@ export class Run {
     if (question.type === "cluster" && cluster) {
       cluster.picked.push(lane);
       cluster.charge += 1;
-      this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      const full = cluster.charge >= question.answers.length;
+      // The last plasma gets no banner of its own: MAXIMUM THRUST is arriving
+      // a beat later and the two would land on top of each other.
+      if (!full) {
+        this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      }
       this.hooks.onCollect(lane, cluster.charge);
       this.phase = "approach";
       // A fresh five seconds for the next decision, after a beat to see what
       // was banked. The prompt has been read by now, so no reading bonus.
       this.thrust = 1;
       this.thrustSeconds = ENCOUNTER.thrustSeconds;
-      this.grace = CLUSTER.collectPauseSeconds;
-      if (cluster.charge >= question.answers.length) {
-        // Nothing left to find. FULL BURN, no decision needed.
+      if (full) {
+        // Nothing left to find: the whole reactor goes in, no decision needed.
+        // No breather either, since MAXIMUM THRUST is already on its way.
         this.burn();
+      } else {
+        this.grace = CLUSTER.collectPauseSeconds;
       }
       return;
     }
@@ -796,6 +835,14 @@ export class Run {
       this.flash("plasma", "SALVAGE", "+1 NOVA");
     }
 
+    // The score: fixed points, whole multipliers, a flat dock for a miss.
+    const scored = scoreOutcome(outcome);
+    outcome.base = scored.base;
+    outcome.multiplier = scored.multiplier;
+    outcome.points = scored.points;
+    this.score = Math.max(this.score + scored.points, 0);
+    outcome.scoreAfter = this.score;
+
     this.outcome = outcome;
     this.outcomes.push(outcome);
     this.events.push({
@@ -844,6 +891,9 @@ export class Run {
       date: this.round.date,
       roundNumber: this.round.roundNumber,
       theme: this.round.theme,
+      score: this.score,
+      maxScore: this.maxScore,
+      lines: scoreLines(this.round, this.outcomes),
       distance: this.flight.distance,
       peakVelocity: this.flight.peakVelocity,
       bestStreak,

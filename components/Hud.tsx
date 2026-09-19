@@ -20,9 +20,16 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
-import { formatDelta, formatDistance, formatVelocity } from "@/lib/game/format";
+import {
+  formatDelta,
+  formatDistance,
+  formatPoints,
+  formatScore,
+  formatVelocity,
+} from "@/lib/game/format";
 import styles from "./Hud.module.css";
 
 interface Props {
@@ -36,6 +43,8 @@ interface Props {
   onToggleBoost: () => void;
   onNova: () => void;
   onAnomaly: (text: string) => void;
+  /** Tap to move past a verdict or a waypoint card. Nothing else advances them. */
+  onConfirm: () => void;
   /**
    * Where the answer squares ended up, as fractions of viewport width. The
    * engine steers the ship to the lane under the square that was tapped, so
@@ -62,7 +71,6 @@ const NOVA_LABEL = {
   narrow: "NOVA: TWO MOST PLAUSIBLE",
 } as const;
 
-const FULL_CHARGE = CLUSTER.chargeMultiplier.length - 1;
 /** Slider step for a nudge button or an arrow key. */
 const NUDGE = 0.01;
 
@@ -102,6 +110,7 @@ export function Hud({
   onToggleBoost,
   onNova,
   onAnomaly,
+  onConfirm,
   onLanes,
   muted,
   onToggleSound,
@@ -119,10 +128,22 @@ export function Hud({
   const isVector = question?.type === "vector";
   const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
 
-  useKeyboard({ state, question, onAnswer, onPick, onBurn, onAim, onLockVector, onToggleBoost, onNova });
-  // The overlay's CSS animation ends invisible, so it can simply live as long
-  // as the full-burn outcome is current; no timer needed.
-  const warp = outcome?.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
+  const awaitingTap = state?.awaitingTap ?? false;
+  useKeyboard({
+    state,
+    question,
+    onAnswer,
+    onPick,
+    onBurn,
+    onAim,
+    onLockVector,
+    onToggleBoost,
+    onNova,
+    onConfirm,
+  });
+  // The overlay's CSS animations end invisible, so they can simply live as
+  // long as the MAXIMUM THRUST outcome is current; no timer needed.
+  const maxThrust = isMaxThrust(outcome);
 
   const thrust = state?.thrust ?? 1;
   const seconds = Math.max(Math.ceil(thrust * (state?.clockSeconds ?? ENCOUNTER.thrustSeconds)), 0);
@@ -132,8 +153,22 @@ export function Hud({
 
   return (
     <div className={styles.hud}>
-      {warp ? <div className={styles.warp} data-testid="warp" aria-hidden="true" /> : null}
+      {maxThrust ? <MaxThrust /> : null}
       {state?.pulse ? <PulseOverlay key={state.pulse.id} pulse={state.pulse} /> : null}
+
+      {/* Tap anywhere to move past a verdict. It covers the whole screen, which
+          is the one time anything is allowed to: the run is parked, the ship is
+          coasting, and there is nothing under it to reach. It sits behind the
+          band so the sound toggle still takes its own taps. */}
+      {awaitingTap ? (
+        <button
+          type="button"
+          className={styles.tapCatcher}
+          onClick={onConfirm}
+          data-testid="continue"
+          aria-label="Continue"
+        />
+      ) : null}
 
       <div className={styles.board}>
         <header className={styles.top}>
@@ -144,6 +179,13 @@ export function Hud({
                 : state?.phase === "finished"
                   ? "Run complete"
                   : "Engines lit"}
+            </span>
+            {/* The score leads. Distance is still tracked and still the story
+                the share card tells, but a speedometer reading is a poor
+                anchor: "1,180 of 1,500" tells you how the run went. */}
+            <span className={`${styles.score} arcade`} data-testid="score">
+              {formatScore(state?.score ?? 0)}
+              <span className={styles.outOf}>/ {formatScore(state?.maxScore ?? 0)}</span>
             </span>
             <span className={`${styles.distance} arcade`} data-testid="distance">
               {formatDistance(state?.distance ?? 0)}
@@ -332,15 +374,47 @@ export function Hud({
           </section>
         ) : null}
 
-        {outcome ? <OutcomeToast outcome={outcome} fact={question?.fact} /> : null}
+        {outcome ? (
+          <OutcomeToast outcome={outcome} fact={question?.fact} awaitingTap={awaitingTap} />
+        ) : null}
 
-        {waypoint ? <WaypointCard waypoint={waypoint} /> : null}
+        {waypoint ? <WaypointCard waypoint={waypoint} awaitingTap={awaitingTap} /> : null}
 
         {state?.phase === "intro" ? (
-          <p className={`${styles.hint} arcade`}>Five seconds a lane. Pick fast.</p>
+          <p className={`${styles.hint} arcade`}>Pick fast. The clock is your thrust.</p>
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * MAXIMUM THRUST: every lane of a cluster found, and the whole reactor dumped
+ * into the engines at once.
+ *
+ * The only outcome with a full-screen treatment of its own. Radial speed
+ * lines, and a hazard placard that reads as a warning light coming on rather
+ * than a score: the ship is doing something it was not built to do, which is
+ * the point. The shake lives on the shell so the scene and the HUD move
+ * together; see GameCanvas.
+ */
+function MaxThrust() {
+  return (
+    <>
+      <div className={styles.warp} data-testid="warp" aria-hidden="true" />
+      <div className={styles.maxThrust} data-testid="max-thrust" aria-live="assertive">
+        <div className={styles.hazard}>
+          <span className={styles.hazardSign} aria-hidden="true">
+            &#9888;
+          </span>
+          <span className={`${styles.hazardText} arcade`}>MAXIMUM THRUST</span>
+          <span className={styles.hazardSign} aria-hidden="true">
+            &#9888;
+          </span>
+        </div>
+        <span className={`${styles.hazardSub} arcade`}>REACTOR DUMPED &middot; HOLD ON</span>
+      </div>
+    </>
   );
 }
 
@@ -511,8 +585,28 @@ function VectorPanel({
   );
 }
 
+/**
+ * TAP TO CONTINUE. Lives inside the card it belongs to, in the top band, so
+ * the ship's half of the screen stays empty; the tap target itself is the
+ * whole screen and is drawn nowhere.
+ */
+function TapPrompt({ shown }: { shown: boolean }) {
+  if (!shown) return null;
+  return (
+    <span className={`${styles.tapPrompt} arcade`} data-testid="tap-prompt">
+      TAP TO CONTINUE
+    </span>
+  );
+}
+
 /** Between stages: what you just flew, the rating, and what is coming. */
-function WaypointCard({ waypoint }: { waypoint: WaypointState }) {
+function WaypointCard({
+  waypoint,
+  awaitingTap,
+}: {
+  waypoint: WaypointState;
+  awaitingTap: boolean;
+}) {
   const rated = waypoint.t >= WAYPOINT.ratingAt;
   const entering = waypoint.t >= WAYPOINT.enteringAt;
   return (
@@ -548,6 +642,7 @@ function WaypointCard({ waypoint }: { waypoint: WaypointState }) {
           <span className={styles.wpHint}>An alien scout is shadowing you. Aim, lock, fire.</span>
         </>
       )}
+      <TapPrompt shown={awaitingTap} />
     </section>
   );
 }
@@ -606,12 +701,21 @@ function formatError(error: number): string {
   return error >= 10 ? String(Math.round(error)) : (Math.round(error * 10) / 10).toFixed(1);
 }
 
-function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | undefined }) {
+function OutcomeToast({
+  outcome,
+  fact,
+  awaitingTap,
+}: {
+  outcome: Outcome;
+  fact: string | undefined;
+  awaitingTap: boolean;
+}) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
-  const full = outcome.kind === "burn" && (outcome.charge ?? 0) >= FULL_CHARGE;
+  const points = outcome.points ?? 0;
+  const full = isMaxThrust(outcome);
   const vector = outcome.error !== undefined;
   const label = full
-    ? "FULL BURN!"
+    ? "MAXIMUM THRUST"
     : vector
       ? outcome.kind === "slingshot"
         ? "DIRECT HIT!"
@@ -630,7 +734,20 @@ function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | unde
     >
       <div className={styles.toastHead}>
         <span className={`${styles.toastKind} arcade`}>{label}</span>
-        <span className={`${styles.toastDelta} arcade`}>{formatDelta(delta)} KM/H</span>
+        <span className={styles.toastFigures}>
+          <span
+            className={`${styles.toastPoints} ${points < 0 ? styles.toastPointsDown : ""} arcade`}
+            data-testid="toast-points"
+          >
+            {formatPoints(points)}
+            {outcome.base && (outcome.multiplier ?? 1) > 1 ? (
+              <span className={styles.toastMultiplier}>
+                {outcome.base} x{outcome.multiplier}
+              </span>
+            ) : null}
+          </span>
+          <span className={`${styles.toastDelta} arcade`}>{formatDelta(delta)} KM/H</span>
+        </span>
       </div>
       {vector ? (
         <span className={styles.toastAnswer}>
@@ -685,6 +802,7 @@ function OutcomeToast({ outcome, fact }: { outcome: Outcome; fact: string | unde
         </span>
       ) : null}
       {fact ? <span className={styles.toastFact}>{fact}</span> : null}
+      <TapPrompt shown={awaitingTap} />
     </section>
   );
 }
@@ -764,9 +882,18 @@ function useKeyboard({
   onLockVector,
   onToggleBoost,
   onNova,
+  onConfirm,
 }: Pick<
   Props,
-  "state" | "onAnswer" | "onPick" | "onBurn" | "onAim" | "onLockVector" | "onToggleBoost" | "onNova"
+  | "state"
+  | "onAnswer"
+  | "onPick"
+  | "onBurn"
+  | "onAim"
+  | "onLockVector"
+  | "onToggleBoost"
+  | "onNova"
+  | "onConfirm"
 > & {
   question: Round["questions"][number] | undefined;
 }) {
@@ -780,6 +907,7 @@ function useKeyboard({
     onLockVector,
     onToggleBoost,
     onNova,
+    onConfirm,
   });
   useEffect(() => {
     latest.current = {
@@ -792,6 +920,7 @@ function useKeyboard({
       onLockVector,
       onToggleBoost,
       onNova,
+      onConfirm,
     };
   });
 
@@ -801,6 +930,16 @@ function useKeyboard({
       if (target && target.tagName === "TEXTAREA") return;
       if (target && target.tagName === "INPUT" && (target as HTMLInputElement).type !== "range") return;
       const current = latest.current;
+      // Parked on a verdict: the only key that does anything is the one that
+      // moves past it. Checked before the phase gate, which only opens on an
+      // approach.
+      if (current.state?.awaitingTap) {
+        if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+          event.preventDefault();
+          current.onConfirm();
+        }
+        return;
+      }
       if (current.state?.phase !== "approach") return;
       const cluster = current.question?.type === "cluster";
       const vector = current.question?.type === "vector";

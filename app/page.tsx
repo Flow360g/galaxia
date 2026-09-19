@@ -35,8 +35,8 @@ export default function Home() {
 
         <p className={styles.lede}>
           {encounters} asteroids, one run a day. Answer fast to keep your
-          thrust, arm Boost when you are sure, and fly as far as you can.
-          Wrong answers hit hard.
+          thrust, arm Boost when you are sure, and run your score as high as it
+          will go. Every wrong answer costs points and speed.
         </p>
 
         <Link href="/play" className={`${styles.start} arcade`}>

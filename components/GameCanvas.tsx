@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Engine } from "@/lib/game/Engine";
+import { isMaxThrust } from "@/lib/game/Flight";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
 import {
   clearRun,
@@ -16,6 +17,7 @@ import {
 import { selectedShip } from "@/lib/game/ships";
 import { Briefing } from "./Briefing";
 import { Hud } from "./Hud";
+import { ScoreTally } from "./ScoreTally";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
 import styles from "./GameCanvas.module.css";
@@ -46,6 +48,12 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   const [state, setState] = useState<GameState | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [summary, setSummary] = useState<RunSummary | null>(null);
+  /**
+   * The scorecard sits between the last encounter and the share card, and only
+   * for a run just flown. Coming back to a stored run goes straight to the
+   * card: the tally is the moment the points land, and that moment has passed.
+   */
+  const [tallied, setTallied] = useState(false);
   /** Bumped to remount the engine for a fresh run. */
   const [attempt, setAttempt] = useState(0);
   /**
@@ -96,6 +104,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   const handleRunEnd = useCallback((result: RunSummary) => {
     saveRun(result);
     storedCache.set(result.date, result);
+    setTallied(false);
     setSummary(result);
   }, []);
 
@@ -148,14 +157,19 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     clearRun(round.date);
     storedCache.set(round.date, null);
     setSummary(null);
+    setTallied(false);
     setState(null);
     setAttempt((n) => n + 1);
   }, [round.date]);
 
   const shown = summary ?? stored ?? null;
+  // MAXIMUM THRUST shakes the whole surface, canvas and HUD together, so the
+  // screen reads as struggling rather than the scene sliding under a steady
+  // overlay. The camera rumbles underneath it; see ChaseCamera.rumble.
+  const maxThrust = isMaxThrust(state?.outcome);
 
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${maxThrust ? styles.shellShake : ""}`}>
       {/* The engine creates and owns the canvas inside this container; see
           EngineOptions.container for why React must not supply it. */}
       <div ref={containerRef} className={styles.stage} />
@@ -172,6 +186,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
           onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+          onConfirm={() => engineRef.current?.confirm()}
           onLanes={(fractions) => engineRef.current?.setLaneFractions(fractions)}
           muted={muted}
           onToggleSound={toggleSound}
@@ -182,7 +197,13 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
         <Briefing round={round} onDone={closeBriefing} firstFlight />
       ) : null}
 
-      {shown ? <ShareCard round={round} summary={shown} onReplay={replayRun} /> : null}
+      {summary && !tallied ? (
+        <ScoreTally summary={summary} onDone={() => setTallied(true)} />
+      ) : null}
+
+      {shown && (tallied || summary === null) ? (
+        <ShareCard round={round} summary={shown} onReplay={replayRun} />
+      ) : null}
       {debug && debugInfo ? <DebugStats info={debugInfo} /> : null}
     </div>
   );
