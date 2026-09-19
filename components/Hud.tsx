@@ -5,11 +5,9 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
-  useState,
-  type FormEvent,
+  type CSSProperties,
 } from "react";
 import type {
-  ClusterState,
   GameState,
   Outcome,
   OutcomeKind,
@@ -20,7 +18,7 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { CLUSTER, COUNTDOWN, ENCOUNTER, SCORE, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
 import {
@@ -42,7 +40,8 @@ interface Props {
   onLockVector: () => void;
   onToggleBoost: () => void;
   onNova: () => void;
-  onAnomaly: (text: string) => void;
+  /** WHERE ON EARTH: ENTER SPACE STATION, once the engine reports the ship alongside. */
+  onEnterStation: () => void;
   /** Tap to move past a verdict or a waypoint card. Nothing else advances them. */
   onConfirm: () => void;
   /**
@@ -63,6 +62,7 @@ const OUTCOME_LABEL: Record<OutcomeKind, string> = {
   wreck: "WRECKED",
   timeout: "TOO SLOW",
   burn: "BURN",
+  dock: "DOCKED",
 };
 
 const NOVA_LABEL = {
@@ -80,6 +80,20 @@ const RATING_TEXT: Record<Rating, string> = {
   B: "STEADY",
   C: "ROUGH",
 };
+
+/**
+ * What a Vector is worth, read from the scoring table rather than typed out,
+ * so retuning the score can never leave the briefing lying about it. The
+ * bands are named, not given as percentages: `VECTOR.perfectBand` is a
+ * fraction of the question's authored tolerance, not of the answer, so "within
+ * 15%" would be wrong however true it looks.
+ */
+const VECTOR_BANDS: Array<[string, string]> = [
+  ["DEAD ON", `${Math.round(SCORE.perEncounter * SCORE.vectorDirect)} PTS`],
+  ["CLOSE", `${Math.round(SCORE.perEncounter * SCORE.vectorGlance)} PTS`],
+  ["WIDE", `-${SCORE.penalty.collision} AND A SHIELD`],
+];
+const TOP_MULTIPLIER = Math.max(...SCORE.streakMultipliers);
 
 /**
  * DOM overlay HUD.
@@ -109,7 +123,7 @@ export function Hud({
   onLockVector,
   onToggleBoost,
   onNova,
-  onAnomaly,
+  onEnterStation,
   onConfirm,
   onLanes,
   muted,
@@ -119,12 +133,14 @@ export function Hud({
     state && state.encounter >= 0 ? round.questions[state.encounter] : undefined;
   const answering = state?.phase === "approach";
   const collecting = state?.phase === "collecting";
-  const scanning = state?.phase === "scanning";
-  const open = answering || collecting || scanning;
+  // WHERE ON EARTH: the question is up while the ship flies in, but nothing
+  // is tappable until it arrives and no clock runs.
+  const station = state?.phase === "station";
+  const open = answering || collecting || station;
   const total = round.questions.length;
   const outcome = state?.outcome ?? null;
   const isCluster = question?.type === "cluster";
-  const isAnomaly = question?.type === "anomaly";
+  const isEarth = question?.type === "earth";
   const isVector = question?.type === "vector";
   const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
 
@@ -139,6 +155,7 @@ export function Hud({
     onLockVector,
     onToggleBoost,
     onNova,
+    onEnterStation,
     onConfirm,
   });
   // The overlay's CSS animations end invisible, so they can simply live as
@@ -154,6 +171,9 @@ export function Hud({
   return (
     <div className={styles.hud}>
       {maxThrust ? <MaxThrust /> : null}
+      {state?.countdown !== null && state?.countdown !== undefined ? (
+        <Countdown step={state.countdown} />
+      ) : null}
       {state?.pulse ? <PulseOverlay key={state.pulse.id} pulse={state.pulse} /> : null}
 
       {/* Tap anywhere to move past a verdict. It covers the whole screen, which
@@ -241,14 +261,14 @@ export function Hud({
 
         {question && open ? (
           <section
-            className={`${styles.panel} ${isAnomaly ? styles.panelAnomaly : ""} ${
+            className={`${styles.panel} ${isEarth ? styles.panelEarth : ""} ${
               isCluster ? styles.panelCluster : ""
             } ${isVector ? styles.panelVector : ""}`}
             data-testid="question"
           >
             <div className={styles.panelHead}>
-              {isAnomaly ? (
-                <span className={`${styles.anomalyTag} arcade`}>AI ANOMALY</span>
+              {isEarth ? (
+                <span className={`${styles.earthTag} arcade`}>WHERE ON EARTH</span>
               ) : isCluster ? (
                 <span className={`${styles.clusterTag} arcade`}>CLUSTER · 3 OF 6</span>
               ) : isVector ? (
@@ -256,7 +276,7 @@ export function Hud({
               ) : (
                 <span className={`${styles.clusterTag} arcade`}>PICK A LANE</span>
               )}
-              {answering || scanning ? (
+              {answering ? (
                 <span
                   className={`${styles.clock} ${thrustLow ? styles.clockLow : ""} arcade`}
                   data-testid="clock"
@@ -269,7 +289,7 @@ export function Hud({
             <p className={styles.prompt}>{question.prompt}</p>
 
             {/* The clock, drawn as thrust draining rather than as a dial. */}
-            {answering || scanning ? (
+            {answering ? (
               <div
                 className={styles.thrustTrack}
                 aria-label={`Thrust ${Math.round(thrust * 100)}%`}
@@ -282,7 +302,7 @@ export function Hud({
               </div>
             ) : null}
 
-            {state?.nova && !isAnomaly ? (
+            {state?.nova && !isEarth ? (
               <p className={styles.novaLine} data-testid="nova-result">
                 <span className={`${styles.novaLabel} arcade`}>
                   {isVector ? "NOVA: WINDOW NARROWED" : NOVA_LABEL[state.nova.kind]}
@@ -291,14 +311,10 @@ export function Hud({
               </p>
             ) : null}
 
-            {isCluster ? <Reactor cluster={state?.cluster ?? null} /> : null}
-
-            {question.type === "anomaly" ? (
-              <AnomalyForm
-                question={question}
-                disabled={!answering}
-                scanning={scanning}
-                onSubmit={onAnomaly}
+            {question.type === "earth" ? (
+              <StationApproach
+                ready={state?.stationReady ?? false}
+                onEnter={onEnterStation}
               />
             ) : question.type === "vector" ? (
               <VectorPanel
@@ -320,33 +336,20 @@ export function Hud({
               />
             )}
 
+            {/* No tools on the approach to the station: there is nothing to
+                scan and nothing to boost through. */}
+            {!isEarth ? (
             <div className={styles.tools}>
               <button
                 type="button"
                 className={`${styles.tool} ${styles.nova} arcade`}
-                disabled={
-                  !answering || isAnomaly || !state || state.novaLeft <= 0 || !!state.nova
-                }
+                disabled={!answering || !state || state.novaLeft <= 0 || !!state.nova}
                 onClick={onNova}
                 data-testid="nova"
               >
                 NOVA <span className={styles.pips}>{"◆".repeat(state?.novaLeft ?? 0)}</span>
               </button>
-              {isCluster ? (
-                <button
-                  type="button"
-                  className={`${styles.tool} ${styles.burn} ${
-                    (state?.cluster?.charge ?? 0) >= 2 ? styles.burnHot : ""
-                  } arcade`}
-                  disabled={!answering || (state?.cluster?.charge ?? 0) <= 0}
-                  onClick={onBurn}
-                  data-testid="burn"
-                >
-                  {(state?.cluster?.charge ?? 0) > 0
-                    ? `BANK +${formatVelocity(state?.cluster?.projected ?? 0)}`
-                    : "BANK"}
-                </button>
-              ) : isVector ? (
+              {isCluster ? null : isVector ? (
                 <button
                   type="button"
                   className={`${styles.tool} ${styles.lock} arcade`}
@@ -362,7 +365,7 @@ export function Hud({
                   className={`${styles.tool} ${styles.boost} ${
                     state?.boostArmed ? styles.boostOn : ""
                   } arcade`}
-                  disabled={!answering || isAnomaly}
+                  disabled={!answering}
                   onClick={onToggleBoost}
                   aria-pressed={state?.boostArmed ?? false}
                   data-testid="boost"
@@ -371,19 +374,97 @@ export function Hud({
                 </button>
               )}
             </div>
+            ) : null}
           </section>
         ) : null}
 
         {outcome ? (
-          <OutcomeToast outcome={outcome} fact={question?.fact} awaitingTap={awaitingTap} />
+          <OutcomeToast
+            outcome={outcome}
+            fact={question?.fact}
+            awaitingTap={awaitingTap}
+            onConfirm={onConfirm}
+          />
         ) : null}
 
-        {waypoint ? <WaypointCard waypoint={waypoint} awaitingTap={awaitingTap} /> : null}
+        {waypoint ? (
+          <WaypointCard waypoint={waypoint} awaitingTap={awaitingTap} onConfirm={onConfirm} />
+        ) : null}
 
         {state?.phase === "intro" ? (
           <p className={`${styles.hint} arcade`}>Pick fast. The clock is your thrust.</p>
         ) : null}
       </div>
+
+      {/*
+        The two cockpit corners. A Cluster is the one encounter that hands the
+        player something to hold and then spend, and the band has no room left
+        to dramatise it, so the gauge takes the bottom left of the screen and
+        the button that fires it takes the bottom right, a thumb's reach apart
+        either side of the ship. They are the only things the run draws below
+        the band; both hug the safe area, and the gauge takes no taps at all.
+      */}
+      {isCluster && (open || (state?.burnDrain ?? 0) > 0) ? (
+        <BoostGauge
+          charge={open ? (state?.cluster?.charge ?? 0) : (state?.burnCharge ?? 0)}
+          drain={open ? 1 : (state?.burnDrain ?? 0)}
+          full={state?.cluster?.full ?? false}
+        />
+      ) : null}
+
+      {isCluster && open ? (
+        <button
+          type="button"
+          className={`${styles.burnDial} ${
+            (state?.cluster?.charge ?? 0) >= 2 ? styles.burnHot : ""
+          } ${state?.cluster?.full ? styles.burnFull : ""} arcade`}
+          disabled={!answering || (state?.cluster?.charge ?? 0) <= 0}
+          onClick={onBurn}
+          data-testid="burn"
+        >
+          {/* Bezel, then the cap that sits proud of it and travels on a
+              press: an arcade button, not a circle with a label. */}
+          <span className={styles.burnDialCap}>
+            <span className={styles.burnDialLabel}>
+              {state?.cluster?.full ? "FIRE" : "BANK"}
+            </span>
+            <span className={styles.burnDialValue}>
+              {(state?.cluster?.charge ?? 0) > 0
+                ? `+${formatVelocity(state?.cluster?.projected ?? 0)}`
+                : "BOOST"}
+            </span>
+          </span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * 3, 2, 1, GO over the engines lighting.
+ *
+ * Keyed on the number so each one replays the animation from the top, which
+ * is what makes it read as a countdown rather than a label changing. Drawn
+ * above the ship and below the band, takes no pointer events, and is gone by
+ * the time the first prompt lands.
+ */
+function Countdown({ step }: { step: number }) {
+  // The number is on screen for exactly as long as it is the current number:
+  // the animation is handed the step's own length from `Tuning.ts` rather
+  // than guessing at one in CSS, so retuning the countdown cannot leave a
+  // hole between two numbers or clip one short.
+  const hold = (step > 0 ? COUNTDOWN.stepSeconds : COUNTDOWN.goSeconds) * 1000;
+  return (
+    <div
+      className={styles.countdown}
+      data-testid="countdown"
+      data-step={step}
+      aria-live="assertive"
+      style={{ "--count-hold": `${Math.round(hold)}ms` } as CSSProperties}
+    >
+      <span key={step} className={`${styles.countdownNumber} arcade`}>
+        {step > 0 ? step : "GO"}
+      </span>
     </div>
   );
 }
@@ -587,8 +668,9 @@ function VectorPanel({
 
 /**
  * TAP TO CONTINUE. Lives inside the card it belongs to, in the top band, so
- * the ship's half of the screen stays empty; the tap target itself is the
- * whole screen and is drawn nowhere.
+ * the ship's half of the screen stays empty. Anywhere is a tap: the card it
+ * sits in takes one, and behind everything a catcher covers the rest of the
+ * screen, drawn nowhere.
  */
 function TapPrompt({ shown }: { shown: boolean }) {
   if (!shown) return null;
@@ -603,17 +685,22 @@ function TapPrompt({ shown }: { shown: boolean }) {
 function WaypointCard({
   waypoint,
   awaitingTap,
+  onConfirm,
 }: {
   waypoint: WaypointState;
   awaitingTap: boolean;
+  onConfirm: () => void;
 }) {
   const rated = waypoint.t >= WAYPOINT.ratingAt;
   const entering = waypoint.t >= WAYPOINT.enteringAt;
   return (
     <section
-      className={`${styles.panel} ${styles.waypoint} ${entering ? styles.waypointEntering : ""}`}
+      className={`${styles.panel} ${styles.waypoint} ${entering ? styles.waypointEntering : ""} ${
+        awaitingTap ? styles.tapReady : ""
+      }`}
       data-testid="waypoint"
       data-rating={waypoint.rating}
+      onClick={awaitingTap ? onConfirm : undefined}
     >
       {!entering ? (
         <>
@@ -637,9 +724,42 @@ function WaypointCard({
         </>
       ) : (
         <>
-          <span className={`${styles.wpEntering} arcade`}>ENTERING PHASE 2</span>
+          <span className={`${styles.wpEntering} arcade`}>
+            ENTERING PHASE {waypoint.nextPhase}
+          </span>
           <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
-          <span className={styles.wpHint}>An alien scout is shadowing you. Aim, lock, fire.</span>
+          {waypoint.nextType === "earth" ? (
+            <>
+              <span className={styles.wpHint}>
+                The scout is down, but its fleet has already landed on Earth. Dock at
+                Wikiplanet Station ahead and read its satellite feed: find where they came
+                down, then call the fleet in. No clock on the approach.
+              </span>
+              <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
+                SATELLITE FEED · STANDING BY
+              </span>
+            </>
+          ) : waypoint.nextType === "vector" ? (
+            <>
+              <span className={styles.wpHint}>
+                An alien scout is shadowing you. Every question now wants a number. Slide
+                the scout onto your answer and fire. Closest wins.
+              </span>
+              <dl className={styles.wpScore} data-testid="waypoint-scoring">
+                {VECTOR_BANDS.map(([band, worth]) => (
+                  <div key={band} className={styles.wpScoreRow}>
+                    <dt className="arcade">{band}</dt>
+                    <dd className="arcade">{worth}</dd>
+                  </div>
+                ))}
+              </dl>
+              <span className={`${styles.wpStreak} arcade`}>
+                STREAK MULTIPLIES UP TO x{TOP_MULTIPLIER}
+              </span>
+            </>
+          ) : (
+            <span className={styles.wpHint}>Same rules, faster sky. Keep the streak alive.</span>
+          )}
         </>
       )}
       <TapPrompt shown={awaitingTap} />
@@ -647,26 +767,127 @@ function WaypointCard({
   );
 }
 
-/** The reactor: how much plasma is aboard, and what banking it is worth. */
-function Reactor({ cluster }: { cluster: ClusterState | null }) {
-  const charge = cluster?.charge ?? 0;
-  const segments = Array.from({ length: FULL_CHARGE }, (_, i) => i < charge);
+/**
+ * The boost gauge: the reactor drawn as a speedometer, in the bottom left
+ * corner of the screen.
+ *
+ * The needle climbs a notch per plasma collected and sweeps back to the peg
+ * as the boost is fired, so the charge reads as something held and then spent.
+ * `drain` is the sweep home, 1 while the charge is aboard and 0 once it is
+ * all in the engines; the run owns it, so the needle keeps falling after the
+ * panel has given way to the verdict. It never takes a tap: firing the boost
+ * is the dial in the opposite corner.
+ *
+ * Geometry is derived from `CLUSTER.gauge`, never hardcoded here.
+ */
+const GAUGE = (() => {
+  const sweep = CLUSTER.gauge.sweepDegrees;
+  const cx = 50;
+  const cy = 38;
+  const r = 32;
+  const start = -90 - sweep / 2;
+  const at = (fraction: number) => {
+    const rad = ((start + sweep * fraction) * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  };
+  const a = at(0);
+  const b = at(1);
+  return {
+    cx,
+    cy,
+    r,
+    sweep,
+    start,
+    at,
+    path: `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`,
+  };
+})();
+
+function BoostGauge({
+  charge,
+  drain,
+  full,
+}: {
+  charge: number;
+  drain: number;
+  full: boolean;
+}) {
+  const value = Math.max(0, Math.min(1, (charge / FULL_CHARGE) * drain));
+  const draining = drain < 1;
+  // While the boost is being spent the needle is driven by the run at about
+  // 12Hz, so the easing that makes a collected notch land with weight would
+  // fight the sweep. It goes linear and short for the drain instead.
+  const ease = draining
+    ? "transform 90ms linear, stroke-dashoffset 90ms linear"
+    : `transform ${CLUSTER.gauge.settleSeconds}s cubic-bezier(0.2, 1.4, 0.4, 1), stroke-dashoffset ${CLUSTER.gauge.settleSeconds}s ease-out`;
+
   return (
-    <div className={styles.reactor} aria-label={`Plasma ${charge} of ${FULL_CHARGE}`}>
-      <span className={`${styles.reactorLabel} arcade`}>PLASMA</span>
-      <div className={styles.reactorTrack} data-testid="reactor" data-charge={charge}>
-        {segments.map((lit, i) => (
-          <span
-            key={i}
-            className={`${styles.reactorCell} ${lit ? styles.reactorLit : ""}`}
-            data-testid={`plasma-${i}`}
-            data-lit={lit}
+    <div
+      className={`${styles.gauge} ${full ? styles.gaugeFull : ""} ${
+        draining ? styles.gaugeDraining : ""
+      }`}
+      data-testid="reactor"
+      data-charge={charge}
+      data-drain={drain.toFixed(2)}
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={FULL_CHARGE}
+      aria-valuenow={charge}
+      aria-label={`Boost gauge, ${charge} of ${FULL_CHARGE} plasma`}
+    >
+      <svg viewBox="0 0 100 60" className={styles.gaugeDial} aria-hidden="true">
+        <path d={GAUGE.path} className={styles.gaugeTrack} pathLength={100} />
+        <path
+          d={GAUGE.path}
+          className={styles.gaugeFill}
+          pathLength={100}
+          strokeDasharray={100}
+          strokeDashoffset={100 - value * 100}
+          style={{ transition: ease }}
+        />
+        {Array.from({ length: FULL_CHARGE + 1 }, (_, i) => {
+          const outer = GAUGE.at(i / FULL_CHARGE);
+          const angle = GAUGE.start + GAUGE.sweep * (i / FULL_CHARGE);
+          const rad = (angle * Math.PI) / 180;
+          const inner = {
+            x: GAUGE.cx + (GAUGE.r - 7) * Math.cos(rad),
+            y: GAUGE.cy + (GAUGE.r - 7) * Math.sin(rad),
+          };
+          return (
+            <line
+              key={i}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              className={`${styles.gaugeTick} ${i > 0 && i <= charge ? styles.gaugeTickLit : ""}`}
+            />
+          );
+        })}
+        <g
+          style={{
+            transform: `rotate(${GAUGE.start + 90 + GAUGE.sweep * value}deg)`,
+            transformOrigin: `${GAUGE.cx}px ${GAUGE.cy}px`,
+            transition: ease,
+          }}
+        >
+          <line
+            x1={GAUGE.cx}
+            y1={GAUGE.cy}
+            x2={GAUGE.cx}
+            y2={GAUGE.cy - GAUGE.r + 6}
+            className={styles.gaugeNeedle}
           />
-        ))}
-      </div>
-      <span className={`${styles.reactorValue} arcade`}>
-        {charge > 0 ? `+${formatVelocity(cluster?.projected ?? 0)} KM/H` : "EMPTY"}
+        </g>
+        <circle cx={GAUGE.cx} cy={GAUGE.cy} r={3.6} className={styles.gaugeHub} />
+      </svg>
+      <span className={`${styles.gaugeValue} arcade`} data-testid="gauge-value">
+        {/* Draining, the readout counts down with the needle; the charge that
+            went in is still what `data-charge` reports. */}
+        {draining ? Math.round(value * FULL_CHARGE) : charge}
+        <span className={styles.gaugeOutOf}>/{FULL_CHARGE}</span>
       </span>
+      <span className={`${styles.gaugeLabel} arcade`}>BOOST</span>
     </div>
   );
 }
@@ -678,18 +899,27 @@ function Reactor({ cluster }: { cluster: ClusterState | null }) {
  */
 function PulseOverlay({ pulse }: { pulse: Pulse }) {
   return (
-    <div
-      className={`${styles.pulse} ${styles[`pulse_${pulse.kind}`]}`}
-      data-testid="pulse"
-      data-kind={pulse.kind}
-      aria-live="polite"
-    >
-      {pulse.kind === "shield" ? (
-        <span className={styles.pulseRing} aria-hidden="true" />
+    <>
+      {/* Taking a hit is the one pulse that owns the whole screen: the scout
+          has just put a bolt through the hull, and a small caption in the
+          middle of the frame would not say so. Drawn nowhere near a touch:
+          pointer-events none, gone in a second. */}
+      {pulse.kind === "damage" ? (
+        <div className={styles.damage} data-testid="damage" aria-hidden="true" />
       ) : null}
-      <span className={`${styles.pulseLabel} arcade`}>{pulse.label}</span>
-      <span className={`${styles.pulseDetail} arcade`}>{pulse.detail}</span>
-    </div>
+      <div
+        className={`${styles.pulse} ${styles[`pulse_${pulse.kind}`]}`}
+        data-testid="pulse"
+        data-kind={pulse.kind}
+        aria-live="polite"
+      >
+        {pulse.kind === "shield" || pulse.kind === "damage" ? (
+          <span className={styles.pulseRing} aria-hidden="true" />
+        ) : null}
+        <span className={`${styles.pulseLabel} arcade`}>{pulse.label}</span>
+        <span className={`${styles.pulseDetail} arcade`}>{pulse.detail}</span>
+      </div>
+    </>
   );
 }
 
@@ -705,10 +935,12 @@ function OutcomeToast({
   outcome,
   fact,
   awaitingTap,
+  onConfirm,
 }: {
   outcome: Outcome;
   fact: string | undefined;
   awaitingTap: boolean;
+  onConfirm: () => void;
 }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
   const points = outcome.points ?? 0;
@@ -727,10 +959,13 @@ function OutcomeToast({
       : OUTCOME_LABEL[outcome.kind];
   return (
     <section
-      className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${full ? styles.toast_full : ""}`}
+      className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${
+        full ? styles.toast_full : ""
+      } ${awaitingTap ? styles.tapReady : ""}`}
       data-testid="toast"
       data-outcome={outcome.kind}
       data-charge={outcome.charge}
+      onClick={awaitingTap ? onConfirm : undefined}
     >
       <div className={styles.toastHead}>
         <span className={`${styles.toastKind} arcade`}>{label}</span>
@@ -782,12 +1017,6 @@ function OutcomeToast({
             <> &middot; {outcome.picks.length - 1} plasma lost</>
           ) : null}
         </span>
-      ) : outcome.anomalyVerdict ? (
-        <span className={styles.toastAnswer}>
-          <strong>{outcome.anomalyVerdict}</strong>
-          {" "}
-          &middot; Scanner score {Math.round((outcome.anomalyScore ?? 0) * 100)}%
-        </span>
       ) : (
         <span className={styles.toastAnswer}>
           Answer: <strong>{outcome.answerText}</strong>
@@ -807,64 +1036,28 @@ function OutcomeToast({
   );
 }
 
-function AnomalyForm({
-  question,
-  disabled,
-  scanning,
-  onSubmit,
-}: {
-  question: Extract<Round["questions"][number], { type: "anomaly" }>;
-  disabled: boolean;
-  scanning: boolean;
-  onSubmit: (text: string) => void;
-}) {
-  const [text, setText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (disabled) return;
-    onSubmit(text);
-  };
-
+/**
+ * WHERE ON EARTH, on the flight: the station is coming alongside and the
+ * one thing in the band is the door. Always rendered, so the band does not
+ * jump when the engine reports arrival; the button simply arms.
+ */
+function StationApproach({ ready, onEnter }: { ready: boolean; onEnter: () => void }) {
   return (
-    <form className={styles.anomaly} onSubmit={submit}>
-      {question.kind === "visual" && question.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          className={styles.anomalyImage}
-          src={question.image}
-          alt={question.imageAlt ?? ""}
-          width={512}
-          height={512}
-        />
-      ) : null}
-      <div className={styles.anomalyRow}>
-        <input
-          ref={inputRef}
-          className={styles.anomalyInput}
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="off"
-          enterKeyHint="send"
-          maxLength={200}
-          placeholder={scanning ? "Scanning..." : "Type your answer"}
-          value={text}
-          disabled={disabled}
-          onChange={(event) => setText(event.target.value)}
-          data-testid="anomaly-input"
-        />
-        <button
-          type="submit"
-          className={`${styles.transmit} arcade`}
-          disabled={disabled}
-          data-testid="anomaly-submit"
-        >
-          {scanning ? "SCANNING" : "TRANSMIT"}
-        </button>
-      </div>
-    </form>
+    <div className={styles.station}>
+      <span className={`${styles.stationStatus} arcade`} data-testid="station-status">
+        {ready ? "WIKIPLANET STATION · ALONGSIDE" : "WIKIPLANET STATION · ON APPROACH"}
+      </span>
+      <button
+        type="button"
+        className={`${styles.enterStation} ${ready ? styles.enterStationReady : ""} arcade`}
+        disabled={!ready}
+        onClick={onEnter}
+        data-testid="enter-station"
+        data-ready={String(ready)}
+      >
+        {ready ? "ENTER SPACE STATION" : "CLOSING..."}
+      </button>
+    </div>
   );
 }
 
@@ -882,6 +1075,7 @@ function useKeyboard({
   onLockVector,
   onToggleBoost,
   onNova,
+  onEnterStation,
   onConfirm,
 }: Pick<
   Props,
@@ -893,6 +1087,7 @@ function useKeyboard({
   | "onLockVector"
   | "onToggleBoost"
   | "onNova"
+  | "onEnterStation"
   | "onConfirm"
 > & {
   question: Round["questions"][number] | undefined;
@@ -907,6 +1102,7 @@ function useKeyboard({
     onLockVector,
     onToggleBoost,
     onNova,
+    onEnterStation,
     onConfirm,
   });
   useEffect(() => {
@@ -920,6 +1116,7 @@ function useKeyboard({
       onLockVector,
       onToggleBoost,
       onNova,
+      onEnterStation,
       onConfirm,
     };
   });
@@ -937,6 +1134,14 @@ function useKeyboard({
         if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
           event.preventDefault();
           current.onConfirm();
+        }
+        return;
+      }
+      // Alongside the station: Enter is the door. Desktop convenience only.
+      if (current.state?.phase === "station") {
+        if (current.state.stationReady && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          current.onEnterStation();
         }
         return;
       }

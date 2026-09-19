@@ -42,8 +42,11 @@ things that make those games sticky:
   cluster's first pick gets two seconds more, because six options and a
   prompt have to be read before the first tap.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
-  to crawling. The Cluster is push-your-luck: bank the plasma now, or pick
-  again for more and risk a boulder. Boost is confidence as a button. Three
+  to crawling. The Cluster is push-your-luck: every right lane winds the
+  boost gauge in the bottom left corner up a notch, and the player either
+  fires it now, on the dial in the opposite corner, or picks again for more
+  and risks a boulder. Fill it and the clock stops: the biggest
+  burst in the game is spent on a tap, never taken away on a timer. Boost is confidence as a button. Three
   shields per run; each wrong lane costs one, and at zero every miss is a
   wreck. Keep every new mechanic inside this frame: a decision with a
   visible stake, a fast verdict, a consequence you can feel.
@@ -75,7 +78,8 @@ The screen has two zones. Respect them:
 
 - **Top band: the whole HUD.** Readouts (distance, velocity, streak, shield
   pips), then the question panel: tag and countdown, prompt, thrust bar,
-  the row of answer squares, the reactor gauge, NOVA and Boost or BURN. The
+  the row of answer squares, the tools (NOVA, and Boost or LOCK & FIRE; a
+  Cluster's own two controls are in the corners, below). The
   outcome toast lands here too. The band is sized by its contents and
   capped at roughly 60vh so it can never creep down over the ship. Padded
   by `env(safe-area-inset-top)` for notches and Dynamic Island.
@@ -83,10 +87,19 @@ The screen has two zones. Respect them:
   so the ship flies in the lower third, and the pod or boulder comes down
   the lane toward it. **Nothing may sit in this region.** No modals,
   banners, tooltips, buttons, or sticky elements over the lower half while
-  a run is live. The one exception is the pulse (PLASMA COLLECTED, SHIELD
+  a run is live. There are two exceptions, and they are the whole list.
+  The first is the pulse (PLASMA COLLECTED, SHIELD
   LOST), a short one-shot flash at about 64% down that is `pointer-events:
-  none` and fades in 1.4 seconds. If a new element must exist, it goes in
-  the band. The tap-to-continue catcher covers the whole screen but is drawn
+  none` and fades in 1.4 seconds. The second is the Cluster's cockpit
+  corners: the boost gauge in the bottom left and the round arcade push
+  button that fires it in the bottom right (a bezel with a domed cap that
+  stands proud of it and travels on a press), out at the edges either side of the ship rather
+  than over it, and only while a Cluster is live. They are deliberate: the
+  charge is the most dramatic thing in the run and the band had no room left
+  to dramatise it, and a thumb reaches a bottom corner without crossing the
+  screen. The gauge takes no taps at all; the dial is the only button the
+  run draws below the band. Both hug `env(safe-area-inset-*)`. Do not read
+  them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
   nowhere and only exists while the run is parked on a verdict; the visible
   TAP TO CONTINUE prompt lives in the band like everything else.
 - **The answer row is the lane map.** The squares sit in one horizontal
@@ -110,10 +123,9 @@ Concrete constraints when building or changing a component:
 - Type is legible on a 5.5 inch screen: prose 14 to 16px, arcade pixel
   type never below 9px, tabular figures for any number that changes so the
   counters do not jitter.
-- Inputs use `font-size: 16px` so iOS does not zoom on focus. The anomaly
-  text field is the only text input in the game; if you add another,
-  reserve space for the software keyboard and keep the submit button
-  visible above it.
+- Inputs use `font-size: 16px` so iOS does not zoom on focus. There are no
+  text inputs in the game today; if you add one, reserve space for the
+  software keyboard and keep the submit button visible above it.
 - Check the `@media (max-width: 720px)` and `(max-height: 620px)` blocks in
   `components/Hud.module.css` when adding HUD elements. Short phones are the
   binding constraint, not narrow ones: every new row in the band pushes the
@@ -138,13 +150,18 @@ for three.js in `COLOR` inside `lib/game/Tuning.ts`. Keep them in sync.
   backdrop blur, no drop shadows except glows.
 - Signal colours: yellow `#ffe03d` (score, slingshot), cyan `#4ff1ff`
   (streak, lane clear, NOVA, plasma pods), orange `#ff8a1f` (Boost, BURN),
-  violet `#b28cff` (the AI Anomaly, and nothing else), red `#ff6b5c` for
-  damage and boulders. Each colour means one thing. Do not reuse violet
-  for a non-anomaly element or cyan for a warning.
+  violet `#b28cff` (contact: the alien scout and Wikiplanet Station, and
+  nothing else), red `#ff6b5c` for damage and boulders. Each colour means
+  one thing. Do not reuse violet for anything that is not contact, or cyan
+  for a warning.
 - Type: Press Start 2P (`.arcade`, always uppercase, tracked) for titles,
   figures, buttons and outcome labels. The sans stack for prompts and
   prose. The mono stack for units.
-- Buttons are square-cornered. Active state inverts to yellow on ink.
+- Buttons are square-cornered. Active state inverts to yellow on ink. The
+  one round button is the Cluster's FIRE dial in the bottom right corner,
+  and it is round because it is a cabinet push button, not a panel tool: a
+  metal bezel, a domed cap raised on a hard skirt, and a real travel on
+  `:active`. Nothing else gets that treatment.
 - Copy is short, loud, present tense, in the game's voice: LANE CLEAR,
   SLINGSHOT!, WRECKED, TOO SLOW, FULL BURN!, PLASMA COLLECTED. No em
   dashes anywhere in UI copy or share text; use a middle dot, comma or
@@ -189,26 +206,29 @@ codebase: the engine calls cues, nothing else makes a noise.
 ## Architecture in one screen
 
 ```
-app/                  routes: / (title), /play, /hangar (ship bay), /api/anomaly,
-                      layout, globals.css
+app/                  routes: / (title), /play, /hangar (ship bay), layout, globals.css
 components/           GameCanvas (React/three.js boundary), Hud, ScoreTally, ShareCard,
                       BestRun, Briefing (first-flight explainer), Hangar (ship bay),
-                      TitleMenu, DebugStats
-lib/game/Run.ts       pure state machine: intro -> approach -> collecting|scanning -> resolving -> aftermath
+                      Station (aboard Wikiplanet Station), TitleMenu, DebugStats
+lib/game/Run.ts       pure state machine: intro -> approach -> collecting -> resolving -> aftermath,
+                      then station -> docked -> finished for WHERE ON EARTH
 lib/game/Flight.ts    pure velocity model: cruise, streak floor, impulse, collision retain
 lib/game/Score.ts     pure scoring: base per encounter, streak multiplier, penalties, tally
 lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the canvas and loop
-lib/game/ShipBay.ts   the hangar's own tiny shell: one hull, turning on a lit deck
+lib/game/ShipBay.ts   the hangar's own tiny shell: one hull on a lit pad, and the drag
+lib/game/bayTextures.ts  the bay's concrete, plating and markings, drawn into canvases
+lib/game/Station.ts   the station on the flight: comes up dead ahead, arms the door
+lib/game/Orbit.ts     the station screen's own tiny shell: the station over Earth
 lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
                       CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, SHIPS, HANGAR, ...)
 lib/game/Incoming.ts  the one pod or boulder that comes down a picked lane
 lib/game/Audio.ts     all sound, synthesised: engine bed, music loop, one-shot cues
 lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, Backdrop,
-                      AsteroidField, Starfield, quality, nova, anomaly, share (card + text),
+                      AsteroidField, Starfield, quality, nova, share (card + text),
                       storage (localStorage), gltf (GLB loader + merge), format, types
 lib/content/round.ts  round loader with build-time validation
-content/rounds/       one JSON per daily round: 2 cluster + 4 mcq + 1 anomaly
+content/rounds/       one JSON per daily round: 2 cluster + 2 vector + 2 mcq + 1 earth
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
 e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
 e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks included
@@ -220,7 +240,7 @@ Rules that fall out of this:
   neither three.js nor React. Game rules go there so they can be stepped with a
   fake clock. Visuals go in `Engine.ts` and the scene modules. The HUD is
   a view of `GameState` plus method calls on the engine (`answer`, `pick`,
-  `burn`, `toggleBoost`, `useNova`, `submitAnomaly`, `confirm`,
+  `burn`, `toggleBoost`, `useNova`, `enterStation`, `endTransmission`, `confirm`,
   `setLaneFractions`).
 - **Every answer is a lane.** MCQ and Cluster both go through the same
   pick -> veer -> incoming -> verdict flow, so the run reads one way. The
@@ -239,10 +259,14 @@ Rules that fall out of this:
   sampled at 12Hz; do not put objects with identity or methods in it. A
   one-shot `Pulse` carries a fresh `id` each time so the HUD can replay
   the animation.
-- **Anomaly scoring never blocks a run.** `/api/anomaly` calls a model
-  when `ANTHROPIC_API_KEY` is set, and the client falls back to the
-  keyword scorer on any failure or after the scan timeout. Keep the rubric
-  server-side; never send it to the client.
+- **The station is a screen, not an engine mode.** WHERE ON EARTH's dock
+  hands the display to `components/Station.tsx`, which has its own tiny
+  shell (`Orbit.ts`) like the hangar does. The flight engine parks under it
+  and never draws again that run; it keeps the sound bed going and nothing
+  else. The encounter resolves through `Run.endTransmission`, which records
+  a neutral `dock` outcome and finishes the run. Arrival on the approach is
+  a timer (`STATION.approachSeconds`), never an asset: the door arms on the
+  same beat whether or not the model has loaded.
 - **Storage is best effort.** localStorage can be missing or full; every
   read and write is wrapped and a failure must never break play.
 
@@ -258,10 +282,36 @@ path from a shared link to flying.
   from `Tuning.ts` and every count from the round, so retuning cannot leave
   it lying: add a number to it the same way. `?replay=1` skips it along with
   today's stored run, and the title screen can call it up again.
-- **The ship bay** (`/hangar`) is one hull turning on a lit deck.
+- **The ship bay** (`/hangar`) is a launch bay inside the carrier the run
+  deploys from: a concrete pad, plated walls, floodlit ceiling, and the bay
+  door open onto the game's own sky. One hull stands on the pad, turning.
   `SHIPS` in `Tuning.ts` is the whole catalogue: name, blurb, model, scale,
   yaw, nozzles and how it unlocks (`default`, `runs`, or `purchase`).
   Adding a hull is one entry there plus a GLB in `public/models`.
+- **The bay is full bleed and the text floats over it.** The canvas is pinned
+  to the viewport and the name, price and buttons sit on a scrim over the
+  bottom. That is not only a look: as a flex sibling of the text the canvas
+  took whatever height the text left, so a hull with a longer name resized it
+  and re-framed the camera mid-switch. Do not put the canvas back in the flow.
+  React measures the overlay and hands the bay `setSafeArea`, which frames the
+  hull into the clear band rather than the raw canvas.
+- **The bay renders sharper than the flight, on purpose.** Its pixel ratio is
+  `HANGAR.dprCap` against the device, not `dprForTier`, and antialiasing is
+  always on. The tier decides detail COUNTS (ribs, floodlights, texture size)
+  and nothing else. A hull the player is being asked to buy cannot be the
+  blurriest thing in the game. It costs about eighteen draw calls.
+- **Light it neutral.** The key and fill are white, the ambient hemisphere is
+  a cool grey and the cyan rim is a trace. The rig before it had a saturated
+  blue hemisphere ground and a strong cyan rim, which turned every pale panel
+  pink. If a hull looks wrong, check the rig before blaming the model.
+- **Surfaces are painted, not shipped.** `lib/game/bayTextures.ts` draws the
+  concrete, the deck markings, the wall plating and the fake contact shadow
+  into canvases at load, in the style `share.ts` draws the share card. Every
+  colour map there must set `SRGBColorSpace` or it renders washed out.
+- **Drag turns the hull**, and the slow revolution eases back in a beat after
+  the thumb lifts. A hull is stood on the pad by its own underside, never by
+  its bounding centre: the Seraph's centre is dragged up by a spire and the
+  Cinder's sits mid-fuselage.
 - **A hull is cosmetic, always.** Every ship has the same flight model. The
   daily round has to stay comparable between two players, so a ship must
   never touch speed, thrust, shields or scoring.
@@ -296,7 +346,9 @@ Run typecheck and lint before committing. Run the e2e test after any change
 to `Run.ts`, `Flight.ts`, the HUD, or a round file; it asserts flow and
 state (every outcome kind, shields, pulses, the share card, persistence),
 never performance. `/play?replay=1` skips today's stored run. `?debug=1`
-overlays FPS, draw calls, triangles, tier and DPR.
+overlays FPS, draw calls, triangles, tier and DPR on the flight, and on
+`/hangar` puts the bay on `window.galaxiaBay` so its angle and draw count can
+be read from the console or a test.
 
 ## Performance budget (mobile)
 
@@ -313,7 +365,9 @@ overlays FPS, draw calls, triangles, tier and DPR.
 ## Authoring a round
 
 `content/rounds/YYYY-MM-DD.json`, seven questions in order: two `cluster`,
-four `mcq`, one `anomaly`. The loader validates cluster shape at import.
+two `vector`, two `mcq`, one `earth`. The loader validates cluster, vector
+and earth shape at import. Stages carry an optional `phase` number for the
+card to announce, so a round can skip a phase that is not built yet.
 
 - Cluster: exactly six `options`, exactly three distinct `answers`
   (indices), a `fact`. All three right lanes must be unarguably right and
@@ -321,9 +375,10 @@ four `mcq`, one `anomaly`. The loader validates cluster shape at import.
   encounter.
 - MCQ: four `options`, one `answer` index, optional `hint` (what a NOVA
   clue reveals), a `fact`.
-- Anomaly: `kind` (`open` or `visual`), optional `image` under `/public`
-  with `imageAlt`, a `rubric` for the model (never shown), `accept`
-  keywords for the offline scorer, `answerText`, a `fact`.
+- Earth: the landing site as `name`, `country`, `lat`, `lon` and a
+  slippy-map `zoom` that frames the giveaway; exactly four `options` with
+  `answer` indexing the one equal to `name`; a `fact`. The feed that reads
+  these is the next build.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.

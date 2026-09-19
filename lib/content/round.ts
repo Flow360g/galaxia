@@ -28,8 +28,35 @@ function validate(round: Round): Round {
     if (previous && previous.after >= stage.after) {
       throw new Error(`Round ${round.date} stage ${stage.name}: stages must end in ascending order`);
     }
+    // A stage may skip a phase number (phase 3 is not built yet) but never
+    // go backwards: the card announces these, and they have to count up.
+    if (stage.phase !== undefined) {
+      const previousPhase = previous ? (previous.phase ?? i) : 0;
+      if (!Number.isInteger(stage.phase) || stage.phase <= previousPhase) {
+        throw new Error(`Round ${round.date} stage ${stage.name}: phase=${stage.phase} must count up`);
+      }
+    }
   });
   for (const question of round.questions) {
+    if (question.type === "earth") {
+      const { options, answer, name, lat, lon, zoom } = question;
+      if (options.length !== 4 || new Set(options).size !== 4) {
+        throw new Error(`Round ${round.date} earth ${question.id}: need 4 distinct options`);
+      }
+      if (!Number.isInteger(answer) || answer < 0 || answer >= options.length) {
+        throw new Error(`Round ${round.date} earth ${question.id}: answer ${answer} out of range`);
+      }
+      if (options[answer] !== name) {
+        throw new Error(`Round ${round.date} earth ${question.id}: options[answer] must be the name`);
+      }
+      if (!(lat >= -90 && lat <= 90) || !(lon >= -180 && lon <= 180)) {
+        throw new Error(`Round ${round.date} earth ${question.id}: lat/lon out of range`);
+      }
+      if (!Number.isInteger(zoom) || zoom < 1 || zoom > 18) {
+        throw new Error(`Round ${round.date} earth ${question.id}: zoom must be 1..18`);
+      }
+      continue;
+    }
     if (question.type === "vector") {
       const { min, max, answer, tolerance, log } = question;
       if (!(min < answer && answer < max)) {

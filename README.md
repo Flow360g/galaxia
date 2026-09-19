@@ -7,17 +7,17 @@ score zero, they physically kill your momentum.
 **Phase 5: stages, the Waypoint and Vector.** The run is two stages. The
 Cluster Belt (two push-your-luck Clusters), then a waypoint that rates the
 stage as the moon rises and an alien scout warps in, then Alien Contact: two
-Vectors (aim a numeric answer on a slider and fire at the alien), Lock-On
-MCQs and the Anomaly. On top of everything before: lanes, three shields,
-continuous flight, a real velocity model, Boost, NOVA scans, runtime sound,
-one model-scored AI Anomaly per run, and a share card that draws the whole
-flight as a story.
+Vectors (aim a numeric answer on a slider and fire at the alien) and Lock-On
+MCQs, then Where on Earth: Earth rises, the ship docks at Wikiplanet Station
+and the satellite feed is the last encounter (the feed itself is the next
+build). On top of everything before: lanes, three shields, continuous flight,
+a real velocity model, Boost, NOVA scans, runtime sound, and a share card that
+draws the whole flight as a story.
 
 ## Running it
 
 ```bash
 npm install
-cp .env.example .env.local   # optional: add ANTHROPIC_API_KEY for the anomaly scorer
 npm run dev                  # http://localhost:3000
 ```
 
@@ -90,13 +90,14 @@ asteroid called -> thrust drains while you think -> answer locks -> the rock str
   reveals an authored clue, or lights the two most plausible options. On a
   cluster it dims one wrong lane. The pick is seeded per question so everyone
   gets the same help on the same rock.
-- **AI Anomaly.** One per run, an open or visual question answered in text.
-  `/api/anomaly` scores it with a model (rubric stays server-side); with no key
-  or on any failure a keyword scorer marks it locally so the run never stalls.
-  A partial score earns a partial burst.
+- **Where on Earth.** The last encounter. Wikiplanet Station comes up dead
+  ahead, the ship throttles back to dock, and ENTER SPACE STATION opens a
+  screen of its own: the station over Earth, aimed at it, with the satellite
+  feed standing by. Reading the feed to find the invasion is the next build;
+  for now END TRANSMISSION resolves the encounter neutrally.
 - **Share card.** A 1080x1350 PNG: velocity over time as a glowing flight
   path, every encounter marked (thread, slingshot, collision, wreck, timeout,
-  anomaly), streak bars, stats, and the total distance. Web Share where
+  dock), streak bars, stats, and the total distance. Web Share where
   available, otherwise download or copy the text strip.
 
 Distance is a speedometer integrated over the run, not seven point awards.
@@ -122,17 +123,18 @@ speed. Float precision stays constant however far a player gets, geometry is
 a fixed recycled pool, and distance is a plain scalar the run owns.
 
 **Pure core, imperative shell.** `Run.ts` is the state machine
-(`intro -> approach -> scanning | collecting -> resolving -> aftermath`) and
+(`intro -> approach -> collecting -> resolving -> aftermath`, then
+`station -> docked` for the last encounter) and
 `Flight.ts` the physics; neither imports three.js or React. `Engine.ts`
 subscribes through `RunHooks`: it spawns the rock (or the six cluster rocks)
 when a question is called, steers and strikes on a pick, plays the strike
 when the answer locks, and fires the burst or the impact on contact. React
 reads `GameState` at about 12Hz and calls `answer`, `pick`, `burn`,
-`toggleBoost`, `useNova`, `submitAnomaly` on the engine.
+`toggleBoost`, `useNova`, `enterStation`, `endTransmission` on the engine.
 
 **The encounter rock** (`EncounterAsteroid.ts`) does not fly at world speed
 while the answer is open. It hangs ahead and creeps in as thrust drains, then
-strikes on lock. The anomaly is the same mesh in violet with a pulse.
+strikes on lock. Nothing spawns it now that every answer is a lane.
 
 **The lane** (`Incoming.ts`) is what comes at the ship after a pick. Nothing
 is in the sky while a question is open, so the scene never leaks which lanes
@@ -177,15 +179,15 @@ canvas inside a container div (a React-supplied canvas would be poisoned by
 ### Layout
 
 ```
-app/                  routes: landing, /play, /api/anomaly, global styles
-components/           GameCanvas (mount boundary), Hud, ShareCard, BestRun, DebugStats
-lib/game/             Engine, Run, Flight, nova, anomaly, share, storage,
+app/                  routes: landing, /play, /hangar, global styles
+components/           GameCanvas (mount boundary), Hud, Station (aboard), ShareCard, BestRun, DebugStats
+lib/game/             Engine, Run, Flight, nova, share, storage, Station, Orbit,
                       Audio, gltf, Ship, EncounterAsteroid, Incoming, Alien, Beam,
                       Landmark, Salvage, Debris, Shield, Exhaust, Camera,
                       Backdrop, AsteroidField, Starfield, quality, Tuning
 lib/content/          round loader
-content/rounds/       one JSON file per daily round (2 cluster + 2 vector + 2 mcq + 1 anomaly)
-public/               spaceship.glb, backdrop, anomaly images
+content/rounds/       one JSON file per daily round (2 cluster + 2 vector + 2 mcq + 1 earth)
+public/               models (ships, alien, station, earth), backdrop
 e2e/                  Playwright full-run test, and the audio signal test
 ```
 
@@ -203,13 +205,14 @@ a NOVA clue reveals) and a `fact`. Vectors carry a numeric `answer`, `min`,
 array names each stage, the index of its last encounter, and the landmark
 that rises at the waypoint closing it (`moon` or `planet`). The rating is
 built for the Cluster stage (plasma and shields); a second waypoint before
-the Anomaly with a planet is a later step and needs its own rating rule.
+Where on Earth reuses it for now and needs its own rating rule.
 
-Models live in `public/models`. `alien.glb` and, when present, `moon.glb` and
-`planet.glb` load through `lib/game/gltf.ts`; a missing or failed model falls
-back to a flat-shaded stand-in so the run never stalls on an asset. The anomaly entry carries `kind` (`open` or `visual`), an optional
-`image` under `/public`, `imageAlt`, a `rubric` the model marks against
-(never shown), `accept` keywords for the offline scorer, and `answerText`.
+Models live in `public/models`. `alien.glb`, `station.glb`, `earth.glb` and,
+when present, `moon.glb` load through `lib/game/gltf.ts`; a missing or failed
+model falls back to a flat-shaded stand-in so the run never stalls on an
+asset. The earth entry carries the landing site (`name`, `country`, `lat`,
+`lon`, `zoom`) and four `options` with the `answer` among them, authored now
+for the satellite feed that is the next build.
 
 ## Performance rules
 
@@ -226,5 +229,4 @@ back to a flat-shaded stand-in so the run never stalls on an asset. The anomaly 
 
 Group leaderboards, server-side persistence, more than one authored round,
 and haptics. Sound is synthesised rather than authored: no recorded music or
-sampled impacts. The anomaly scorer is a single unstructured call; a
-structured-output tool call would be the next hardening step.
+sampled impacts.

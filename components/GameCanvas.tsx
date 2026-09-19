@@ -16,7 +16,9 @@ import {
 } from "@/lib/game/storage";
 import { selectedShip } from "@/lib/game/ships";
 import { Briefing } from "./Briefing";
+import { Ready } from "./Ready";
 import { Hud } from "./Hud";
+import { Station } from "./Station";
 import { ScoreTally } from "./ScoreTally";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
@@ -57,6 +59,12 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   /** Bumped to remount the engine for a fresh run. */
   const [attempt, setAttempt] = useState(0);
   /**
+   * READY has been pressed. The engine is held back until it is: the run
+   * starts when the player says so, and the countdown runs over the engines
+   * lighting once it does.
+   */
+  const [launched, setLaunched] = useState(false);
+  /**
    * Sound on or off, remembered between runs. Reading storage in the lazy
    * initialiser is safe here: the HUD this feeds is never rendered on the
    * server or on the hydrating pass, since `stored` is undefined until then.
@@ -93,10 +101,19 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
 
   // The engine emits state every frame. Re-rendering React at 60fps would
   // cost more than the scene does, so the HUD is sampled at ~12Hz instead.
+  //
+  // The throttle is for the figures that merely tick along -- distance,
+  // velocity, thrust. Anything the player just caused has to land on the next
+  // frame instead: a tapped square that stays lit for another 80ms reads as
+  // the game lagging behind the thumb. `beat` is a cheap signature of
+  // everything a player action changes, and a change in it jumps the queue.
   const lastStateEmit = useRef(0);
+  const lastBeat = useRef("");
   const handleState = useCallback((next: GameState) => {
+    const beat = stateBeat(next);
     const now = performance.now();
-    if (now - lastStateEmit.current < 80) return;
+    if (beat === lastBeat.current && now - lastStateEmit.current < 80) return;
+    lastBeat.current = beat;
     lastStateEmit.current = now;
     setState(next);
   }, []);
@@ -110,12 +127,27 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
 
   /** The briefing holds the run back until it is closed. */
   const briefing = unbriefed === true && !briefed;
-  const playing = stored === null && summary === null && !briefing;
+  /** Then the launch card holds it back until READY. */
+  const readying = !briefing && !launched && stored === null && summary === null;
+  const playing = stored === null && summary === null && !briefing && launched;
 
   const closeBriefing = useCallback(() => {
     saveBriefed(true);
     setBriefed(true);
   }, []);
+
+  const launch = useCallback(() => setLaunched(true), []);
+  const endTransmission = useCallback(() => engineRef.current?.endTransmission(), []);
+
+  /**
+   * WHERE ON EARTH: aboard the station. Gated on the run's phase rather than
+   * on `playing`, because the station screen stays up as the backdrop for the
+   * tally and the share card: the run ends from inside it, and the last state
+   * the engine emits is the docked one.
+   */
+  const docked = state?.phase === "docked";
+  const stages = round.stages ?? [];
+  const stationPhase = stages[stages.length - 1]?.phase ?? stages.length;
 
   const toggleSound = useCallback(() => {
     setMuted((current) => {
@@ -130,7 +162,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   useEffect(() => {
     const container = containerRef.current;
     // `undefined` on either of these means storage has not been read yet.
-    if (!container || stored !== null || unbriefed !== false) return;
+    if (!container || stored !== null || unbriefed !== false || !launched) return;
 
     const engine = new Engine({
       container,
@@ -151,7 +183,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
       engineRef.current = null;
     };
     // `attempt` is a deliberate dependency: bumping it remounts the engine.
-  }, [round, debug, stored, unbriefed, ship, attempt, handleState, handleRunEnd]);
+  }, [round, debug, stored, unbriefed, ship, attempt, launched, handleState, handleRunEnd]);
 
   const replayRun = useCallback(() => {
     clearRun(round.date);
@@ -159,6 +191,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     setSummary(null);
     setTallied(false);
     setState(null);
+    setLaunched(false);
     setAttempt((n) => n + 1);
   }, [round.date]);
 
@@ -174,7 +207,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           EngineOptions.container for why React must not supply it. */}
       <div ref={containerRef} className={styles.stage} />
 
-      {playing ? (
+      {playing && !docked ? (
         <Hud
           state={state}
           round={round}
@@ -185,7 +218,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onLockVector={() => engineRef.current?.lockVector()}
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
-          onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+          onEnterStation={() => engineRef.current?.enterStation()}
           onConfirm={() => engineRef.current?.confirm()}
           onLanes={(fractions) => engineRef.current?.setLaneFractions(fractions)}
           muted={muted}
@@ -193,9 +226,15 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
         />
       ) : null}
 
+      {docked ? (
+        <Station phase={stationPhase} showPanel={summary === null} onEnd={endTransmission} />
+      ) : null}
+
       {briefing ? (
         <Briefing round={round} onDone={closeBriefing} firstFlight />
       ) : null}
+
+      {readying ? <Ready round={round} onReady={launch} /> : null}
 
       {summary && !tallied ? (
         <ScoreTally summary={summary} onDone={() => setTallied(true)} />
@@ -223,4 +262,33 @@ function storedRun(date: string): RunSummary | null {
 
 function subscribeStorage(): () => void {
   return () => {};
+}
+
+/**
+ * Everything about a frame that a player action can change, as one string.
+ * Compared against the last frame's to decide whether a state emit can wait
+ * for the throttle or has to go through now. Cheap on purpose: it is built
+ * every frame, so it stays primitives joined together and never touches the
+ * figures that move on their own.
+ */
+function stateBeat(state: GameState): string {
+  const cluster = state.cluster;
+  return [
+    state.phase,
+    state.encounter,
+    // The countdown: the numeral has to flip on the same frame as its pip,
+    // not up to a sample later.
+    state.countdown ?? -1,
+    state.awaitingTap ? 1 : 0,
+    // The door arms on the frame the station comes alongside, not a sample later.
+    state.stationReady ? 1 : 0,
+    state.boostArmed ? 1 : 0,
+    state.novaLeft,
+    state.nova ? 1 : 0,
+    state.shields,
+    state.pulse?.id ?? 0,
+    cluster ? cluster.picked.length : -1,
+    cluster ? cluster.charge : -1,
+    cluster ? cluster.eliminated.length : -1,
+  ].join(":");
 }

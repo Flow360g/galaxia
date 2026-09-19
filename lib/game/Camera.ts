@@ -35,6 +35,14 @@ export class ChaseCamera {
    */
   private laneLock = 0;
   /**
+   * How far into the lane lock the rig currently is, 0..1. `laneLock` says
+   * what the rig should be doing; this says what it is actually doing, and it
+   * eases between the two. Both the lateral follow and the aim are scaled by
+   * it, so engaging or dropping a lock swings the camera over a few frames
+   * instead of teleporting its aim on the frame the lane is tapped.
+   */
+  private laneBlend = 0;
+  /**
    * A sustained rumble, unlike `shake`'s single decaying kick: it holds at
    * full for most of its life and only then eases off. MAXIMUM THRUST is the
    * one thing that asks for it, and holding it is the whole point -- a hull
@@ -144,9 +152,13 @@ export class ChaseCamera {
     // toward the edge of frame as it steers, which is what makes a hard turn
     // feel committed instead of the world merely sliding underneath.
     // A lane lock pins the rig to the centreline: position and aim both stop
-    // tracking X, so the ship's screen position is purely its world X.
-    const locked = this.laneLock > 0;
-    const follow = locked ? 0 : CAMERA.lateralFollow;
+    // tracking X, so the ship's screen position is purely its world X. The
+    // changeover is eased rather than switched, or the aim would jump by the
+    // whole lead on the frame the lock goes on and again when it comes off.
+    const blend = 1 - Math.exp(-CAMERA.laneLockResponse * dt);
+    this.laneBlend += ((this.laneLock > 0 ? 1 : 0) - this.laneBlend) * blend;
+    const tracking = 1 - this.laneBlend;
+    const follow = CAMERA.lateralFollow * tracking;
     scratchTarget.set(
       ship.group.position.x * follow,
       ship.group.position.y * 0.55 + CAMERA.offsetY + this.pullback * 0.3,
@@ -164,7 +176,7 @@ export class ChaseCamera {
     // Aim ahead, leaning into the turn, and above the ship so it flies in the
     // lower third of the frame with the question owning the top.
     scratchLook.set(
-      locked ? 0 : ship.group.position.x + ship.velocityX * CAMERA.lookLateralLead,
+      (ship.group.position.x + ship.velocityX * CAMERA.lookLateralLead) * tracking,
       ship.group.position.y * 0.6 + CAMERA.lookLift,
       -CAMERA.lookAheadZ,
     );
