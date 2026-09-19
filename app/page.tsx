@@ -10,9 +10,18 @@ import styles from "./page.module.css";
  * the day's stats along the bottom rail. The fastest path from a shared link
  * to flying is still one tap.
  */
-export default function Home() {
-  const round = getRound();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ round?: string }>;
+}) {
+  // Read per request rather than prerendered, so the title screen turns
+  // over at midnight with the round. `?round=` is the same QA hatch as on
+  // /play, and Press Start carries it through.
+  const params = await searchParams;
+  const round = getRound(params.round);
   const encounters = round.questions.length;
+  const playHref = params.round ? `/play?round=${encodeURIComponent(params.round)}` : "/play";
 
   return (
     <main className={styles.main}>
@@ -39,7 +48,7 @@ export default function Home() {
           will go. Every wrong answer costs points and speed.
         </p>
 
-        <Link href="/play" className={`${styles.start} arcade`}>
+        <Link href={playHref} className={`${styles.start} arcade`}>
           Press Start
         </Link>
 

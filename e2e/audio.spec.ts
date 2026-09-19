@@ -95,7 +95,7 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   await page.addInitScript(probe);
   // ?debug=1 puts the audio engine on the window, which is the only way to
   // ask what one layer of the mix is contributing.
-  await page.goto("/play?replay=1&debug=1");
+  await page.goto("/play?replay=1&debug=1&round=2026-09-18");
 
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
@@ -177,7 +177,7 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   expect((await measure(page, 1000)).peak).toBeLessThan(0.005);
 
   // And the choice survives a reload.
-  await page.goto("/play?replay=1");
+  await page.goto("/play?replay=1&round=2026-09-18");
   await launch(page);
   await expect(page.getByTestId("sound")).toHaveAttribute("data-muted", "true", {
     timeout: 20_000,
