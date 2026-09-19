@@ -126,6 +126,20 @@ export const CLUSTER = {
    * plain thread; the full charge is the biggest burst in the game.
    */
   chargeMultiplier: [0, 1, 1.7, 2.6],
+  /**
+   * The boost gauge: the reactor drawn as a speedometer at the bottom left of
+   * the panel. The needle climbs a notch per plasma and sweeps back to the
+   * peg as the boost is fired, so the charge reads as something held and then
+   * spent rather than a bar that blinks out.
+   */
+  gauge: {
+    /** Sweep of the dial in degrees, symmetric about straight up. */
+    sweepDegrees: 244,
+    /** Seconds the needle takes to settle on a newly collected notch. */
+    settleSeconds: 0.42,
+    /** Seconds the gauge takes to empty once the boost is fired. */
+    drainSeconds: 1.2,
+  },
 } as const;
 
 /**

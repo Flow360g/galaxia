@@ -42,8 +42,11 @@ things that make those games sticky:
   cluster's first pick gets two seconds more, because six options and a
   prompt have to be read before the first tap.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
-  to crawling. The Cluster is push-your-luck: bank the plasma now, or pick
-  again for more and risk a boulder. Boost is confidence as a button. Three
+  to crawling. The Cluster is push-your-luck: every right lane winds the
+  boost gauge in the bottom left corner up a notch, and the player either
+  fires it now, on the dial in the opposite corner, or picks again for more
+  and risks a boulder. Fill it and the clock stops: the biggest
+  burst in the game is spent on a tap, never taken away on a timer. Boost is confidence as a button. Three
   shields per run; each wrong lane costs one, and at zero every miss is a
   wreck. Keep every new mechanic inside this frame: a decision with a
   visible stake, a fast verdict, a consequence you can feel.
@@ -75,7 +78,8 @@ The screen has two zones. Respect them:
 
 - **Top band: the whole HUD.** Readouts (distance, velocity, streak, shield
   pips), then the question panel: tag and countdown, prompt, thrust bar,
-  the row of answer squares, the reactor gauge, NOVA and Boost or BURN. The
+  the row of answer squares, the tools (NOVA, and Boost or LOCK & FIRE; a
+  Cluster's own two controls are in the corners, below). The
   outcome toast lands here too. The band is sized by its contents and
   capped at roughly 60vh so it can never creep down over the ship. Padded
   by `env(safe-area-inset-top)` for notches and Dynamic Island.
@@ -83,10 +87,19 @@ The screen has two zones. Respect them:
   so the ship flies in the lower third, and the pod or boulder comes down
   the lane toward it. **Nothing may sit in this region.** No modals,
   banners, tooltips, buttons, or sticky elements over the lower half while
-  a run is live. The one exception is the pulse (PLASMA COLLECTED, SHIELD
+  a run is live. There are two exceptions, and they are the whole list.
+  The first is the pulse (PLASMA COLLECTED, SHIELD
   LOST), a short one-shot flash at about 64% down that is `pointer-events:
-  none` and fades in 1.4 seconds. If a new element must exist, it goes in
-  the band. The tap-to-continue catcher covers the whole screen but is drawn
+  none` and fades in 1.4 seconds. The second is the Cluster's cockpit
+  corners: the boost gauge in the bottom left and the round arcade push
+  button that fires it in the bottom right (a bezel with a domed cap that
+  stands proud of it and travels on a press), out at the edges either side of the ship rather
+  than over it, and only while a Cluster is live. They are deliberate: the
+  charge is the most dramatic thing in the run and the band had no room left
+  to dramatise it, and a thumb reaches a bottom corner without crossing the
+  screen. The gauge takes no taps at all; the dial is the only button the
+  run draws below the band. Both hug `env(safe-area-inset-*)`. Do not read
+  them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
   nowhere and only exists while the run is parked on a verdict; the visible
   TAP TO CONTINUE prompt lives in the band like everything else.
 - **The answer row is the lane map.** The squares sit in one horizontal
@@ -144,7 +157,11 @@ for three.js in `COLOR` inside `lib/game/Tuning.ts`. Keep them in sync.
 - Type: Press Start 2P (`.arcade`, always uppercase, tracked) for titles,
   figures, buttons and outcome labels. The sans stack for prompts and
   prose. The mono stack for units.
-- Buttons are square-cornered. Active state inverts to yellow on ink.
+- Buttons are square-cornered. Active state inverts to yellow on ink. The
+  one round button is the Cluster's FIRE dial in the bottom right corner,
+  and it is round because it is a cabinet push button, not a panel tool: a
+  metal bezel, a domed cap raised on a hard skirt, and a real travel on
+  `:active`. Nothing else gets that treatment.
 - Copy is short, loud, present tense, in the game's voice: LANE CLEAR,
   SLINGSHOT!, WRECKED, TOO SLOW, FULL BURN!, PLASMA COLLECTED. No em
   dashes anywhere in UI copy or share text; use a middle dot, comma or

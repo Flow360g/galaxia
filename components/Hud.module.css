@@ -387,45 +387,120 @@
   color: var(--arcade-cyan);
 }
 
-/* Reactor: plasma aboard, and what banking it is worth right now. */
-.reactor {
+/*
+ * The boost gauge: the reactor as a speedometer in the bottom LEFT corner of
+ * the screen, with the dial that fires it in the bottom right. A Cluster is
+ * the one encounter that hands the player something to hold and then spend,
+ * and the band has no room left to dramatise it, so these two are the one
+ * thing the run draws below the band, out at the corners either side of the
+ * ship rather than over it. The gauge takes no taps at all.
+ */
+.gauge {
+  position: fixed;
+  z-index: 3;
+  left: max(var(--pad), env(safe-area-inset-left));
+  bottom: max(var(--pad), env(safe-area-inset-bottom));
+  width: 108px;
+  pointer-events: none;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-}
-
-.reactorLabel,
-.reactorValue {
-  font-size: 8px;
-  color: var(--panel-label);
-  white-space: nowrap;
-}
-
-.reactorValue {
-  color: var(--arcade-cyan);
-  min-width: 86px;
-  text-align: right;
-}
-
-.reactorTrack {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  height: 9px;
+  animation: cornerIn 260ms ease-out;
 }
 
-.reactorCell {
+.gaugeDial {
+  width: 100%;
   display: block;
-  border: 1px solid var(--rule-dark);
-  background: rgba(7, 17, 34, 0.6);
-  transition: background 220ms, box-shadow 220ms;
+  overflow: visible;
+  filter: drop-shadow(0 2px 10px rgba(7, 17, 34, 0.9));
 }
 
-.reactorLit {
-  background: linear-gradient(to right, var(--arcade-cyan), #ffffff);
-  box-shadow: 0 0 12px rgba(79, 241, 255, 0.7);
-  animation: reactorIn 320ms ease-out;
+.gaugeTrack {
+  fill: none;
+  stroke: var(--rule-dark);
+  stroke-width: 7;
+  stroke-linecap: butt;
+}
+
+.gaugeFill {
+  fill: none;
+  stroke: var(--arcade-cyan);
+  stroke-width: 7;
+  stroke-linecap: butt;
+  filter: drop-shadow(0 0 4px rgba(79, 241, 255, 0.85));
+}
+
+.gaugeTick {
+  stroke: var(--rule-dark);
+  stroke-width: 2;
+}
+
+.gaugeTickLit {
+  stroke: #ffffff;
+}
+
+.gaugeNeedle {
+  stroke: var(--arcade-cyan);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(79, 241, 255, 0.9));
+}
+
+.gaugeHub {
+  fill: var(--arcade-cyan);
+}
+
+/* The digital readout sits under the dial, clear of the needle's sweep. */
+.gaugeValue {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--arcade-cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.gaugeOutOf {
+  font-size: 10px;
+  color: var(--panel-label);
+}
+
+.gaugeLabel {
+  font-size: 9px;
+  line-height: 1;
+  color: var(--panel-label);
+}
+
+/* Full: every lane found, the clock stopped, the boost waiting on a tap. */
+.gaugeFull .gaugeFill,
+.gaugeFull .gaugeNeedle {
+  stroke: #ff8a1f;
+  filter: drop-shadow(0 0 7px rgba(255, 138, 31, 0.9));
+}
+
+.gaugeFull .gaugeHub {
+  fill: #ff8a1f;
+}
+
+.gaugeFull .gaugeValue {
+  color: #ff8a1f;
+}
+
+.gaugeFull {
+  animation: gaugeFull 900ms ease-in-out infinite;
+}
+
+/* Spending it: the needle falls and the dial runs hot. */
+.gaugeDraining .gaugeFill,
+.gaugeDraining .gaugeNeedle {
+  stroke: #ff8a1f;
+}
+
+.gaugeDraining .gaugeHub {
+  fill: #ff8a1f;
+}
+
+.gaugeDraining .gaugeValue {
+  color: #ff8a1f;
 }
 
 .novaLine {
@@ -446,6 +521,7 @@
   display: flex;
   gap: 6px;
 }
+
 
 .tool {
   flex: 1;
@@ -480,22 +556,126 @@
   letter-spacing: 0.2em;
 }
 
-.boost,
-.burn {
+.boost {
   border-color: rgba(255, 138, 31, 0.6);
   color: #ff8a1f;
 }
 
-.boostOn,
-.burn:not(:disabled) {
+.boostOn {
   background: #ff8a1f;
   color: var(--ink);
   border-color: #ff8a1f;
   box-shadow: 0 0 18px rgba(255, 138, 31, 0.6);
 }
 
+/* Two plasma aboard: the collar starts breathing, slower than when it is full. */
 .burnHot:not(:disabled) {
-  animation: pulseGlow 900ms ease-in-out infinite;
+  animation: dialGlow 1400ms ease-in-out infinite;
+}
+
+/*
+ * The dial that spends it: bottom RIGHT corner, round, thumb-sized, and the
+ * only button the run puts below the band. Round because it is not one of the
+ * square tools in the panel and should never be mistaken for a lane.
+ *
+ * It is built like the thing it is imitating. The button element is the
+ * bezel, the dark collar bolted to the cabinet; the cap inside it is the
+ * plastic, domed with a gradient, standing `--travel` proud of the bezel on a
+ * hard-edged skirt. A press drops the cap the full travel and collapses the
+ * skirt under it, so the button goes down rather than dimming.
+ */
+.burnDial {
+  --travel: 6px;
+  position: fixed;
+  z-index: 3;
+  right: max(var(--pad), env(safe-area-inset-right));
+  bottom: max(var(--pad), env(safe-area-inset-bottom));
+  width: 92px;
+  height: 92px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The collar: brushed dark metal, lit from above, with a well in it. */
+  background:
+    radial-gradient(circle at 50% 34%, #2a3548 0%, #101a2b 62%, #060d18 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 3px 16px rgba(0, 0, 0, 0.65);
+  animation: cornerIn 260ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.burnDialCap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--ink);
+  /* The plastic: lit from above left, darker where it curves away. */
+  background:
+    radial-gradient(circle at 38% 26%, #ffc46a 0%, #ff9c33 34%, #ff8a1f 58%, #d96a0c 100%);
+  box-shadow:
+    /* the side wall of the cap, and the shadow it throws in the well */
+    0 var(--travel) 0 #8f4506,
+    0 calc(var(--travel) + 3px) 8px rgba(0, 0, 0, 0.55),
+    inset 0 2px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.3);
+  transform: translateY(calc(var(--travel) / -2));
+  transition: transform 70ms ease-out, box-shadow 70ms ease-out, background 160ms;
+}
+
+/* Pressed: all the way down, the skirt gone, the shadow tight underneath. */
+.burnDial:not(:disabled):active .burnDialCap {
+  transform: translateY(calc(var(--travel) / 2));
+  box-shadow:
+    0 1px 0 #8f4506,
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Nothing to spend: the cap is unlit and sits flush in its collar. */
+.burnDial:disabled {
+  cursor: default;
+}
+
+.burnDial:disabled .burnDialCap {
+  background: radial-gradient(circle at 38% 26%, #2b3648 0%, #1b2536 60%, #121b2a 100%);
+  color: var(--panel-label);
+  box-shadow:
+    0 2px 0 #0a1220,
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(calc(var(--travel) / 2));
+}
+
+.burnDialLabel {
+  font-size: 12px;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.burnDialValue {
+  font-size: 9px;
+  line-height: 1;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The gauge is full: this is the only thing left to do. The collar lights up
+ * around the cap, the way a cabinet button waiting on a press does.
+ */
+.burnFull:not(:disabled) {
+  animation: dialGlow 520ms ease-in-out infinite;
 }
 
 .boostOn {
@@ -1045,14 +1225,42 @@
   }
 }
 
-@keyframes reactorIn {
+@keyframes dialGlow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+      0 3px 16px rgba(0, 0, 0, 0.65),
+      0 0 14px rgba(255, 138, 31, 0.5);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+      0 3px 16px rgba(0, 0, 0, 0.65),
+      0 0 30px rgba(255, 138, 31, 0.95);
+  }
+}
+
+@keyframes cornerIn {
   from {
-    transform: scaleX(0);
-    transform-origin: left center;
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
-    transform: scaleX(1);
-    transform-origin: left center;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gaugeFull {
+  0%,
+  100% {
+    filter: none;
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(255, 138, 31, 0.75));
   }
 }
 
@@ -1168,7 +1376,10 @@
     animation: none;
   }
 
-  .reactorLit,
+  .gauge,
+  .burnDial,
+  .gaugeFull,
+  .burnFull:not(:disabled),
   .burnHot:not(:disabled),
   .boostOn,
   .clockLow,
@@ -1179,6 +1390,12 @@
 
   .pulse {
     animation: none;
+  }
+
+  /* The gauge is driven by inline transitions, so they need overriding here. */
+  .gaugeDial *,
+  .gaugeDial {
+    transition: none !important;
   }
 
   .tapPrompt {
@@ -1280,6 +1497,25 @@
 
   .anomalyImage {
     max-width: 100px;
+  }
+
+  .gauge {
+    width: 84px;
+  }
+
+  .burnDial {
+    --travel: 5px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .burnDialCap {
+    width: 62px;
+    height: 62px;
+  }
+
+  .burnDialLabel {
+    font-size: 10px;
   }
 
   .pulse {
