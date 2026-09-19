@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Exhaust } from "./Exhaust";
 import { loadLambertModel } from "./gltf";
 import { ENCOUNTER, EXHAUST, FX, SHIP, WORLD } from "./Tuning";
+import { DEFAULT_SHIP, type ShipSpec } from "./ships";
 import type { OutcomeKind, QualityTier } from "./types";
 
 /**
@@ -45,10 +46,15 @@ export class Ship {
 
   private disposables: Array<{ dispose(): void }> = [];
 
+  /**
+   * @param spec  which hull to fly. Cosmetic: every hull has the same flight
+   *              model, and only the mesh, its scale and its nozzles differ.
+   */
   constructor(
     private readonly reducedMotion: boolean,
     tier: QualityTier,
     random: () => number,
+    private readonly spec: ShipSpec = DEFAULT_SHIP,
   ) {
     this.group.add(this.body);
     this.buildExhausts(tier, random);
@@ -58,7 +64,7 @@ export class Ship {
   }
 
   private buildExhausts(tier: QualityTier, random: () => number): void {
-    for (const nozzle of SHIP.nozzles) {
+    for (const nozzle of this.spec.nozzles) {
       const exhaust = new Exhaust(tier, random);
       exhaust.group.position.set(nozzle.x, nozzle.y, nozzle.z);
       exhaust.group.rotation.x = EXHAUST.tilt;
@@ -71,8 +77,12 @@ export class Ship {
    * Load the GLB hull and reveal the ship. Resolves either way; a failed
    * fetch leaves the ship hidden, which is preferable to a stand-in shape.
    */
-  async loadModel(url: string = SHIP.modelUrl): Promise<void> {
-    const loaded = await loadLambertModel(url, SHIP.modelLength, SHIP.modelYaw);
+  async loadModel(url: string = this.spec.modelUrl): Promise<void> {
+    const loaded = await loadLambertModel(
+      url,
+      this.spec.modelLength,
+      this.spec.modelYaw,
+    );
     if (!loaded || this.disposed) return;
     this.disposables = loaded.disposables;
     this.body.add(loaded.group);

@@ -11,6 +11,10 @@ import type { RunSummary } from "./types";
 const RUN_PREFIX = "galaxia:run:";
 const BEST_KEY = "galaxia:best";
 const MUTED_KEY = "galaxia:muted";
+const FLOWN_KEY = "galaxia:flown";
+const BRIEFED_KEY = "galaxia:briefed";
+const SHIP_KEY = "galaxia:ship";
+const OWNED_KEY = "galaxia:owned";
 
 export interface BestRecord {
   distance: number;
@@ -43,9 +47,17 @@ function write(key: string, value: unknown): void {
   }
 }
 
-/** Records the run under its date and lifts the best if it was beaten. */
+/**
+ * Records the run under its date, counts it toward the flight log and lifts
+ * the best if it was beaten.
+ *
+ * A date already on file does not count again, so the `?replay=1` escape
+ * hatch cannot be used to farm an unlock.
+ */
 export function saveRun(summary: RunSummary): void {
+  const firstToday = loadRun(summary.date) === null;
   write(`${RUN_PREFIX}${summary.date}`, summary);
+  if (firstToday) write(FLOWN_KEY, loadFlown() + 1);
 
   const best = loadBest();
   if (!best || summary.distance > best.distance) {
@@ -82,6 +94,56 @@ export function loadMuted(): boolean {
 
 export function saveMuted(muted: boolean): void {
   write(MUTED_KEY, muted);
+}
+
+/**
+ * Runs flown on this device, ever. The flight log: what earns a hull, and
+ * what decides whether a player has flown before and needs the briefing.
+ *
+ * Deliberately not derived from the stored runs: those are keyed by date and
+ * the escape hatch clears them, and an unlock that can be undone by clearing
+ * today's run is not an unlock.
+ */
+export function loadFlown(): number {
+  const flown = read<number>(FLOWN_KEY);
+  return typeof flown === "number" && Number.isFinite(flown) && flown > 0
+    ? Math.floor(flown)
+    : 0;
+}
+
+/** Whether the pre-flight briefing has been read through to the end. */
+export function loadBriefed(): boolean {
+  return read<boolean>(BRIEFED_KEY) === true;
+}
+
+export function saveBriefed(briefed: boolean): void {
+  write(BRIEFED_KEY, briefed);
+}
+
+/** The hull the player last chose, or null for the standard issue one. */
+export function loadShipId(): string | null {
+  const id = read<string>(SHIP_KEY);
+  return typeof id === "string" && id.length > 0 ? id : null;
+}
+
+export function saveShipId(id: string): void {
+  write(SHIP_KEY, id);
+}
+
+/**
+ * Hulls bought outright. Local only, like everything else here, so a cleared
+ * browser loses them; see `purchaseShip` in ships.ts for where a real
+ * entitlement check belongs.
+ */
+export function loadOwnedShips(): string[] {
+  const owned = read<string[]>(OWNED_KEY);
+  return Array.isArray(owned) ? owned.filter((id) => typeof id === "string") : [];
+}
+
+export function saveOwnedShip(id: string): void {
+  const owned = loadOwnedShips();
+  if (owned.includes(id)) return;
+  write(OWNED_KEY, [...owned, id]);
 }
 
 export function clearRun(date: string): void {

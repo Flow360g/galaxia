@@ -1,3 +1,10 @@
 spaceship.glb: "Spaceship" by Quaternius (quaternius.com), released under CC0 1.0.
 
 alien.glb: "Flying saucer" by Poly by Google, from the Poly by Google archive, released under CC-BY 4.0.
+
+flamingo.glb: "Spaceship" by Quaternius (quaternius.com), released under CC0 1.0.
+  A second hull from the same pack (authored as "Fernando the Flamingo").
+
+seraph.glb: "1" by Eric Finn. Supplied by the project owner; the upstream
+  licence was not stated with the file. Confirm the terms before shipping
+  this hull publicly, especially as paid content.

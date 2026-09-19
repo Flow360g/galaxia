@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BestRun } from "@/components/BestRun";
+import { TitleMenu } from "@/components/TitleMenu";
 import { getRound } from "@/lib/content/round";
 import { formatRoundNumber } from "@/lib/game/format";
 import styles from "./page.module.css";
@@ -41,6 +42,8 @@ export default function Home() {
         <Link href="/play" className={`${styles.start} arcade`}>
           Press Start
         </Link>
+
+        <TitleMenu round={round} />
       </div>
 
       <footer className={styles.footer}>

@@ -17,6 +17,7 @@ import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
 import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
+import { DEFAULT_SHIP, type ShipSpec } from "./ships";
 import type {
   DebugInfo,
   GameState,
@@ -39,6 +40,11 @@ export interface EngineOptions {
   round: Round;
   /** Start muted. The player's last choice, read from storage by the shell. */
   muted?: boolean;
+  /**
+   * The hull to fly. The player's choice, read from storage by the shell like
+   * `muted`. Cosmetic: it changes the mesh and its nozzles, nothing else.
+   */
+  ship?: ShipSpec;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onOutcome?: (outcome: Outcome, index: number) => void;
@@ -166,7 +172,7 @@ export class Engine {
 
     const random = createRandom(options.round.seed);
 
-    this.ship = new Ship(reducedMotion, this.tier, random);
+    this.ship = new Ship(reducedMotion, this.tier, random, options.ship ?? DEFAULT_SHIP);
     this.scene.add(this.ship.group);
     void this.ship.loadModel();
 
