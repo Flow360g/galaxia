@@ -25,18 +25,25 @@ import styles from "./Hangar.module.css";
 /**
  * The ship bay.
  *
- * One hull at a time, turning on a lit deck, with its name and papers under
- * it. `ShipBay` owns the canvas and its own loop exactly as `Engine` does on
- * the flight surface; React owns the DOM over it and hands the bay a spec
- * whenever the player flicks to another hull.
+ * The bay fills the screen; the name, the price and the buttons float over the
+ * bottom of it. `ShipBay` owns the canvas and its own loop exactly as `Engine`
+ * does on the flight surface; React owns the DOM over it, hands the bay a spec
+ * whenever the player flicks to another hull, and tells it how much of the
+ * bottom the overlay is covering so the hull frames into what is left.
+ *
+ * The canvas is pinned to the viewport rather than laid out above the text on
+ * purpose. As a flex sibling it took whatever height the text left, so a hull
+ * with a longer name or a third line of blurb resized it and re-framed the
+ * camera mid-switch, which is what made switching ships jump.
  *
  * What is unlocked decides what this screen SAYS, so the flight log is read
  * through a store snapshot like the title screen's record: undefined on the
  * server and until hydration, which reads out as a quiet bay for one frame
  * rather than as the wrong state confidently rendered.
  */
-export function Hangar() {
+export function Hangar({ debug = false }: { debug?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLElement>(null);
   const bayRef = useRef<ShipBay | null>(null);
   const ships = useMemo(() => allShips(), []);
 
@@ -52,6 +59,8 @@ export function Hangar() {
   /** Which hull the carousel is showing, once the player has flicked it. */
   const [picked, setPicked] = useState<string | null>(null);
   const [checkout, setCheckout] = useState(false);
+  /** The turn-me hint, up until the first touch of the bay. */
+  const [hinted, setHinted] = useState(false);
 
   const showing = picked ?? selectedId ?? ships[0]?.id ?? null;
   const index = Math.max(
@@ -64,7 +73,7 @@ export function Hangar() {
     const container = containerRef.current;
     if (!container) return;
 
-    const bay = new ShipBay(container);
+    const bay = new ShipBay(container, { debug });
     bayRef.current = bay;
     bay.start();
 
@@ -72,12 +81,36 @@ export function Hangar() {
       bay.dispose();
       bayRef.current = null;
     };
-  }, []);
+  }, [debug]);
 
   // The hull on the turntable follows the carousel.
   useEffect(() => {
     if (ship) void bayRef.current?.setShip(ship);
   }, [ship]);
+
+  /**
+   * Tell the bay how much of itself the overlay is sitting on, so it can
+   * centre the hull in the clear band above rather than behind the type.
+   * Watched rather than measured once: the overlay grows and shrinks with the
+   * checkout panel and with the viewport.
+   */
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    const container = containerRef.current;
+    if (!overlay || !container) return;
+
+    const report = () => {
+      const height = container.clientHeight || window.innerHeight;
+      bayRef.current?.setSafeArea(overlay.offsetHeight / height);
+    };
+
+    const observer = new ResizeObserver(report);
+    observer.observe(overlay);
+    observer.observe(container);
+    report();
+
+    return () => observer.disconnect();
+  }, []);
 
   const step = useCallback(
     (delta: number) => {
@@ -119,6 +152,16 @@ export function Hangar() {
 
   return (
     <main className={styles.main}>
+      {/* The bay creates and owns its canvas inside this container, and takes
+          the drags directly. Everything else floats over it. */}
+      <div
+        ref={containerRef}
+        className={styles.bay}
+        onPointerDown={() => setHinted(true)}
+      />
+
+      <div className={styles.topScrim} aria-hidden="true" />
+
       <header className={styles.header}>
         <Link href="/" className={`${styles.back} arcade`} data-testid="bay-back">
           Base
@@ -129,35 +172,36 @@ export function Hangar() {
         </span>
       </header>
 
-      {/* The bay creates and owns its canvas inside this container. */}
-      <div className={styles.stage}>
-        <div ref={containerRef} className={styles.bay} />
+      {availability && availability.state !== "available" ? (
+        <span className={`${styles.stamp} arcade`} data-testid="bay-stamp">
+          {availability.state === "locked" ? "Locked" : "Limited edition"}
+        </span>
+      ) : null}
 
-        <button
-          type="button"
-          className={`${styles.arrow} ${styles.prev} arcade`}
-          onClick={() => step(-1)}
-          aria-label="Previous ship"
-        >
-          &lt;
-        </button>
-        <button
-          type="button"
-          className={`${styles.arrow} ${styles.next} arcade`}
-          onClick={() => step(1)}
-          aria-label="Next ship"
-        >
-          &gt;
-        </button>
+      <button
+        type="button"
+        className={`${styles.arrow} ${styles.prev} arcade`}
+        onClick={() => step(-1)}
+        aria-label="Previous ship"
+      >
+        &lt;
+      </button>
+      <button
+        type="button"
+        className={`${styles.arrow} ${styles.next} arcade`}
+        onClick={() => step(1)}
+        aria-label="Next ship"
+      >
+        &gt;
+      </button>
 
-        {availability && availability.state !== "available" ? (
-          <span className={`${styles.stamp} arcade`} data-testid="bay-stamp">
-            {availability.state === "locked" ? "Locked" : "Limited edition"}
-          </span>
-        ) : null}
-      </div>
+      {hinted ? null : (
+        <p className={`${styles.hint} arcade`} data-testid="bay-hint">
+          Drag to turn
+        </p>
+      )}
 
-      <section className={styles.plate}>
+      <section className={styles.overlay} ref={overlayRef}>
         <div className={styles.namePlate}>
           <h1 className={`${styles.name} arcade`} data-testid="ship-name">
             {ship.name}

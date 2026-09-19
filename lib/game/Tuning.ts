@@ -583,11 +583,24 @@ export const SHIPS = [
  * no shadows, counts from here) but there is no treadmill and no ship state:
  * one hull, one slow rotation, one key light.
  */
+/**
+ * The ship bay: a launch bay inside the carrier the run deploys from.
+ *
+ * Its own little scene, not the flight one. Same material rules (Lambert, flat
+ * shading, no shadows, counts from here) but there is no treadmill and no ship
+ * state: a frame here is a rotation, a bob and whatever the player is dragging.
+ *
+ * The bay is allowed to be SHARPER than the flight. The flight budget exists
+ * to protect an asteroid field, a starfield and two exhaust plumes; the bay
+ * draws one hull and a room, so it renders at the device's real pixel ratio
+ * (capped) with antialiasing on, and only its detail COUNTS come off the
+ * quality tier.
+ */
 export const HANGAR = {
   /** Seconds for one full revolution of the hull. Slow enough to study. */
-  revolveSeconds: 18,
+  revolveSeconds: 22,
   /** Hull tilt toward the camera, radians, so the deck view is not side-on. */
-  tilt: 0.22,
+  tilt: 0.18,
   /**
    * Framing. The bay measures the hull it loaded and pulls the camera back to
    * fit its bounding sphere, so a wide hull and a long one both fill the frame
@@ -597,40 +610,145 @@ export const HANGAR = {
    * the camera height as a fraction of the distance it ends up at, and the
    * FOV is vertical, as three.js counts it.
    */
-  fov: 34,
-  framePadding: 1.26,
-  cameraLift: 0.18,
-  /** Aim offset above the hovering hull, so it sits centred in the frame. */
-  lookY: 0.1,
-  /** The hull hovers this far above the deck, and bobs by this much. */
-  hoverY: 0.75,
-  bobAmplitude: 0.07,
-  bobRate: 0.9,
-  /** Deck plate size and the grid drawn on it. */
-  deckSize: 34,
-  gridDivisions: 24,
-  /** Radius of the ring of pad lights let into the deck, and how many. */
-  padRadius: 4.3,
-  padCount: 10,
-  padSize: 0.3,
   /**
-   * Gantry pylons: how far out to either side, how tall, how thick. Framing
-   * fits the hull, so these sit just inside the frame edges at the nearest
-   * hull and a little further in at the biggest one.
+   * A wider lens than a showroom strictly needs, because the bay is half the
+   * point: at 34 degrees the hull filled the frame and the room around it was
+   * a rumour off both edges.
    */
-  gantryX: 3.9,
-  gantryHeight: 5.2,
-  gantryDepth: 0.5,
-  /** The rear bulkhead: how far back it sits and how high it stands. Kept
-      low so the bay still opens onto space above it. */
-  bulkheadZ: -15,
-  bulkheadHeight: 7,
-  /** Lit rail along the top of the bulkhead. The bay's one horizon line. */
-  lintelHeight: 0.16,
-  /** Light levels: key from above front, fill from the deck, rim from behind. */
-  keyIntensity: 1.25,
-  fillIntensity: 0.5,
-  rimIntensity: 0.9,
+  fov: 46,
+  framePadding: 1.05,
+  cameraLift: 0.12,
+  /**
+   * How much of the overlay's height to lift the hull clear by. At 1 the hull
+   * sits fully above the type but the camera pitches down into the deck and
+   * the bay stops reading as a room; a bit under a half is the compromise.
+   */
+  frameBias: 0.45,
+  /** Aim offset above the hovering hull, so it sits centred in the frame. */
+  lookY: 0.05,
+  /**
+   * How fast the camera slides to a new hull's framing. Each hull has its own
+   * bounding sphere, so a switch changes the distance; easing it turns a jump
+   * into a dolly.
+   */
+  frameEaseRate: 7,
+  /** A new hull fades and scales in over this, so a switch is not a pop. */
+  swapFadeSeconds: 0.28,
+  swapFromScale: 0.94,
+  /**
+   * The hull hovers this far above the PAD, measured from its own underside
+   * rather than from its bounding centre. A hull's centre means nothing: the
+   * Seraph's is dragged up by a spire and the Cinder's sits mid-fuselage, so
+   * centring both at one height leaves one buried and the other in orbit.
+   */
+  hoverGap: 0.28,
+  /** Fallback hover, used until a hull has been measured. */
+  hoverY: 0.5,
+  bobAmplitude: 0.06,
+  bobRate: 0.8,
+
+  /**
+   * Its own pixel ratio, not the flight tier's. A phone on the low tier
+   * renders the flight at DPR 1 to protect the frame; the bay has the budget
+   * to spare and a soft hull is the thing players notice first.
+   */
+  dprCap: 2,
+
+  /**
+   * Drag to orbit. Horizontal travel is yaw, vertical is pitch, both in
+   * radians per CSS pixel, so the hull tracks the thumb at any density.
+   */
+  dragYawPerPixel: 0.009,
+  dragPitchPerPixel: 0.006,
+  /** Pitch is clamped: past these the hull reads as a diagram, not a ship. */
+  pitchMin: -0.45,
+  pitchMax: 0.75,
+  /** Idle seconds after a drag before the turntable picks up again, and the
+      seconds it takes to reach full speed once it does. */
+  resumeSeconds: 2.4,
+  resumeEaseSeconds: 1.6,
+
+  /**
+   * The bay. Concrete deck, a landing dais, ribbed walls either side, a
+   * lit ceiling and an open door aft looking out at space.
+   */
+  /** The deck sits just under the hull: the hover is meant to read as a hand's
+      width of daylight, not as a ship stuck to the ceiling of the bay. */
+  deckY: -0.85,
+  deckSize: 34,
+  /** How many times the concrete tiles across the deck. Tiled rather than
+      stretched, or the slab seams smear at this camera distance. */
+  deckTiles: 5,
+  /** The markings decal laid over the concrete, and how wide a patch it covers. */
+  markingsSize: 17,
+  /** The dais the hull hovers over: radius, height, and its lit edge. */
+  padRadius: 2.4,
+  padHeight: 0.26,
+  padRingHeight: 0.06,
+  /** Fake contact shadow on the dais. Real shadows are banned; this is a
+      radial gradient on a plane, and it is most of what sells the hover. */
+  shadowRadius: 2.1,
+  shadowOpacity: 0.55,
+  /** Side walls: how far out, how tall, how far fore and aft they run. */
+  wallX: 7.6,
+  wallHeight: 9,
+  /** Walls and ceiling run back past the camera, or the frame shows a bar of
+      empty space over the near end of the bay. */
+  wallDepth: 48,
+  wallZ: 2,
+  /** Structural ribs up the walls, by quality tier. */
+  ribCounts: [9, 7, 5],
+  ribWidth: 0.5,
+  ribDepth: 0.55,
+  /** Ceiling height, and the floodlight panels let into it, by tier. */
+  ceilingY: 9.6,
+  ceilingDepth: 60,
+  floodCounts: [7, 5, 4],
+  floodSize: 2,
+  floodSpacing: 4.4,
+  floodIntensity: 0.35,
+  /** The ceiling is lit from nowhere, so it carries its own dim glow rather
+      than reading as a black bar across the top of the frame. */
+  ceilingEmissive: 0x1b2230,
+  /** The door aft: where the bulkhead stands and the size of the hole in it. */
+  doorZ: -16,
+  doorWidth: 11,
+  doorHeight: 6.2,
+  /** Rail of light around the door opening. */
+  doorRail: 0.16,
+  /** The space plane seen through the door, and how far behind it sits. */
+  voidZ: -23,
+  voidSize: 42,
+
+  /**
+   * The light rig, and the reason a white panel used to read pink.
+   *
+   * The key and the fill are both neutral white and do the work; the ambient
+   * hemisphere is a cool grey rather than the saturated blue it was, which is
+   * what tinted every pale surface. The cyan rim survives at a fraction of
+   * its old strength: enough to edge the silhouette off the bulkhead, not
+   * enough to colour a wing.
+   */
+  keyIntensity: 1.45,
+  keyPosition: [-4, 7, 6],
+  fillIntensity: 0.55,
+  fillPosition: [5, 1.5, 5],
+  ambientIntensity: 0.45,
+  ambientSky: 0xdfe7f2,
+  ambientGround: 0x2a3140,
+  rimIntensity: 0.25,
+  rimPosition: [-3, 4, -8],
+
+  /** Deck, wall and dais tones. Concrete, not cabinet paint. */
+  deckColor: 0x4a4e57,
+  wallColor: 0x3c414b,
+  ribColor: 0x4f555f,
+  padColor: 0x5a6068,
+  doorFrameColor: 0x2e333c,
+  floodColor: 0xdbe4f5,
+
+  /** Canvas texture resolution by quality tier. */
+  textureSizes: [1024, 512, 512],
 } as const;
 
 export const EXHAUST = {

@@ -173,7 +173,8 @@ components/           GameCanvas (React/three.js boundary), Hud, ShareCard, Best
 lib/game/Run.ts       pure state machine: intro -> approach -> collecting|scanning -> resolving -> aftermath
 lib/game/Flight.ts    pure velocity model: cruise, streak floor, impulse, collision retain
 lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the canvas and loop
-lib/game/ShipBay.ts   the hangar's own tiny shell: one hull, turning on a lit deck
+lib/game/ShipBay.ts   the hangar's own tiny shell: one hull on a lit pad, and the drag
+lib/game/bayTextures.ts  the bay's concrete, plating and markings, drawn into canvases
 lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
                       CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, SHIPS, HANGAR, ...)
@@ -232,10 +233,36 @@ path from a shared link to flying.
   from `Tuning.ts` and every count from the round, so retuning cannot leave
   it lying: add a number to it the same way. `?replay=1` skips it along with
   today's stored run, and the title screen can call it up again.
-- **The ship bay** (`/hangar`) is one hull turning on a lit deck.
+- **The ship bay** (`/hangar`) is a launch bay inside the carrier the run
+  deploys from: a concrete pad, plated walls, floodlit ceiling, and the bay
+  door open onto the game's own sky. One hull stands on the pad, turning.
   `SHIPS` in `Tuning.ts` is the whole catalogue: name, blurb, model, scale,
   yaw, nozzles and how it unlocks (`default`, `runs`, or `purchase`).
   Adding a hull is one entry there plus a GLB in `public/models`.
+- **The bay is full bleed and the text floats over it.** The canvas is pinned
+  to the viewport and the name, price and buttons sit on a scrim over the
+  bottom. That is not only a look: as a flex sibling of the text the canvas
+  took whatever height the text left, so a hull with a longer name resized it
+  and re-framed the camera mid-switch. Do not put the canvas back in the flow.
+  React measures the overlay and hands the bay `setSafeArea`, which frames the
+  hull into the clear band rather than the raw canvas.
+- **The bay renders sharper than the flight, on purpose.** Its pixel ratio is
+  `HANGAR.dprCap` against the device, not `dprForTier`, and antialiasing is
+  always on. The tier decides detail COUNTS (ribs, floodlights, texture size)
+  and nothing else. A hull the player is being asked to buy cannot be the
+  blurriest thing in the game. It costs about eighteen draw calls.
+- **Light it neutral.** The key and fill are white, the ambient hemisphere is
+  a cool grey and the cyan rim is a trace. The rig before it had a saturated
+  blue hemisphere ground and a strong cyan rim, which turned every pale panel
+  pink. If a hull looks wrong, check the rig before blaming the model.
+- **Surfaces are painted, not shipped.** `lib/game/bayTextures.ts` draws the
+  concrete, the deck markings, the wall plating and the fake contact shadow
+  into canvases at load, in the style `share.ts` draws the share card. Every
+  colour map there must set `SRGBColorSpace` or it renders washed out.
+- **Drag turns the hull**, and the slow revolution eases back in a beat after
+  the thumb lifts. A hull is stood on the pad by its own underside, never by
+  its bounding centre: the Seraph's centre is dragged up by a spire and the
+  Cinder's sits mid-fuselage.
 - **A hull is cosmetic, always.** Every ship has the same flight model. The
   daily round has to stay comparable between two players, so a ship must
   never touch speed, thrust, shields or scoring.
@@ -270,7 +297,9 @@ Run typecheck and lint before committing. Run the e2e test after any change
 to `Run.ts`, `Flight.ts`, the HUD, or a round file; it asserts flow and
 state (every outcome kind, shields, pulses, the share card, persistence),
 never performance. `/play?replay=1` skips today's stored run. `?debug=1`
-overlays FPS, draw calls, triangles, tier and DPR.
+overlays FPS, draw calls, triangles, tier and DPR on the flight, and on
+`/hangar` puts the bay on `window.galaxiaBay` so its angle and draw count can
+be read from the console or a test.
 
 ## Performance budget (mobile)
 
