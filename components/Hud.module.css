@@ -556,85 +556,126 @@
   letter-spacing: 0.2em;
 }
 
-.boost,
-.burn {
+.boost {
   border-color: rgba(255, 138, 31, 0.6);
   color: #ff8a1f;
 }
 
-.boostOn,
-.burn:not(:disabled) {
+.boostOn {
   background: #ff8a1f;
   color: var(--ink);
   border-color: #ff8a1f;
   box-shadow: 0 0 18px rgba(255, 138, 31, 0.6);
 }
 
+/* Two plasma aboard: the collar starts breathing, slower than when it is full. */
 .burnHot:not(:disabled) {
-  animation: pulseGlow 900ms ease-in-out infinite;
+  animation: dialGlow 1400ms ease-in-out infinite;
 }
 
 /*
  * The dial that spends it: bottom RIGHT corner, round, thumb-sized, and the
  * only button the run puts below the band. Round because it is not one of the
  * square tools in the panel and should never be mistaken for a lane.
+ *
+ * It is built like the thing it is imitating. The button element is the
+ * bezel, the dark collar bolted to the cabinet; the cap inside it is the
+ * plastic, domed with a gradient, standing `--travel` proud of the bezel on a
+ * hard-edged skirt. A press drops the cap the full travel and collapses the
+ * skirt under it, so the button goes down rather than dimming.
  */
 .burnDial {
+  --travel: 7px;
   position: fixed;
   z-index: 3;
   right: max(var(--pad), env(safe-area-inset-right));
   bottom: max(var(--pad), env(safe-area-inset-bottom));
-  width: 96px;
-  height: 96px;
+  width: 108px;
+  height: 108px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The collar: brushed dark metal, lit from above, with a well in it. */
+  background:
+    radial-gradient(circle at 50% 34%, #2a3548 0%, #101a2b 62%, #060d18 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 3px 16px rgba(0, 0, 0, 0.65);
+  animation: cornerIn 260ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.burnDialCap {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  border: 2px solid rgba(255, 138, 31, 0.75);
-  background: rgba(7, 17, 34, 0.86);
-  color: #ff8a1f;
-  backdrop-filter: blur(3px);
-  box-shadow: 0 2px 14px rgba(7, 17, 34, 0.9);
-  transition: background 120ms, color 120ms, border-color 120ms, box-shadow 220ms;
-  animation: cornerIn 260ms ease-out;
-}
-
-.burnDial:disabled {
-  opacity: 0.4;
-  cursor: default;
-  color: var(--panel-label);
-  border-color: var(--rule-dark);
-}
-
-.burnDial:not(:disabled) {
-  background: #ff8a1f;
   color: var(--ink);
-  box-shadow: 0 0 20px rgba(255, 138, 31, 0.55);
+  /* The plastic: lit from above left, darker where it curves away. */
+  background:
+    radial-gradient(circle at 38% 26%, #ffc46a 0%, #ff9c33 34%, #ff8a1f 58%, #d96a0c 100%);
+  box-shadow:
+    /* the side wall of the cap, and the shadow it throws in the well */
+    0 var(--travel) 0 #8f4506,
+    0 calc(var(--travel) + 3px) 8px rgba(0, 0, 0, 0.55),
+    inset 0 2px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.3);
+  transform: translateY(calc(var(--travel) / -2));
+  transition: transform 70ms ease-out, box-shadow 70ms ease-out, background 160ms;
 }
 
-.burnDial:not(:disabled):active {
-  transform: scale(0.94);
+/* Pressed: all the way down, the skirt gone, the shadow tight underneath. */
+.burnDial:not(:disabled):active .burnDialCap {
+  transform: translateY(calc(var(--travel) / 2));
+  box-shadow:
+    0 1px 0 #8f4506,
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Nothing to spend: the cap is unlit and sits flush in its collar. */
+.burnDial:disabled {
+  cursor: default;
+}
+
+.burnDial:disabled .burnDialCap {
+  background: radial-gradient(circle at 38% 26%, #2b3648 0%, #1b2536 60%, #121b2a 100%);
+  color: var(--panel-label);
+  box-shadow:
+    0 2px 0 #0a1220,
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4);
+  transform: translateY(calc(var(--travel) / 2));
 }
 
 .burnDialLabel {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .burnDialValue {
   font-size: 9px;
   line-height: 1;
-  opacity: 0.85;
+  opacity: 0.8;
   font-variant-numeric: tabular-nums;
 }
 
-/* The gauge is full: this is the only thing left to do. */
+/*
+ * The gauge is full: this is the only thing left to do. The collar lights up
+ * around the cap, the way a cabinet button waiting on a press does.
+ */
 .burnFull:not(:disabled) {
-  animation: pulseGlow 520ms ease-in-out infinite;
-  box-shadow: 0 0 26px rgba(255, 138, 31, 0.9);
+  animation: dialGlow 520ms ease-in-out infinite;
 }
 
 .boostOn {
@@ -1184,6 +1225,24 @@
   }
 }
 
+@keyframes dialGlow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+      0 3px 16px rgba(0, 0, 0, 0.65),
+      0 0 14px rgba(255, 138, 31, 0.5);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+      0 3px 16px rgba(0, 0, 0, 0.65),
+      0 0 30px rgba(255, 138, 31, 0.95);
+  }
+}
+
 @keyframes cornerIn {
   from {
     opacity: 0;
@@ -1445,8 +1504,18 @@
   }
 
   .burnDial {
-    width: 78px;
-    height: 78px;
+    --travel: 5px;
+    width: 88px;
+    height: 88px;
+  }
+
+  .burnDialCap {
+    width: 68px;
+    height: 68px;
+  }
+
+  .burnDialLabel {
+    font-size: 12px;
   }
 
   .pulse {

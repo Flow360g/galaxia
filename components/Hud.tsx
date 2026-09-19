@@ -394,13 +394,17 @@ export function Hud({
           onClick={onBurn}
           data-testid="burn"
         >
-          <span className={styles.burnDialLabel}>
-            {state?.cluster?.full ? "FIRE" : "BANK"}
-          </span>
-          <span className={styles.burnDialValue}>
-            {(state?.cluster?.charge ?? 0) > 0
-              ? `+${formatVelocity(state?.cluster?.projected ?? 0)}`
-              : "BOOST"}
+          {/* Bezel, then the cap that sits proud of it and travels on a
+              press: an arcade button, not a circle with a label. */}
+          <span className={styles.burnDialCap}>
+            <span className={styles.burnDialLabel}>
+              {state?.cluster?.full ? "FIRE" : "BANK"}
+            </span>
+            <span className={styles.burnDialValue}>
+              {(state?.cluster?.charge ?? 0) > 0
+                ? `+${formatVelocity(state?.cluster?.projected ?? 0)}`
+                : "BOOST"}
+            </span>
           </span>
         </button>
       ) : null}

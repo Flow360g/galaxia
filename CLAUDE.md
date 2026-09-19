@@ -91,8 +91,9 @@ The screen has two zones. Respect them:
   The first is the pulse (PLASMA COLLECTED, SHIELD
   LOST), a short one-shot flash at about 64% down that is `pointer-events:
   none` and fades in 1.4 seconds. The second is the Cluster's cockpit
-  corners: the boost gauge in the bottom left and the round dial that fires
-  it in the bottom right, out at the edges either side of the ship rather
+  corners: the boost gauge in the bottom left and the round arcade push
+  button that fires it in the bottom right (a bezel with a domed cap that
+  stands proud of it and travels on a press), out at the edges either side of the ship rather
   than over it, and only while a Cluster is live. They are deliberate: the
   charge is the most dramatic thing in the run and the band had no room left
   to dramatise it, and a thumb reaches a bottom corner without crossing the
@@ -156,7 +157,11 @@ for three.js in `COLOR` inside `lib/game/Tuning.ts`. Keep them in sync.
 - Type: Press Start 2P (`.arcade`, always uppercase, tracked) for titles,
   figures, buttons and outcome labels. The sans stack for prompts and
   prose. The mono stack for units.
-- Buttons are square-cornered. Active state inverts to yellow on ink.
+- Buttons are square-cornered. Active state inverts to yellow on ink. The
+  one round button is the Cluster's FIRE dial in the bottom right corner,
+  and it is round because it is a cabinet push button, not a panel tool: a
+  metal bezel, a domed cap raised on a hard skirt, and a real travel on
+  `:active`. Nothing else gets that treatment.
 - Copy is short, loud, present tense, in the game's voice: LANE CLEAR,
   SLINGSHOT!, WRECKED, TOO SLOW, FULL BURN!, PLASMA COLLECTED. No em
   dashes anywhere in UI copy or share text; use a middle dot, comma or
