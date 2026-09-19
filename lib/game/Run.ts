@@ -1,7 +1,8 @@
 import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
-import { resolveClusterNova, resolveNova } from "./nova";
-import { CLUSTER, ENCOUNTER, LANE, NOVA, SHIELDS } from "./Tuning";
+import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
+import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
+import { CLUSTER, ENCOUNTER, LANE, NOVA, SHIELDS, VECTOR, WAYPOINT } from "./Tuning";
 import type {
   AnomalyQuestion,
   AnomalyVerdict,
@@ -14,9 +15,12 @@ import type {
   Phase,
   Pulse,
   Question,
+  Rating,
   Round,
   RunEvent,
   RunSummary,
+  VectorState,
+  WaypointState,
 } from "./types";
 
 /**
@@ -50,6 +54,12 @@ export interface RunHooks {
    * after it, or 0 on a question with no reactor.
    */
   onCollect(lane: number, charge: number): void;
+  /** Vector: the aim moved. `t` is the slider position, 0..1 left to right. */
+  onAim(t: number): void;
+  /** Vector: locked. The alien decloaks at `truthT`; the beam fires along `aimT`. */
+  onVectorLock(outcome: Outcome, aimT: number, truthT: number): void;
+  /** A stage ended. Play the card; the next encounter starts after `WAYPOINT.seconds`. */
+  onWaypoint(info: WaypointState): void;
   /** The answer locked. Whatever is in the lane strikes; the ship reacts. */
   onLock(index: number, outcome: Outcome): void;
   /** Contact. Velocity has just changed; play the burst or the impact. */
@@ -86,10 +96,25 @@ export class Run {
   outcome: Outcome | null = null;
   /** The last collect or hit, for the HUD to flash over the scene. */
   pulse: Pulse | null = null;
+  /** The score. Distance is still tracked; this is what the run is played for. */
+  score = 0;
+  /** What a perfect run would score. Fixed by the round. */
+  readonly maxScore: number;
+  /**
+   * The run is parked on a toast or a waypoint card, waiting to be tapped on.
+   * Nothing advances on a timer once a verdict is up: the player reads it and
+   * says when they are done with it.
+   */
+  awaitingTap = false;
 
   elapsed = 0;
   private timer: number = ENCOUNTER.introSeconds;
   private thrustSeconds: number = ENCOUNTER.thrustSeconds;
+  /**
+   * Seconds the clock is held full at the top of an approach. A beat to read
+   * what just happened before the countdown starts costing anything.
+   */
+  private grace = 0;
   private pending: Outcome | null = null;
   private struck = false;
   private sampleTimer = 0;
@@ -98,6 +123,14 @@ export class Run {
   private pulseId = 0;
   private cluster: ClusterProgress | null = null;
   private pendingPick: { lane: number; correct: boolean } | null = null;
+  /** Vector aim in slider space, and the window a NOVA scan left open. */
+  private vectorT = 0.5;
+  private vectorWindow: [number, number] = [0, 1];
+  private vectorsFlown = 0;
+  /** Strength of the pending vector lock's burst (glancing hits are partial). */
+  private vectorStrength = 1;
+  private waypoint: WaypointState | null = null;
+  private readonly ratings: Rating[] = [];
   /** Bumped on every lock so a late scan result cannot land on a later rock. */
   private scanToken = 0;
 
@@ -106,6 +139,7 @@ export class Run {
     private readonly hooks: RunHooks,
     private readonly random: () => number,
   ) {
+    this.maxScore = maxScoreFor(round);
     this.sample();
   }
 
@@ -129,6 +163,8 @@ export class Run {
       phase: this.phase,
       encounter: this.index,
       resolved: this.outcomes.length,
+      score: this.score,
+      maxScore: this.maxScore,
       distance: this.flight.distance,
       velocity: this.flight.velocity,
       peakVelocity: this.flight.peakVelocity,
@@ -138,10 +174,14 @@ export class Run {
       novaLeft: this.novaLeft,
       nova: this.nova,
       cluster: this.clusterState(),
+      vector: this.vectorState(),
+      waypoint: this.phase === "waypoint" ? this.waypoint : null,
+      clockSeconds: this.thrustSeconds,
       shields: this.shields,
       maxShields: SHIELDS.perRun,
       pulse: this.pulse,
       outcome: this.phase === "aftermath" || this.phase === "finished" ? this.outcome : null,
+      awaitingTap: this.awaitingTap,
       running: true,
     };
   }
@@ -155,6 +195,16 @@ export class Run {
       projected: this.burnImpulse(cluster.charge),
       projectedNext: this.burnImpulse(cluster.charge + 1),
       eliminated: cluster.eliminated,
+    };
+  }
+
+  private vectorState(): VectorState | null {
+    const question = this.question;
+    if (!question || question.type !== "vector" || !this.answering) return null;
+    return {
+      t: this.vectorT,
+      value: fromSlider(question, this.vectorT),
+      window: this.vectorWindow,
     };
   }
 
@@ -194,6 +244,7 @@ export class Run {
    */
   private beginPick(lane: number, correct: boolean): void {
     this.pulse = null;
+    this.grace = 0;
     this.pendingPick = { lane, correct };
     this.phase = "collecting";
     this.timer = LANE.runSeconds;
@@ -225,8 +276,101 @@ export class Run {
     });
   }
 
+  /** Vector: move the aim. Clamped to the NOVA window. Never changes phase. */
+  aim(t: number): void {
+    const question = this.question;
+    if (!this.answering || !question || question.type !== "vector") return;
+    const [lo, hi] = this.vectorWindow;
+    this.vectorT = Math.min(hi, Math.max(lo, Number.isFinite(t) ? t : this.vectorT));
+    this.hooks.onAim(this.vectorT);
+  }
+
+  /** Vector: fire on the current aim. */
+  lockVector(): void {
+    const question = this.question;
+    if (!this.answering || !question || question.type !== "vector") return;
+
+    const guess = fromSlider(question, this.vectorT);
+    const truthT = toSlider(question, question.answer);
+    // In slider space when log-scaled, so a tolerance authored in answer
+    // units still means "this far either side of the truth on the slider".
+    const error = question.log
+      ? Math.abs(this.vectorT - truthT) /
+        Math.max(toSlider(question, question.answer + question.tolerance) - truthT, 1e-6)
+      : Math.abs(guess - question.answer) / Math.max(question.tolerance, 1e-6);
+
+    let kind: Outcome["kind"];
+    let strength = 1;
+    let severity = 1;
+    let salvage: Outcome["salvage"];
+    if (error <= VECTOR.perfectBand) {
+      kind = "slingshot";
+      salvage = this.shields < SHIELDS.perRun ? "shield" : "nova";
+    } else if (error <= 1) {
+      kind = "thread";
+      const across = (error - VECTOR.perfectBand) / (1 - VECTOR.perfectBand);
+      strength = 1 - across * (1 - VECTOR.glanceFloor);
+    } else {
+      kind = outcomeKind(false, false, false, this.shields > 0);
+      // How wrong, not just wrong: a shot that grazed the tolerance costs a
+      // fraction of what a wild one does.
+      severity = missSeverity(error);
+      if (this.shields > 0) {
+        this.shields -= 1;
+        this.shieldLost = true;
+        this.flash(
+          "shield",
+          "SHIELD DOWN",
+          this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
+        );
+      } else {
+        this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
+      }
+    }
+
+    this.vectorStrength = strength;
+    const outcome: Outcome = {
+      kind,
+      correct: error <= 1,
+      boosted: false,
+      timedOut: false,
+      thrustLeft: this.thrust,
+      velocityBefore: this.flight.velocity,
+      velocityAfter: this.flight.velocity,
+      streakBefore: this.flight.streak,
+      streakAfter: this.flight.streak,
+      chosen: null,
+      guessText: formatValue(guess, question.unit),
+      answerText: formatValue(question.answer, question.unit),
+      error,
+      guessValue: guess,
+      severity,
+      ...(salvage ? { salvage } : {}),
+    };
+    this.lock(outcome);
+    this.hooks.onVectorLock(outcome, this.vectorT, truthT);
+  }
+
+  /**
+   * The player tapped to move on. Only ever called while `awaitingTap`, and
+   * the one thing that advances a toast or a waypoint card.
+   */
+  confirm(): void {
+    if (!this.awaitingTap) return;
+    this.awaitingTap = false;
+    if (this.phase === "waypoint") {
+      this.startEncounter(this.index + 1);
+      return;
+    }
+    if (this.phase === "aftermath") {
+      if (!this.startWaypoint()) this.startEncounter(this.index + 1);
+    }
+  }
+
   toggleBoost(): void {
-    if (!this.answering || this.question?.type === "cluster") return;
+    if (!this.answering) return;
+    const type = this.question?.type;
+    if (type === "cluster" || type === "vector") return;
     this.boostArmed = !this.boostArmed;
   }
 
@@ -243,6 +387,11 @@ export class Run {
       const cluster = this.cluster;
       this.nova = resolveClusterNova(question, cluster?.picked ?? [], this.random);
       if (cluster) cluster.eliminated = [...this.nova.eliminated];
+    } else if (question.type === "vector") {
+      const scan = resolveVectorNova(question, this.random);
+      this.vectorWindow = scan.window;
+      this.nova = { kind: "narrow", eliminated: [], highlighted: [], clue: null };
+      this.aim(this.vectorT);
     } else {
       this.nova = resolveNova(question, this.random);
     }
@@ -308,6 +457,10 @@ export class Run {
         break;
 
       case "approach":
+        if (this.grace > 0) {
+          this.grace -= dt;
+          break;
+        }
         this.thrust -= dt / this.thrustSeconds;
         if (this.thrust <= 0) {
           this.thrust = 0;
@@ -340,16 +493,23 @@ export class Run {
         if (!this.struck && this.timer <= ENCOUNTER.resolveSeconds) this.contact();
         if (this.timer <= 0) {
           this.phase = "aftermath";
-          this.timer =
-            this.question?.type === "anomaly"
-              ? ENCOUNTER.aftermathSecondsAnomaly
-              : ENCOUNTER.aftermathSeconds;
+          this.timer = ENCOUNTER.confirmArmSeconds;
         }
         break;
 
       case "aftermath":
+        // A short beat so the tap that answered cannot skip its own verdict,
+        // then it sits here until the player taps. No timer takes it away.
+        if (this.awaitingTap) break;
         this.timer -= dt;
-        if (this.timer <= 0) this.startEncounter(this.index + 1);
+        if (this.timer <= 0) this.awaitingTap = true;
+        break;
+
+      case "waypoint":
+        if (this.awaitingTap) break;
+        this.timer -= dt;
+        if (this.waypoint) this.waypoint.t = WAYPOINT.seconds - this.timer;
+        if (this.timer <= 0) this.awaitingTap = true;
         break;
 
       case "finished":
@@ -358,6 +518,39 @@ export class Run {
   }
 
   // -------------------------------------------------------------- internals
+
+  /**
+   * If a stage ends on the encounter just flown, and another follows, play
+   * the waypoint. Returns false when the run should just carry on.
+   */
+  private startWaypoint(): boolean {
+    const stages = this.round.stages ?? [];
+    const stageIndex = stages.findIndex((stage) => stage.after === this.index);
+    const stage = stages[stageIndex];
+    const next = stages[stageIndex + 1];
+    if (!stage || !next || !this.round.questions[this.index + 1]) return false;
+
+    const plasma = this.outcomes.reduce((sum, o) => sum + (o.kind === "burn" ? (o.charge ?? 0) : 0), 0);
+    const rating = rateStage(plasma, this.shields);
+    this.ratings.push(rating);
+    const closing = this.events[this.events.length - 1];
+    if (closing) closing.rating = rating;
+    this.waypoint = {
+      stage: stage.name,
+      next: next.name,
+      rating,
+      plasma,
+      shields: this.shields,
+      peakVelocity: this.flight.peakVelocity,
+      t: 0,
+    };
+    this.pulse = null;
+    this.phase = "waypoint";
+    this.awaitingTap = false;
+    this.timer = WAYPOINT.seconds;
+    this.hooks.onWaypoint(this.waypoint);
+    return true;
+  }
 
   private startEncounter(index: number): void {
     const question = this.round.questions[index];
@@ -368,6 +561,7 @@ export class Run {
 
     this.index = index;
     this.phase = "approach";
+    this.awaitingTap = false;
     this.thrust = 1;
     this.boostArmed = false;
     this.nova = null;
@@ -377,10 +571,25 @@ export class Run {
     this.struck = false;
     this.cluster =
       question.type === "cluster" ? { picked: [], charge: 0, eliminated: [] } : null;
+    this.vectorT = 0.5;
+    this.vectorWindow = [0, 1];
+    this.vectorStrength = 1;
+    const vectorSlot = Math.min(this.vectorsFlown, VECTOR.thrustSeconds.length - 1);
+    if (question.type === "vector") this.vectorsFlown += 1;
     this.thrustSeconds =
-      question.type === "anomaly" ? ENCOUNTER.anomalyThrustSeconds : ENCOUNTER.thrustSeconds;
+      question.type === "anomaly"
+        ? ENCOUNTER.anomalyThrustSeconds
+        : question.type === "vector"
+          ? VECTOR.thrustSeconds[vectorSlot]!
+          : question.type === "cluster"
+            ? // Six options and a prompt to read before the first tap. Every
+              // pick after it drops back to the plain five.
+              ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds
+            : ENCOUNTER.thrustSeconds;
+    this.grace = 0;
 
     this.hooks.onEncounterStart(index, question);
+    if (question.type === "vector") this.hooks.onAim(this.vectorT);
   }
 
   /**
@@ -414,14 +623,24 @@ export class Run {
     if (question.type === "cluster" && cluster) {
       cluster.picked.push(lane);
       cluster.charge += 1;
-      this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      const full = cluster.charge >= question.answers.length;
+      // The last plasma gets no banner of its own: MAXIMUM THRUST is arriving
+      // a beat later and the two would land on top of each other.
+      if (!full) {
+        this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
+      }
       this.hooks.onCollect(lane, cluster.charge);
       this.phase = "approach";
-      // A fresh five seconds for the next decision.
+      // A fresh five seconds for the next decision, after a beat to see what
+      // was banked. The prompt has been read by now, so no reading bonus.
       this.thrust = 1;
-      if (cluster.charge >= question.answers.length) {
-        // Nothing left to find. FULL BURN, no decision needed.
+      this.thrustSeconds = ENCOUNTER.thrustSeconds;
+      if (full) {
+        // Nothing left to find: the whole reactor goes in, no decision needed.
+        // No breather either, since MAXIMUM THRUST is already on its way.
         this.burn();
+      } else {
+        this.grace = CLUSTER.collectPauseSeconds;
       }
       return;
     }
@@ -534,7 +753,9 @@ export class Run {
         ? (question.options[question.answer] ?? "")
         : question.type === "cluster"
           ? clusterAnswerText(question)
-          : question.answerText;
+          : question.type === "vector"
+            ? formatValue(question.answer, question.unit)
+            : question.answerText;
 
     this.lock({
       kind: "timeout",
@@ -592,7 +813,7 @@ export class Run {
     if (!outcome) return;
     this.struck = true;
 
-    const strength = outcome.anomalyScore ?? 1;
+    const strength = outcome.anomalyScore ?? (outcome.error !== undefined ? this.vectorStrength : 1);
     const multiplier =
       outcome.kind === "burn" ? (CLUSTER.chargeMultiplier[outcome.charge ?? 0] ?? 0) : 1;
     outcome.velocityBefore = this.flight.velocity;
@@ -601,8 +822,26 @@ export class Run {
       outcome.thrustLeft,
       strength,
       multiplier,
+      outcome.severity ?? 1,
     );
     outcome.streakAfter = this.flight.streak;
+
+    // Salvage lands with the burst, so the HUD change and the FX line up.
+    if (outcome.salvage === "shield") {
+      this.shields = Math.min(this.shields + 1, SHIELDS.perRun);
+      this.flash("plasma", "SALVAGE", "SHIELD RESTORED");
+    } else if (outcome.salvage === "nova") {
+      this.novaLeft += 1;
+      this.flash("plasma", "SALVAGE", "+1 NOVA");
+    }
+
+    // The score: fixed points, whole multipliers, a flat dock for a miss.
+    const scored = scoreOutcome(outcome);
+    outcome.base = scored.base;
+    outcome.multiplier = scored.multiplier;
+    outcome.points = scored.points;
+    this.score = Math.max(this.score + scored.points, 0);
+    outcome.scoreAfter = this.score;
 
     this.outcome = outcome;
     this.outcomes.push(outcome);
@@ -652,6 +891,9 @@ export class Run {
       date: this.round.date,
       roundNumber: this.round.roundNumber,
       theme: this.round.theme,
+      score: this.score,
+      maxScore: this.maxScore,
+      lines: scoreLines(this.round, this.outcomes),
       distance: this.flight.distance,
       peakVelocity: this.flight.peakVelocity,
       bestStreak,
@@ -665,6 +907,7 @@ export class Run {
         .length,
       shieldLost: this.shieldLost,
       shieldsLeft: this.shields,
+      ratings: [...this.ratings],
       anomaly: anomaly
         ? {
             score: anomaly.anomalyScore ?? 0,
@@ -678,6 +921,34 @@ export class Run {
       durationSeconds: this.elapsed,
     };
   }
+}
+
+/**
+ * How hard a vector miss lands, 0..1, from its normalised error.
+ *
+ * Error 1 is the edge of the tolerance: a shot that only just missed costs
+ * `severityFloor` of a full impact. It ramps to a full impact at
+ * `severityFullAt` and stays there, so a wild guess is the worst it gets.
+ */
+export function missSeverity(error: number): number {
+  const span = Math.max(VECTOR.severityFullAt - 1, 1e-6);
+  const across = clamp01((error - 1) / span);
+  return VECTOR.severityFloor + (1 - VECTOR.severityFloor) * across;
+}
+
+/** Stage rating from plasma banked. S also needs every shield still up. */
+export function rateStage(plasma: number, shields: number): Rating {
+  if (plasma >= WAYPOINT.ratings.S && shields >= SHIELDS.perRun) return "S";
+  if (plasma >= WAYPOINT.ratings.A) return "A";
+  if (plasma >= WAYPOINT.ratings.B) return "B";
+  return "C";
+}
+
+/** A number with grouping and its unit, for toasts and the share record. */
+export function formatValue(value: number, unit: string | undefined): string {
+  const rounded = Math.abs(value) >= 100 ? Math.round(value) : Math.round(value * 10) / 10;
+  const text = rounded.toLocaleString("en-AU");
+  return unit ? `${text} ${unit}` : text;
 }
 
 /** The three right answers, for the toast and the share record. */

@@ -1,7 +1,8 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Exhaust } from "./Exhaust";
+import { loadLambertModel } from "./gltf";
 import { ENCOUNTER, EXHAUST, FX, SHIP, WORLD } from "./Tuning";
+import { DEFAULT_SHIP, type ShipSpec } from "./ships";
 import type { OutcomeKind, QualityTier } from "./types";
 
 /**
@@ -45,10 +46,15 @@ export class Ship {
 
   private disposables: Array<{ dispose(): void }> = [];
 
+  /**
+   * @param spec  which hull to fly. Cosmetic: every hull has the same flight
+   *              model, and only the mesh, its scale and its nozzles differ.
+   */
   constructor(
     private readonly reducedMotion: boolean,
     tier: QualityTier,
     random: () => number,
+    private readonly spec: ShipSpec = DEFAULT_SHIP,
   ) {
     this.group.add(this.body);
     this.buildExhausts(tier, random);
@@ -58,7 +64,7 @@ export class Ship {
   }
 
   private buildExhausts(tier: QualityTier, random: () => number): void {
-    for (const nozzle of SHIP.nozzles) {
+    for (const nozzle of this.spec.nozzles) {
       const exhaust = new Exhaust(tier, random);
       exhaust.group.position.set(nozzle.x, nozzle.y, nozzle.z);
       exhaust.group.rotation.x = EXHAUST.tilt;
@@ -71,53 +77,30 @@ export class Ship {
    * Load the GLB hull and reveal the ship. Resolves either way; a failed
    * fetch leaves the ship hidden, which is preferable to a stand-in shape.
    */
-  async loadModel(url: string = SHIP.modelUrl): Promise<void> {
-    let gltf: Awaited<ReturnType<GLTFLoader["loadAsync"]>>;
-    try {
-      gltf = await new GLTFLoader().loadAsync(url);
-    } catch {
-      return;
-    }
-    if (this.disposed) return;
-
-    const model = gltf.scene;
-    const next: Array<{ dispose(): void }> = [];
-
-    model.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      // The README bans PBR on mobile. Lambert with the same atlas keeps the
-      // authored colours at a fraction of the shader cost.
-      const source = object.material as THREE.MeshStandardMaterial;
-      const material = new THREE.MeshLambertMaterial({
-        map: source.map ?? null,
-        color: source.color,
-      });
-      object.material = material;
-      next.push(object.geometry, material);
-      if (source.map) next.push(source.map);
-      source.dispose();
-    });
-
-    const bounds = new THREE.Box3().setFromObject(model);
-    const size = bounds.getSize(new THREE.Vector3());
-    const centre = bounds.getCenter(new THREE.Vector3());
-    const longest = Math.max(size.x, size.y, size.z, 1e-6);
-    const scale = SHIP.modelLength / longest;
-
-    const wrapper = new THREE.Group();
-    model.position.copy(centre).multiplyScalar(-1);
-    wrapper.add(model);
-    wrapper.scale.setScalar(scale);
-    wrapper.rotation.y = SHIP.modelYaw;
-
-    this.disposables = next;
-    this.body.add(wrapper);
+  async loadModel(url: string = this.spec.modelUrl): Promise<void> {
+    const loaded = await loadLambertModel(
+      url,
+      this.spec.modelLength,
+      this.spec.modelYaw,
+    );
+    if (!loaded || this.disposed) return;
+    this.disposables = loaded.disposables;
+    this.body.add(loaded.group);
     this.body.visible = true;
   }
 
   /** Spike the exhaust, e.g. on a correct-answer boost. */
   pulseExhaust(strength = 1): void {
     for (const exhaust of this.exhausts) exhaust.pulse(strength);
+  }
+
+  /**
+   * Raw plasma in the burn, 0..1. Held by the engine for the length of a
+   * MAXIMUM THRUST rather than decayed here, so the plume stays huge and
+   * violet for as long as the moment lasts.
+   */
+  setOverdrive(amount: number): void {
+    for (const exhaust of this.exhausts) exhaust.setOverdrive(amount);
   }
 
   /**

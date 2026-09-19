@@ -1,0 +1,215 @@
+/* Pre-flight briefing. A full-screen card over the stage, shown before the
+   engine starts, so unlike everything else in a live run it is allowed to own
+   the whole screen. Same dark panel, hairlines and square yellow button as
+   the rest of the cabinet. */
+
+/* Fixed rather than absolute: this is shown over the flight surface before a
+   run and over the title screen after one, and only one of those two is a
+   fixed container. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(7, 17, 34, 0.88);
+  animation: fadeIn 260ms ease-out;
+}
+
+.panel {
+  width: 100%;
+  max-width: 460px;
+  max-height: 100%;
+  background: rgba(7, 17, 34, 0.94);
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #ffffff;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule-dark);
+  padding-bottom: 10px;
+}
+
+.count {
+  font-size: 9px;
+  color: var(--panel-label);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keyed on the step, so each card fades up as it arrives. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: rise 240ms ease-out;
+}
+
+.tag {
+  font-size: 9px;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--arcade-cyan);
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--arcade-yellow);
+}
+
+.lines {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.line {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lineLabel {
+  font-size: 9px;
+  color: #ffffff;
+  letter-spacing: var(--track-label);
+}
+
+.lineText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d5dbe6;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 100%;
+  height: 3px;
+  background: var(--rule-dark);
+}
+
+.dot[data-on="true"] {
+  background: var(--arcade-cyan);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Both buttons clear 44px so either can be hit with a thumb. */
+.primary,
+.secondary {
+  flex: 1;
+  min-height: 46px;
+  padding: 14px 16px;
+  font-size: 11px;
+  border: 1px solid var(--rule-dark);
+  background: transparent;
+  color: #ffffff;
+}
+
+.secondary {
+  flex: 0 0 34%;
+  color: var(--panel-label);
+}
+
+.primary {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+  border-color: var(--arcade-yellow);
+}
+
+.primary:active {
+  background: #ffffff;
+}
+
+.secondary:active {
+  background: rgba(228, 231, 236, 0.1);
+}
+
+/* Short phones: the band is the binding constraint everywhere else in the
+   game, and a six-card briefing is no different. Tighten, never scroll. */
+@media (max-height: 700px) {
+  .lineText {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .lines {
+    gap: 9px;
+  }
+
+  .panel {
+    gap: 11px;
+  }
+}
+
+@media (max-height: 620px) {
+  .title {
+    font-size: 13px;
+  }
+
+  .lineText {
+    font-size: 12px;
+  }
+
+  .lines {
+    gap: 7px;
+  }
+
+  .primary,
+  .secondary {
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 10px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card {
+    animation: none;
+  }
+}

@@ -2,8 +2,9 @@
 
 # Galaxia
 
-A daily quiz flight. Seven encounters, one run a day, and your score is the
-distance you fly. Every answer is a lane: tap a square, the ship veers into
+A daily quiz flight. Seven encounters, one run a day, scored out of a fixed
+1,500. Distance is still flown and still tracked; the score is what the run
+is played for. Every answer is a lane: tap a square, the ship veers into
 that lane, and the verdict rides in on it. A right lane sends a plasma pod
 the ship flies through and accelerates; a wrong lane sends a boulder that
 strikes the hull and kills its momentum. Built with Next.js 16 (App Router,
@@ -25,8 +26,21 @@ things that make those games sticky:
 - **Two to three minutes, one thumb.** A run has to fit a bus stop. Every
   interaction is a single tap. Nothing requires precision, reading a manual,
   or two hands.
+- **A score you can hold in your head.** Every encounter is worth the same
+  base, the streak multiplies it in whole steps, and a wrong answer docks a
+  flat amount. A run is quoted out of what a perfect run would have scored,
+  so "1,180 of 1,500" means the same to everyone comparing. Distance is a
+  speedometer reading and makes a poor anchor: nobody knows whether 12,000 km
+  is a good day. See `SCORE` in `Tuning.ts` and `lib/game/Score.ts`; the end
+  of the run tallies it line by line before the share card.
+- **The player says when to move on.** Nothing advances on a timer once a
+  verdict is up. The outcome toast and the waypoint card carry the right
+  answer and a fact, and they sit there until the screen is tapped. Only the
+  answer itself is timed.
 - **Tension, then release.** The clock is five seconds per pick, drawn as
-  thrust draining and a countdown, and it refills for every decision.
+  thrust draining and a countdown, and it refills for every decision. A
+  cluster's first pick gets two seconds more, because six options and a
+  prompt have to be read before the first tap.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
   to crawling. The Cluster is push-your-luck: bank the plasma now, or pick
   again for more and risk a boulder. Boost is confidence as a button. Three
@@ -72,7 +86,9 @@ The screen has two zones. Respect them:
   a run is live. The one exception is the pulse (PLASMA COLLECTED, SHIELD
   LOST), a short one-shot flash at about 64% down that is `pointer-events:
   none` and fades in 1.4 seconds. If a new element must exist, it goes in
-  the band.
+  the band. The tap-to-continue catcher covers the whole screen but is drawn
+  nowhere and only exists while the run is parked on a verdict; the visible
+  TAP TO CONTINUE prompt lives in the band like everything else.
 - **The answer row is the lane map.** The squares sit in one horizontal
   row in lane order, and the row measures its own layout and hands the
   engine each square's horizontal screen fraction, so tapping square 3
@@ -173,31 +189,39 @@ codebase: the engine calls cues, nothing else makes a noise.
 ## Architecture in one screen
 
 ```
-app/                  routes: / (title), /play, /api/anomaly, layout, globals.css
-components/           GameCanvas (React/three.js boundary), Hud, ShareCard, BestRun, DebugStats
+app/                  routes: / (title), /play, /hangar (ship bay), /api/anomaly,
+                      layout, globals.css
+components/           GameCanvas (React/three.js boundary), Hud, ScoreTally, ShareCard,
+                      BestRun, Briefing (first-flight explainer), Hangar (ship bay),
+                      TitleMenu, DebugStats
 lib/game/Run.ts       pure state machine: intro -> approach -> collecting|scanning -> resolving -> aftermath
 lib/game/Flight.ts    pure velocity model: cruise, streak floor, impulse, collision retain
+lib/game/Score.ts     pure scoring: base per encounter, streak multiplier, penalties, tally
 lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the canvas and loop
+lib/game/ShipBay.ts   the hangar's own tiny shell: one hull, turning on a lit deck
+lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
-                      CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, ...)
+                      CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, SHIPS, HANGAR, ...)
 lib/game/Incoming.ts  the one pod or boulder that comes down a picked lane
 lib/game/Audio.ts     all sound, synthesised: engine bed, music loop, one-shot cues
 lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, Backdrop,
                       AsteroidField, Starfield, quality, nova, anomaly, share (card + text),
-                      storage (localStorage), format, types
+                      storage (localStorage), gltf (GLB loader + merge), format, types
 lib/content/round.ts  round loader with build-time validation
 content/rounds/       one JSON per daily round: 2 cluster + 4 mcq + 1 anomaly
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
 e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
+e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks included
 ```
 
 Rules that fall out of this:
 
-- **Pure core, imperative shell.** `Run.ts` and `Flight.ts` import neither
-  three.js nor React. Game rules go there so they can be stepped with a
+- **Pure core, imperative shell.** `Run.ts`, `Flight.ts` and `Score.ts` import
+  neither three.js nor React. Game rules go there so they can be stepped with a
   fake clock. Visuals go in `Engine.ts` and the scene modules. The HUD is
   a view of `GameState` plus method calls on the engine (`answer`, `pick`,
-  `burn`, `toggleBoost`, `useNova`, `submitAnomaly`, `setLaneFractions`).
+  `burn`, `toggleBoost`, `useNova`, `submitAnomaly`, `confirm`,
+  `setLaneFractions`).
 - **Every answer is a lane.** MCQ and Cluster both go through the same
   pick -> veer -> incoming -> verdict flow, so the run reads one way. The
   camera stops tracking laterally for `LANE.lockSeconds` after a pick so
@@ -221,6 +245,41 @@ Rules that fall out of this:
   server-side; never send it to the client.
 - **Storage is best effort.** localStorage can be missing or full; every
   read and write is wrapped and a failure must never break play.
+
+## The briefing and the ship bay
+
+Two screens wrap the run. Neither is part of it, and neither may slow the
+path from a shared link to flying.
+
+- **The briefing** is the rules and the scoring system, shown once, before
+  the first round, when the flight log is empty and it has never been read.
+  The shell holds the engine back until it closes, so a new player is never
+  reading a rule against a draining clock. Every figure in its copy is read
+  from `Tuning.ts` and every count from the round, so retuning cannot leave
+  it lying: add a number to it the same way. `?replay=1` skips it along with
+  today's stored run, and the title screen can call it up again.
+- **The ship bay** (`/hangar`) is one hull turning on a lit deck.
+  `SHIPS` in `Tuning.ts` is the whole catalogue: name, blurb, model, scale,
+  yaw, nozzles and how it unlocks (`default`, `runs`, or `purchase`).
+  Adding a hull is one entry there plus a GLB in `public/models`.
+- **A hull is cosmetic, always.** Every ship has the same flight model. The
+  daily round has to stay comparable between two players, so a ship must
+  never touch speed, thrust, shields or scoring.
+- **Unlocks are counted, not derived.** `galaxia:flown` counts runs actually
+  completed, one per date, so the escape hatch cannot farm an unlock and
+  clearing today's run cannot undo one.
+- **A selection never blocks a run.** It is a string in localStorage, so it
+  can name a hull that is gone or was never unlocked; `selectedShip()` falls
+  back to standard issue rather than failing to fly.
+- **The limited edition has no provider behind it yet.** `purchaseShip()` in
+  `ships.ts` records the entitlement locally and is the seam: a real
+  checkout takes the money server-side, stores the entitlement against an
+  account, and has that function read it instead. Until then the bay says so
+  in as many words, and the hull is honour-system on the device.
+- **A many-part GLB is merged on load.** `gltf.ts` collapses an untextured
+  model of more than `PERF.mergeMeshesAbove` meshes into one, baking each
+  part's colour into vertices. The limited edition hull is 65 parts, which
+  unmerged is 65 of the scene's 60 draw calls.
 
 ## Commands
 

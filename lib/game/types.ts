@@ -58,7 +58,37 @@ export interface ClusterQuestion {
   fact?: string;
 }
 
-export type Question = McqQuestion | ClusterQuestion | AnomalyQuestion;
+/**
+ * A Vector: a numeric answer aimed on a slider. The ship steers to match and
+ * a beam fires on lock; the alien decloaks at the truth. Error against the
+ * authored `tolerance` decides a direct hit, a glancing hit or a miss.
+ */
+export interface VectorQuestion {
+  id: string;
+  type: "vector";
+  prompt: string;
+  answer: number;
+  min: number;
+  max: number;
+  /** Shown after the value, e.g. "m" or "km". */
+  unit?: string;
+  /** Log-scaled slider for wide ranges. Requires min > 0. */
+  log?: boolean;
+  /** Error in answer units that still counts as a hit. */
+  tolerance: number;
+  fact?: string;
+}
+
+export type Question = McqQuestion | ClusterQuestion | VectorQuestion | AnomalyQuestion;
+
+/** A stage of the run. A waypoint plays after the last encounter of each stage but the final one. */
+export interface Stage {
+  name: string;
+  /** Index of the last encounter in this stage. */
+  after: number;
+  /** Landmark that rises at the waypoint closing this stage. */
+  landmark?: "moon" | "planet";
+}
 
 export interface Round {
   date: string;
@@ -66,6 +96,7 @@ export interface Round {
   seed: number;
   theme: string;
   questions: Question[];
+  stages?: Stage[];
 }
 
 // --------------------------------------------------------------------- run
@@ -77,6 +108,8 @@ export type Phase =
   | "approach"
   /** A lane was picked: the ship is veering and the pod or boulder is inbound. */
   | "collecting"
+  /** Between stages: rating card, landmark, alien arrival. No input. */
+  | "waypoint"
   /** Anomaly answer sent, waiting on the scorer. Thrust frozen. */
   | "scanning"
   /** Answer locked, asteroid striking, outcome animating. */
@@ -102,6 +135,32 @@ export interface Pulse {
   /** Figure under it, e.g. "+1" or "1 SHIELD LOST". */
   detail: string;
 }
+
+/** Live state of a Vector encounter: where the aim is, in slider space 0..1. */
+export interface VectorState {
+  /** Slider position, 0..1. */
+  t: number;
+  /** The aimed value in answer units. */
+  value: number;
+  /** Slider window still open after a NOVA scan, 0..1. */
+  window: [number, number];
+}
+
+/** The card shown between stages. */
+export interface WaypointState {
+  /** Stage just cleared. */
+  stage: string;
+  /** Stage about to begin. */
+  next: string;
+  rating: Rating;
+  plasma: number;
+  shields: number;
+  peakVelocity: number;
+  /** Seconds into the waypoint. */
+  t: number;
+}
+
+export type Rating = "S" | "A" | "B" | "C";
 
 /** Live state of a Cluster encounter, while it is open. */
 export interface ClusterState {
@@ -164,6 +223,49 @@ export interface Outcome {
   charge?: number;
   /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
   picks?: number[];
+  /** Vector only: |guess - truth| / tolerance. */
+  error?: number;
+  /** Vector only: the aimed value. */
+  guessValue?: number;
+  /** Vector only: what a direct hit salvaged. */
+  salvage?: "shield" | "nova";
+  /**
+   * How hard a wrong answer lands, 0..1. A vector miss scales it by HOW wrong
+   * the shot was, so grazing the tolerance costs a fraction of what a wild
+   * guess costs. Everything else is a flat 1.
+   */
+  severity?: number;
+  /** Points earned before the streak multiplier. 0 on a wrong answer. */
+  base?: number;
+  /** The streak multiplier this encounter was scored at. */
+  multiplier?: number;
+  /** Net points this encounter added to the score. Negative when it cost. */
+  points?: number;
+  /** The score after this encounter landed. */
+  scoreAfter?: number;
+}
+
+/** One encounter's line in the end-of-run tally. */
+export interface ScoreLine {
+  index: number;
+  /** CLUSTER, VECTOR, LANE, ANOMALY. */
+  label: string;
+  /** One short line: "3 PLASMA BANKED", "DIRECT HIT", "MISSED". */
+  detail: string;
+  /** Points earned before the multiplier. */
+  base: number;
+  multiplier: number;
+  /** Net points, negative when the encounter cost points. */
+  points: number;
+  /** Points a perfect run would have taken from this encounter. */
+  max: number;
+  /**
+   * Whether the encounter itself was full marks. It can be true on a line
+   * that still fell short of `max`, because `max` also counts the streak
+   * multiplier a perfect run would have carried in. Only a line that left
+   * points on the table at the encounter is called out.
+   */
+  full: boolean;
 }
 
 /** Live state the HUD reads each frame. Flat and primitive on purpose. */
@@ -173,7 +275,11 @@ export interface GameState {
   encounter: number;
   /** Encounters resolved so far. */
   resolved: number;
-  /** Total distance this run, km. The score. */
+  /** The score: what the run is played for. See `Score.ts`. */
+  score: number;
+  /** What a perfect run would score. The score is always quoted out of this. */
+  maxScore: number;
+  /** Total distance this run, km. Tracked and shared, but not the score. */
   distance: number;
   /** Current velocity, km/h. */
   velocity: number;
@@ -186,6 +292,12 @@ export interface GameState {
   nova: NovaResult | null;
   /** Cluster encounter in progress, or null. */
   cluster: ClusterState | null;
+  /** Vector encounter in progress, or null. */
+  vector: VectorState | null;
+  /** Waypoint card in progress, or null. */
+  waypoint: WaypointState | null;
+  /** Seconds on a full clock for the current encounter. */
+  clockSeconds: number;
   /** Shields left. Each wrong lane costs one; at zero, a miss is a wreck. */
   shields: number;
   maxShields: number;
@@ -193,6 +305,11 @@ export interface GameState {
   pulse: Pulse | null;
   /** Outcome of the most recent encounter, while its toast is up. */
   outcome: Outcome | null;
+  /**
+   * Nothing moves on until the player taps. True once the toast or the
+   * waypoint card has had its beat and is waiting on them.
+   */
+  awaitingTap: boolean;
   running: boolean;
 }
 
@@ -222,6 +339,8 @@ export interface RunEvent {
   streak: number;
   /** Burn events: plasma banked. */
   charge?: number;
+  /** Set on the event that closed a stage: the rating awarded at the waypoint. */
+  rating?: Rating;
 }
 
 /** Everything the share card and the record need. Serialisable. */
@@ -229,6 +348,11 @@ export interface RunSummary {
   date: string;
   roundNumber: number;
   theme: string;
+  /** The score, and what a perfect run would have scored. */
+  score: number;
+  maxScore: number;
+  /** One line per encounter flown, for the end-of-run tally. */
+  lines: ScoreLine[];
   distance: number;
   peakVelocity: number;
   bestStreak: number;
@@ -244,6 +368,8 @@ export interface RunSummary {
   shieldLost: boolean;
   /** Shields still up at the end of the run. */
   shieldsLeft: number;
+  /** One rating per waypoint, in order. */
+  ratings: Rating[];
   anomaly: { score: number; correct: boolean; verdict: string } | null;
   outcomes: Outcome[];
   samples: FlightSample[];

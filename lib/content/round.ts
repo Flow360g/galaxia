@@ -19,7 +19,30 @@ const ROUNDS: Record<string, Round> = {
  * a player. Clusters are the fiddly ones: six lanes, three distinct answers.
  */
 function validate(round: Round): Round {
+  const stages = round.stages ?? [];
+  stages.forEach((stage, i) => {
+    const previous = stages[i - 1];
+    if (!Number.isInteger(stage.after) || stage.after < 0 || stage.after >= round.questions.length) {
+      throw new Error(`Round ${round.date} stage ${stage.name}: after=${stage.after} out of range`);
+    }
+    if (previous && previous.after >= stage.after) {
+      throw new Error(`Round ${round.date} stage ${stage.name}: stages must end in ascending order`);
+    }
+  });
   for (const question of round.questions) {
+    if (question.type === "vector") {
+      const { min, max, answer, tolerance, log } = question;
+      if (!(min < answer && answer < max)) {
+        throw new Error(`Round ${round.date} vector ${question.id}: answer must sit inside min..max`);
+      }
+      if (!(tolerance > 0)) {
+        throw new Error(`Round ${round.date} vector ${question.id}: tolerance must be positive`);
+      }
+      if (log && !(min > 0)) {
+        throw new Error(`Round ${round.date} vector ${question.id}: log scale needs min > 0`);
+      }
+      continue;
+    }
     if (question.type !== "cluster") continue;
     const lanes = question.options.length;
     const answers = new Set(question.answers);

@@ -1,18 +1,24 @@
 import * as THREE from "three";
 import { requestAnomalyScore } from "./anomaly";
+import { Alien } from "./Alien";
 import { AsteroidField } from "./AsteroidField";
 import { AudioEngine } from "./Audio";
 import { Backdrop } from "./Backdrop";
+import { Beam } from "./Beam";
 import { ChaseCamera } from "./Camera";
 import { Debris } from "./Debris";
 import { EncounterAsteroid } from "./EncounterAsteroid";
 import { Incoming } from "./Incoming";
+import { Landmark } from "./Landmark";
 import { Run } from "./Run";
+import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
-import { CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, WORLD } from "./Tuning";
+import { isMaxThrust } from "./Flight";
+import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
+import { DEFAULT_SHIP, type ShipSpec } from "./ships";
 import type {
   DebugInfo,
   GameState,
@@ -21,6 +27,7 @@ import type {
   Question,
   Round,
   RunSummary,
+  WaypointState,
 } from "./types";
 
 export interface EngineOptions {
@@ -34,6 +41,11 @@ export interface EngineOptions {
   round: Round;
   /** Start muted. The player's last choice, read from storage by the shell. */
   muted?: boolean;
+  /**
+   * The hull to fly. The player's choice, read from storage by the shell like
+   * `muted`. Cosmetic: it changes the mesh and its nozzles, nothing else.
+   */
+  ship?: ShipSpec;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onOutcome?: (outcome: Outcome, index: number) => void;
@@ -61,6 +73,12 @@ export class Engine {
   private readonly stars: Starfield;
   private readonly rock: EncounterAsteroid;
   private readonly incoming: Incoming;
+  private readonly alien: Alien;
+  private readonly beam: Beam;
+  private readonly returnBeam: Beam;
+  private readonly aimLine: Beam;
+  private readonly landmark: Landmark;
+  private readonly salvage: Salvage;
   private readonly debris: Debris;
   private readonly shield: Shield;
   private readonly backdrop: Backdrop;
@@ -83,16 +101,40 @@ export class Engine {
   private side: 1 | -1 = 1;
   /** Extra streak intensity from a slingshot or a burn, decaying. */
   private streakSurge = 0;
-  /** Seconds the surge holds before it decays. A FULL BURN sets this. */
+  /** Seconds the surge holds before it decays. A MAXIMUM THRUST sets this. */
   private surgeHold = 0;
+  /**
+   * Seconds left of MAXIMUM THRUST. While it runs, the reactor's whole charge
+   * is going through the engines: the plume is huge and violet and the rig
+   * will not sit still.
+   */
+  private overdriveLeft = 0;
   /**
    * Horizontal screen fractions of the answer squares, measured by the HUD.
    * Lane i's world X is whatever projects to `laneFractions[i]`, so the ship
    * lands under the square that was tapped.
    */
   private laneFractions: number[] = [];
-  /** This encounter is answered by tapping lanes, not by typing. */
+  /** This encounter is answered by tapping lanes, not by typing or aiming. */
   private laneEncounter = false;
+  /** This encounter is a vector; the alien is the target. */
+  private inVector = false;
+  private vectorsFlown = 0;
+  /**
+   * Vectors in the whole round. The scout survives every hit but the last:
+   * earlier ones knock it about, the final one breaks it up. Killing it on
+   * the first would leave the second vector with nothing to shoot at.
+   */
+  private readonly vectorTotal: number;
+  /** World X the aim line points down while the player drags. */
+  private aimX = 0;
+  /** Field density, current and target, so the belt thins smoothly. */
+  private density = 1;
+  private densityTarget = 1;
+  /** The waypoint in progress, and which of its beats have fired. */
+  private waypoint: WaypointState | null = null;
+  private waypointBeat = 0;
+  private readonly scratchB = new THREE.Vector3();
 
   private fpsAccumulator = 0;
   private fpsFrames = 0;
@@ -137,7 +179,7 @@ export class Engine {
 
     const random = createRandom(options.round.seed);
 
-    this.ship = new Ship(reducedMotion, this.tier, random);
+    this.ship = new Ship(reducedMotion, this.tier, random, options.ship ?? DEFAULT_SHIP);
     this.scene.add(this.ship.group);
     void this.ship.loadModel();
 
@@ -155,6 +197,21 @@ export class Engine {
 
     this.incoming = new Incoming(random);
     this.scene.add(this.incoming.group);
+
+    this.alien = new Alien(random);
+    this.scene.add(this.alien.group);
+    this.vectorTotal = options.round.questions.filter((q) => q.type === "vector").length;
+
+    this.beam = new Beam(0.35);
+    this.returnBeam = new Beam(0.5);
+    this.aimLine = new Beam(0.12);
+    this.scene.add(this.beam.group, this.returnBeam.group, this.aimLine.group);
+
+    this.landmark = new Landmark();
+    this.chase.camera.add(this.landmark.group);
+
+    this.salvage = new Salvage();
+    this.scene.add(this.salvage.mesh);
 
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
@@ -175,6 +232,9 @@ export class Engine {
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
         onPick: (lane, correct) => this.onPick(lane, correct),
         onCollect: (lane, charge) => this.onCollect(lane, charge),
+        onAim: (t) => this.onAim(t),
+        onVectorLock: (outcome, aimT, truthT) => this.onVectorLock(outcome, aimT, truthT),
+        onWaypoint: (info) => this.onWaypoint(info),
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
         onFinished: () => this.endRun(),
@@ -219,6 +279,12 @@ export class Engine {
     this.backdrop.dispose();
     this.rock.dispose();
     this.incoming.dispose();
+    this.alien.dispose();
+    this.beam.dispose();
+    this.returnBeam.dispose();
+    this.aimLine.dispose();
+    this.landmark.dispose();
+    this.salvage.dispose();
     this.debris.dispose();
     this.audio.dispose();
 
@@ -265,6 +331,21 @@ export class Engine {
     this.run.burn();
   }
 
+  /** Vector: move the aim, 0..1 across the slider. */
+  aim(t: number): void {
+    this.run.aim(t);
+  }
+
+  /** Vector: fire on the current aim. */
+  lockVector(): void {
+    this.run.lockVector();
+  }
+
+  /** The player tapped to move past a verdict or a waypoint card. */
+  confirm(): void {
+    this.run.confirm();
+  }
+
   useNova(): void {
     if (this.run.canNova) this.audio.nova();
     this.run.useNova();
@@ -289,14 +370,74 @@ export class Engine {
 
   private onEncounterStart(index: number, question: Question): void {
     this.side = index % 2 === 0 ? 1 : -1;
-    this.laneEncounter = question.type !== "anomaly";
+    this.laneEncounter = question.type === "mcq" || question.type === "cluster";
+    const wasVector = this.inVector;
+    this.inVector = question.type === "vector";
+    this.waypoint = null;
     // A lane question opens on an empty sky: the ambient field and nothing
-    // else. Only the anomaly still rides in on its own rock.
-    if (!this.laneEncounter) this.rock.spawn(true);
+    // else. A vector opens on the cloaked alien. Only the anomaly still rides
+    // in on its own rock.
+    if (question.type === "anomaly") this.rock.spawn(true);
+    if (this.inVector) {
+      const slot = Math.min(this.vectorsFlown, VECTOR.holdFar.length - 1);
+      this.vectorsFlown += 1;
+      this.alien.station(VECTOR.holdFar[slot]!);
+    }
+    // Leaving the alien stage: the scout leaves and the landmark sinks away.
+    if (wasVector && !this.inVector) {
+      this.alien.warpOut();
+      this.landmark.sink();
+      this.densityTarget = 1;
+    }
+    this.aimLine.hide();
     this.incoming.retire();
     this.chase.releaseLane();
     this.ship.recentre();
     this.audio.encounter(question);
+  }
+
+  /** Slider position to world X: the same projection the answer squares use. */
+  private aimWorldX(t: number): number {
+    return this.chase.laneX(0.5 + (t - 0.5) * LANE.reach);
+  }
+
+  private onAim(t: number): void {
+    this.aimX = this.aimWorldX(t);
+    this.chase.lockLane(LANE.lockSeconds);
+    this.ship.holdLane(this.aimX);
+  }
+
+  private onVectorLock(outcome: Outcome, aimT: number, truthT: number): void {
+    this.audio.strike();
+    // The scout slides to the truth: that IS the answer being shown, and the
+    // shot is already on its way to where it will be.
+    const truthX = this.aimWorldX(truthT);
+    this.alien.reveal(truthX);
+    this.aimLine.hide();
+
+    this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+    this.alien.target(this.scratchB);
+    if (outcome.correct) {
+      // On target: the beam ends on the hull, at the truth.
+      this.scratchB.x = truthX;
+    } else {
+      // Wide: the shot runs along the aim and carries on past the scout, so
+      // a miss reads as a miss rather than as a hit that did nothing.
+      this.scratchB.x = this.aimWorldX(aimT);
+      this.scratchB.sub(this.scratch).multiplyScalar(VECTOR.missOvershoot).add(this.scratch);
+    }
+    this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds, 1);
+  }
+
+  private onWaypoint(info: WaypointState): void {
+    this.waypoint = info;
+    this.waypointBeat = 0;
+    this.densityTarget = WAYPOINT.fieldDensity;
+    const stage = this.options.round.stages?.find((s) => s.name === info.stage);
+    this.landmark.rise(stage?.landmark ?? "moon", 1);
+    this.incoming.retire();
+    this.chase.releaseLane();
+    this.ship.recentre();
   }
 
   private onPick(lane: number, correct: boolean): void {
@@ -329,6 +470,15 @@ export class Engine {
   }
 
   private onLock(outcome: Outcome): void {
+    if (this.inVector) {
+      // The beam is already in flight from onVectorLock. A timeout has no
+      // beam: the alien simply fires first.
+      if (outcome.timedOut) {
+        this.audio.strike();
+        this.alien.reveal(this.alien.group.position.x);
+      }
+      return;
+    }
     this.audio.strike();
     if (this.laneEncounter) {
       if (outcome.correct) {
@@ -351,15 +501,28 @@ export class Engine {
     const kind = outcome.kind;
     this.chase.shake(FX.shake[kind]);
 
+    if (this.inVector) {
+      this.audio.contact(kind);
+      this.onVectorContact(outcome);
+      this.options.onOutcome?.(outcome, index);
+      return;
+    }
+
     if (kind === "burn") {
-      const full = (outcome.charge ?? 0) >= CLUSTER.chargeMultiplier.length - 1;
+      const full = isMaxThrust(outcome);
       this.audio.contact(kind, outcome.charge ?? 0, full);
       if (full) {
         this.chase.burst(FX.warp.pullback, FX.warp.fovKick);
         this.chase.shake(FX.warp.shake);
+        this.chase.rumble(
+          FX.overdrive.seconds,
+          FX.overdrive.rumble,
+          FX.overdrive.rumbleRoll,
+        );
+        this.overdriveLeft = FX.overdrive.seconds;
         this.streakSurge = FX.warp.streakSurge;
         this.surgeHold = FX.warp.holdSeconds;
-        this.shield.flash(1, COLOR.boost);
+        this.shield.flash(1, COLOR.plasma);
       } else {
         const charge = outcome.charge ?? 1;
         const scale = charge >= 2 ? 1 : 0.6;
@@ -402,6 +565,37 @@ export class Engine {
     }
 
     this.options.onOutcome?.(outcome, index);
+  }
+
+  private onVectorContact(outcome: Outcome): void {
+    const kind = outcome.kind;
+    this.alien.target(this.scratchB);
+    if (outcome.correct) {
+      // Anything on target hits the hull. On the last vector of the run that
+      // hit is the kill; before it the scout is knocked about and stays up.
+      const kill = this.vectorsFlown >= this.vectorTotal;
+      const heavy = kind === "slingshot";
+      const burst = heavy ? "slingshot" : "thread";
+      this.alien.hit(kill ? "direct" : "glance");
+      this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.anomaly);
+      this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
+      this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
+      this.ship.pulseExhaust(FX.exhaustPulse[burst]);
+      if (heavy) this.streakSurge = FX.streakSurge;
+      if (outcome.salvage) {
+        this.scratch.copy(this.ship.group.position);
+        this.salvage.launch(this.scratchB, this.scratch);
+      }
+    } else {
+      // Miss or timeout: the alien fires back.
+      this.alien.returnFire();
+      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+      this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
+      this.chase.shake(FX.vector.returnFireShake);
+      this.shield.flash(kind === "wreck" ? 1.4 : 1, COLOR.neg);
+      this.ship.impact(kind, this.side);
+    }
+    this.chase.releaseLane();
   }
 
   private endRun(): void {
@@ -469,11 +663,49 @@ export class Engine {
     if (this.surgeHold > 0) this.surgeHold -= dt;
     else this.streakSurge *= Math.exp(-FX.pullbackDecay * dt);
 
+    // MAXIMUM THRUST: hold the plume at full, then ease it back down on the
+    // same curve the camera rumble uses, so flame and shake end together.
+    if (this.overdriveLeft > 0) this.overdriveLeft = Math.max(this.overdriveLeft - dt, 0);
+    this.ship.setOverdrive(overdriveLevel(this.overdriveLeft));
+
     const phase = this.run.phase;
     const open = phase === "approach" || phase === "collecting";
     // Only the anomaly still has a rock hanging ahead of the ship to loom as
     // the clock drains. Lane questions keep the sky clear.
-    if (open && !this.laneEncounter) this.rock.setLoom(1 - this.run.thrust);
+    if (open && !this.laneEncounter && !this.inVector) this.rock.setLoom(1 - this.run.thrust);
+
+    // The aim line: from the nose to the alien's depth, only while aiming.
+    if (this.inVector && phase === "approach") {
+      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+      this.scratchB.set(this.aimX, VECTOR.holdY, this.alien.group.position.z);
+      this.aimLine.hold(this.scratch, this.scratchB, COLOR.cyan, 0.3);
+    } else if (phase !== "approach") {
+      this.aimLine.hide();
+    }
+
+    // Waypoint beats: the rating stamp shakes the camera; the alien warps in
+    // as the "entering" line lands.
+    if (phase === "waypoint" && this.waypoint) {
+      const t = this.waypoint.t;
+      if (this.waypointBeat < 1 && t >= WAYPOINT.ratingAt) {
+        this.waypointBeat = 1;
+        this.chase.shake(FX.waypoint.ratingShake);
+      }
+      if (this.waypointBeat < 2 && t >= WAYPOINT.enteringAt) {
+        this.waypointBeat = 2;
+        this.alien.warpIn(VECTOR.holdFar[0]!);
+        this.shield.flash(FX.waypoint.warpFlash, COLOR.anomaly);
+        this.chase.shake(0.4);
+      }
+    }
+
+    this.density += (this.densityTarget - this.density) * (1 - Math.exp(-1.2 * dt));
+    this.field.setDensity(this.density);
+    this.alien.update(dt);
+    this.beam.update(dt);
+    this.returnBeam.update(dt);
+    this.landmark.update(dt);
+    if (this.salvage.update(dt)) this.shield.flash(0.9, COLOR.cyan);
 
     this.audio.update(dt, ratio, this.run.thrust, open);
     this.ship.update(dt, ratio, open ? this.run.thrust : 1);
@@ -522,6 +754,21 @@ export class Engine {
     this.renderer.setPixelRatio(dprForTier(tier));
     this.resize();
   }
+}
+
+/** Z of the ship's nose, where beams leave from. */
+const SHIP_NOSE_Z = -2.6;
+
+/**
+ * MAXIMUM THRUST intensity from the seconds left on it: full through the
+ * hold, then eased to nothing. Matches `ChaseCamera.rumbleLevel` so the plume
+ * and the shake die together.
+ */
+function overdriveLevel(secondsLeft: number): number {
+  if (secondsLeft <= 0) return 0;
+  const left = secondsLeft / FX.overdrive.seconds;
+  const tail = FX.overdrive.hold;
+  return left >= 1 - tail ? 1 : left / (1 - tail);
 }
 
 /** Streaks start showing a little way above cruise and saturate near the top. */

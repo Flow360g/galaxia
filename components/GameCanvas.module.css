@@ -21,3 +21,60 @@
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* MAXIMUM THRUST: the surface itself loses its grip for a beat. Kept small in
+   amplitude and irregular in period so it reads as a hull fighting the burn
+   rather than a screen wobble, and stopped outright for reduced motion. The
+   camera rumbles in the scene at the same time; see ChaseCamera.rumble. */
+.shellShake {
+  animation: shellShake 2.8s linear;
+}
+
+@keyframes shellShake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  4% {
+    transform: translate3d(-5px, 3px, 0);
+  }
+  9% {
+    transform: translate3d(4px, -4px, 0);
+  }
+  15% {
+    transform: translate3d(-4px, -2px, 0);
+  }
+  22% {
+    transform: translate3d(5px, 2px, 0);
+  }
+  30% {
+    transform: translate3d(-3px, 4px, 0);
+  }
+  38% {
+    transform: translate3d(4px, -3px, 0);
+  }
+  47% {
+    transform: translate3d(-3px, -3px, 0);
+  }
+  56% {
+    transform: translate3d(3px, 3px, 0);
+  }
+  65% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+  74% {
+    transform: translate3d(2px, -2px, 0);
+  }
+  83% {
+    transform: translate3d(-1px, -1px, 0);
+  }
+  92% {
+    transform: translate3d(1px, 1px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shellShake {
+    animation: none;
+  }
+}

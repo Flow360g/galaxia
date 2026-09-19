@@ -68,7 +68,7 @@ export const FLIGHT = {
 
 export const ENCOUNTER = {
   /** Engines lighting before the first asteroid is called. */
-  introSeconds: 1.6,
+  introSeconds: 2.6,
   /**
    * Seconds on the clock for a single pick. Thrust IS the timer, and it
    * refills for every pick, so a six-lane cluster is six five-second
@@ -84,14 +84,18 @@ export const ENCOUNTER = {
   strikeSeconds: 0.7,
   /**
    * Seconds from lock to contact when the lane was clean. There is nothing
-   * left to hit, so the impulse lands almost at once and the run moves on.
+   * left to hit, so the impulse lands soon after, with just enough of a beat
+   * for the collect flash to register before the toast takes the band.
    */
-  clearSeconds: 0.18,
+  clearSeconds: 0.6,
   /** Seconds the outcome animation owns the screen after contact. */
-  resolveSeconds: 1.0,
-  /** Seconds the outcome toast holds before the next asteroid is called. */
-  aftermathSeconds: 2.4,
-  aftermathSecondsAnomaly: 3.8,
+  resolveSeconds: 1.5,
+  /**
+   * The toast carries the verdict, the right answer and a fact, and nothing
+   * moves on until the player taps. This is only the beat before TAP TO
+   * CONTINUE arms, so the tap that answered cannot skip its own verdict.
+   */
+  confirmArmSeconds: 0.7,
   /** Radius of an encounter asteroid, and of the anomaly. */
   radius: 4.6,
   anomalyRadius: 5.2,
@@ -106,6 +110,17 @@ export const ENCOUNTER = {
 
 export const CLUSTER = {
   laneCount: 6,
+  /**
+   * Extra seconds on the clock for the FIRST pick of a cluster only. Six
+   * options and a prompt have to be read before the first tap; every pick
+   * after it is read already, so those run on the plain five.
+   */
+  firstPickBonusSeconds: 2,
+  /**
+   * A breather after a plasma pod is collected, before the clock for the next
+   * pick starts draining. Long enough to see what was banked.
+   */
+  collectPauseSeconds: 1.1,
   /**
    * Impulse multiplier by PLASMA banked. Index = charge. One plasma is a
    * plain thread; the full charge is the biggest burst in the game.
@@ -154,9 +169,142 @@ export const LANE = {
   lockSeconds: 3.2,
 } as const;
 
+/**
+ * The SCORE: the number the player is actually playing for.
+ *
+ * Distance is still tracked and still the story the share card tells, but it
+ * is a speedometer reading, and a speedometer is a poor anchor: nobody knows
+ * whether 12,000 km is good. The score is fixed and countable instead. Every
+ * encounter is worth the same base, the streak multiplies it in whole steps,
+ * and a wrong answer docks a flat amount, so "1,180 out of 1,500" means the
+ * same thing to everyone comparing runs.
+ */
+export const SCORE = {
+  /** Points an encounter is worth at full marks, before the multiplier. */
+  perEncounter: 100,
+  /** Cluster: share of the base for 1, 2 and 3 plasma banked. */
+  clusterShare: [0.3, 0.6, 1],
+  /** Vector: share of the base for a direct hit and for a glancing hit. */
+  vectorDirect: 1,
+  vectorGlance: 0.5,
+  /** Anomaly: share at full marks, and for a partial answer. */
+  anomalyFull: 1,
+  anomalyPartial: 0.5,
+  /** Scanner score at or above which the anomaly is full marks. */
+  anomalyFullAt: 0.8,
+  /**
+   * Multiplier by the streak carried INTO the encounter; the last value holds
+   * for anything longer. Whole numbers on purpose: x2 is a thing a player can
+   * hold in their head mid-run, x1.65 is not.
+   */
+  streakMultipliers: [1, 1, 2, 2, 3, 3, 3],
+  /** Points docked for getting it wrong. A wreck costs double a collision. */
+  penalty: { collision: 25, wreck: 50, timeout: 25 },
+} as const;
+
 /** The run's shields. Each wrong lane costs one; at zero, a miss is a wreck. */
 export const SHIELDS = {
   perRun: 3,
+} as const;
+
+export const VECTOR = {
+  /** Thrust budget per vector, by how many vectors have been flown this run. */
+  thrustSeconds: [20, 16],
+  /**
+   * Alien hold Z, by vector number: it comes in closer the second time. Near
+   * enough that the scout reads as a ship you are shooting AT rather than a
+   * speck on the horizon.
+   */
+  holdFar: [-58, -44],
+  /** How far above the corridor the scout holds station. */
+  holdY: 3.2,
+  /** Normalised error at or under which a lock is a DIRECT HIT. */
+  perfectBand: 0.15,
+  /** Strength of a glancing hit at the edge of tolerance (1.0 at the perfect band). */
+  glanceFloor: 0.4,
+  /** Seconds the beam takes to reach the alien after lock. */
+  beamSeconds: 0.35,
+  /**
+   * A shot that misses flies PAST the scout rather than stopping level with
+   * it: the beam runs on to this multiple of the range before it fades, so a
+   * miss reads as a miss.
+   */
+  missOvershoot: 1.5,
+  /**
+   * How hard a miss lands. Error 1 is the edge of tolerance and costs
+   * `severityFloor` of a full impact; error `severityFullAt` and beyond costs
+   * all of it. Being a little wrong should not read the same as being wild.
+   */
+  severityFloor: 0.3,
+  severityFullAt: 4,
+  /** Fraction of the slider a NOVA scan leaves open around the truth. */
+  novaWindow: 0.34,
+  /** Slow drift of the scout, so its rest position is never the answer. */
+  driftAmplitude: 6,
+  driftRate: 0.23,
+} as const;
+
+export const WAYPOINT = {
+  /** Seconds its beats take to play. It then waits for a tap like the toast. */
+  seconds: 6,
+  /** When the rating stamps in, and when the "entering" line lands. */
+  ratingAt: 1.1,
+  enteringAt: 4.0,
+  /** Ambient field density during and after the waypoint, 0..1. */
+  fieldDensity: 0.3,
+  /** Plasma thresholds for a rating, checked from the top. S also needs every shield. */
+  ratings: { S: 6, A: 4, B: 2 },
+} as const;
+
+export const LANDMARK = {
+  /** Distance in front of the camera; must be < CAMERA.far. */
+  depth: 300,
+  /** Off to this side (camera X) and above the corridor. Portrait frames are
+   *  narrow, so this sits the disc half in, half out of the right edge. */
+  offsetX: 105,
+  offsetY: 70,
+  /** The sphere radius the model is normalised to. */
+  radius: 55,
+  /** Seconds to rise into view, and to sink out at the next stage. */
+  riseSeconds: 4,
+  sinkSeconds: 6,
+  /** Slow spin, radians per second. */
+  spin: 0.02,
+  moonUrl: "/models/moon.glb",
+  planetUrl: "/models/planet.glb",
+} as const;
+
+export const ALIEN = {
+  modelUrl: "/models/alien.glb",
+  /**
+   * The hull, normalised to this long. The scout is the only thing the player
+   * is aiming at for a whole encounter, so it is read at ship scale, not at
+   * debris scale.
+   */
+  modelLength: 14,
+  /** Where the warp-in starts on Z, and how long the run to station takes. */
+  warpFromZ: -400,
+  warpSeconds: 1.6,
+  /**
+   * The scout is lit, not cloaked: the hull is the whole point of it being
+   * there. It holds at this opacity and breathes by `shimmer` either side, a
+   * live engine rather than a field around the model.
+   */
+  holdOpacity: 0.92,
+  shimmer: 0.08,
+  cloakRate: 2.6,
+  /** Slow roll and yaw of the scout on station, radians/sec. */
+  idleSpin: 0.22,
+  /** Seconds to slide to the truth and settle once the shot is away. */
+  decloakSeconds: 0.3,
+  /** A glancing hit: seconds of the spin, and how far it is knocked back. */
+  glanceSeconds: 0.9,
+  glanceKick: 7,
+  /** Return fire: seconds for the red beam, and the warp-out run. */
+  returnFireSeconds: 0.5,
+  warpOutSeconds: 1.2,
+  /** Seconds the hull takes to come apart on a kill. */
+  destroySeconds: 0.9,
 } as const;
 
 export const NOVA = {
@@ -190,6 +338,44 @@ export const FX = {
     streakSurge: 1.6,
     /** Seconds the surge holds before it starts to decay. */
     holdSeconds: 2,
+  },
+  /** Vector hits and the alien's return fire. */
+  vector: {
+    directShake: 1.0,
+    glanceShake: 0.45,
+    returnFireShake: 1.3,
+    /** Salvage capsule flight time to the ship. */
+    salvageSeconds: 0.6,
+  },
+  /** The waypoint: rating stamp shake and the alien warp flash. */
+  waypoint: { ratingShake: 0.6, warpFlash: 1.2 },
+  /**
+   * MAXIMUM THRUST: all three lanes, the whole reactor dumped into the
+   * engines at once. Raw plasma in the burn, more of it than the ship was
+   * built for, and a rumble that reads as the hull not much liking it.
+   *
+   * This is the only outcome in the game that gets its own treatment, and it
+   * is deliberately over the top; two plasma is a good burn, three is an
+   * event.
+   */
+  overdrive: {
+    /** Seconds the whole thing lasts. */
+    seconds: 2.8,
+    /** Fraction of that spent at full intensity before it eases off. */
+    hold: 0.55,
+    /** Plume length and width at the peak, as multipliers. */
+    flameLength: 1.75,
+    flameRadius: 1.5,
+    /**
+     * How far the flame's colour is dragged toward plasma at the peak, 0..1.
+     * Deliberately short of 1: the fire should read as contaminated with
+     * plasma, orange at the nozzle bleeding to pink and violet down the tail,
+     * not as a plain magenta jet.
+     */
+    flameTint: 0.9,
+    /** Sustained camera shake, and the slow roll that sells losing the line. */
+    rumble: 0.75,
+    rumbleRoll: 0.05,
   },
   /** Collecting a plasma pod on a correct lane. */
   collect: { shake: 0.15, exhaustPulse: 1.4, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
@@ -378,23 +564,147 @@ export const SHIP = {
   bobRate: 1.6,
   /** Fixed Z the ship sits at. The world moves past it. */
   z: 0,
-  /** URL of the hull model. Served from /public. */
-  modelUrl: "/models/spaceship.glb",
-  /** The loaded model is scaled so its longest axis measures this. */
-  modelLength: 4.4,
+} as const;
+
+/**
+ * The hangar: every hull the player can fly, in display order.
+ *
+ * One entry is one ship. The geometry fields are per-model facts, tuned by
+ * eye against the loaded GLB, and the unlock field is the only thing that
+ * decides whether a hull is available:
+ *
+ *   - `default`  always flyable, and what a new player launches in;
+ *   - `runs`     earned, once `runs` runs are on file;
+ *   - `purchase` limited edition, bought once for `priceCents`.
+ *
+ * The copy lives here with the numbers on purpose: a hull is a name, a
+ * silhouette and a scale factor, and splitting those across two files is how
+ * they drift apart. `lib/game/ships.ts` reads this and nothing else.
+ *
+ * Every hull flies identically. A ship is a skin, so a shared daily round
+ * stays comparable between two players however they have theirs painted.
+ */
+export const SHIPS = [
+  {
+    id: "cinder",
+    name: "Cinder VII",
+    /** Shown under the name in the bay. */
+    className: "Interceptor",
+    blurb:
+      "Standard issue, rust-plated, three owners before you. Flies like it remembers every one of them.",
+    /** URL of the hull model. Served from /public. */
+    modelUrl: "/models/spaceship.glb",
+    /** The loaded model is scaled so its longest axis measures this. */
+    modelLength: 4.4,
+    /**
+     * Extra Y rotation applied to the model so its nose faces -Z (the
+     * direction of travel). The Quaternius ships are authored nose toward +Z.
+     */
+    modelYaw: Math.PI,
+    /**
+     * Exhaust nozzle positions in ship space (after normalisation and yaw),
+     * +Z is the rear. Tuned by eye against the loaded model.
+     */
+    nozzles: [
+      { x: -0.62, y: 0.02, z: 2.35 },
+      { x: 0.62, y: 0.02, z: 2.35 },
+    ],
+    unlock: { kind: "default" },
+  },
+  {
+    id: "flamingo",
+    name: "Neon Flamingo",
+    className: "Long-range racer",
+    blurb:
+      "All wing and no armour. Painted so the thing that hits you knows exactly what it hit.",
+    modelUrl: "/models/flamingo.glb",
+    /** Wider than it is long, so it normalises to a bigger figure than Cinder. */
+    modelLength: 5.2,
+    modelYaw: Math.PI,
+    nozzles: [
+      { x: -0.5, y: 0.0, z: 2.1 },
+      { x: 0.5, y: 0.0, z: 2.1 },
+    ],
+    unlock: { kind: "runs", runs: 5 },
+  },
+  {
+    id: "seraph",
+    name: "White Seraph",
+    className: "Limited edition",
+    blurb:
+      "Two cores lit, four dark, and a spire that was not on the schematics. No record of who built it.",
+    modelUrl: "/models/seraph.glb",
+    modelLength: 4.8,
+    /** Authored nose toward +X, so it needs a quarter turn rather than a half. */
+    modelYaw: Math.PI / 2,
+    /**
+     * Its engine cluster is six rings packed close together, and six plumes
+     * at this flame length is a wall of fire with a ship somewhere behind it.
+     * Two of them are lit, which is also what the blurb claims.
+     */
+    nozzles: [
+      { x: -0.5, y: 0.05, z: 1.95 },
+      { x: 0.5, y: 0.05, z: 1.95 },
+    ],
+    unlock: { kind: "purchase", priceCents: 499, currency: "USD" },
+  },
+] as const;
+
+/**
+ * The ship bay: the lit deck the hull turns on when the player views it.
+ *
+ * Its own little scene, not the flight one. Same rules apply (Lambert, flat,
+ * no shadows, counts from here) but there is no treadmill and no ship state:
+ * one hull, one slow rotation, one key light.
+ */
+export const HANGAR = {
+  /** Seconds for one full revolution of the hull. Slow enough to study. */
+  revolveSeconds: 18,
+  /** Hull tilt toward the camera, radians, so the deck view is not side-on. */
+  tilt: 0.22,
   /**
-   * Extra Y rotation applied to the model so its nose faces -Z (the direction
-   * of travel). The Quaternius ship is authored nose toward +Z.
+   * Framing. The bay measures the hull it loaded and pulls the camera back to
+   * fit its bounding sphere, so a wide hull and a long one both fill the frame
+   * and neither hangs off the side of a portrait phone.
+   *
+   * `framePadding` is the breathing room around that sphere, `cameraLift` is
+   * the camera height as a fraction of the distance it ends up at, and the
+   * FOV is vertical, as three.js counts it.
    */
-  modelYaw: Math.PI,
+  fov: 34,
+  framePadding: 1.26,
+  cameraLift: 0.18,
+  /** Aim offset above the hovering hull, so it sits centred in the frame. */
+  lookY: 0.1,
+  /** The hull hovers this far above the deck, and bobs by this much. */
+  hoverY: 0.75,
+  bobAmplitude: 0.07,
+  bobRate: 0.9,
+  /** Deck plate size and the grid drawn on it. */
+  deckSize: 34,
+  gridDivisions: 24,
+  /** Radius of the ring of pad lights let into the deck, and how many. */
+  padRadius: 4.3,
+  padCount: 10,
+  padSize: 0.3,
   /**
-   * Exhaust nozzle positions in ship space (after normalisation and yaw),
-   * +Z is the rear. Tuned by eye against the loaded model.
+   * Gantry pylons: how far out to either side, how tall, how thick. Framing
+   * fits the hull, so these sit just inside the frame edges at the nearest
+   * hull and a little further in at the biggest one.
    */
-  nozzles: [
-    { x: -0.62, y: 0.02, z: 2.35 },
-    { x: 0.62, y: 0.02, z: 2.35 },
-  ],
+  gantryX: 3.9,
+  gantryHeight: 5.2,
+  gantryDepth: 0.5,
+  /** The rear bulkhead: how far back it sits and how high it stands. Kept
+      low so the bay still opens onto space above it. */
+  bulkheadZ: -15,
+  bulkheadHeight: 7,
+  /** Lit rail along the top of the bulkhead. The bay's one horizon line. */
+  lintelHeight: 0.16,
+  /** Light levels: key from above front, fill from the deck, rim from behind. */
+  keyIntensity: 1.25,
+  fillIntensity: 0.5,
+  rimIntensity: 0.9,
 } as const;
 
 export const EXHAUST = {
@@ -521,6 +831,12 @@ export const COLOR = {
   shield: 0x6fd6ff,
   /** Boost / slingshot heat. */
   boost: 0xff8a1f,
+  /**
+   * Raw plasma, as it looks coming out of the engines rather than sitting in
+   * the reactor: hot pink at the nozzle, cooling through violet.
+   */
+  plasma: 0xff4fd8,
+  plasmaDeep: 0x8a3cff,
 } as const;
 
 export const PERF = {
@@ -532,4 +848,10 @@ export const PERF = {
   maxDelta: 1 / 30,
   /** Device pixel ratio cap per tier. A 3x phone otherwise renders 9x pixels. */
   dprCap: [2, 1.5, 1],
+  /**
+   * A loaded model with more meshes than this is merged into one, with its
+   * material colours baked into vertices. Above the threshold a hull costs a
+   * draw call per part, and the whole scene has sixty to spend.
+   */
+  mergeMeshesAbove: 8,
 } as const;

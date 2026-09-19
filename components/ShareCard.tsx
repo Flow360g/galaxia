@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatDistance, formatRoundNumber } from "@/lib/game/format";
+import { formatDistance, formatRoundNumber, formatScore } from "@/lib/game/format";
 import { renderShareCard, shareCardBlob, shareText } from "@/lib/game/share";
 import type { RunSummary } from "@/lib/game/types";
 import styles from "./ShareCard.module.css";
@@ -144,6 +144,19 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
         <h2 id="share-card-heading" className={`${styles.heading} arcade`}>
           Run complete
         </h2>
+
+        {/* The score leads, out of what was on offer, because that is the
+            figure a player compares. Distance trails it as the flight stat it
+            now is. A run stored before the score existed has no anchor to
+            quote, so it shows its distance alone. */}
+        {typeof summary.score === "number" && (summary.maxScore ?? 0) > 0 ? (
+          <div className={styles.score}>
+            <span className={`${styles.scoreValue} arcade`} data-testid="final-score">
+              {formatScore(summary.score)}
+            </span>
+            <span className={styles.outOf}>/ {formatScore(summary.maxScore)}</span>
+          </div>
+        ) : null}
 
         <div className={styles.distance}>
           <span className={`${styles.distanceValue} arcade`} data-testid="final-distance">

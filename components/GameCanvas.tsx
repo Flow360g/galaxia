@@ -2,9 +2,22 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Engine } from "@/lib/game/Engine";
+import { isMaxThrust } from "@/lib/game/Flight";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
-import { clearRun, loadMuted, loadRun, saveMuted, saveRun } from "@/lib/game/storage";
+import {
+  clearRun,
+  loadBriefed,
+  loadFlown,
+  loadMuted,
+  loadRun,
+  saveBriefed,
+  saveMuted,
+  saveRun,
+} from "@/lib/game/storage";
+import { selectedShip } from "@/lib/game/ships";
+import { Briefing } from "./Briefing";
 import { Hud } from "./Hud";
+import { ScoreTally } from "./ScoreTally";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
 import styles from "./GameCanvas.module.css";
@@ -12,7 +25,11 @@ import styles from "./GameCanvas.module.css";
 interface Props {
   round: Round;
   debug: boolean;
-  /** Skip the stored run and fly again regardless. */
+  /**
+   * Skip the stored run and fly again regardless. A dev and QA hatch, so it
+   * also skips the first-flight briefing: a tester re-flying a round is not
+   * a new player.
+   */
   replay?: boolean;
 }
 
@@ -31,6 +48,12 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   const [state, setState] = useState<GameState | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [summary, setSummary] = useState<RunSummary | null>(null);
+  /**
+   * The scorecard sits between the last encounter and the share card, and only
+   * for a run just flown. Coming back to a stored run goes straight to the
+   * card: the tally is the moment the points land, and that moment has passed.
+   */
+  const [tallied, setTallied] = useState(false);
   /** Bumped to remount the engine for a fresh run. */
   const [attempt, setAttempt] = useState(0);
   /**
@@ -41,12 +64,30 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   const [muted, setMuted] = useState(loadMuted);
   const mutedRef = useRef(muted);
   /**
+   * The hull to fly, resolved once. Read the same way as `muted`: the shell
+   * owns storage, the engine is handed the answer. Changing ships mid-run is
+   * not a thing, so this never updates.
+   */
+  const [ship] = useState(selectedShip);
+  /** Dismissed this visit, by reading the briefing through or skipping it. */
+  const [briefed, setBriefed] = useState(false);
+  /**
    * Today's stored run, if any. `undefined` on the server and until hydration
    * so the engine never starts before storage has been checked.
    */
   const stored = useSyncExternalStore(
     subscribeStorage,
     () => (replay ? null : storedRun(round.date)),
+    () => undefined,
+  );
+  /**
+   * Whether this device has never flown and has never read the briefing.
+   * `undefined` until hydration, like `stored`, so the engine cannot start
+   * behind a briefing that is about to appear.
+   */
+  const unbriefed = useSyncExternalStore(
+    subscribeStorage,
+    () => (replay ? false : loadFlown() === 0 && !loadBriefed()),
     () => undefined,
   );
 
@@ -63,10 +104,18 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   const handleRunEnd = useCallback((result: RunSummary) => {
     saveRun(result);
     storedCache.set(result.date, result);
+    setTallied(false);
     setSummary(result);
   }, []);
 
-  const playing = stored === null && summary === null;
+  /** The briefing holds the run back until it is closed. */
+  const briefing = unbriefed === true && !briefed;
+  const playing = stored === null && summary === null && !briefing;
+
+  const closeBriefing = useCallback(() => {
+    saveBriefed(true);
+    setBriefed(true);
+  }, []);
 
   const toggleSound = useCallback(() => {
     setMuted((current) => {
@@ -80,11 +129,13 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || stored !== null) return;
+    // `undefined` on either of these means storage has not been read yet.
+    if (!container || stored !== null || unbriefed !== false) return;
 
     const engine = new Engine({
       container,
       round,
+      ship,
       // Read through the ref: a change of mind mid-run goes to `setMuted` on
       // the live engine, and must never remount it.
       muted: mutedRef.current,
@@ -100,20 +151,25 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
       engineRef.current = null;
     };
     // `attempt` is a deliberate dependency: bumping it remounts the engine.
-  }, [round, debug, stored, attempt, handleState, handleRunEnd]);
+  }, [round, debug, stored, unbriefed, ship, attempt, handleState, handleRunEnd]);
 
   const replayRun = useCallback(() => {
     clearRun(round.date);
     storedCache.set(round.date, null);
     setSummary(null);
+    setTallied(false);
     setState(null);
     setAttempt((n) => n + 1);
   }, [round.date]);
 
   const shown = summary ?? stored ?? null;
+  // MAXIMUM THRUST shakes the whole surface, canvas and HUD together, so the
+  // screen reads as struggling rather than the scene sliding under a steady
+  // overlay. The camera rumbles underneath it; see ChaseCamera.rumble.
+  const maxThrust = isMaxThrust(state?.outcome);
 
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${maxThrust ? styles.shellShake : ""}`}>
       {/* The engine creates and owns the canvas inside this container; see
           EngineOptions.container for why React must not supply it. */}
       <div ref={containerRef} className={styles.stage} />
@@ -125,16 +181,29 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onAnswer={(option) => engineRef.current?.answer(option)}
           onPick={(lane) => engineRef.current?.pick(lane)}
           onBurn={() => engineRef.current?.burn()}
+          onAim={(t) => engineRef.current?.aim(t)}
+          onLockVector={() => engineRef.current?.lockVector()}
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
           onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+          onConfirm={() => engineRef.current?.confirm()}
           onLanes={(fractions) => engineRef.current?.setLaneFractions(fractions)}
           muted={muted}
           onToggleSound={toggleSound}
         />
       ) : null}
 
-      {shown ? <ShareCard round={round} summary={shown} onReplay={replayRun} /> : null}
+      {briefing ? (
+        <Briefing round={round} onDone={closeBriefing} firstFlight />
+      ) : null}
+
+      {summary && !tallied ? (
+        <ScoreTally summary={summary} onDone={() => setTallied(true)} />
+      ) : null}
+
+      {shown && (tallied || summary === null) ? (
+        <ShareCard round={round} summary={shown} onReplay={replayRun} />
+      ) : null}
       {debug && debugInfo ? <DebugStats info={debugInfo} /> : null}
     </div>
   );
