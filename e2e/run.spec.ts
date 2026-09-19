@@ -27,7 +27,7 @@ async function advance(page: Page, via: "banner" | "anywhere" = "anywhere") {
 test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, share", async ({
   page,
 }) => {
-  await page.goto("/play?replay=1");
+  await page.goto("/play?replay=1&round=2026-09-18");
 
   const question = page.getByTestId("question");
   const toast = page.getByTestId("toast");
@@ -227,9 +227,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "16-share");
 
   // The run is persisted: a reload shows the card, not a fresh run.
-  await page.goto("/play");
+  await page.goto("/play?round=2026-09-18");
   await expect(page.getByTestId("share-card")).toBeVisible({ timeout: 15_000 });
-  await page.goto("/");
+  await page.goto("/?round=2026-09-18");
   await expect(page.getByTestId("today-run")).toContainText("KM");
 
   // And the flight log counted it, which is what earns a hull in the bay.
@@ -237,7 +237,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
 });
 
 test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
-  await page.goto("/play?replay=1");
+  await page.goto("/play?replay=1&round=2026-09-18");
   const toast = page.getByTestId("toast");
 
   await launch(page);

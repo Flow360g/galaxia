@@ -227,6 +227,5 @@ for the satellite feed that is the next build.
 
 ## What is deliberately not done
 
-Group leaderboards, server-side persistence, more than one authored round,
-and haptics. Sound is synthesised rather than authored: no recorded music or
+Group leaderboards, server-side persistence, and haptics. Sound is synthesised rather than authored: no recorded music or
 sampled impacts.

@@ -345,7 +345,8 @@ npm run test:e2e       # playwright, builds and serves on :3100, SwiftShader Web
 Run typecheck and lint before committing. Run the e2e test after any change
 to `Run.ts`, `Flight.ts`, the HUD, or a round file; it asserts flow and
 state (every outcome kind, shields, pulses, the share card, persistence),
-never performance. `/play?replay=1` skips today's stored run. `?debug=1`
+never performance. `/play?replay=1` skips today's stored run and
+`?round=YYYY-MM-DD` flies any round in the pool. `?debug=1`
 overlays FPS, draw calls, triangles, tier and DPR on the flight, and on
 `/hangar` puts the bay on `window.galaxiaBay` so its angle and draw count can
 be read from the console or a test.
@@ -382,14 +383,16 @@ card to announce, so a round can skip a phase that is not built yet.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.
-- Rounds roll over at the player's local midnight (`todayKey`). A missing
-  date falls back to the sample round so a shared link never lands on a
-  blank screen.
+- Rounds roll over at the player's local midnight (`todayKey`). The
+  authored rounds form a pool: a date with its own file gets it, any other
+  date rotates through the pool by day number, so every day is a round and a
+  shared link never lands on a blank screen. `?round=YYYY-MM-DD` on `/` or
+  `/play` flies a specific one; it is a QA hatch like `?replay=1`.
 
 ## Deliberately not done
 
-Haptics, group leaderboards, server-side persistence, accounts, and more
-than one authored round. Recorded audio is also out: sound is synthesised,
+Haptics, group leaderboards, server-side persistence, and accounts.
+Recorded audio is also out: sound is synthesised,
 and a sample library is not the way back in. Do not add these in passing. If one is asked
 for, `lib/content/round.ts` and `lib/game/storage.ts` are the seams that
 change; the engine and HUD should not.

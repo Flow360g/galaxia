@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-22",
+  "roundNumber": 4,
+  "seed": 20260922,
+  "theme": "History and culture",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these people were Roman emperors?",
+      "options": ["Nero", "Hannibal", "Augustus", "Pericles", "Hadrian", "Cleopatra"],
+      "answers": [0, 2, 4],
+      "fact": "Hadrian's Wall took about six years to build across northern Britain, and much of it still stands."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these instruments have strings?",
+      "options": ["Cello", "Oboe", "Harp", "Trumpet", "Banjo", "Flute"],
+      "answers": [0, 2, 4],
+      "fact": "A concert harp has 47 strings and seven pedals, each of which retunes a whole set of strings at once."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How many years did the Hundred Years' War actually last?",
+      "answer": 116,
+      "min": 50,
+      "max": 200,
+      "unit": "years",
+      "tolerance": 10,
+      "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How many keys does a standard piano have?",
+      "answer": 88,
+      "min": 20,
+      "max": 200,
+      "unit": "keys",
+      "tolerance": 6,
+      "fact": "88: 52 white and 36 black, a range settled on in the 1880s and never changed."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Who painted the ceiling of the Sistine Chapel?",
+      "options": ["Leonardo", "Raphael", "Michelangelo", "Donatello"],
+      "answer": 2,
+      "hint": "He considered himself a sculptor, not a painter.",
+      "fact": "Michelangelo painted it standing on scaffolding, craning upward, over four years from 1508."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "Which language has the most native speakers?",
+      "options": ["English", "Hindi", "Spanish", "Mandarin"],
+      "answer": 3,
+      "hint": "Not the most learned, the most born into.",
+      "fact": "Mandarin has around 940 million native speakers. English has more speakers in total once second languages are counted."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed.",
+      "name": "Istanbul",
+      "country": "Turkey",
+      "lat": 41.02,
+      "lon": 28.975,
+      "zoom": 13,
+      "options": ["Istanbul", "Athens", "Odesa", "Sofia"],
+      "answer": 0,
+      "fact": "About 40,000 ships pass through the Bosphorus each year, three times the traffic of the Suez Canal."
+    }
+  ],
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 5, "landmark": "planet" },
+    { "name": "Where on Earth", "after": 6, "phase": 4 }
+  ]
+}
