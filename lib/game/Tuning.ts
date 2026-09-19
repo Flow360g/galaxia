@@ -183,6 +183,21 @@ export const LANE = {
   /** Radius of the boulder that punishes a wrong lane, and of a plasma pod. */
   rockRadius: 5.2,
   podRadius: 1.9,
+  /**
+   * Where the boulder is when the verdict lands. The strike ends with the
+   * rock's leading face this far INTO the nose, so its centre sits at
+   * `SHIP.noseZ - rockRadius + strikeOverlap`: a hit, not a kiss, and never
+   * a hull swallowed to the cockpit before the crack is heard. It used to run
+   * to a point behind the ship's origin and the hull flew half way into it.
+   */
+  strikeOverlap: 0.8,
+  /**
+   * The struck boulder collapses over this long, and drifts aft at this
+   * fraction of world speed while it does. The debris burst carries the
+   * motion; the remnant only has to be gone before it reaches the canopy.
+   */
+  shatterSeconds: 0.25,
+  shatterDrift: 0.35,
   /** Objects are born fanned out and converge on the true lane as they come in. */
   farSpread: 1.25,
   /**
@@ -866,6 +881,12 @@ export const SHIP = {
   bobRate: 1.6,
   /** Fixed Z the ship sits at. The world moves past it. */
   z: 0,
+  /**
+   * Z of the nose, ahead of `z`. Where beams leave from and where a boulder
+   * has to be to count as touching the hull. A hull is normalised to its
+   * catalogue length and centred, so this is about half the longest one.
+   */
+  noseZ: -2.6,
 } as const;
 
 /**
@@ -978,14 +999,26 @@ export const HANGAR = {
   /** Hull tilt toward the camera, radians, so the deck view is not side-on. */
   tilt: 0.18,
   /**
-   * Framing. The bay measures the hull it loaded and pulls the camera back to
-   * fit its bounding sphere, so a wide hull and a long one both fill the frame
-   * and neither hangs off the side of a portrait phone.
+   * Framing. The camera is a fixture of the room, not of the hull: it stands
+   * back far enough to hold a sphere of `frameRadius` inside the clear part
+   * of the frame and aims at a fixed point over the pad, so paging through
+   * the catalogue changes the ship and nothing else. It used to fit each
+   * hull's own bounding sphere and aim at its centre, and every switch
+   * dollied in or out and pitched up or down; a bay that zooms on every page
+   * reads as broken. A hull larger than `frameRadius` still fits: the bay
+   * frames the larger of the two.
    *
    * `framePadding` is the breathing room around that sphere, `cameraLift` is
    * the camera height as a fraction of the distance it ends up at, and the
    * FOV is vertical, as three.js counts it.
    */
+  /** Bounding radius the camera frames for, in world units. The White
+      Seraph, spire and all, is the largest hull in the catalogue and measures
+      3.68 on the bay's own rig; the others sit at 3.1 and 3.47. Read
+      `galaxiaBay.debugState().hullRadius` under `?debug=1` when adding one. */
+  frameRadius: 3.7,
+  /** Height above the PAD TOP the camera aims at. */
+  aimY: 1.1,
   /**
    * A wider lens than a showroom strictly needs, because the bay is half the
    * point: at 34 degrees the hull filled the frame and the room around it was
@@ -1000,12 +1033,10 @@ export const HANGAR = {
    * the bay stops reading as a room; a bit under a half is the compromise.
    */
   frameBias: 0.45,
-  /** Aim offset above the hovering hull, so it sits centred in the frame. */
-  lookY: 0.05,
   /**
-   * How fast the camera slides to a new hull's framing. Each hull has its own
-   * bounding sphere, so a switch changes the distance; easing it turns a jump
-   * into a dolly.
+   * How fast the camera slides to a new framing. A hull switch no longer
+   * changes it, but the overlay growing for the checkout panel does, and
+   * easing turns that into a dolly rather than a cut.
    */
   frameEaseRate: 7,
   /** A new hull fades and scales in over this, so a switch is not a pop. */
@@ -1018,7 +1049,7 @@ export const HANGAR = {
    * centring both at one height leaves one buried and the other in orbit.
    */
   hoverGap: 0.28,
-  /** Fallback hover, used until a hull has been measured. */
+  /** Fallback turntable height, used until a hull has been measured. */
   hoverY: 0.5,
   bobAmplitude: 0.06,
   bobRate: 0.8,

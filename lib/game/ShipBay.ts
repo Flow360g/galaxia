@@ -41,6 +41,19 @@ const scratchPosition = new THREE.Vector3();
 const scratchQuaternion = new THREE.Quaternion();
 const scratchScale = new THREE.Vector3(1, 1, 1);
 const scratchEuler = new THREE.Euler();
+const scratchBox = new THREE.Box3();
+const scratchSphere = new THREE.Sphere();
+/**
+ * The measuring rig: where a freshly loaded hull is stood to be measured
+ * before it goes on the turntable. It has no parent and carries only the
+ * turntable's resting tilt, so the box it yields is the hull's own, in the
+ * pose it will be shown in. Measuring on the turntable itself was the bug
+ * that buried hulls in the pad: `Box3.setFromObject` works in world space,
+ * so the box carried the PREVIOUS hull's lift, the bob, the drag and the
+ * swap scale, and each switch stood the new hull a little lower.
+ */
+const measuringRig = new THREE.Group();
+measuringRig.rotation.x = HANGAR.tilt;
 
 export interface ShipBayOptions {
   /** `?debug=1`: park the bay on `window.galaxiaBay` for the console and the
@@ -71,21 +84,20 @@ export class ShipBay {
   /** Bumped on every load so a slow fetch cannot install a stale hull. */
   private loadToken = 0;
   /**
-   * Bounding-sphere radius of the hull on the turntable. What the camera is
-   * framed against, measured rather than assumed: the catalogue normalises a
-   * hull's LONGEST axis, which for a wide one is its wingspan, so two hulls
-   * with the same `modelLength` can need very different distances.
+   * Bounding-sphere radius of the hull on the turntable, measured rather
+   * than assumed: the catalogue normalises a hull's LONGEST axis, which for
+   * a wide one is its wingspan. The camera frames the larger of this and
+   * `HANGAR.frameRadius`, so the catalogue's hulls all frame alike and only
+   * an oversized one pushes the camera back.
    */
   private hullRadius = DEFAULT_SHIP.modelLength * 0.6;
   /** 0..1 through the fade-in that hides a hull swap. 1 when settled. */
   private swapT = 1;
   /**
    * Where the turntable has to sit for the hull's underside to clear the pad
-   * by `HANGAR.hoverGap`, and where the hull's visual centre ends up once it
-   * does. The camera aims at the latter.
+   * by `HANGAR.hoverGap`. Measured per hull; the camera does not follow it.
    */
   private hullLift: number = HANGAR.hoverY;
-  private hullCentreY: number = HANGAR.hoverY;
 
   private readonly disposables: Array<{ dispose(): void }> = [];
   private readonly reducedMotion = prefersReducedMotion();
@@ -564,16 +576,21 @@ export class ShipBay {
     this.hull = loaded.group;
     this.hullMaterials = loaded.materials;
     this.hullDisposables = loaded.disposables;
+
+    // Measure what actually arrived on the rig, in its own frame, THEN put
+    // it on the turntable. See `measuringRig` for why the order matters.
+    measuringRig.add(loaded.group);
+    measuringRig.updateMatrixWorld(true);
+    scratchBox.setFromObject(loaded.group);
+    measuringRig.remove(loaded.group);
     this.hullHolder.add(loaded.group);
 
-    // Measure what actually arrived, then stand it on the pad and frame it.
-    const box = new THREE.Box3().setFromObject(loaded.group);
-    const sphere = box.getBoundingSphere(new THREE.Sphere());
-    this.hullRadius = Math.max(sphere.radius, 0.5);
+    scratchBox.getBoundingSphere(scratchSphere);
+    this.hullRadius = Math.max(scratchSphere.radius, 0.5);
 
+    // Stand it on the pad by its underside, and frame the room around it.
     const padTop = HANGAR.deckY + HANGAR.padHeight;
-    this.hullLift = padTop + HANGAR.hoverGap - box.min.y;
-    this.hullCentreY = this.hullLift + (box.min.y + box.max.y) / 2;
+    this.hullLift = padTop + HANGAR.hoverGap - scratchBox.min.y;
     this.turntable.position.y = this.hullLift;
     this.frame();
 
@@ -693,8 +710,10 @@ export class ShipBay {
   }
 
   /**
-   * Work out how far back the camera has to stand to hold the hull's bounding
-   * sphere inside the clear part of the frame.
+   * Work out how far back the camera has to stand to hold the framing sphere
+   * inside the clear part of the frame. The sphere is `HANGAR.frameRadius`
+   * for every catalogue hull, so paging through them never moves the camera;
+   * a hull that measures larger than that is fitted on its own radius.
    *
    * The FOV is vertical, so on a tall narrow bay the horizontal one binds, and
    * framing on the vertical alone hangs the wingtips off both sides. Fit
@@ -709,29 +728,30 @@ export class ShipBay {
       Math.tan(verticalHalf) * Math.max(this.camera.aspect, 0.01),
     );
     const tightest = Math.min(usableVerticalHalf, horizontalHalf);
-    this.targetDistance =
-      (this.hullRadius / Math.sin(tightest)) * HANGAR.framePadding;
+    const radius = Math.max(this.hullRadius, HANGAR.frameRadius);
+    this.targetDistance = (radius / Math.sin(tightest)) * HANGAR.framePadding;
     if (this.distance === 0) this.distance = this.targetDistance;
   }
 
-  /** Point the camera, given wherever the eased distance has reached. */
+  /**
+   * Point the camera, given wherever the eased distance has reached. It aims
+   * at a fixed height over the pad, not at the hull: the room is the
+   * constant and the hull is what changes.
+   */
   private placeCamera(): void {
     const distance = this.distance;
     const verticalHalf = ((this.camera.fov * Math.PI) / 180) / 2;
-    // World-space half-height of the frame at the hull. Shifting the aim down
+    // World-space half-height of the frame at the pad. Shifting the aim down
     // by the covered share of it lifts the hull into the clear band.
     const halfHeight = Math.tan(verticalHalf) * distance;
     // Only part of the way: aiming the full height below the hull lifts it
     // clear of the type but pitches the camera down into the deck, and the
     // bay stops reading as a room you are standing in.
     const lift = halfHeight * this.safeArea * HANGAR.frameBias;
+    const aimY = HANGAR.deckY + HANGAR.padHeight + HANGAR.aimY;
 
-    this.camera.position.set(
-      0,
-      this.hullCentreY + distance * HANGAR.cameraLift,
-      distance,
-    );
-    this.camera.lookAt(0, this.hullCentreY + HANGAR.lookY - lift, 0);
+    this.camera.position.set(0, aimY + distance * HANGAR.cameraLift, distance);
+    this.camera.lookAt(0, aimY - lift, 0);
   }
 
   // -------------------------------------------------------------- frame loop
@@ -819,11 +839,20 @@ export class ShipBay {
     drawCalls: number;
     triangles: number;
     dpr: number;
+    /** The current hull's measured radius and turntable height, so the
+        framing constant can be checked against the catalogue and a test can
+        assert a hull stands at the same height on every visit. */
+    hullRadius: number;
+    hullLift: number;
+    padTop: number;
   } {
     return {
       yaw: this.turntable.rotation.y,
       pitch: this.turntable.rotation.x,
       dragged: this.dragged,
+      hullRadius: this.hullRadius,
+      hullLift: this.hullLift,
+      padTop: HANGAR.deckY + HANGAR.padHeight,
       drawCalls: this.renderer.info.render.calls,
       triangles: this.renderer.info.render.triangles,
       dpr: this.renderer.getPixelRatio(),
