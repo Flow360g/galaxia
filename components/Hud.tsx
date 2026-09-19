@@ -317,16 +317,7 @@ export function Hud({
               />
             )}
 
-            <div className={`${styles.tools} ${isCluster ? styles.toolsCluster : ""}`}>
-              {/* Bottom left of the panel, where the thumb already is: the
-                  gauge, then the buttons that spend it. */}
-              {isCluster ? (
-                <BoostGauge
-                  charge={state?.cluster?.charge ?? 0}
-                  drain={1}
-                  full={state?.cluster?.full ?? false}
-                />
-              ) : null}
+            <div className={styles.tools}>
               <button
                 type="button"
                 className={`${styles.tool} ${styles.nova} arcade`}
@@ -338,23 +329,7 @@ export function Hud({
               >
                 NOVA <span className={styles.pips}>{"◆".repeat(state?.novaLeft ?? 0)}</span>
               </button>
-              {isCluster ? (
-                <button
-                  type="button"
-                  className={`${styles.tool} ${styles.burn} ${
-                    (state?.cluster?.charge ?? 0) >= 2 ? styles.burnHot : ""
-                  } ${state?.cluster?.full ? styles.burnFull : ""} arcade`}
-                  disabled={!answering || (state?.cluster?.charge ?? 0) <= 0}
-                  onClick={onBurn}
-                  data-testid="burn"
-                >
-                  {state?.cluster?.full
-                    ? `FIRE BOOST +${formatVelocity(state.cluster.projected)}`
-                    : (state?.cluster?.charge ?? 0) > 0
-                      ? `BANK +${formatVelocity(state?.cluster?.projected ?? 0)}`
-                      : "BANK"}
-                </button>
-              ) : isVector ? (
+              {isCluster ? null : isVector ? (
                 <button
                   type="button"
                   className={`${styles.tool} ${styles.lock} arcade`}
@@ -382,17 +357,6 @@ export function Hud({
           </section>
         ) : null}
 
-        {/* The panel closes the moment the boost is fired, so the gauge steps
-            out of it and finishes emptying on its own, still in the band. */}
-        {isCluster && !open && (state?.burnDrain ?? 0) > 0 ? (
-          <BoostGauge
-            charge={state?.burnCharge ?? 0}
-            drain={state?.burnDrain ?? 0}
-            full={false}
-            solo
-          />
-        ) : null}
-
         {outcome ? (
           <OutcomeToast outcome={outcome} fact={question?.fact} awaitingTap={awaitingTap} />
         ) : null}
@@ -403,6 +367,43 @@ export function Hud({
           <p className={`${styles.hint} arcade`}>Pick fast. The clock is your thrust.</p>
         ) : null}
       </div>
+
+      {/*
+        The two cockpit corners. A Cluster is the one encounter that hands the
+        player something to hold and then spend, and the band has no room left
+        to dramatise it, so the gauge takes the bottom left of the screen and
+        the button that fires it takes the bottom right, a thumb's reach apart
+        either side of the ship. They are the only things the run draws below
+        the band; both hug the safe area, and the gauge takes no taps at all.
+      */}
+      {isCluster && (open || (state?.burnDrain ?? 0) > 0) ? (
+        <BoostGauge
+          charge={open ? (state?.cluster?.charge ?? 0) : (state?.burnCharge ?? 0)}
+          drain={open ? 1 : (state?.burnDrain ?? 0)}
+          full={state?.cluster?.full ?? false}
+        />
+      ) : null}
+
+      {isCluster && open ? (
+        <button
+          type="button"
+          className={`${styles.burnDial} ${
+            (state?.cluster?.charge ?? 0) >= 2 ? styles.burnHot : ""
+          } ${state?.cluster?.full ? styles.burnFull : ""} arcade`}
+          disabled={!answering || (state?.cluster?.charge ?? 0) <= 0}
+          onClick={onBurn}
+          data-testid="burn"
+        >
+          <span className={styles.burnDialLabel}>
+            {state?.cluster?.full ? "FIRE" : "BANK"}
+          </span>
+          <span className={styles.burnDialValue}>
+            {(state?.cluster?.charge ?? 0) > 0
+              ? `+${formatVelocity(state?.cluster?.projected ?? 0)}`
+              : "BOOST"}
+          </span>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -667,13 +668,15 @@ function WaypointCard({
 }
 
 /**
- * The boost gauge: the reactor drawn as a speedometer.
+ * The boost gauge: the reactor drawn as a speedometer, in the bottom left
+ * corner of the screen.
  *
  * The needle climbs a notch per plasma collected and sweeps back to the peg
  * as the boost is fired, so the charge reads as something held and then spent.
  * `drain` is the sweep home, 1 while the charge is aboard and 0 once it is
  * all in the engines; the run owns it, so the needle keeps falling after the
- * panel has given way to the verdict.
+ * panel has given way to the verdict. It never takes a tap: firing the boost
+ * is the dial in the opposite corner.
  *
  * Geometry is derived from `CLUSTER.gauge`, never hardcoded here.
  */
@@ -704,12 +707,10 @@ function BoostGauge({
   charge,
   drain,
   full,
-  solo,
 }: {
   charge: number;
   drain: number;
   full: boolean;
-  solo?: boolean;
 }) {
   const value = Math.max(0, Math.min(1, (charge / FULL_CHARGE) * drain));
   const draining = drain < 1;
@@ -724,7 +725,7 @@ function BoostGauge({
     <div
       className={`${styles.gauge} ${full ? styles.gaugeFull : ""} ${
         draining ? styles.gaugeDraining : ""
-      } ${solo ? styles.gaugeSolo : ""}`}
+      }`}
       data-testid="reactor"
       data-charge={charge}
       data-drain={drain.toFixed(2)}

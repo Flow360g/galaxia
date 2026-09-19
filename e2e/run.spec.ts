@@ -194,7 +194,7 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
   // spent on a tap, not taken away on a timer.
   await page.keyboard.press(String(lanes[lanes.length - 1]! + 1));
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "3", { timeout: 5_000 });
-  await expect(page.getByTestId("burn")).toContainText("FIRE BOOST");
+  await expect(page.getByTestId("burn")).toContainText("FIRE");
   await shot(page, "14-gauge-full");
   await page.getByTestId("burn").click();
   await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
