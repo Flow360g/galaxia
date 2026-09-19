@@ -189,6 +189,9 @@ type BayState = {
   drawCalls: number;
   triangles: number;
   dpr: number;
+  hullRadius: number;
+  hullLift: number;
+  padTop: number;
 };
 
 declare global {
@@ -218,19 +221,45 @@ test("the bay does not move when the hull changes", async ({ page }) => {
   const first = await canvas.boundingBox();
   expect(first).not.toBeNull();
 
-  for (let i = 0; i < 2; i += 1) {
+  // Every hull stands on the pad, and stands at the SAME height on every
+  // visit. It used to be measured on the turntable, in world space, so each
+  // switch inherited the previous hull's lift and the bob's phase, and a few
+  // pages in the hull was below the deck.
+  const lifts = new Map<string, number>();
+  const settled = async (name: string): Promise<BayState> => {
+    await expect(page.getByTestId("ship-name")).toHaveText(name);
+    // The hull arrives when its GLB does; wait for the lift to leave the
+    // fallback and hold still.
+    await expect
+      .poll(async () => (await bayState(page)).hullLift, { timeout: 20_000 })
+      .not.toBe(0.5);
+    return bayState(page);
+  };
+
+  const order = ["Cinder VII", "Neon Flamingo", "White Seraph"];
+  let state = await settled(order[0]!);
+  expect(state.hullLift).toBeGreaterThan(state.padTop);
+  lifts.set(order[0]!, state.hullLift);
+
+  for (let i = 1; i < 6; i += 1) {
     await page.getByRole("button", { name: "Next ship" }).click();
-    await expect(page.getByTestId("ship-name")).not.toHaveText("Cinder VII");
+    const name = order[i % order.length]!;
+    state = await settled(name);
     const box = await canvas.boundingBox();
     expect(box).toEqual(first);
+    // Above the pad, by the whole hover gap, never buried.
+    expect(state.hullLift).toBeGreaterThan(state.padTop);
+    const seen = lifts.get(name);
+    if (seen !== undefined) expect(state.hullLift).toBeCloseTo(seen, 6);
+    lifts.set(name, state.hullLift);
   }
 
   // And the hull is rendered sharp, on its own budget rather than the
   // flight's: a phone on the low tier renders the flight at DPR 1.
-  const state = await bayState(page);
-  expect(state.dpr).toBeGreaterThan(1);
+  const budget = await bayState(page);
+  expect(budget.dpr).toBeGreaterThan(1);
   // A room and one hull. The flight scene is allowed sixty.
-  expect(state.drawCalls).toBeLessThanOrEqual(30);
+  expect(budget.drawCalls).toBeLessThanOrEqual(30);
 });
 
 test("dragging turns the hull, and the hint gives way", async ({ page }) => {

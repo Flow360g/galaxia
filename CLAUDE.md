@@ -311,7 +311,13 @@ path from a shared link to flying.
 - **Drag turns the hull**, and the slow revolution eases back in a beat after
   the thumb lifts. A hull is stood on the pad by its own underside, never by
   its bounding centre: the Seraph's centre is dragged up by a spire and the
-  Cinder's sits mid-fuselage.
+  Cinder's sits mid-fuselage. It is measured on a rig of its own before it
+  goes on the turntable; measured in place, the box is in world space and
+  carries the last hull's height and the bob, and every page sank the hull.
+- **The camera is a fixture of the room.** It frames `HANGAR.frameRadius`
+  and aims at `HANGAR.aimY` over the pad, whatever hull is up, so paging the
+  catalogue changes the ship and nothing else. A hull larger than the
+  constant still fits; read `debugState().hullRadius` when adding one.
 - **A hull is cosmetic, always.** Every ship has the same flight model. The
   daily round has to stay comparable between two players, so a ship must
   never touch speed, thrust, shields or scoring.

@@ -206,6 +206,20 @@ export function Hud({
             <span className={`${styles.score} arcade`} data-testid="score">
               {formatScore(state?.score ?? 0)}
               <span className={styles.outOf}>/ {formatScore(state?.maxScore ?? 0)}</span>
+              {/* What the last encounter did to it, on the number it did it
+                  to. Keyed per encounter so the pop replays on every verdict;
+                  it lives while the toast does and goes with it. */}
+              {outcome && outcome.points !== undefined && state ? (
+                <span
+                  key={state.encounter}
+                  className={`${styles.scoreDelta} ${
+                    outcome.points < 0 ? styles.scoreDeltaDown : ""
+                  }`}
+                  data-testid="score-delta"
+                >
+                  {formatPoints(outcome.points)}
+                </span>
+              ) : null}
             </span>
             <span className={`${styles.distance} arcade`} data-testid="distance">
               {formatDistance(state?.distance ?? 0)}
@@ -975,13 +989,12 @@ function OutcomeToast({
             data-testid="toast-points"
           >
             {formatPoints(points)}
-            {outcome.base && (outcome.multiplier ?? 1) > 1 ? (
-              <span className={styles.toastMultiplier}>
-                {outcome.base} x{outcome.multiplier}
-              </span>
-            ) : null}
           </span>
-          <span className={`${styles.toastDelta} arcade`}>{formatDelta(delta)} KM/H</span>
+          {outcome.base && (outcome.multiplier ?? 1) > 1 ? (
+            <span className={`${styles.toastMultiplier} arcade`}>
+              {outcome.base} x{outcome.multiplier}
+            </span>
+          ) : null}
         </span>
       </div>
       {vector ? (
@@ -1023,13 +1036,19 @@ function OutcomeToast({
           {!outcome.correct && outcome.chosen !== null ? <> &middot; You: {outcome.guessText}</> : null}
         </span>
       )}
-      {outcome.streakAfter >= 2 ? (
-        <span className={`${styles.toastStreak} arcade`}>STREAK x{outcome.streakAfter}</span>
-      ) : outcome.streakBefore >= 2 && !outcome.correct ? (
-        <span className={`${styles.toastStreak} ${styles.toastStreakLost} arcade`}>
-          STREAK x{outcome.streakBefore} LOST
-        </span>
-      ) : null}
+      {/* The streak and the speedometer, one rung under the points. The
+          velocity change used to share the head with the points and pulled
+          the eye off the score. */}
+      <span className={`${styles.toastMeta} arcade`}>
+        {outcome.streakAfter >= 2 ? (
+          <span className={styles.toastStreak}>STREAK x{outcome.streakAfter}</span>
+        ) : outcome.streakBefore >= 2 && !outcome.correct ? (
+          <span className={`${styles.toastStreak} ${styles.toastStreakLost}`}>
+            STREAK x{outcome.streakBefore} LOST
+          </span>
+        ) : null}
+        <span className={styles.toastDelta}>{formatDelta(delta)} KM/H</span>
+      </span>
       {fact ? <span className={styles.toastFact}>{fact}</span> : null}
       <TapPrompt shown={awaitingTap} />
     </section>

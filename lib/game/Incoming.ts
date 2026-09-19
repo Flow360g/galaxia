@@ -182,7 +182,10 @@ export class Incoming {
       case "strike": {
         this.t = Math.min(this.t + dt / this.seconds, 1);
         const eased = this.t * this.t;
-        g.position.z = this.from + (SHIP.z + 1.5 - this.from) * eased;
+        // Ends with the rock's face just into the nose, on the same beat the
+        // run calls contact. See `LANE.strikeOverlap`.
+        const contactZ = SHIP.noseZ - LANE.rockRadius + LANE.strikeOverlap;
+        g.position.z = this.from + (contactZ - this.from) * eased;
         g.position.x = this.xAt(g.position.z);
         break;
       }
@@ -193,14 +196,16 @@ export class Incoming {
         if (g.position.z > 20) this.retire();
         break;
       case "shatter": {
-        this.t += dt / 0.3;
+        this.t += dt / LANE.shatterSeconds;
         if (this.t >= 1) {
           this.retire();
           break;
         }
-        this.rock.scale.setScalar(1 - this.t * this.t);
+        // Linear, not eased: half gone at half time, so the remnant is never
+        // still rock-sized as it drifts back over the hull.
+        this.rock.scale.setScalar(1 - this.t);
         this.rock.rotation.y += dt * 10;
-        g.position.z += worldSpeed * dt;
+        g.position.z += worldSpeed * LANE.shatterDrift * dt;
         break;
       }
     }
