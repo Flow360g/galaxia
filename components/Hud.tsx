@@ -9,7 +9,6 @@ import {
   type FormEvent,
 } from "react";
 import type {
-  ClusterState,
   GameState,
   Outcome,
   OutcomeKind,
@@ -20,7 +19,7 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { CLUSTER, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
 import {
@@ -291,8 +290,6 @@ export function Hud({
               </p>
             ) : null}
 
-            {isCluster ? <Reactor cluster={state?.cluster ?? null} /> : null}
-
             {question.type === "anomaly" ? (
               <AnomalyForm
                 question={question}
@@ -320,7 +317,16 @@ export function Hud({
               />
             )}
 
-            <div className={styles.tools}>
+            <div className={`${styles.tools} ${isCluster ? styles.toolsCluster : ""}`}>
+              {/* Bottom left of the panel, where the thumb already is: the
+                  gauge, then the buttons that spend it. */}
+              {isCluster ? (
+                <BoostGauge
+                  charge={state?.cluster?.charge ?? 0}
+                  drain={1}
+                  full={state?.cluster?.full ?? false}
+                />
+              ) : null}
               <button
                 type="button"
                 className={`${styles.tool} ${styles.nova} arcade`}
@@ -337,14 +343,16 @@ export function Hud({
                   type="button"
                   className={`${styles.tool} ${styles.burn} ${
                     (state?.cluster?.charge ?? 0) >= 2 ? styles.burnHot : ""
-                  } arcade`}
+                  } ${state?.cluster?.full ? styles.burnFull : ""} arcade`}
                   disabled={!answering || (state?.cluster?.charge ?? 0) <= 0}
                   onClick={onBurn}
                   data-testid="burn"
                 >
-                  {(state?.cluster?.charge ?? 0) > 0
-                    ? `BANK +${formatVelocity(state?.cluster?.projected ?? 0)}`
-                    : "BANK"}
+                  {state?.cluster?.full
+                    ? `FIRE BOOST +${formatVelocity(state.cluster.projected)}`
+                    : (state?.cluster?.charge ?? 0) > 0
+                      ? `BANK +${formatVelocity(state?.cluster?.projected ?? 0)}`
+                      : "BANK"}
                 </button>
               ) : isVector ? (
                 <button
@@ -372,6 +380,17 @@ export function Hud({
               )}
             </div>
           </section>
+        ) : null}
+
+        {/* The panel closes the moment the boost is fired, so the gauge steps
+            out of it and finishes emptying on its own, still in the band. */}
+        {isCluster && !open && (state?.burnDrain ?? 0) > 0 ? (
+          <BoostGauge
+            charge={state?.burnCharge ?? 0}
+            drain={state?.burnDrain ?? 0}
+            full={false}
+            solo
+          />
         ) : null}
 
         {outcome ? (
@@ -647,26 +666,127 @@ function WaypointCard({
   );
 }
 
-/** The reactor: how much plasma is aboard, and what banking it is worth. */
-function Reactor({ cluster }: { cluster: ClusterState | null }) {
-  const charge = cluster?.charge ?? 0;
-  const segments = Array.from({ length: FULL_CHARGE }, (_, i) => i < charge);
+/**
+ * The boost gauge: the reactor drawn as a speedometer.
+ *
+ * The needle climbs a notch per plasma collected and sweeps back to the peg
+ * as the boost is fired, so the charge reads as something held and then spent.
+ * `drain` is the sweep home, 1 while the charge is aboard and 0 once it is
+ * all in the engines; the run owns it, so the needle keeps falling after the
+ * panel has given way to the verdict.
+ *
+ * Geometry is derived from `CLUSTER.gauge`, never hardcoded here.
+ */
+const GAUGE = (() => {
+  const sweep = CLUSTER.gauge.sweepDegrees;
+  const cx = 50;
+  const cy = 38;
+  const r = 32;
+  const start = -90 - sweep / 2;
+  const at = (fraction: number) => {
+    const rad = ((start + sweep * fraction) * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  };
+  const a = at(0);
+  const b = at(1);
+  return {
+    cx,
+    cy,
+    r,
+    sweep,
+    start,
+    at,
+    path: `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`,
+  };
+})();
+
+function BoostGauge({
+  charge,
+  drain,
+  full,
+  solo,
+}: {
+  charge: number;
+  drain: number;
+  full: boolean;
+  solo?: boolean;
+}) {
+  const value = Math.max(0, Math.min(1, (charge / FULL_CHARGE) * drain));
+  const draining = drain < 1;
+  // While the boost is being spent the needle is driven by the run at about
+  // 12Hz, so the easing that makes a collected notch land with weight would
+  // fight the sweep. It goes linear and short for the drain instead.
+  const ease = draining
+    ? "transform 90ms linear, stroke-dashoffset 90ms linear"
+    : `transform ${CLUSTER.gauge.settleSeconds}s cubic-bezier(0.2, 1.4, 0.4, 1), stroke-dashoffset ${CLUSTER.gauge.settleSeconds}s ease-out`;
+
   return (
-    <div className={styles.reactor} aria-label={`Plasma ${charge} of ${FULL_CHARGE}`}>
-      <span className={`${styles.reactorLabel} arcade`}>PLASMA</span>
-      <div className={styles.reactorTrack} data-testid="reactor" data-charge={charge}>
-        {segments.map((lit, i) => (
-          <span
-            key={i}
-            className={`${styles.reactorCell} ${lit ? styles.reactorLit : ""}`}
-            data-testid={`plasma-${i}`}
-            data-lit={lit}
+    <div
+      className={`${styles.gauge} ${full ? styles.gaugeFull : ""} ${
+        draining ? styles.gaugeDraining : ""
+      } ${solo ? styles.gaugeSolo : ""}`}
+      data-testid="reactor"
+      data-charge={charge}
+      data-drain={drain.toFixed(2)}
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={FULL_CHARGE}
+      aria-valuenow={charge}
+      aria-label={`Boost gauge, ${charge} of ${FULL_CHARGE} plasma`}
+    >
+      <svg viewBox="0 0 100 60" className={styles.gaugeDial} aria-hidden="true">
+        <path d={GAUGE.path} className={styles.gaugeTrack} pathLength={100} />
+        <path
+          d={GAUGE.path}
+          className={styles.gaugeFill}
+          pathLength={100}
+          strokeDasharray={100}
+          strokeDashoffset={100 - value * 100}
+          style={{ transition: ease }}
+        />
+        {Array.from({ length: FULL_CHARGE + 1 }, (_, i) => {
+          const outer = GAUGE.at(i / FULL_CHARGE);
+          const angle = GAUGE.start + GAUGE.sweep * (i / FULL_CHARGE);
+          const rad = (angle * Math.PI) / 180;
+          const inner = {
+            x: GAUGE.cx + (GAUGE.r - 7) * Math.cos(rad),
+            y: GAUGE.cy + (GAUGE.r - 7) * Math.sin(rad),
+          };
+          return (
+            <line
+              key={i}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              className={`${styles.gaugeTick} ${i > 0 && i <= charge ? styles.gaugeTickLit : ""}`}
+            />
+          );
+        })}
+        <g
+          style={{
+            transform: `rotate(${GAUGE.start + 90 + GAUGE.sweep * value}deg)`,
+            transformOrigin: `${GAUGE.cx}px ${GAUGE.cy}px`,
+            transition: ease,
+          }}
+        >
+          <line
+            x1={GAUGE.cx}
+            y1={GAUGE.cy}
+            x2={GAUGE.cx}
+            y2={GAUGE.cy - GAUGE.r + 6}
+            className={styles.gaugeNeedle}
           />
-        ))}
-      </div>
-      <span className={`${styles.reactorValue} arcade`}>
-        {charge > 0 ? `+${formatVelocity(cluster?.projected ?? 0)} KM/H` : "EMPTY"}
+        </g>
+        <circle cx={GAUGE.cx} cy={GAUGE.cy} r={3.6} className={styles.gaugeHub} />
+      </svg>
+      <span className={`${styles.gaugeValue} arcade`} data-testid="gauge-value">
+        {/* Draining, the readout counts down with the needle; the charge that
+            went in is still what `data-charge` reports. */}
+        {draining ? Math.round(value * FULL_CHARGE) : charge}
+        <span className={styles.gaugeOutOf}>/{FULL_CHARGE}</span>
       </span>
+      <span className={`${styles.gaugeLabel} arcade`}>BOOST</span>
     </div>
   );
 }

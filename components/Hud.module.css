@@ -387,45 +387,121 @@
   color: var(--arcade-cyan);
 }
 
-/* Reactor: plasma aboard, and what banking it is worth right now. */
-.reactor {
+/*
+ * The boost gauge: the reactor as a speedometer, bottom left of the panel
+ * where the thumb already is. The needle climbs a notch per plasma and sweeps
+ * back to the peg as the boost is fired. Sizes here are the dial only; the
+ * geometry inside it comes from CLUSTER.gauge.
+ */
+.gauge {
+  width: 82px;
+  flex: 0 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-}
-
-.reactorLabel,
-.reactorValue {
-  font-size: 8px;
-  color: var(--panel-label);
-  white-space: nowrap;
-}
-
-.reactorValue {
-  color: var(--arcade-cyan);
-  min-width: 86px;
-  text-align: right;
-}
-
-.reactorTrack {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
-  height: 9px;
 }
 
-.reactorCell {
+.gaugeDial {
+  width: 100%;
   display: block;
-  border: 1px solid var(--rule-dark);
-  background: rgba(7, 17, 34, 0.6);
-  transition: background 220ms, box-shadow 220ms;
+  overflow: visible;
 }
 
-.reactorLit {
-  background: linear-gradient(to right, var(--arcade-cyan), #ffffff);
-  box-shadow: 0 0 12px rgba(79, 241, 255, 0.7);
-  animation: reactorIn 320ms ease-out;
+.gaugeTrack {
+  fill: none;
+  stroke: var(--rule-dark);
+  stroke-width: 7;
+  stroke-linecap: butt;
+}
+
+.gaugeFill {
+  fill: none;
+  stroke: var(--arcade-cyan);
+  stroke-width: 7;
+  stroke-linecap: butt;
+  filter: drop-shadow(0 0 4px rgba(79, 241, 255, 0.85));
+}
+
+.gaugeTick {
+  stroke: var(--rule-dark);
+  stroke-width: 2;
+}
+
+.gaugeTickLit {
+  stroke: #ffffff;
+}
+
+.gaugeNeedle {
+  stroke: var(--arcade-cyan);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(79, 241, 255, 0.9));
+}
+
+.gaugeHub {
+  fill: var(--arcade-cyan);
+}
+
+/* The digital readout sits under the dial, clear of the needle's sweep. */
+.gaugeValue {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--arcade-cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.gaugeOutOf {
+  font-size: 9px;
+  color: var(--panel-label);
+}
+
+.gaugeLabel {
+  font-size: 8px;
+  line-height: 1;
+  color: var(--panel-label);
+}
+
+/* Full: every lane found, the clock stopped, the boost waiting on a tap. */
+.gaugeFull .gaugeFill,
+.gaugeFull .gaugeNeedle {
+  stroke: #ff8a1f;
+  filter: drop-shadow(0 0 7px rgba(255, 138, 31, 0.9));
+}
+
+.gaugeFull .gaugeHub {
+  fill: #ff8a1f;
+}
+
+.gaugeFull .gaugeValue {
+  color: #ff8a1f;
+}
+
+.gaugeFull {
+  animation: gaugeFull 900ms ease-in-out infinite;
+}
+
+/* Spending it: the needle falls and the dial runs hot. */
+.gaugeDraining .gaugeFill,
+.gaugeDraining .gaugeNeedle {
+  stroke: #ff8a1f;
+}
+
+.gaugeDraining .gaugeHub {
+  fill: #ff8a1f;
+}
+
+.gaugeDraining .gaugeValue {
+  color: #ff8a1f;
+}
+
+/*
+ * Once the boost is fired the panel is gone, so the gauge finishes emptying
+ * on its own. Still in the band, still left: nothing goes over the ship.
+ */
+.gaugeSolo {
+  align-self: flex-start;
+  margin-left: 2px;
 }
 
 .novaLine {
@@ -445,6 +521,21 @@
 .tools {
   display: flex;
   gap: 6px;
+}
+
+/*
+ * Cluster: the gauge takes the left of the row and the two buttons stack
+ * beside it, so the dial earns its height instead of squeezing the labels.
+ */
+.toolsCluster {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+}
+
+.toolsCluster .gauge {
+  grid-row: span 2;
+  align-self: center;
 }
 
 .tool {
@@ -496,6 +587,12 @@
 
 .burnHot:not(:disabled) {
   animation: pulseGlow 900ms ease-in-out infinite;
+}
+
+/* The gauge is full: this is the only thing left to do. */
+.burnFull:not(:disabled) {
+  animation: pulseGlow 520ms ease-in-out infinite;
+  box-shadow: 0 0 24px rgba(255, 138, 31, 0.85);
 }
 
 .boostOn {
@@ -1045,14 +1142,13 @@
   }
 }
 
-@keyframes reactorIn {
-  from {
-    transform: scaleX(0);
-    transform-origin: left center;
+@keyframes gaugeFull {
+  0%,
+  100% {
+    filter: none;
   }
-  to {
-    transform: scaleX(1);
-    transform-origin: left center;
+  50% {
+    filter: drop-shadow(0 0 10px rgba(255, 138, 31, 0.75));
   }
 }
 
@@ -1168,7 +1264,8 @@
     animation: none;
   }
 
-  .reactorLit,
+  .gaugeFull,
+  .burnFull:not(:disabled),
   .burnHot:not(:disabled),
   .boostOn,
   .clockLow,
@@ -1179,6 +1276,12 @@
 
   .pulse {
     animation: none;
+  }
+
+  /* The gauge is driven by inline transitions, so they need overriding here. */
+  .gaugeDial *,
+  .gaugeDial {
+    transition: none !important;
   }
 
   .tapPrompt {
@@ -1280,6 +1383,10 @@
 
   .anomalyImage {
     max-width: 100px;
+  }
+
+  .gauge {
+    width: 68px;
   }
 
   .pulse {

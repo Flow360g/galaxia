@@ -42,8 +42,10 @@ things that make those games sticky:
   cluster's first pick gets two seconds more, because six options and a
   prompt have to be read before the first tap.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
-  to crawling. The Cluster is push-your-luck: bank the plasma now, or pick
-  again for more and risk a boulder. Boost is confidence as a button. Three
+  to crawling. The Cluster is push-your-luck: every right lane winds the
+  boost gauge up a notch, and the player either fires it now or picks again
+  for more and risks a boulder. Fill it and the clock stops: the biggest
+  burst in the game is spent on a tap, never taken away on a timer. Boost is confidence as a button. Three
   shields per run; each wrong lane costs one, and at zero every miss is a
   wreck. Keep every new mechanic inside this frame: a decision with a
   visible stake, a fast verdict, a consequence you can feel.
@@ -75,7 +77,9 @@ The screen has two zones. Respect them:
 
 - **Top band: the whole HUD.** Readouts (distance, velocity, streak, shield
   pips), then the question panel: tag and countdown, prompt, thrust bar,
-  the row of answer squares, the reactor gauge, NOVA and Boost or BURN. The
+  the row of answer squares, then the tools: on a Cluster the boost gauge at
+  the bottom left with NOVA and BANK / FIRE BOOST beside it, otherwise NOVA
+  and Boost or LOCK & FIRE. The
   outcome toast lands here too. The band is sized by its contents and
   capped at roughly 60vh so it can never creep down over the ship. Padded
   by `env(safe-area-inset-top)` for notches and Dynamic Island.

@@ -190,8 +190,13 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
       timeout: 5_000,
     });
   }
-  // Third correct pick auto-burns: the panel gives way to the toast, no BANK tap needed.
+  // The third correct pick fills the gauge and stops the clock: the boost is
+  // spent on a tap, not taken away on a timer.
   await page.keyboard.press(String(lanes[lanes.length - 1]! + 1));
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "3", { timeout: 5_000 });
+  await expect(page.getByTestId("burn")).toContainText("FIRE BOOST");
+  await shot(page, "14-gauge-full");
+  await page.getByTestId("burn").click();
   await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
   await expect(toast).toHaveAttribute("data-charge", "3");
   await expect(toast).toContainText("MAXIMUM THRUST");
