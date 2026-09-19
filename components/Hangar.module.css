@@ -1,28 +1,70 @@
-/* The ship bay. Portrait: a header rail, the lit bay, then the plate under
-   it. Fills the viewport exactly and never scrolls, like every other screen
-   in the game. */
+/* The ship bay.
+
+   The bay fills the screen and everything else floats over it. That is not
+   only a look: it is what stops the hull jumping. When the canvas was a flex
+   sibling of the text, every hull with a longer name or a third line of blurb
+   resized it, which re-framed the camera mid-switch. Pinned to the viewport,
+   the canvas cannot know or care what the text below it is doing.
+
+   So: do not put the canvas back in the flow, and do not let anything size
+   itself off the overlay. */
 
 .main {
   position: fixed;
   inset: 0;
-  display: flex;
-  flex-direction: column;
   background: var(--space);
   color: #ffffff;
-  padding: 0 16px;
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  gap: 10px;
   overflow: hidden;
 }
 
+/* The bay creates its canvas in here. Full bleed, behind everything. */
+.bay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.bay > canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The hull is dragged with a finger, so the browser must not claim the
+     gesture for a scroll or a pull-to-refresh. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Keeps the header legible over a lit ceiling. */
+.topScrim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 17, 34, 0.92),
+    rgba(7, 17, 34, 0.55) 55%,
+    rgba(7, 17, 34, 0)
+  );
+}
+
 .header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid var(--rule-dark);
-  padding-bottom: 10px;
+  padding: 0 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
 }
 
 .back {
@@ -45,36 +87,30 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The bay itself takes whatever height the plate leaves it. */
-.stage {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 180px;
-  border: 1px solid var(--rule-dark);
-  overflow: hidden;
-}
-
-.bay {
+/* Stamp on a hull the player cannot fly yet. Sits under the header. */
+.stamp {
   position: absolute;
-  inset: 0;
+  top: max(52px, calc(env(safe-area-inset-top) + 40px));
+  left: 16px;
+  z-index: 2;
+  font-size: 9px;
+  letter-spacing: var(--track-label);
+  color: var(--arcade-yellow);
+  border: 1px solid var(--arcade-yellow);
+  padding: 6px 8px;
+  background: rgba(7, 17, 34, 0.72);
 }
 
-.bay > canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  touch-action: manipulation;
-}
-
+/* Arrows sit in the clear band above the overlay, not at half height. */
 .arrow {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 38%;
+  z-index: 2;
   min-width: 46px;
   min-height: 46px;
   font-size: 13px;
   color: #ffffff;
-  background: rgba(7, 17, 34, 0.7);
+  background: rgba(7, 17, 34, 0.55);
   border: 1px solid var(--rule-dark);
 }
 
@@ -84,37 +120,54 @@
 }
 
 .prev {
-  left: 8px;
+  left: 10px;
 }
 
 .next {
-  right: 8px;
+  right: 10px;
 }
 
-/* Corner stamp on a hull the player cannot fly yet. */
-.stamp {
+/* One-time nudge that the hull can be turned. Goes away on first touch. */
+.hint {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
   font-size: 9px;
   letter-spacing: var(--track-label);
-  color: var(--arcade-yellow);
-  border: 1px solid var(--arcade-yellow);
-  padding: 6px 8px;
-  background: rgba(7, 17, 34, 0.72);
+  color: #ffffff;
+  text-shadow: 0 1px 6px rgba(7, 17, 34, 0.95), 0 0 14px rgba(7, 17, 34, 0.8);
+  pointer-events: none;
+  animation: pulse 2.4s ease-in-out infinite;
 }
 
-.plate {
-  flex: 0 0 auto;
+/* The floating plate. Gradient rather than a hard edge, so the deck runs
+   under the type instead of stopping at a line. */
+.overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 26px 16px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  background: linear-gradient(
+    to top,
+    rgba(7, 17, 34, 0.97),
+    rgba(7, 17, 34, 0.93) 52%,
+    rgba(7, 17, 34, 0.72) 80%,
+    rgba(7, 17, 34, 0)
+  );
 }
 
 .namePlate {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
 }
@@ -123,7 +176,7 @@
   margin: 0;
   font-size: 18px;
   color: #ffffff;
-  text-shadow: 0 0 18px rgba(79, 241, 255, 0.55);
+  text-shadow: 0 2px 12px rgba(7, 17, 34, 0.9);
 }
 
 .class {
@@ -175,7 +228,7 @@
 }
 
 .primary:disabled {
-  background: transparent;
+  background: rgba(7, 17, 34, 0.6);
   color: var(--panel-label);
   border-color: var(--rule-dark);
 }
@@ -185,7 +238,7 @@
 }
 
 .secondary {
-  background: transparent;
+  background: rgba(7, 17, 34, 0.6);
   color: var(--panel-label);
   border-color: var(--rule-dark);
 }
@@ -209,7 +262,7 @@
   gap: 8px;
   border: 1px solid var(--arcade-yellow);
   padding: 12px;
-  background: rgba(255, 224, 61, 0.05);
+  background: rgba(255, 224, 61, 0.06);
 }
 
 .checkoutPrice {
@@ -254,7 +307,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: transparent;
+  background: rgba(7, 17, 34, 0.55);
   border: 1px solid var(--rule-dark);
   color: var(--panel-label);
 }
@@ -286,13 +339,31 @@
   color: var(--arcade-yellow);
 }
 
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
 @media (min-width: 721px) {
-  .main {
+  .overlay {
     padding-left: 32px;
     padding-right: 32px;
+    align-items: stretch;
   }
 
-  .plate {
+  .overlay > * {
     max-width: 620px;
     width: 100%;
     align-self: center;
@@ -303,8 +374,8 @@
   }
 }
 
-/* Short phones. The bay gives up height first, but never below 180px, and
-   the plate tightens around it. */
+/* Short phones. The overlay is what steals height from the hull, so it is
+   what gives it back. */
 @media (max-height: 700px) {
   .blurb {
     font-size: 13px;
@@ -314,8 +385,9 @@
     font-size: 15px;
   }
 
-  .plate {
+  .overlay {
     gap: 8px;
+    padding-top: 22px;
   }
 }
 
@@ -329,5 +401,9 @@
     min-height: 44px;
     padding: 13px 14px;
     font-size: 10px;
+  }
+
+  .hint {
+    display: none;
   }
 }
