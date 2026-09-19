@@ -249,6 +249,7 @@ export class Engine {
     if (this.frameHandle !== null || this.disposed) return;
     this.clock.start();
     this.audio.setRunning(true);
+    this.audio.setMood("cruise");
     this.loop();
   }
 
@@ -382,7 +383,8 @@ export class Engine {
     // Leaving the alien stage: the scout leaves and the landmark sinks away.
     if (wasVector && !this.inVector) {
       this.alien.warpOut();
-      this.landmark.sink();
+      this.landmark.pass();
+      this.audio.setMood("cruise");
       this.densityTarget = 1;
     }
     this.incoming.retire();
@@ -445,7 +447,7 @@ export class Engine {
     this.waypointBeat = 0;
     this.densityTarget = WAYPOINT.fieldDensity;
     const stage = this.options.round.stages?.find((s) => s.name === info.stage);
-    this.landmark.rise(stage?.landmark ?? "moon", 1);
+    this.landmark.approach(stage?.landmark ?? "moon", 1);
     this.incoming.retire();
     this.chase.releaseLane();
     this.ship.recentre();
@@ -704,6 +706,13 @@ export class Engine {
         this.alien.warpIn(VECTOR.holdFar[0]!);
         this.shield.flash(FX.waypoint.warpFlash, COLOR.anomaly);
         this.chase.shake(0.4);
+        // The bed turns on the same beat the scout arrives, and the arrival
+        // itself covers the key change. Only when the stage ahead is really
+        // the scout's: a round whose next stage is lanes keeps its music.
+        if (this.waypoint.nextType === "vector") {
+          this.audio.alienArrival();
+          this.audio.setMood("dread");
+        }
       }
     }
 

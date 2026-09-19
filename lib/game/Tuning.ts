@@ -299,9 +299,19 @@ export const LANDMARK = {
   offsetY: 70,
   /** The sphere radius the model is normalised to. */
   radius: 55,
-  /** Seconds to rise into view, and to sink out at the next stage. */
-  riseSeconds: 4,
-  sinkSeconds: 6,
+  /**
+   * Where the approach starts, in the same units as `depth`. It is a
+   * projection figure only: nothing is ever placed out there, because
+   * perspective depends on nothing but X/Z, Y/Z and an angular size of r/|Z|,
+   * so the disc stays at `depth` and its offsets and scale carry the distance.
+   * That keeps it inside `CAMERA.far` however far away it reads.
+   */
+  farDepth: 2600,
+  /** Where it ends up once the ship has flown past it. */
+  passDepth: 150,
+  /** Seconds to come in from the distance, and to slide past at the next stage. */
+  approachSeconds: 4,
+  passSeconds: 6,
   /** Slow spin, radians per second. */
   spin: 0.02,
   moonUrl: "/models/moon.glb",
@@ -494,23 +504,96 @@ export const AUDIO = {
     glide: 0.28,
   },
 
+  /**
+   * The bed. One generative loop, two moods: `cruise` is the run, `dread` is
+   * the alien stage. The scheduler settings are shared; everything that
+   * decides what the loop SOUNDS like lives in a mood table, so turning the
+   * music ominous is a change here and a `setMood` call, never a second
+   * scheduler.
+   *
+   * The dread recipe, so a later tune keeps the intent: drop an octave and
+   * slow the tempo for weight, put the flat second and the tritone in the
+   * scale for menace, detune the pad hard enough to beat and stack a minor
+   * second on it, mute the hat so the pulse loses its arcade tick, darken and
+   * thin the arp so the melody reads as a distant signal rather than a tune,
+   * halve the arp density so there is space to be uneasy in, and hold a sub
+   * under the bar.
+   */
   music: {
-    /** Beats per minute at cruise and at max speed. */
-    bpm: [88, 116],
-    /** Scheduler lookahead and tick, seconds. */
+    /** Scheduler lookahead and tick, seconds. Shared by every mood. */
     lookahead: 0.15,
     tickSeconds: 0.025,
-    /** Root note of each bar, as a frequency in hertz. A minor, four bars. */
-    roots: [55, 43.65, 65.41, 49],
-    /** Minor pentatonic, semitone offsets from the root. */
-    scale: [0, 3, 5, 7, 10, 12, 15],
+    /** Steps per bar. Eighth notes, so a bar is four beats. */
     steps: 8,
-    bassGain: 0.26,
-    padGain: 0.055,
-    arpGain: [0.03, 0.07],
-    hatGain: [0.01, 0.035],
     /** How much of the music goes to the tail. */
     send: 0.22,
+
+    /** The bed the run is flown to: A minor, four bars, arcade. */
+    cruise: {
+      /** Beats per minute at cruise and at max speed. */
+      bpm: [88, 116],
+      /** Root note of each bar, as a frequency in hertz. A minor, four bars. */
+      roots: [55, 43.65, 65.41, 49],
+      /** Minor pentatonic, semitone offsets from the root. */
+      scale: [0, 3, 5, 7, 10, 12, 15],
+      bassGain: 0.26,
+      padGain: 0.055,
+      arpGain: [0.03, 0.07],
+      hatGain: [0.01, 0.035],
+      /** Lowpass on the arp at cruise and at max speed. */
+      arpFilterHz: [1600, 4600],
+      /** Detune of the pad pair, in cents. */
+      padDetune: 6,
+      /** Semitones of a third pad voice against the chord. 0 is none. */
+      padSecond: 0,
+      /** A sub held under the bar. 0 is none. */
+      subGain: 0,
+      /** Play the arp every Nth step. 1 is every step. */
+      arpEvery: 1,
+    },
+
+    /** Phase 2: the scout is out there. The same bed, lower and wrong. */
+    dread: {
+      bpm: [62, 78],
+      /** D1, C#1, D1, C1: a semitone crawl that never resolves. */
+      roots: [36.71, 34.65, 36.71, 32.7],
+      /** Phrygian flat second plus the tritone. */
+      scale: [0, 1, 5, 6, 7, 10, 12],
+      bassGain: 0.3,
+      padGain: 0.075,
+      arpGain: [0.012, 0.03],
+      hatGain: [0, 0.006],
+      arpFilterHz: [500, 1400],
+      padDetune: 26,
+      padSecond: 1,
+      subGain: 0.1,
+      arpEvery: 2,
+    },
+  },
+
+  /**
+   * The scout warping in. Three layers, like every other impact in here: a
+   * sub falling away under it, an inharmonic cluster that rings rather than
+   * chimes, and a noise swell rushing in behind. It lands on the warp flash
+   * and covers the seam where the music changes key.
+   */
+  alienArrival: {
+    /** The sub: where it starts, where it falls to, and how long it takes. */
+    subFrom: 90,
+    subTo: 28,
+    subSeconds: 2.2,
+    subGain: 0.42,
+    /** Inharmonic partials, as ratios of `ringHz`. Not a chord. */
+    ringHz: 196,
+    ringRatios: [1, 1.41, 2.09],
+    ringSeconds: 2.6,
+    ringGain: 0.1,
+    /** The rush: noise sweeping up behind the sub. */
+    rushFrom: 300,
+    rushTo: 2600,
+    rushSeconds: 1.5,
+    rushGain: 0.16,
+    send: 0.75,
   },
 
   /**

@@ -152,6 +152,12 @@ export interface WaypointState {
   stage: string;
   /** Stage about to begin. */
   next: string;
+  /**
+   * Type of the first encounter of that stage, so the card can brief the
+   * game the player is about to play rather than assume one. Flat, like
+   * everything else on `GameState`.
+   */
+  nextType: Question["type"];
   rating: Rating;
   plasma: number;
   shields: number;

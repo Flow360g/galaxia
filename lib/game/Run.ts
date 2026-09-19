@@ -549,7 +549,8 @@ export class Run {
     const stageIndex = stages.findIndex((stage) => stage.after === this.index);
     const stage = stages[stageIndex];
     const next = stages[stageIndex + 1];
-    if (!stage || !next || !this.round.questions[this.index + 1]) return false;
+    const nextQuestion = this.round.questions[this.index + 1];
+    if (!stage || !next || !nextQuestion) return false;
 
     const plasma = this.outcomes.reduce((sum, o) => sum + (o.kind === "burn" ? (o.charge ?? 0) : 0), 0);
     const rating = rateStage(plasma, this.shields);
@@ -559,6 +560,7 @@ export class Run {
     this.waypoint = {
       stage: stage.name,
       next: next.name,
+      nextType: nextQuestion.type,
       rating,
       plasma,
       shields: this.shields,

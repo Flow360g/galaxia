@@ -21,7 +21,7 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { COUNTDOWN, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { COUNTDOWN, ENCOUNTER, SCORE, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
 import {
@@ -81,6 +81,20 @@ const RATING_TEXT: Record<Rating, string> = {
   B: "STEADY",
   C: "ROUGH",
 };
+
+/**
+ * What a Vector is worth, read from the scoring table rather than typed out,
+ * so retuning the score can never leave the briefing lying about it. The
+ * bands are named, not given as percentages: `VECTOR.perfectBand` is a
+ * fraction of the question's authored tolerance, not of the answer, so "within
+ * 15%" would be wrong however true it looks.
+ */
+const VECTOR_BANDS: Array<[string, string]> = [
+  ["DEAD ON", `${Math.round(SCORE.perEncounter * SCORE.vectorDirect)} PTS`],
+  ["CLOSE", `${Math.round(SCORE.perEncounter * SCORE.vectorGlance)} PTS`],
+  ["WIDE", `-${SCORE.penalty.collision} AND A SHIELD`],
+];
+const TOP_MULTIPLIER = Math.max(...SCORE.streakMultipliers);
 
 /**
  * DOM overlay HUD.
@@ -685,7 +699,27 @@ function WaypointCard({
         <>
           <span className={`${styles.wpEntering} arcade`}>ENTERING PHASE 2</span>
           <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
-          <span className={styles.wpHint}>An alien scout is shadowing you. Aim, lock, fire.</span>
+          {waypoint.nextType === "vector" ? (
+            <>
+              <span className={styles.wpHint}>
+                An alien scout is shadowing you. Every question now wants a number. Slide
+                the scout onto your answer and fire. Closest wins.
+              </span>
+              <dl className={styles.wpScore} data-testid="waypoint-scoring">
+                {VECTOR_BANDS.map(([band, worth]) => (
+                  <div key={band} className={styles.wpScoreRow}>
+                    <dt className="arcade">{band}</dt>
+                    <dd className="arcade">{worth}</dd>
+                  </div>
+                ))}
+              </dl>
+              <span className={`${styles.wpStreak} arcade`}>
+                STREAK MULTIPLIES UP TO x{TOP_MULTIPLIER}
+              </span>
+            </>
+          ) : (
+            <span className={styles.wpHint}>Same rules, faster sky. Keep the streak alive.</span>
+          )}
         </>
       )}
       <TapPrompt shown={awaitingTap} />
