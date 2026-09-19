@@ -18,11 +18,17 @@ export class Flight {
   distance = 0;
   streak = 0;
   peakVelocity: number = FLIGHT.cruise;
+  /**
+   * Scales the cruise floor, 0..1. Throttling back does not touch velocity
+   * directly: it lowers the floor and lets velocity relax down to it on the
+   * same curve everything else rides, so a slowdown reads as one.
+   */
+  throttle = 1;
 
   /** The floor velocity relaxes toward, set by the streak. */
   get cruise(): number {
     const steps = Math.min(this.streak, FLIGHT.streakCap);
-    return FLIGHT.cruise * (1 + FLIGHT.streakCruiseGain * steps);
+    return FLIGHT.cruise * (1 + FLIGHT.streakCruiseGain * steps) * this.throttle;
   }
 
   /** World units per second for the scene. */
@@ -53,8 +59,8 @@ export class Flight {
   /**
    * Apply an outcome. Returns the velocity after it landed.
    *
-   * `strength` (0..1) scales a correct outcome's impulse, so a partially
-   * right anomaly answer earns a partial burst. `multiplier` scales it up:
+   * `strength` (0..1) scales a correct outcome's impulse, so a glancing
+   * vector hit earns a partial burst. `multiplier` scales it up:
    * a cluster burn passes the charge multiplier here.
    *
    * `severity` (0..1) scales a WRONG outcome the same way: at 1 the impact
@@ -87,6 +93,10 @@ export class Flight {
       case "wreck":
         this.streak = 0;
         this.velocity = Math.max(this.velocity * retain(FLIGHT.wreckRetain, severity), FLIGHT.minVelocity);
+        break;
+      case "dock":
+        // Neutral: the ship is alongside, nothing has struck it and nothing
+        // has been earned. Velocity and streak are left where they were.
         break;
     }
     this.peakVelocity = Math.max(this.peakVelocity, this.velocity);

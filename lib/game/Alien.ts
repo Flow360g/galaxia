@@ -53,7 +53,7 @@ export class Alien {
     const geometry = new THREE.OctahedronGeometry(1, 0);
     const material = new THREE.MeshLambertMaterial({
       color: 0x6f5aa8,
-      emissive: COLOR.anomaly,
+      emissive: COLOR.contact,
       emissiveIntensity: 0.3,
       flatShading: true,
       transparent: true,

@@ -66,17 +66,38 @@ export const FLIGHT = {
   distanceTimeScale: 90,
 } as const;
 
+/**
+ * The launch countdown: 3, 2, 1, GO over the engines lighting.
+ *
+ * The run does not start because a timer somewhere ran out; it starts because
+ * the player said READY and then watched it come. That is the whole job of
+ * this -- the first cluster has a five second clock on it, and a player who
+ * is still working out that the screen has started is already behind it.
+ */
+export const COUNTDOWN = {
+  /** Seconds each of 3, 2 and 1 holds. */
+  stepSeconds: 0.72,
+  /** Seconds GO holds before it clears and the first prompt lands. */
+  goSeconds: 0.54,
+} as const;
+
+/** How long the whole countdown, and therefore the intro, runs for. */
+const COUNTDOWN_SECONDS = COUNTDOWN.stepSeconds * 3 + COUNTDOWN.goSeconds;
+
 export const ENCOUNTER = {
-  /** Engines lighting before the first asteroid is called. */
-  introSeconds: 2.6,
+  /**
+   * Engines lighting before the first asteroid is called. This IS the
+   * countdown: the numbers come down over the ship getting under way, and
+   * GO clears exactly as the first prompt lands. Retune `COUNTDOWN` and the
+   * two stay together.
+   */
+  introSeconds: COUNTDOWN_SECONDS,
   /**
    * Seconds on the clock for a single pick. Thrust IS the timer, and it
    * refills for every pick, so a six-lane cluster is six five-second
    * decisions rather than one long one.
    */
   thrustSeconds: 5,
-  /** The anomaly needs typing time. */
-  anomalyThrustSeconds: 40,
   /** Asteroid Z at full thrust and at empty thrust. It looms as you think. */
   holdFar: -170,
   holdNear: -48,
@@ -96,16 +117,13 @@ export const ENCOUNTER = {
    * CONTINUE arms, so the tap that answered cannot skip its own verdict.
    */
   confirmArmSeconds: 0.7,
-  /** Radius of an encounter asteroid, and of the anomaly. */
+  /** Radius of an encounter asteroid. */
   radius: 4.6,
-  anomalyRadius: 5.2,
   /** Vertical offset of the encounter rock so it sits in the ship's eyeline. */
   offsetY: 0.6,
   /** Lateral swerve when threading past, and the tighter skim on a slingshot. */
   threadOffsetX: 9.5,
   skimOffsetX: 6.6,
-  /** How long the scorer may take before the anomaly is marked locally. */
-  scanTimeoutSeconds: 9,
 } as const;
 
 export const CLUSTER = {
@@ -201,11 +219,6 @@ export const SCORE = {
   /** Vector: share of the base for a direct hit and for a glancing hit. */
   vectorDirect: 1,
   vectorGlance: 0.5,
-  /** Anomaly: share at full marks, and for a partial answer. */
-  anomalyFull: 1,
-  anomalyPartial: 0.5,
-  /** Scanner score at or above which the anomaly is full marks. */
-  anomalyFullAt: 0.8,
   /**
    * Multiplier by the streak carried INTO the encounter; the last value holds
    * for anything longer. Whole numbers on purpose: x2 is a thing a player can
@@ -236,14 +249,25 @@ export const VECTOR = {
   perfectBand: 0.15,
   /** Strength of a glancing hit at the edge of tolerance (1.0 at the perfect band). */
   glanceFloor: 0.4,
-  /** Seconds the beam takes to reach the alien after lock. */
-  beamSeconds: 0.35,
   /**
-   * A shot that misses flies PAST the scout rather than stopping level with
-   * it: the beam runs on to this multiple of the range before it fades, so a
-   * miss reads as a miss.
+   * Seconds the beam takes to reach the alien after lock. A shot is a shot:
+   * it crosses the gap almost before the eye has it, and everything that
+   * makes it read -- the muzzle, the recoil, the scout going up -- lands in
+   * the same instant rather than spread over a lazy arc.
    */
-  missOvershoot: 1.5,
+  beamSeconds: 0.1,
+  /**
+   * Lock to contact when the shot is on target. Barely longer than the beam
+   * takes to arrive, so the crack, the hit and the explosion are one event.
+   */
+  strikeSeconds: 0.16,
+  /**
+   * Lock to contact when the shot is NOT taken: the aim was wrong, our guns
+   * stay quiet, and the scout takes this long to line up and fire back. The
+   * silence is the point -- a beat of nothing coming from the ship before
+   * the hull is hit.
+   */
+  returnDelaySeconds: 0.85,
   /**
    * How hard a miss lands. Error 1 is the edge of tolerance and costs
    * `severityFloor` of a full impact; error `severityFullAt` and beyond costs
@@ -279,13 +303,117 @@ export const LANDMARK = {
   offsetY: 70,
   /** The sphere radius the model is normalised to. */
   radius: 55,
-  /** Seconds to rise into view, and to sink out at the next stage. */
-  riseSeconds: 4,
-  sinkSeconds: 6,
+  /**
+   * Where the approach starts, in the same units as `depth`. It is a
+   * projection figure only: nothing is ever placed out there, because
+   * perspective depends on nothing but X/Z, Y/Z and an angular size of r/|Z|,
+   * so the disc stays at `depth` and its offsets and scale carry the distance.
+   * That keeps it inside `CAMERA.far` however far away it reads.
+   */
+  farDepth: 2600,
+  /** Where it ends up once the ship has flown past it. */
+  passDepth: 150,
+  /** Seconds to come in from the distance, and to slide past at the next stage. */
+  approachSeconds: 4,
+  passSeconds: 6,
   /** Slow spin, radians per second. */
   spin: 0.02,
   moonUrl: "/models/moon.glb",
-  planetUrl: "/models/planet.glb",
+  planetUrl: "/models/earth.glb",
+} as const;
+
+/**
+ * WHERE ON EARTH: the relay station. Two appearances, one model.
+ *
+ * On the flight it comes up out of the distance dead ahead, projected the
+ * way the landmark is (see `LANDMARK.farDepth`), and the ship throttles back
+ * to come alongside. Aboard, it hangs in the foreground of its own scene
+ * with the docking module aimed at Earth.
+ */
+export const STATION = {
+  modelUrl: "/models/station.glb",
+  /** Distance in front of the camera; must be < CAMERA.far. */
+  depth: 300,
+  /** Where the approach starts, a projection figure only, like the landmark's. */
+  farDepth: 3200,
+  /**
+   * Camera-space offsets at `depth`. Dead ahead on X; below centre on Y so
+   * it sits in the gap between the HUD band and the ship in the lower third.
+   */
+  offsetX: 0,
+  offsetY: -34,
+  /** The model's longest axis at `depth`. */
+  length: 120,
+  /** Yaw so the dish and the solar wings read side-on, like a station should. */
+  yaw: 0.35,
+  /** Slow roll about the docking axis, radians per second. */
+  spin: 0.04,
+  /** Seconds from first sight to alongside. Arrival is this timer, never an asset. */
+  approachSeconds: 7,
+  /** Ambient rock density on the approach: a station does not sit in a belt. */
+  fieldDensity: 0.05,
+  /** The cruise floor while docking, as a fraction of normal. See Flight.throttle. */
+  dockThrottle: 0.12,
+
+  /** Aboard: the model's longest axis, in the orbit scene's units. */
+  dockedLength: 9,
+  /**
+   * Where it hangs, with Earth at `EARTH.position`. Below the band's third
+   * of the frame, above Earth, so the docking module reads as aimed down at
+   * the planet rather than off the edge of the screen.
+   */
+  dockedPosition: [0.4, -6.5, 0] as [number, number, number],
+  /** Roll about the docking axis while aboard, radians per second. */
+  dockedSpin: 0.06,
+  /**
+   * The docking module lies on the model's tube axis, and the loader centres
+   * the model on its bounds, which the solar wings drag off that axis. This
+   * is how far, as a fraction of the model length, to slide the model back so
+   * the tube axis passes through the pivot the station is aimed with.
+   */
+  axisOffset: 0.156,
+} as const;
+
+/** Earth, as seen from the station. */
+export const EARTH = {
+  modelUrl: "/models/earth.glb",
+  /** Diameter in the orbit scene's units. */
+  diameter: 10,
+  /**
+   * Centre: below the station and well behind it, so it reads as a planet
+   * in the distance with the docking module aimed at it, not a wall.
+   */
+  position: [1.2, -15.5, -2] as [number, number, number],
+  /** Radians per second. */
+  spin: 0.025,
+  /** Axial lean, radians. Earth's own is 23.4 degrees. */
+  tilt: 0.41,
+  /** Atmosphere: two additive shells, inside-out and outside, as scale and opacity. */
+  haloInner: { scale: 1.035, opacity: 0.22 },
+  haloOuter: { scale: 1.09, opacity: 0.08 },
+} as const;
+
+/** The orbit scene's camera and sun. */
+export const ORBIT = {
+  fov: 42,
+  near: 0.1,
+  /** Far enough to hold the backdrop plane at `BACKDROP.depth`. */
+  far: 600,
+  /** Where the camera sits, and what it looks at. Side-on to the station, a little above it. */
+  cameraPosition: [-7, -4, 31] as [number, number, number],
+  lookAt: [0.3, -8.6, 0] as [number, number, number],
+  /**
+   * The composition is authored wide. In portrait the camera backs off along
+   * its own line until the frame is at least this many degrees across.
+   */
+  minHorizontalFov: 28,
+  /** A slow drift so the frame is never a still: amplitude in units, rate in rad/s. */
+  driftAmplitude: 0.35,
+  driftRate: 0.18,
+  /** The sun: warm, from the side, so Earth has a terminator and the station a dark face. */
+  sunPosition: [18, 8, 6] as [number, number, number],
+  sunIntensity: 2.4,
+  fillIntensity: 0.55,
 } as const;
 
 export const ALIEN = {
@@ -314,8 +442,18 @@ export const ALIEN = {
   /** A glancing hit: seconds of the spin, and how far it is knocked back. */
   glanceSeconds: 0.9,
   glanceKick: 7,
-  /** Return fire: seconds for the red beam, and the warp-out run. */
-  returnFireSeconds: 0.5,
+  /**
+   * Return fire: seconds for the red beam to cross, and the warp-out run.
+   * The scout's shot is as quick as ours -- the dread is in the beat before
+   * it (`VECTOR.returnDelaySeconds`), not in a slow bolt.
+   */
+  returnFireSeconds: 0.18,
+  /**
+   * The scout's gun, as a transposition of the ship's. Under 1 is bigger and
+   * further off: the same discharge from something you would rather not be
+   * in front of.
+   */
+  gunPitch: 0.62,
   warpOutSeconds: 1.2,
   /** Seconds the hull takes to come apart on a kill. */
   destroySeconds: 0.9,
@@ -338,6 +476,8 @@ export const FX = {
     wreck: 2.2,
     timeout: 1.1,
     burn: 0.8,
+    /** Docking never strikes the ship. */
+    dock: 0,
   },
   /** Camera pull-back (extra +Z offset) on a burst, and its decay per second. */
   pullback: { thread: 2.2, slingshot: 5.5, burn: 4.5 },
@@ -358,6 +498,9 @@ export const FX = {
     directShake: 1.0,
     glanceShake: 0.45,
     returnFireShake: 1.3,
+    /** Firing: the recoil through the rig, and the lens kicking with it. */
+    fireShake: 0.7,
+    fireKick: 4.5,
     /** Salvage capsule flight time to the ship. */
     salvageSeconds: 0.6,
   },
@@ -467,31 +610,111 @@ export const AUDIO = {
     glide: 0.28,
   },
 
+  /**
+   * The bed. One generative loop, two moods: `cruise` is the run, `dread` is
+   * the alien stage. The scheduler settings are shared; everything that
+   * decides what the loop SOUNDS like lives in a mood table, so turning the
+   * music ominous is a change here and a `setMood` call, never a second
+   * scheduler.
+   *
+   * The dread recipe, so a later tune keeps the intent: drop an octave and
+   * slow the tempo for weight, put the flat second and the tritone in the
+   * scale for menace, detune the pad hard enough to beat and stack a minor
+   * second on it, mute the hat so the pulse loses its arcade tick, darken and
+   * thin the arp so the melody reads as a distant signal rather than a tune,
+   * halve the arp density so there is space to be uneasy in, and hold a sub
+   * under the bar.
+   */
   music: {
-    /** Beats per minute at cruise and at max speed. */
-    bpm: [88, 116],
-    /** Scheduler lookahead and tick, seconds. */
+    /** Scheduler lookahead and tick, seconds. Shared by every mood. */
     lookahead: 0.15,
     tickSeconds: 0.025,
-    /** Root note of each bar, as a frequency in hertz. A minor, four bars. */
-    roots: [55, 43.65, 65.41, 49],
-    /** Minor pentatonic, semitone offsets from the root. */
-    scale: [0, 3, 5, 7, 10, 12, 15],
+    /** Steps per bar. Eighth notes, so a bar is four beats. */
     steps: 8,
     /**
      * Octave of each part above the bar root. A phone speaker reproduces
      * almost nothing below about 400Hz, so the parts sit an octave or two
      * higher than the theory wants: a bass at 55Hz is a bass nobody hears.
+     * Shared by every mood; a mood moves its roots, not its octaves.
      */
     octaves: { bass: 2, pad: 4, arp: 8, sparkle: 16 },
-    bassGain: 0.24,
-    padGain: 0.07,
-    arpGain: [0.075, 0.13],
-    /** The octave above the arp, added as the run gets fast. */
-    sparkleGain: 0.045,
-    hatGain: [0.016, 0.045],
     /** How much of the music goes to the tail. */
     send: 0.26,
+
+    /** The bed the run is flown to: A minor, four bars, arcade. */
+    cruise: {
+      /** Beats per minute at cruise and at max speed. */
+      bpm: [88, 116],
+      /** Root note of each bar, as a frequency in hertz. A minor, four bars. */
+      roots: [55, 43.65, 65.41, 49],
+      /** Minor pentatonic, semitone offsets from the root. */
+      scale: [0, 3, 5, 7, 10, 12, 15],
+      bassGain: 0.24,
+      padGain: 0.07,
+      arpGain: [0.075, 0.13],
+      /** The octave above the arp, added as the run gets fast. */
+      sparkleGain: 0.045,
+      hatGain: [0.016, 0.045],
+      /** Lowpass on the arp at cruise and at max speed. */
+      arpFilterHz: [1600, 4600],
+      /** Detune of the pad pair, in cents. */
+      padDetune: 6,
+      /** Semitones of a third pad voice against the chord. 0 is none. */
+      padSecond: 0,
+      /** A sub held under the bar. 0 is none. */
+      subGain: 0,
+      /** Play the arp every Nth step. 1 is every step. */
+      arpEvery: 1,
+    },
+
+    /**
+     * Phase 2: the scout is out there. The same bed, lower and wrong. Its
+     * gains sit in the same ratio to cruise as when it was written, before
+     * the music level fix; it has not been listened to since. Tune by ear.
+     */
+    dread: {
+      bpm: [62, 78],
+      /** D1, C#1, D1, C1: a semitone crawl that never resolves. */
+      roots: [36.71, 34.65, 36.71, 32.7],
+      /** Phrygian flat second plus the tritone. */
+      scale: [0, 1, 5, 6, 7, 10, 12],
+      bassGain: 0.28,
+      padGain: 0.095,
+      arpGain: [0.03, 0.055],
+      /** No lift in dread. */
+      sparkleGain: 0,
+      hatGain: [0, 0.008],
+      arpFilterHz: [500, 1400],
+      padDetune: 26,
+      padSecond: 1,
+      subGain: 0.1,
+      arpEvery: 2,
+    },
+  },
+
+  /**
+   * The scout warping in. Three layers, like every other impact in here: a
+   * sub falling away under it, an inharmonic cluster that rings rather than
+   * chimes, and a noise swell rushing in behind. It lands on the warp flash
+   * and covers the seam where the music changes key.
+   */
+  alienArrival: {
+    /** The sub: where it starts, where it falls to, and how long it takes. */
+    subFrom: 90,
+    subTo: 28,
+    subSeconds: 2.2,
+    subGain: 0.42,
+    /** Inharmonic partials, as ratios of `ringHz`. Not a chord. */
+    ringHz: 196,
+    ringRatios: [1, 1.41, 2.09],
+    ringSeconds: 2.6,
+    ringGain: 0.1,
+    /** The rush: noise sweeping up behind the sub. */
+    rushFrom: 300,
+    rushTo: 2600,
+    rushSeconds: 1.5,
+    rushGain: 0.16,
+    send: 0.75,
   },
 
   /**
@@ -517,10 +740,75 @@ export const AUDIO = {
   },
 
   /**
+   * The launch countdown. Three pips and a GO: the pips are one clean tone
+   * with a click on the front, the GO is the same note an octave up with a
+   * fifth over it and the room behind it, so the last one reads as a start
+   * rather than a fourth pip.
+   */
+  countdown: {
+    pipHz: 660,
+    goHz: 1320,
+    seconds: 0.16,
+    goSeconds: 0.5,
+    gain: 0.2,
+    send: 0.35,
+  },
+
+  /**
    * A pass: the Doppler of something going by. The filter rises to `peak` as
    * it approaches and falls away behind, and the pan crosses with it.
    */
   whoosh: { q: 5.5, peakBias: 0.42, bodyGain: 0.5, send: 0.35 },
+
+  /**
+   * The ship's gun. Not a pew: a discharge.
+   *
+   * The crack is the capacitor letting go and is over in a fortieth of a
+   * second -- it is the whole reason the shot reads as sudden. Under it a
+   * pair of detuned saws fall from the top of their range to the bottom in
+   * the same breath, driven so they tear, and a sub lands with them so the
+   * hull feels it. The bolt itself is noise sweeping down and out across the
+   * stereo field, which is the sound of it leaving.
+   */
+  laser: {
+    crack: { seconds: 0.025, gain: 0.5, hz: [8200, 2600], q: 1.1 },
+    body: { seconds: 0.26, gain: 0.3, hz: [2400, 180], detuneCents: 22, q: 9 },
+    sub: { seconds: 0.3, gain: 0.26, hz: [160, 40] },
+    bolt: { seconds: 0.34, gain: 0.22, hz: [5200, 700], q: 3.2, pan: [0, 0.45] },
+    send: 0.45,
+    duck: 0.3,
+  },
+
+  /**
+   * Something going up at a distance: the scout when the shot lands. Sharper
+   * and drier at the front than a hull crash, because it is happening over
+   * there, and with most of its length in the tail -- the room is what says
+   * "far away", and there is nothing else out here to say it.
+   */
+  blast: {
+    crack: { seconds: 0.04, gain: 0.34, hz: [6400, 1500] },
+    body: { seconds: 0.55, gain: 0.34, hz: [1800, 120], q: 1.4 },
+    sub: { seconds: 0.6, gain: 0.3, hz: [110, 32] },
+    /** Pieces coming off, scattered so no two blasts are the same. */
+    rubble: { count: 9, spread: 0.55, gain: 0.1, hz: [900, 4800], seconds: 0.1 },
+    send: 0.7,
+    duck: 0.42,
+  },
+
+  /**
+   * Docking: an airlock, not a hit. The clamps taking the hull, the hull
+   * ringing off them on one low inharmonic partial, and the seal hissing
+   * after. Ducks the bed the way an impact does, since a mass has just met
+   * a bigger one.
+   */
+  dock: {
+    clamp: { seconds: 0.22, gain: 0.42, hz: [900, 90], q: 1.6 },
+    sub: { seconds: 0.5, gain: 0.3, hz: [90, 38] },
+    ring: { hz: 146, seconds: 1.6, gain: 0.16, delay: 0.05, ratio: 2.76, index: 260 },
+    hiss: { seconds: 1.4, gain: 0.09, hz: [3200, 900], q: 0.9, attack: 0.15, delay: 0.3 },
+    send: 0.6,
+    duck: 0.35,
+  },
 
   /** Boost, slingshot and the burn: thrust you can hear winding up. */
   boost: {
@@ -881,6 +1169,14 @@ export const CAMERA = {
   lateralFollow: 0.72,
   /** Positional damping. Higher = tighter, stiffer chase. */
   positionDamping: 4.2,
+  /**
+   * How fast the rig eases in and out of a lane lock. The lock swings the
+   * camera's whole job around -- from following the ship's X to holding the
+   * centreline -- and flipping that in one frame snaps the aim, which reads
+   * as a glitch the instant a lane is tapped. Blending it over a few frames
+   * makes the same change invisible. Higher = quicker, harder changeover.
+   */
+  laneLockResponse: 6.5,
   /** How far ahead (on -Z) the camera aims. Makes steering read as intent. */
   lookAheadZ: 30,
   /**
@@ -957,8 +1253,11 @@ export const COLOR = {
   /** Arcade signal colours. */
   yellow: 0xffe03d,
   cyan: 0x4ff1ff,
-  /** The anomaly glows violet, unlike any normal rock. */
-  anomaly: 0xb28cff,
+  /**
+   * Violet: contact. The alien scout, and the relay station of WHERE ON
+   * EARTH. Nothing else in the game is this colour.
+   */
+  contact: 0xb28cff,
   /** Shield flash. */
   shield: 0x6fd6ff,
   /** Boost / slingshot heat. */

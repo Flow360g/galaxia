@@ -95,19 +95,21 @@
     },
     {
       "id": "q7",
-      "type": "anomaly",
-      "kind": "visual",
-      "image": "/anomaly/orion.png",
-      "imageAlt": "A star map on a dark navy sky. Seven bright stars form an hourglass shape: an orange-tinted star at the upper left shoulder, a white star at the upper right shoulder, three evenly spaced stars in a short straight diagonal line across the middle, a faint vertical trio of stars hanging just below that line, a white star at the lower left, and a large blue-white star at the lower right. Faint lines connect them into a stick figure.",
-      "prompt": "ANOMALY DETECTED. Our long-range scanner captured this star pattern. Name the constellation.",
-      "rubric": "The player must identify the constellation as Orion. Accept Orion, Orion the Hunter, or The Hunter. Naming only a part of it (Orion's Belt, the belt, the sword) or a star in it (Betelgeuse, Rigel) earns partial credit at most. Any other constellation is wrong.",
-      "accept": [
-        "orion",
-        "orion the hunter",
-        "hunter"
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed.",
+      "name": "Dubai",
+      "country": "United Arab Emirates",
+      "lat": 25.117,
+      "lon": 55.138,
+      "zoom": 13,
+      "options": [
+        "Doha",
+        "Dubai",
+        "Abu Dhabi",
+        "Jeddah"
       ],
-      "answerText": "Orion",
-      "fact": "Orion's three belt stars, Alnitak, Alnilam and Mintaka, lie 700 to 2,000 light-years away yet line up almost perfectly from Earth."
+      "answer": 1,
+      "fact": "Palm Jumeirah used 94 million cubic metres of dredged sand and no steel reinforcement in its breakwater."
     }
   ],
   "stages": [
@@ -118,7 +120,13 @@
     },
     {
       "name": "Alien Contact",
-      "after": 6
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 6,
+      "phase": 4
     }
   ]
 }

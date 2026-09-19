@@ -35,6 +35,13 @@ import type { OutcomeKind, Question } from "./types";
 /** Web Audio cannot ramp to zero on an exponential curve. This is silence. */
 const SILENT = 0.0001;
 
+/**
+ * Which bed the music loop is playing. One scheduler, two tables of notes and
+ * gains in `AUDIO.music`: the run is flown to `cruise`, the alien stage to
+ * `dread`.
+ */
+export type MusicMood = "cruise" | "dread";
+
 /** Options shared by every one-shot voice. */
 interface VoiceOptions {
   duration: number;
@@ -100,6 +107,7 @@ export class AudioEngine {
   private musicTimer: ReturnType<typeof setInterval> | null = null;
   private nextStepTime = 0;
   private step = 0;
+  private mood: MusicMood = "cruise";
 
   /** Smoothed 0..1 speed ratio, what every layer reads. */
   private intensity = 0;
@@ -456,6 +464,21 @@ export class AudioEngine {
   }
 
   /**
+   * Turn the bed. The step counter resets so the new key starts at bar 0
+   * rather than landing halfway through a progression it was never written
+   * for, and the crossfade comes for free: the outgoing bar's pad is nearly a
+   * bar long and rings over the first bar of the new mood.
+   *
+   * Deliberately NOT a ramp on `musicBus.gain`: `duck` writes that gain back
+   * to `AUDIO.musicBus` on every impact and would wipe it out.
+   */
+  setMood(mood: MusicMood): void {
+    if (mood === this.mood) return;
+    this.mood = mood;
+    this.step = 0;
+  }
+
+  /**
    * Lookahead scheduler: a timer this coarse cannot place a note accurately,
    * so it only queues the notes falling inside the next lookahead window and
    * the audio clock does the timing.
@@ -464,20 +487,22 @@ export class AudioEngine {
     const ctx = this.ctx;
     if (!ctx || this.muted || !this.running) return;
     const cfg = AUDIO.music;
+    const mood = AUDIO.music[this.mood];
 
     while (this.nextStepTime < ctx.currentTime + cfg.lookahead) {
-      const stepSeconds = 60 / lerp(cfg.bpm[0], cfg.bpm[1], this.intensity) / 2;
+      const stepSeconds = 60 / lerp(mood.bpm[0], mood.bpm[1], this.intensity) / 2;
       this.playStep(this.step, this.nextStepTime, stepSeconds);
       this.nextStepTime += stepSeconds;
-      this.step = (this.step + 1) % (cfg.steps * cfg.roots.length);
+      this.step = (this.step + 1) % (cfg.steps * mood.roots.length);
     }
   }
 
   private playStep(step: number, when: number, stepSeconds: number): void {
     const cfg = AUDIO.music;
+    const mood = AUDIO.music[this.mood];
     const bar = Math.floor(step / cfg.steps);
     const beat = step % cfg.steps;
-    const root = cfg.roots[bar] ?? cfg.roots[0];
+    const root = mood.roots[bar] ?? mood.roots[0];
     const t = this.intensity;
 
     // Bass on the downbeat and the half bar: the pulse the run is flown to.
@@ -485,7 +510,7 @@ export class AudioEngine {
     if (beat === 0 || beat === 4) {
       this.tone(root * cfg.octaves.bass, when, {
         duration: stepSeconds * 1.6,
-        gain: cfg.bassGain,
+        gain: mood.bassGain,
         type: "triangle",
         attack: 0.012,
         filterHz: 520,
@@ -494,14 +519,29 @@ export class AudioEngine {
       });
     }
 
+    // Sub: one long note under the whole bar, the part of the bed that is
+    // felt rather than heard. Undriven on purpose, so unlike the bass it
+    // stays on the music bus and ducks out of the way of an impact.
+    if (beat === 0 && mood.subGain > 0) {
+      this.tone(root / 2, when, {
+        duration: stepSeconds * cfg.steps * 1.1,
+        gain: mood.subGain,
+        type: "sine",
+        attack: stepSeconds * 2,
+        bus: this.musicBus,
+      });
+    }
+
     // Pad: two detuned sines across the whole bar, holding the chord under
     // everything else so the loop never sounds like four separate blips.
+    // `padSecond` stacks a third voice a semitone or two above them, which
+    // is what stops the chord sitting still.
     if (beat === 0) {
       const barSeconds = stepSeconds * cfg.steps;
-      for (const detune of [-6, 6]) {
+      for (const detune of [-mood.padDetune, mood.padDetune]) {
         this.tone(root * cfg.octaves.pad, when, {
           duration: barSeconds * 0.95,
-          gain: cfg.padGain,
+          gain: mood.padGain,
           type: "sine",
           attack: barSeconds * 0.25,
           detune,
@@ -509,46 +549,61 @@ export class AudioEngine {
           bus: this.musicBus,
         });
       }
+      if (mood.padSecond > 0) {
+        this.tone(root * cfg.octaves.pad * Math.pow(2, mood.padSecond / 12), when, {
+          duration: barSeconds * 0.8,
+          gain: mood.padGain * 0.7,
+          type: "sine",
+          attack: barSeconds * 0.4,
+          send: cfg.send,
+          bus: this.musicBus,
+        });
+      }
     }
 
-    // Arpeggio: the melody, climbing the pentatonic and reaching an octave
-    // higher the faster the ship is going. Triangle through a resonant
-    // lowpass with a tail on it, rather than a bare square: the same line,
-    // without the toy.
-    const degree = (ARP[beat % ARP.length] ?? 0) + (t > 0.55 && beat % 2 === 1 ? 5 : 0);
-    const semitones =
-      (cfg.scale[degree % cfg.scale.length] ?? 0) + 12 * Math.floor(degree / cfg.scale.length);
-    const note = root * cfg.octaves.arp * Math.pow(2, semitones / 12);
-    this.tone(note, when, {
-      duration: stepSeconds * 0.9,
-      gain: lerp(cfg.arpGain[0], cfg.arpGain[1], t),
-      type: "triangle",
-      attack: 0.006,
-      filterHz: lerp(1600, 4600, t),
-      filterQ: 3,
-      send: cfg.send,
-      bus: this.musicBus,
-    });
-
-    // Sparkle: the same note an octave up, fading in with speed. It is what
-    // makes the loop lift as the run gets fast rather than just quicken.
-    if (t > 0.25) {
-      this.tone((note * cfg.octaves.sparkle) / cfg.octaves.arp, when, {
-        duration: stepSeconds * 0.55,
-        gain: cfg.sparkleGain * clamp01((t - 0.25) / 0.5),
+    // Arpeggio: the melody, climbing the scale and reaching an octave higher
+    // the faster the ship is going. Triangle through a resonant lowpass with
+    // a tail on it, rather than a bare square: the same line, without the
+    // toy. `arpEvery` thins it out, because a bed meant to unsettle needs
+    // more space in it than a bed meant to drive.
+    if (beat % mood.arpEvery === 0) {
+      const degree = (ARP[beat % ARP.length] ?? 0) + (t > 0.55 && beat % 2 === 1 ? 5 : 0);
+      const semitones =
+        (mood.scale[degree % mood.scale.length] ?? 0) + 12 * Math.floor(degree / mood.scale.length);
+      const note = root * cfg.octaves.arp * Math.pow(2, semitones / 12);
+      this.tone(note, when, {
+        duration: stepSeconds * 0.9,
+        gain: lerp(mood.arpGain[0], mood.arpGain[1], t),
         type: "triangle",
-        attack: 0.004,
+        attack: 0.006,
+        filterHz: lerp(mood.arpFilterHz[0], mood.arpFilterHz[1], t),
+        filterQ: 3,
         send: cfg.send,
         bus: this.musicBus,
       });
+
+      // Sparkle: the same note an octave up, fading in with speed. It is what
+      // makes the loop lift as the run gets fast rather than just quicken.
+      // A mood can have none: dread should not lift.
+      if (t > 0.25 && mood.sparkleGain > 0) {
+        this.tone((note * cfg.octaves.sparkle) / cfg.octaves.arp, when, {
+          duration: stepSeconds * 0.55,
+          gain: mood.sparkleGain * clamp01((t - 0.25) / 0.5),
+          type: "triangle",
+          attack: 0.004,
+          send: cfg.send,
+          bus: this.musicBus,
+        });
+      }
     }
 
     // Hat: an offbeat tick. It is what makes the tempo readable at low
-    // volume on a phone speaker.
-    if (beat % 2 === 1) {
+    // volume on a phone speaker, and the first thing to go when the bed
+    // should stop sounding like an arcade.
+    if (beat % 2 === 1 && mood.hatGain[1] > 0) {
       this.noiseVoice(when, {
         duration: 0.04,
-        gain: lerp(cfg.hatGain[0], cfg.hatGain[1], t),
+        gain: lerp(mood.hatGain[0], mood.hatGain[1], t),
         type: "highpass",
         from: 7000,
         to: 9500,
@@ -561,8 +616,8 @@ export class AudioEngine {
 
   /** A new encounter is called. */
   encounter(question: Question): void {
-    if (question.type === "anomaly") {
-      // The anomaly is the odd one out on screen, so it is the odd one out
+    if (question.type === "earth") {
+      // The station is the odd one out on screen, so it is the odd one out
       // here too: a violet shimmer rather than the usual alert.
       this.tone(220, 0, {
         duration: 1.6,
@@ -579,6 +634,30 @@ export class AudioEngine {
         attack: 0.6,
         detune: 8,
         send: 0.7,
+      });
+      return;
+    }
+    if (question.type === "vector") {
+      // The scout is already out there and the shot is the player's to take,
+      // so this opens lower and slower than a lane: a held note rather than
+      // a call to act.
+      this.tone(49, 0, {
+        duration: 1.8,
+        gain: 0.2,
+        type: "sine",
+        attack: 0.55,
+        sweepTo: 41,
+        send: 0.55,
+      });
+      this.noiseVoice(0, {
+        duration: 1.4,
+        gain: 0.05,
+        type: "bandpass",
+        from: 900,
+        to: 260,
+        q: 3,
+        attack: 0.5,
+        send: 0.6,
       });
       return;
     }
@@ -602,6 +681,52 @@ export class AudioEngine {
       q: 1.4,
       attack: 0.2,
       send: 0.5,
+    });
+  }
+
+  /**
+   * The scout warps in at the waypoint. Layered like an impact, because that
+   * is what it is: a sub falling away, an inharmonic cluster ringing over it
+   * and a rush of air closing in behind. It ducks the bed, which is also
+   * what covers the seam where the music changes key under it.
+   */
+  alienArrival(): void {
+    const cfg = AUDIO.alienArrival;
+    this.duck(AUDIO.duck.burn);
+
+    this.tone(cfg.subFrom, 0, {
+      duration: cfg.subSeconds,
+      gain: cfg.subGain,
+      type: "sine",
+      attack: 0.05,
+      sweepTo: cfg.subTo,
+      drive: true,
+      send: 0.3,
+    });
+
+    // Inharmonic, not a chord: ratios that do not belong to one fundamental
+    // are what make a thing read as a hull rather than as a note.
+    for (const [i, ratio] of cfg.ringRatios.entries()) {
+      this.tone(cfg.ringHz * ratio, 0, {
+        duration: cfg.ringSeconds,
+        gain: cfg.ringGain / (i + 1),
+        type: "sine",
+        attack: 0.35 + i * 0.12,
+        delay: i * 0.06,
+        send: cfg.send,
+      });
+    }
+
+    this.noiseVoice(0, {
+      duration: cfg.rushSeconds,
+      gain: cfg.rushGain,
+      type: "bandpass",
+      from: cfg.rushFrom,
+      to: cfg.rushTo,
+      q: 1.6,
+      attack: cfg.rushSeconds * 0.75,
+      send: cfg.send,
+      pan: [0.6, -0.15],
     });
   }
 
@@ -648,6 +773,222 @@ export class AudioEngine {
       attack: 0.25,
       send: 0.3,
     });
+  }
+
+  /**
+   * A gun going off. Four layers in one instant: see `AUDIO.laser`.
+   *
+   * Fired by the ship when the vector shot is taken, and by the scout when
+   * it shoots back. `pitch` is the whole cue transposed, which is the one
+   * thing that separates the two: ours is bright and tight, theirs is the
+   * same discharge from something bigger and further away.
+   */
+  laser(pitch = 1): void {
+    const cfg = AUDIO.laser;
+    this.duck(cfg.duck);
+
+    // The capacitor letting go. Nothing else here is this short, and it is
+    // what puts the "sudden" in the shot.
+    this.noiseVoice(0, {
+      duration: cfg.crack.seconds,
+      gain: cfg.crack.gain,
+      type: "bandpass",
+      from: cfg.crack.hz[0]! * pitch,
+      to: cfg.crack.hz[1]! * pitch,
+      q: cfg.crack.q,
+      drive: true,
+      send: cfg.send,
+    });
+
+    // The discharge: two saws falling the whole range, beating against each
+    // other on the way down.
+    for (const detune of [-cfg.body.detuneCents, cfg.body.detuneCents]) {
+      this.tone(cfg.body.hz[0]! * pitch, 0, {
+        duration: cfg.body.seconds,
+        gain: cfg.body.gain * 0.5,
+        type: "sawtooth",
+        sweepTo: cfg.body.hz[1]! * pitch,
+        filterHz: 5200 * pitch,
+        filterQ: cfg.body.q,
+        detune,
+        drive: true,
+        send: cfg.send,
+      });
+    }
+
+    // The sub, so the hull wears the recoil.
+    this.tone(cfg.sub.hz[0]! * pitch, 0, {
+      duration: cfg.sub.seconds,
+      gain: cfg.sub.gain,
+      type: "sine",
+      sweepTo: cfg.sub.hz[1]! * pitch,
+      send: cfg.send * 0.4,
+    });
+
+    // The bolt leaving, crossing the field as it goes.
+    this.noiseVoice(0, {
+      duration: cfg.bolt.seconds,
+      gain: cfg.bolt.gain,
+      type: "bandpass",
+      from: cfg.bolt.hz[0]! * pitch,
+      to: cfg.bolt.hz[1]! * pitch,
+      q: cfg.bolt.q,
+      pan: [cfg.bolt.pan[0]!, cfg.bolt.pan[1]!],
+      send: cfg.send,
+    });
+  }
+
+  /**
+   * Something going up out there: the scout taking the shot. See
+   * `AUDIO.blast`. `strength` scales the whole thing, so a glance off the
+   * hull is not the same event as a kill.
+   */
+  blast(strength = 1): void {
+    const cfg = AUDIO.blast;
+    this.duck(cfg.duck * strength);
+
+    this.noiseVoice(0, {
+      duration: cfg.crack.seconds,
+      gain: cfg.crack.gain * strength,
+      type: "highpass",
+      from: cfg.crack.hz[0]!,
+      to: cfg.crack.hz[1]!,
+      drive: true,
+      send: cfg.send,
+    });
+    this.noiseVoice(0, {
+      duration: cfg.body.seconds * strength,
+      gain: cfg.body.gain * strength,
+      type: "lowpass",
+      from: cfg.body.hz[0]!,
+      to: cfg.body.hz[1]!,
+      q: cfg.body.q,
+      drive: true,
+      send: cfg.send,
+    });
+    this.tone(cfg.sub.hz[0]!, 0, {
+      duration: cfg.sub.seconds * strength,
+      gain: cfg.sub.gain * strength,
+      type: "sine",
+      sweepTo: cfg.sub.hz[1]!,
+      delay: 0.02,
+      send: cfg.send * 0.5,
+    });
+
+    // Pieces coming off, thrown about the stereo field at random.
+    const count = Math.max(Math.round(cfg.rubble.count * strength), 3);
+    for (let i = 0; i < count; i += 1) {
+      const pan = (Math.random() * 2 - 1) * 0.9;
+      this.noiseVoice(0, {
+        duration: cfg.rubble.seconds,
+        gain: cfg.rubble.gain * strength,
+        type: "bandpass",
+        from: cfg.rubble.hz[0]! + Math.random() * (cfg.rubble.hz[1]! - cfg.rubble.hz[0]!),
+        to: cfg.rubble.hz[0]!,
+        q: 4,
+        delay: 0.03 + Math.random() * cfg.rubble.spread,
+        pan: [pan, pan],
+        send: cfg.send,
+      });
+    }
+  }
+
+  /**
+   * Docking. An airlock, not a hit: the clamps taking the hull, the hull
+   * ringing off them on one low inharmonic partial, and the pressure hiss
+   * of the seal a beat after. Ducks the bed the way an impact does, since a
+   * mass has just met a bigger one. Numbers in `AUDIO.dock`.
+   */
+  dock(): void {
+    const cfg = AUDIO.dock;
+    this.duck(cfg.duck);
+
+    // The clamps: a filtered thump with grit on it, and a sub under it.
+    this.noiseVoice(0, {
+      duration: cfg.clamp.seconds,
+      gain: cfg.clamp.gain,
+      type: "lowpass",
+      from: cfg.clamp.hz[0]!,
+      to: cfg.clamp.hz[1]!,
+      q: cfg.clamp.q,
+      drive: true,
+      send: cfg.send,
+    });
+    this.tone(cfg.sub.hz[0]!, 0, {
+      duration: cfg.sub.seconds,
+      gain: cfg.sub.gain,
+      type: "sine",
+      sweepTo: cfg.sub.hz[1]!,
+      send: cfg.send * 0.5,
+    });
+    // The hull ringing off it.
+    this.bell(cfg.ring.hz, {
+      duration: cfg.ring.seconds,
+      gain: cfg.ring.gain,
+      delay: cfg.ring.delay,
+      ratio: cfg.ring.ratio,
+      index: cfg.ring.index,
+    });
+    // The seal: air, arriving late and dying away.
+    this.noiseVoice(0, {
+      duration: cfg.hiss.seconds,
+      gain: cfg.hiss.gain,
+      type: "bandpass",
+      from: cfg.hiss.hz[0]!,
+      to: cfg.hiss.hz[1]!,
+      q: cfg.hiss.q,
+      attack: cfg.hiss.attack,
+      delay: cfg.hiss.delay,
+      send: cfg.send,
+    });
+  }
+
+  /**
+   * The launch countdown. `step` is 3, 2 or 1, then 0 for GO.
+   *
+   * The pips are deliberately plain -- one clean tone with a click on the
+   * front, the same every time -- so that GO, which is an octave up with a
+   * fifth over it and the room behind it, reads as a start and not as a
+   * fourth pip.
+   */
+  countdown(step: number): void {
+    const cfg = AUDIO.countdown;
+    const go = step <= 0;
+
+    this.noiseVoice(0, {
+      duration: 0.012,
+      gain: cfg.gain * 0.5,
+      type: "highpass",
+      from: 3200,
+      to: 2400,
+      send: cfg.send * 0.5,
+    });
+    this.tone(go ? cfg.goHz : cfg.pipHz, 0, {
+      duration: go ? cfg.goSeconds : cfg.seconds,
+      gain: cfg.gain,
+      type: "triangle",
+      attack: 0.008,
+      send: cfg.send,
+    });
+    if (!go) return;
+
+    // GO: a fifth over the top and the sub under it, so the run starts on a
+    // chord rather than a beep.
+    this.tone(cfg.goHz * 1.5, 0, {
+      duration: cfg.goSeconds,
+      gain: cfg.gain * 0.6,
+      type: "triangle",
+      attack: 0.008,
+      delay: 0.02,
+      send: cfg.send,
+    });
+    this.tone(cfg.pipHz / 4, 0, {
+      duration: cfg.goSeconds,
+      gain: cfg.gain * 0.8,
+      type: "sine",
+      send: cfg.send * 0.5,
+    });
+    this.pulseEngine(0.5);
   }
 
   /** A NOVA scan fires. */

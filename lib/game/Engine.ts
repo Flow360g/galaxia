@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { requestAnomalyScore } from "./anomaly";
 import { Alien } from "./Alien";
 import { AsteroidField } from "./AsteroidField";
 import { AudioEngine } from "./Audio";
@@ -15,8 +14,21 @@ import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
+import { Station } from "./Station";
 import { isMaxThrust } from "./Flight";
-import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
+import {
+  ALIEN,
+  CLUSTER,
+  COLOR,
+  ENCOUNTER,
+  FX,
+  LANE,
+  PERF,
+  STATION,
+  VECTOR,
+  WAYPOINT,
+  WORLD,
+} from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import { DEFAULT_SHIP, type ShipSpec } from "./ships";
 import type {
@@ -76,8 +88,8 @@ export class Engine {
   private readonly alien: Alien;
   private readonly beam: Beam;
   private readonly returnBeam: Beam;
-  private readonly aimLine: Beam;
   private readonly landmark: Landmark;
+  private readonly station: Station;
   private readonly salvage: Salvage;
   private readonly debris: Debris;
   private readonly shield: Shield;
@@ -91,6 +103,12 @@ export class Engine {
   private resizeObserver: ResizeObserver | null = null;
   private disposed = false;
   private ended = false;
+  /**
+   * WHERE ON EARTH: the ship is aboard and the station screen owns the
+   * display. The loop keeps ticking so the sound bed carries on under it,
+   * but nothing is drawn: the flight is never seen again this run.
+   */
+  private parked = false;
 
   private readonly canvas: HTMLCanvasElement;
   private tier: QualityTier;
@@ -126,8 +144,6 @@ export class Engine {
    * the first would leave the second vector with nothing to shoot at.
    */
   private readonly vectorTotal: number;
-  /** World X the aim line points down while the player drags. */
-  private aimX = 0;
   /** Field density, current and target, so the belt thins smoothly. */
   private density = 1;
   private densityTarget = 1;
@@ -204,11 +220,15 @@ export class Engine {
 
     this.beam = new Beam(0.35);
     this.returnBeam = new Beam(0.5);
-    this.aimLine = new Beam(0.12);
-    this.scene.add(this.beam.group, this.returnBeam.group, this.aimLine.group);
+    this.scene.add(this.beam.group, this.returnBeam.group);
 
     this.landmark = new Landmark();
     this.chase.camera.add(this.landmark.group);
+
+    // Fetched now so the bytes are in by the last encounter; see Station.
+    this.station = new Station();
+    this.chase.camera.add(this.station.group);
+    void this.station.load();
 
     this.salvage = new Salvage();
     this.scene.add(this.salvage.mesh);
@@ -229,16 +249,17 @@ export class Engine {
     this.run = new Run(
       options.round,
       {
+        onCountdown: (step) => this.audio.countdown(step),
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
         onPick: (lane, correct) => this.onPick(lane, correct),
         onCollect: (lane, charge) => this.onCollect(lane, charge),
         onAim: (t) => this.onAim(t),
-        onVectorLock: (outcome, aimT, truthT) => this.onVectorLock(outcome, aimT, truthT),
+        onVectorLock: (outcome, truthT) => this.onVectorLock(outcome, truthT),
         onWaypoint: (info) => this.onWaypoint(info),
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
         onFinished: () => this.endRun(),
-        scoreAnomaly: (question, answer) => requestAnomalyScore(question, answer),
+        onDock: () => this.onDock(),
       },
       random,
     );
@@ -252,6 +273,7 @@ export class Engine {
     if (this.frameHandle !== null || this.disposed) return;
     this.clock.start();
     this.audio.setRunning(true);
+    this.audio.setMood("cruise");
     this.loop();
   }
 
@@ -282,8 +304,8 @@ export class Engine {
     this.alien.dispose();
     this.beam.dispose();
     this.returnBeam.dispose();
-    this.aimLine.dispose();
     this.landmark.dispose();
+    this.station.dispose();
     this.salvage.dispose();
     this.debris.dispose();
     this.audio.dispose();
@@ -356,8 +378,22 @@ export class Engine {
     this.audio.setMuted(muted);
   }
 
-  submitAnomaly(text: string): void {
-    this.run.submitAnomaly(text);
+  /**
+   * WHERE ON EARTH: ENTER SPACE STATION. The station screen takes the
+   * display, and the flight parks under it for the rest of the run.
+   */
+  enterStation(): void {
+    this.run.enterStation();
+    if (this.run.phase !== "docked") return;
+    // React mounts the station screen off this frame's state, so it goes out
+    // now rather than waiting on a loop that is about to stop drawing.
+    this.options.onState?.(this.state);
+    this.parked = true;
+  }
+
+  /** WHERE ON EARTH: END TRANSMISSION. Resolves the encounter and ends the run. */
+  endTransmission(): void {
+    this.run.endTransmission();
   }
 
   get state(): GameState {
@@ -375,9 +411,7 @@ export class Engine {
     this.inVector = question.type === "vector";
     this.waypoint = null;
     // A lane question opens on an empty sky: the ambient field and nothing
-    // else. A vector opens on the cloaked alien. Only the anomaly still rides
-    // in on its own rock.
-    if (question.type === "anomaly") this.rock.spawn(true);
+    // else. A vector opens on the cloaked alien.
     if (this.inVector) {
       const slot = Math.min(this.vectorsFlown, VECTOR.holdFar.length - 1);
       this.vectorsFlown += 1;
@@ -386,10 +420,16 @@ export class Engine {
     // Leaving the alien stage: the scout leaves and the landmark sinks away.
     if (wasVector && !this.inVector) {
       this.alien.warpOut();
-      this.landmark.sink();
+      this.landmark.pass();
+      this.audio.setMood("cruise");
       this.densityTarget = 1;
     }
-    this.aimLine.hide();
+    // WHERE ON EARTH opens on the station coming up out of the distance, and
+    // the belt thins to nothing: a station does not sit in a rock field.
+    if (question.type === "earth") {
+      this.station.approach();
+      this.densityTarget = STATION.fieldDensity;
+    }
     this.incoming.retire();
     this.chase.releaseLane();
     this.ship.recentre();
@@ -401,32 +441,48 @@ export class Engine {
     return this.chase.laneX(0.5 + (t - 0.5) * LANE.reach);
   }
 
+  /**
+   * The aim moved. The ship slides to it and that is the only tell: nothing
+   * is drawn out of the nose until the shot is taken, so the sky gives away
+   * neither the aim nor the answer.
+   */
   private onAim(t: number): void {
-    this.aimX = this.aimWorldX(t);
     this.chase.lockLane(LANE.lockSeconds);
-    this.ship.holdLane(this.aimX);
+    this.ship.holdLane(this.aimWorldX(t));
   }
 
-  private onVectorLock(outcome: Outcome, aimT: number, truthT: number): void {
-    this.audio.strike();
-    // The scout slides to the truth: that IS the answer being shown, and the
-    // shot is already on its way to where it will be.
+  /**
+   * The player locked. The scout slides to the truth either way -- that IS
+   * the answer being shown -- but the gun only goes off if the aim was good
+   * enough to take the shot.
+   *
+   * A wrong answer fires nothing. The ship sits there with the scout lined
+   * up on it and the silence is the tell; `onVectorContact` has the alien
+   * fire back a beat later.
+   */
+  private onVectorLock(outcome: Outcome, truthT: number): void {
     const truthX = this.aimWorldX(truthT);
     this.alien.reveal(truthX);
-    this.aimLine.hide();
 
+    if (!outcome.correct) {
+      // The scout winding up to fire: a swell under the beat of nothing
+      // happening, so the return fire is heard coming.
+      this.audio.strike();
+      return;
+    }
+
+    // On target, and the whole shot lands in one instant: the crack, the
+    // recoil through the rig and a bolt across the gap in a tenth of a
+    // second. The debris pool is left alone here on purpose -- it is one
+    // shared pool, and it is owed to the explosion that lands next frame.
+    this.audio.laser();
     this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
     this.alien.target(this.scratchB);
-    if (outcome.correct) {
-      // On target: the beam ends on the hull, at the truth.
-      this.scratchB.x = truthX;
-    } else {
-      // Wide: the shot runs along the aim and carries on past the scout, so
-      // a miss reads as a miss rather than as a hit that did nothing.
-      this.scratchB.x = this.aimWorldX(aimT);
-      this.scratchB.sub(this.scratch).multiplyScalar(VECTOR.missOvershoot).add(this.scratch);
-    }
+    this.scratchB.x = truthX;
     this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds, 1);
+    this.chase.shake(FX.vector.fireShake);
+    this.chase.burst(0, FX.vector.fireKick);
+    this.ship.pulseExhaust(FX.exhaustPulse.thread);
   }
 
   private onWaypoint(info: WaypointState): void {
@@ -434,7 +490,7 @@ export class Engine {
     this.waypointBeat = 0;
     this.densityTarget = WAYPOINT.fieldDensity;
     const stage = this.options.round.stages?.find((s) => s.name === info.stage);
-    this.landmark.rise(stage?.landmark ?? "moon", 1);
+    this.landmark.approach(stage?.landmark ?? "moon", 1);
     this.incoming.retire();
     this.chase.releaseLane();
     this.ship.recentre();
@@ -554,11 +610,7 @@ export class Engine {
       } else {
         this.rock.contact(true);
         this.scratch.copy(this.rock.group.position);
-        this.debris.burst(
-          this.scratch,
-          strength,
-          this.rock.anomaly ? COLOR.anomaly : COLOR.panelLabel,
-        );
+        this.debris.burst(this.scratch, strength, COLOR.panelLabel);
       }
       this.shield.flash(kind === "wreck" ? 1.4 : 1);
       this.ship.impact(kind, this.side);
@@ -577,7 +629,10 @@ export class Engine {
       const heavy = kind === "slingshot";
       const burst = heavy ? "slingshot" : "thread";
       this.alien.hit(kill ? "direct" : "glance");
-      this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.anomaly);
+      // The bolt arrives and the scout goes up in the same instant: the hull
+      // comes apart and a blast lands out there with it.
+      this.audio.blast(kill ? 1 : heavy ? 0.8 : 0.55);
+      this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.contact);
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
       this.ship.pulseExhaust(FX.exhaustPulse[burst]);
@@ -587,8 +642,10 @@ export class Engine {
         this.salvage.launch(this.scratchB, this.scratch);
       }
     } else {
-      // Miss or timeout: the alien fires back.
+      // Miss or timeout: our guns never went off, and the scout has spent the
+      // beat since the lock lining up. Now it fires, and the hull wears it.
       this.alien.returnFire();
+      this.audio.laser(ALIEN.gunPitch);
       this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
       this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
       this.chase.shake(FX.vector.returnFireShake);
@@ -596,6 +653,11 @@ export class Engine {
       this.ship.impact(kind, this.side);
     }
     this.chase.releaseLane();
+  }
+
+  /** Aboard. The station screen is up; the airlock is the one thing the scene adds. */
+  private onDock(): void {
+    this.audio.dock();
   }
 
   private endRun(): void {
@@ -647,6 +709,12 @@ export class Engine {
     const raw = this.clock.getDelta();
     const dt = Math.min(raw, PERF.maxDelta);
 
+    if (this.parked) {
+      // Aboard the station: the bed idles on at a standstill, and that is all.
+      this.audio.update(dt, 0, 1, false);
+      return;
+    }
+
     this.update(dt);
     this.renderer.render(this.scene, this.chase.camera);
     this.emitDebug(raw);
@@ -670,18 +738,6 @@ export class Engine {
 
     const phase = this.run.phase;
     const open = phase === "approach" || phase === "collecting";
-    // Only the anomaly still has a rock hanging ahead of the ship to loom as
-    // the clock drains. Lane questions keep the sky clear.
-    if (open && !this.laneEncounter && !this.inVector) this.rock.setLoom(1 - this.run.thrust);
-
-    // The aim line: from the nose to the alien's depth, only while aiming.
-    if (this.inVector && phase === "approach") {
-      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
-      this.scratchB.set(this.aimX, VECTOR.holdY, this.alien.group.position.z);
-      this.aimLine.hold(this.scratch, this.scratchB, COLOR.cyan, 0.3);
-    } else if (phase !== "approach") {
-      this.aimLine.hide();
-    }
 
     // Waypoint beats: the rating stamp shakes the camera; the alien warps in
     // as the "entering" line lands.
@@ -693,11 +749,22 @@ export class Engine {
       }
       if (this.waypointBeat < 2 && t >= WAYPOINT.enteringAt) {
         this.waypointBeat = 2;
-        this.alien.warpIn(VECTOR.holdFar[0]!);
-        this.shield.flash(FX.waypoint.warpFlash, COLOR.anomaly);
-        this.chase.shake(0.4);
+        // The scout only comes for the scout's stage. A round whose next
+        // stage is lanes, or the station, keeps its sky and its music.
+        if (this.waypoint.nextType === "vector") {
+          this.alien.warpIn(VECTOR.holdFar[0]!);
+          this.shield.flash(FX.waypoint.warpFlash, COLOR.contact);
+          this.chase.shake(0.4);
+          // The bed turns on the same beat the scout arrives, and the arrival
+          // itself covers the key change.
+          this.audio.alienArrival();
+          this.audio.setMood("dread");
+        }
       }
     }
+
+    // WHERE ON EARTH: the station coming alongside is what arms the door.
+    if (this.station.update(dt)) this.run.arriveAtStation();
 
     this.density += (this.densityTarget - this.density) * (1 - Math.exp(-1.2 * dt));
     this.field.setDensity(this.density);

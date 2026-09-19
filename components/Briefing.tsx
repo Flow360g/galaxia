@@ -177,7 +177,7 @@ function buildCards(round: Round): Card[] {
   const clusters = count(questions, "cluster");
   const vectors = count(questions, "vector");
   const mcqs = count(questions, "mcq");
-  const anomalies = count(questions, "anomaly");
+  const earths = count(questions, "earth");
   const fullCharge = CLUSTER.chargeMultiplier.length - 1;
 
   const encounters: Line[] = [];
@@ -199,15 +199,15 @@ function buildCards(round: Round): Card[] {
   if (vectors > 0) {
     encounters.push({
       label: `Vector x${vectors}`,
-      text: `A number, aimed on a slider. Lock to fire. Land it inside ${percent(
+      text: `A number, aimed on a slider. Lock to fire, but only a good aim gets the shot off: land it inside ${percent(
         VECTOR.perfectBand,
-      )} of tolerance for a direct hit and you salvage a shield or a NOVA back.`,
+      )} of tolerance for a direct hit and you salvage a shield or a NOVA back. Miss, and the scout fires first.`,
     });
   }
-  if (anomalies > 0) {
+  if (earths > 0) {
     encounters.push({
-      label: "AI anomaly",
-      text: "The last encounter. Type an answer in your own words and a model marks it out of 100. Close counts.",
+      label: "Where on Earth",
+      text: "The last encounter. Dock at the station and open its satellite feed: the invasion has landed somewhere on Earth, and the fleet is waiting on your call.",
     });
   }
 

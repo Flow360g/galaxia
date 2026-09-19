@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { launch } from "./helpers";
 
 /**
  * The two things that wrap a run: the briefing a first-time player is walked
@@ -60,12 +61,14 @@ test("a first flight is briefed on the rules before the round starts", async ({
   await expect(next).toHaveText(/launch/i);
   await next.click();
 
-  // Briefing gone, run live.
+  // Briefing gone, and the launch card behind it.
   await expect(briefing).toHaveCount(0);
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 
   // It was read once and does not come back.
   await page.goto("/play");
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
   await expect(page.getByTestId("briefing")).toHaveCount(0);
 });
@@ -75,6 +78,7 @@ test("the briefing can be skipped from the first card", async ({ page }) => {
   await expect(page.getByTestId("briefing")).toBeVisible({ timeout: 20_000 });
   await page.getByTestId("briefing-back").click();
   await expect(page.getByTestId("briefing")).toHaveCount(0);
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 });
 
@@ -83,6 +87,7 @@ test("a returning player is not briefed, and can read it again from the title", 
 }) => {
   await seedFlown(page, 3);
   await page.goto("/play");
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
   await expect(page.getByTestId("briefing")).toHaveCount(0);
 
@@ -165,6 +170,7 @@ test("the bay flies the hull it was told to, and refuses one it was not", async 
   await page.goto("/hangar");
   await expect(page.getByTestId("ship-name")).toHaveText("Cinder VII");
   await page.goto("/play?replay=1");
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 });
 
