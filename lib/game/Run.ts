@@ -2,7 +2,7 @@ import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
 import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
 import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
-import { CLUSTER, ENCOUNTER, LANE, NOVA, SHIELDS, VECTOR, WAYPOINT } from "./Tuning";
+import { CLUSTER, COUNTDOWN, ENCOUNTER, LANE, NOVA, SHIELDS, VECTOR, WAYPOINT } from "./Tuning";
 import type {
   AnomalyQuestion,
   AnomalyVerdict,
@@ -45,6 +45,11 @@ import type {
  */
 
 export interface RunHooks {
+  /**
+   * The launch countdown ticked over. `step` is 3, 2 or 1, then 0 for GO.
+   * Fired once per number, not per frame.
+   */
+  onCountdown(step: number): void;
   /** A new question is called. Nothing is in the sky yet. */
   onEncounterStart(index: number, question: Question): void;
   /** A lane was picked. Veer into it and launch the pod or the boulder. */
@@ -56,8 +61,11 @@ export interface RunHooks {
   onCollect(lane: number, charge: number): void;
   /** Vector: the aim moved. `t` is the slider position, 0..1 left to right. */
   onAim(t: number): void;
-  /** Vector: locked. The alien decloaks at `truthT`; the beam fires along `aimT`. */
-  onVectorLock(outcome: Outcome, aimT: number, truthT: number): void;
+  /**
+   * Vector: locked. The scout slides to `truthT` whatever happened; whether
+   * the ship's gun goes off at all is the engine's call, off `outcome`.
+   */
+  onVectorLock(outcome: Outcome, truthT: number): void;
   /** A stage ended. Play the card; the next encounter starts after `WAYPOINT.seconds`. */
   onWaypoint(info: WaypointState): void;
   /** The answer locked. Whatever is in the lane strikes; the ship reacts. */
@@ -109,6 +117,12 @@ export class Run {
 
   elapsed = 0;
   private timer: number = ENCOUNTER.introSeconds;
+  /**
+   * Where the launch countdown has got to: 3, 2, 1, then 0 for GO, and null
+   * once the run is flying. Held rather than derived every read so a step
+   * change can be noticed and announced exactly once.
+   */
+  private countdown: number | null = null;
   private thrustSeconds: number = ENCOUNTER.thrustSeconds;
   /**
    * Seconds the clock is held full at the top of an approach. A beat to read
@@ -177,6 +191,7 @@ export class Run {
       vector: this.vectorState(),
       waypoint: this.phase === "waypoint" ? this.waypoint : null,
       clockSeconds: this.thrustSeconds,
+      countdown: this.countdown,
       shields: this.shields,
       maxShields: SHIELDS.perRun,
       pulse: this.pulse,
@@ -318,14 +333,10 @@ export class Run {
       if (this.shields > 0) {
         this.shields -= 1;
         this.shieldLost = true;
-        this.flash(
-          "shield",
-          "SHIELD DOWN",
-          this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
-        );
-      } else {
-        this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
       }
+      // No banner yet. Nothing has happened to the ship at this point: the
+      // shot was simply not taken. The damage lands when the scout fires,
+      // and `contact` puts it on screen then.
     }
 
     this.vectorStrength = strength;
@@ -347,8 +358,11 @@ export class Run {
       severity,
       ...(salvage ? { salvage } : {}),
     };
-    this.lock(outcome);
-    this.hooks.onVectorLock(outcome, this.vectorT, truthT);
+    // A shot that is taken resolves almost instantly: the bolt crosses and
+    // the scout goes up in one event. A shot that is not taken leaves a beat
+    // of silence before the scout fires back.
+    this.lock(outcome, error <= 1 ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
+    this.hooks.onVectorLock(outcome, truthT);
   }
 
   /**
@@ -451,10 +465,17 @@ export class Run {
     }
 
     switch (this.phase) {
-      case "intro":
+      case "intro": {
         this.timer -= dt;
+        // The engines lighting IS the countdown. One announcement per number.
+        const step = countdownStep(this.timer);
+        if (step !== this.countdown) {
+          this.countdown = step;
+          if (step !== null) this.hooks.onCountdown(step);
+        }
         if (this.timer <= 0) this.startEncounter(0);
         break;
+      }
 
       case "approach":
         if (this.grace > 0) {
@@ -826,6 +847,18 @@ export class Run {
     );
     outcome.streakAfter = this.flight.streak;
 
+    // The scout's shot landing on the hull. The ship took nothing at lock --
+    // it simply did not fire -- so this is the moment the damage happens,
+    // and the moment the screen says so.
+    if (this.question?.type === "vector" && !outcome.correct) {
+      const detail = outcome.timedOut
+        ? "NO SHOT TAKEN"
+        : outcome.kind === "wreck"
+          ? "NO SHIELDS LEFT"
+          : `SHIELD DOWN \u00b7 ${this.shields} LEFT`;
+      this.flash("damage", outcome.kind === "wreck" ? "HULL BREACH" : "HULL HIT", detail);
+    }
+
     // Salvage lands with the burst, so the HUD change and the FX line up.
     if (outcome.salvage === "shield") {
       this.shields = Math.min(this.shields + 1, SHIELDS.perRun);
@@ -954,4 +987,19 @@ export function formatValue(value: number, unit: string | undefined): string {
 /** The three right answers, for the toast and the share record. */
 function clusterAnswerText(question: ClusterQuestion): string {
   return question.answers.map((lane) => question.options[lane] ?? "").join(", ");
+}
+
+/**
+ * Where the launch countdown stands with `timer` seconds of intro left:
+ * 3, 2, 1, then 0 for GO, and null once the run is under way. The numbers
+ * are read off the clock rather than counted, so a dropped frame cannot skip
+ * one or leave the run starting on "2".
+ */
+function countdownStep(timer: number): number | null {
+  if (timer <= 0) return null;
+  const { stepSeconds, goSeconds } = COUNTDOWN;
+  if (timer > stepSeconds * 2 + goSeconds) return 3;
+  if (timer > stepSeconds + goSeconds) return 2;
+  if (timer > goSeconds) return 1;
+  return 0;
 }

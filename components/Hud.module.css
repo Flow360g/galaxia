@@ -91,6 +91,15 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/*
+ * A card that is parked on a verdict. The whole card is the button: the
+ * player aims at the words, and the words are the middle of it.
+ */
+.tapReady {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .tapPrompt {
   font-size: 9px;
   color: var(--arcade-cyan);
@@ -690,12 +699,36 @@
   text-shadow: 0 0 22px rgba(255, 138, 31, 0.9);
 }
 
-.pulse_shield .pulseLabel {
+.pulse_shield .pulseLabel,
+.pulse_damage .pulseLabel {
   color: #ff6b5c;
   text-shadow: 0 0 22px rgba(255, 107, 92, 0.9);
 }
 
+/*
+ * Taking the scout's shot. The frame itself is hit: two hard red flashes
+ * over everything, then a vignette bleeding in from the edges as it settles,
+ * which is the whole vocabulary of "you are the one that got hit" and costs
+ * one element to draw. Never in the way -- it takes no pointer events and is
+ * gone inside a second and a half.
+ */
+.damage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at center, rgba(255, 107, 92, 0) 34%, rgba(255, 45, 30, 0.55) 100%),
+    linear-gradient(rgba(255, 107, 92, 0.22), rgba(255, 107, 92, 0.22));
+  animation: damageIn 1400ms ease-out forwards;
+}
+
 /* The shield taking the hit: a ring that snaps out around the ship and dies. */
+.pulse_damage .pulseRing {
+  border-color: rgba(255, 107, 92, 0.9);
+  box-shadow: 0 0 40px rgba(255, 107, 92, 0.6), inset 0 0 40px rgba(255, 107, 92, 0.4);
+}
+
 .pulseRing {
   position: absolute;
   left: 50%;
@@ -946,6 +979,7 @@
   color: var(--panel-label);
 }
 
+
 @keyframes stampIn {
   from {
     opacity: 0;
@@ -959,6 +993,39 @@
 
 /* MAXIMUM THRUST: a hazard placard over the middle of the screen, above the
    ship and below the question. A warning light coming on, not a score. */
+/*
+ * 3, 2, 1, GO. Below the band and above the ship, in the empty middle of the
+ * frame that only ever holds one-shot overlays. Nothing here takes a touch.
+ */
+.countdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 38%;
+  z-index: 4;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+.countdownNumber {
+  font-size: 64px;
+  line-height: 1;
+  color: var(--arcade-cyan);
+  text-shadow: 0 0 30px rgba(79, 241, 255, 0.85);
+  font-variant-numeric: tabular-nums;
+  /* Held for exactly this step's length; the HUD hands the value down from
+     COUNTDOWN in Tuning.ts. */
+  animation: countIn var(--count-hold, 720ms) ease-out forwards;
+}
+
+.countdown[data-step="0"] .countdownNumber {
+  font-size: 48px;
+  color: var(--arcade-yellow);
+  text-shadow: 0 0 34px rgba(255, 224, 61, 0.9);
+  animation: goIn var(--count-hold, 540ms) ease-out forwards;
+}
+
 .maxThrust {
   position: absolute;
   left: 0;
@@ -1077,6 +1144,85 @@
   }
 }
 
+/* A number arriving hard and letting go: it lands big, settles, then lifts
+   away as the next one comes in. */
+@keyframes countIn {
+  0% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  84% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+
+/* GO goes the other way: it does not fall back, it blows out. It holds long
+   enough to be read first -- the run starts on it. */
+@keyframes goIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  26% {
+    transform: scale(1);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes damageCalm {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes damageIn {
+  0% {
+    opacity: 0;
+  }
+  /* The hit: two frames of white-hot before the red settles in. */
+  4% {
+    opacity: 1;
+  }
+  10% {
+    opacity: 0.25;
+  }
+  16% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes ringOut {
   from {
     opacity: 0.95;
@@ -1158,6 +1304,18 @@
   .warp,
   .pulseRing {
     display: none;
+  }
+
+  /* The hit still has to register, so the overlay stays -- it just fades in
+     and out once instead of flashing. */
+  .damage {
+    animation: damageCalm 1400ms ease-out forwards;
+  }
+
+  /* The numbers still have to change, so they stay; they just do not lunge. */
+  .countdownNumber,
+  .countdown[data-step="0"] .countdownNumber {
+    animation: none;
   }
 
   .maxThrust {
@@ -1284,5 +1442,17 @@
 
   .pulse {
     top: 70%;
+  }
+
+  .countdown {
+    top: 42%;
+  }
+
+  .countdownNumber {
+    font-size: 44px;
+  }
+
+  .countdown[data-step="0"] .countdownNumber {
+    font-size: 34px;
   }
 }

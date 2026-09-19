@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type FormEvent,
 } from "react";
 import type {
@@ -20,7 +21,7 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { COUNTDOWN, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
 import {
@@ -154,6 +155,9 @@ export function Hud({
   return (
     <div className={styles.hud}>
       {maxThrust ? <MaxThrust /> : null}
+      {state?.countdown !== null && state?.countdown !== undefined ? (
+        <Countdown step={state.countdown} />
+      ) : null}
       {state?.pulse ? <PulseOverlay key={state.pulse.id} pulse={state.pulse} /> : null}
 
       {/* Tap anywhere to move past a verdict. It covers the whole screen, which
@@ -375,15 +379,51 @@ export function Hud({
         ) : null}
 
         {outcome ? (
-          <OutcomeToast outcome={outcome} fact={question?.fact} awaitingTap={awaitingTap} />
+          <OutcomeToast
+            outcome={outcome}
+            fact={question?.fact}
+            awaitingTap={awaitingTap}
+            onConfirm={onConfirm}
+          />
         ) : null}
 
-        {waypoint ? <WaypointCard waypoint={waypoint} awaitingTap={awaitingTap} /> : null}
+        {waypoint ? (
+          <WaypointCard waypoint={waypoint} awaitingTap={awaitingTap} onConfirm={onConfirm} />
+        ) : null}
 
         {state?.phase === "intro" ? (
           <p className={`${styles.hint} arcade`}>Pick fast. The clock is your thrust.</p>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/**
+ * 3, 2, 1, GO over the engines lighting.
+ *
+ * Keyed on the number so each one replays the animation from the top, which
+ * is what makes it read as a countdown rather than a label changing. Drawn
+ * above the ship and below the band, takes no pointer events, and is gone by
+ * the time the first prompt lands.
+ */
+function Countdown({ step }: { step: number }) {
+  // The number is on screen for exactly as long as it is the current number:
+  // the animation is handed the step's own length from `Tuning.ts` rather
+  // than guessing at one in CSS, so retuning the countdown cannot leave a
+  // hole between two numbers or clip one short.
+  const hold = (step > 0 ? COUNTDOWN.stepSeconds : COUNTDOWN.goSeconds) * 1000;
+  return (
+    <div
+      className={styles.countdown}
+      data-testid="countdown"
+      data-step={step}
+      aria-live="assertive"
+      style={{ "--count-hold": `${Math.round(hold)}ms` } as CSSProperties}
+    >
+      <span key={step} className={`${styles.countdownNumber} arcade`}>
+        {step > 0 ? step : "GO"}
+      </span>
     </div>
   );
 }
@@ -587,8 +627,9 @@ function VectorPanel({
 
 /**
  * TAP TO CONTINUE. Lives inside the card it belongs to, in the top band, so
- * the ship's half of the screen stays empty; the tap target itself is the
- * whole screen and is drawn nowhere.
+ * the ship's half of the screen stays empty. Anywhere is a tap: the card it
+ * sits in takes one, and behind everything a catcher covers the rest of the
+ * screen, drawn nowhere.
  */
 function TapPrompt({ shown }: { shown: boolean }) {
   if (!shown) return null;
@@ -603,17 +644,22 @@ function TapPrompt({ shown }: { shown: boolean }) {
 function WaypointCard({
   waypoint,
   awaitingTap,
+  onConfirm,
 }: {
   waypoint: WaypointState;
   awaitingTap: boolean;
+  onConfirm: () => void;
 }) {
   const rated = waypoint.t >= WAYPOINT.ratingAt;
   const entering = waypoint.t >= WAYPOINT.enteringAt;
   return (
     <section
-      className={`${styles.panel} ${styles.waypoint} ${entering ? styles.waypointEntering : ""}`}
+      className={`${styles.panel} ${styles.waypoint} ${entering ? styles.waypointEntering : ""} ${
+        awaitingTap ? styles.tapReady : ""
+      }`}
       data-testid="waypoint"
       data-rating={waypoint.rating}
+      onClick={awaitingTap ? onConfirm : undefined}
     >
       {!entering ? (
         <>
@@ -678,18 +724,27 @@ function Reactor({ cluster }: { cluster: ClusterState | null }) {
  */
 function PulseOverlay({ pulse }: { pulse: Pulse }) {
   return (
-    <div
-      className={`${styles.pulse} ${styles[`pulse_${pulse.kind}`]}`}
-      data-testid="pulse"
-      data-kind={pulse.kind}
-      aria-live="polite"
-    >
-      {pulse.kind === "shield" ? (
-        <span className={styles.pulseRing} aria-hidden="true" />
+    <>
+      {/* Taking a hit is the one pulse that owns the whole screen: the scout
+          has just put a bolt through the hull, and a small caption in the
+          middle of the frame would not say so. Drawn nowhere near a touch:
+          pointer-events none, gone in a second. */}
+      {pulse.kind === "damage" ? (
+        <div className={styles.damage} data-testid="damage" aria-hidden="true" />
       ) : null}
-      <span className={`${styles.pulseLabel} arcade`}>{pulse.label}</span>
-      <span className={`${styles.pulseDetail} arcade`}>{pulse.detail}</span>
-    </div>
+      <div
+        className={`${styles.pulse} ${styles[`pulse_${pulse.kind}`]}`}
+        data-testid="pulse"
+        data-kind={pulse.kind}
+        aria-live="polite"
+      >
+        {pulse.kind === "shield" || pulse.kind === "damage" ? (
+          <span className={styles.pulseRing} aria-hidden="true" />
+        ) : null}
+        <span className={`${styles.pulseLabel} arcade`}>{pulse.label}</span>
+        <span className={`${styles.pulseDetail} arcade`}>{pulse.detail}</span>
+      </div>
+    </>
   );
 }
 
@@ -705,10 +760,12 @@ function OutcomeToast({
   outcome,
   fact,
   awaitingTap,
+  onConfirm,
 }: {
   outcome: Outcome;
   fact: string | undefined;
   awaitingTap: boolean;
+  onConfirm: () => void;
 }) {
   const delta = outcome.velocityAfter - outcome.velocityBefore;
   const points = outcome.points ?? 0;
@@ -727,10 +784,13 @@ function OutcomeToast({
       : OUTCOME_LABEL[outcome.kind];
   return (
     <section
-      className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${full ? styles.toast_full : ""}`}
+      className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${
+        full ? styles.toast_full : ""
+      } ${awaitingTap ? styles.tapReady : ""}`}
       data-testid="toast"
       data-outcome={outcome.kind}
       data-charge={outcome.charge}
+      onClick={awaitingTap ? onConfirm : undefined}
     >
       <div className={styles.toastHead}>
         <span className={`${styles.toastKind} arcade`}>{label}</span>

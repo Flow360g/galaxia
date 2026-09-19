@@ -199,9 +199,9 @@ function buildCards(round: Round): Card[] {
   if (vectors > 0) {
     encounters.push({
       label: `Vector x${vectors}`,
-      text: `A number, aimed on a slider. Lock to fire. Land it inside ${percent(
+      text: `A number, aimed on a slider. Lock to fire, but only a good aim gets the shot off: land it inside ${percent(
         VECTOR.perfectBand,
-      )} of tolerance for a direct hit and you salvage a shield or a NOVA back.`,
+      )} of tolerance for a direct hit and you salvage a shield or a NOVA back. Miss, and the scout fires first.`,
     });
   }
   if (anomalies > 0) {

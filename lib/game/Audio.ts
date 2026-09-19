@@ -35,6 +35,7 @@ import type { OutcomeKind, Question } from "./types";
 /** Web Audio cannot ramp to zero on an exponential curve. This is silence. */
 const SILENT = 0.0001;
 
+
 /** Options shared by every one-shot voice. */
 interface VoiceOptions {
   duration: number;
@@ -642,6 +643,172 @@ export class AudioEngine {
       attack: 0.25,
       send: 0.3,
     });
+  }
+
+  /**
+   * A gun going off. Four layers in one instant: see `AUDIO.laser`.
+   *
+   * Fired by the ship when the vector shot is taken, and by the scout when
+   * it shoots back. `pitch` is the whole cue transposed, which is the one
+   * thing that separates the two: ours is bright and tight, theirs is the
+   * same discharge from something bigger and further away.
+   */
+  laser(pitch = 1): void {
+    const cfg = AUDIO.laser;
+    this.duck(cfg.duck);
+
+    // The capacitor letting go. Nothing else here is this short, and it is
+    // what puts the "sudden" in the shot.
+    this.noiseVoice(0, {
+      duration: cfg.crack.seconds,
+      gain: cfg.crack.gain,
+      type: "bandpass",
+      from: cfg.crack.hz[0]! * pitch,
+      to: cfg.crack.hz[1]! * pitch,
+      q: cfg.crack.q,
+      drive: true,
+      send: cfg.send,
+    });
+
+    // The discharge: two saws falling the whole range, beating against each
+    // other on the way down.
+    for (const detune of [-cfg.body.detuneCents, cfg.body.detuneCents]) {
+      this.tone(cfg.body.hz[0]! * pitch, 0, {
+        duration: cfg.body.seconds,
+        gain: cfg.body.gain * 0.5,
+        type: "sawtooth",
+        sweepTo: cfg.body.hz[1]! * pitch,
+        filterHz: 5200 * pitch,
+        filterQ: cfg.body.q,
+        detune,
+        drive: true,
+        send: cfg.send,
+      });
+    }
+
+    // The sub, so the hull wears the recoil.
+    this.tone(cfg.sub.hz[0]! * pitch, 0, {
+      duration: cfg.sub.seconds,
+      gain: cfg.sub.gain,
+      type: "sine",
+      sweepTo: cfg.sub.hz[1]! * pitch,
+      send: cfg.send * 0.4,
+    });
+
+    // The bolt leaving, crossing the field as it goes.
+    this.noiseVoice(0, {
+      duration: cfg.bolt.seconds,
+      gain: cfg.bolt.gain,
+      type: "bandpass",
+      from: cfg.bolt.hz[0]! * pitch,
+      to: cfg.bolt.hz[1]! * pitch,
+      q: cfg.bolt.q,
+      pan: [cfg.bolt.pan[0]!, cfg.bolt.pan[1]!],
+      send: cfg.send,
+    });
+  }
+
+  /**
+   * Something going up out there: the scout taking the shot. See
+   * `AUDIO.blast`. `strength` scales the whole thing, so a glance off the
+   * hull is not the same event as a kill.
+   */
+  blast(strength = 1): void {
+    const cfg = AUDIO.blast;
+    this.duck(cfg.duck * strength);
+
+    this.noiseVoice(0, {
+      duration: cfg.crack.seconds,
+      gain: cfg.crack.gain * strength,
+      type: "highpass",
+      from: cfg.crack.hz[0]!,
+      to: cfg.crack.hz[1]!,
+      drive: true,
+      send: cfg.send,
+    });
+    this.noiseVoice(0, {
+      duration: cfg.body.seconds * strength,
+      gain: cfg.body.gain * strength,
+      type: "lowpass",
+      from: cfg.body.hz[0]!,
+      to: cfg.body.hz[1]!,
+      q: cfg.body.q,
+      drive: true,
+      send: cfg.send,
+    });
+    this.tone(cfg.sub.hz[0]!, 0, {
+      duration: cfg.sub.seconds * strength,
+      gain: cfg.sub.gain * strength,
+      type: "sine",
+      sweepTo: cfg.sub.hz[1]!,
+      delay: 0.02,
+      send: cfg.send * 0.5,
+    });
+
+    // Pieces coming off, thrown about the stereo field at random.
+    const count = Math.max(Math.round(cfg.rubble.count * strength), 3);
+    for (let i = 0; i < count; i += 1) {
+      const pan = (Math.random() * 2 - 1) * 0.9;
+      this.noiseVoice(0, {
+        duration: cfg.rubble.seconds,
+        gain: cfg.rubble.gain * strength,
+        type: "bandpass",
+        from: cfg.rubble.hz[0]! + Math.random() * (cfg.rubble.hz[1]! - cfg.rubble.hz[0]!),
+        to: cfg.rubble.hz[0]!,
+        q: 4,
+        delay: 0.03 + Math.random() * cfg.rubble.spread,
+        pan: [pan, pan],
+        send: cfg.send,
+      });
+    }
+  }
+
+  /**
+   * The launch countdown. `step` is 3, 2 or 1, then 0 for GO.
+   *
+   * The pips are deliberately plain -- one clean tone with a click on the
+   * front, the same every time -- so that GO, which is an octave up with a
+   * fifth over it and the room behind it, reads as a start and not as a
+   * fourth pip.
+   */
+  countdown(step: number): void {
+    const cfg = AUDIO.countdown;
+    const go = step <= 0;
+
+    this.noiseVoice(0, {
+      duration: 0.012,
+      gain: cfg.gain * 0.5,
+      type: "highpass",
+      from: 3200,
+      to: 2400,
+      send: cfg.send * 0.5,
+    });
+    this.tone(go ? cfg.goHz : cfg.pipHz, 0, {
+      duration: go ? cfg.goSeconds : cfg.seconds,
+      gain: cfg.gain,
+      type: "triangle",
+      attack: 0.008,
+      send: cfg.send,
+    });
+    if (!go) return;
+
+    // GO: a fifth over the top and the sub under it, so the run starts on a
+    // chord rather than a beep.
+    this.tone(cfg.goHz * 1.5, 0, {
+      duration: cfg.goSeconds,
+      gain: cfg.gain * 0.6,
+      type: "triangle",
+      attack: 0.008,
+      delay: 0.02,
+      send: cfg.send,
+    });
+    this.tone(cfg.pipHz / 4, 0, {
+      duration: cfg.goSeconds,
+      gain: cfg.gain * 0.8,
+      type: "sine",
+      send: cfg.send * 0.5,
+    });
+    this.pulseEngine(0.5);
   }
 
   /** A NOVA scan fires. */

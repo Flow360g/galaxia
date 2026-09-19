@@ -1,0 +1,128 @@
+/* The launch card. A full-screen panel over the stage, shown before the
+   engine starts, so like the briefing it is allowed to own the whole screen:
+   there is no ship underneath it yet. Same dark panel, hairlines and square
+   yellow button as the rest of the cabinet. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(7, 17, 34, 0.88);
+  animation: fadeIn 240ms ease-out;
+}
+
+.panel {
+  width: 100%;
+  max-width: 460px;
+  max-height: 100%;
+  background: rgba(7, 17, 34, 0.94);
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #ffffff;
+  animation: rise 240ms ease-out;
+}
+
+.tag {
+  font-size: 9px;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--arcade-cyan);
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--arcade-yellow);
+}
+
+.lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--rule-dark);
+  padding-top: 14px;
+}
+
+.line {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d5dbe6;
+}
+
+.line strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* One target, thumb-sized, and the only thing on the card that takes a tap. */
+.ready {
+  min-height: 52px;
+  padding: 16px;
+  font-size: 13px;
+  border: 1px solid var(--arcade-yellow);
+  background: var(--arcade-yellow);
+  color: var(--ink);
+}
+
+.ready:active {
+  background: #ffffff;
+}
+
+/* Short phones: tighten, never scroll. The band rule applies here too. */
+@media (max-height: 700px) {
+  .line {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .lines {
+    gap: 10px;
+    padding-top: 12px;
+  }
+
+  .title {
+    font-size: 17px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel {
+    animation: none;
+  }
+}

@@ -129,7 +129,7 @@ export type NovaKind = "eliminate" | "clue" | "narrow";
  */
 export interface Pulse {
   id: number;
-  kind: "plasma" | "shield" | "boost";
+  kind: "plasma" | "shield" | "boost" | "damage";
   /** Headline, e.g. PLASMA COLLECTED. */
   label: string;
   /** Figure under it, e.g. "+1" or "1 SHIELD LOST". */
@@ -302,6 +302,11 @@ export interface GameState {
   shields: number;
   maxShields: number;
   /** The most recent collect or hit, for the HUD to flash. Never cleared mid-run. */
+  /**
+   * The launch countdown over the intro: 3, 2, 1, then 0 for GO, and null
+   * once the run is flying.
+   */
+  countdown: number | null;
   pulse: Pulse | null;
   /** Outcome of the most recent encounter, while its toast is up. */
   outcome: Outcome | null;

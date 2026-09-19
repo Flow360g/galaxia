@@ -66,9 +66,32 @@ export const FLIGHT = {
   distanceTimeScale: 90,
 } as const;
 
+/**
+ * The launch countdown: 3, 2, 1, GO over the engines lighting.
+ *
+ * The run does not start because a timer somewhere ran out; it starts because
+ * the player said READY and then watched it come. That is the whole job of
+ * this -- the first cluster has a five second clock on it, and a player who
+ * is still working out that the screen has started is already behind it.
+ */
+export const COUNTDOWN = {
+  /** Seconds each of 3, 2 and 1 holds. */
+  stepSeconds: 0.72,
+  /** Seconds GO holds before it clears and the first prompt lands. */
+  goSeconds: 0.54,
+} as const;
+
+/** How long the whole countdown, and therefore the intro, runs for. */
+const COUNTDOWN_SECONDS = COUNTDOWN.stepSeconds * 3 + COUNTDOWN.goSeconds;
+
 export const ENCOUNTER = {
-  /** Engines lighting before the first asteroid is called. */
-  introSeconds: 2.6,
+  /**
+   * Engines lighting before the first asteroid is called. This IS the
+   * countdown: the numbers come down over the ship getting under way, and
+   * GO clears exactly as the first prompt lands. Retune `COUNTDOWN` and the
+   * two stay together.
+   */
+  introSeconds: COUNTDOWN_SECONDS,
   /**
    * Seconds on the clock for a single pick. Thrust IS the timer, and it
    * refills for every pick, so a six-lane cluster is six five-second
@@ -222,14 +245,25 @@ export const VECTOR = {
   perfectBand: 0.15,
   /** Strength of a glancing hit at the edge of tolerance (1.0 at the perfect band). */
   glanceFloor: 0.4,
-  /** Seconds the beam takes to reach the alien after lock. */
-  beamSeconds: 0.35,
   /**
-   * A shot that misses flies PAST the scout rather than stopping level with
-   * it: the beam runs on to this multiple of the range before it fades, so a
-   * miss reads as a miss.
+   * Seconds the beam takes to reach the alien after lock. A shot is a shot:
+   * it crosses the gap almost before the eye has it, and everything that
+   * makes it read -- the muzzle, the recoil, the scout going up -- lands in
+   * the same instant rather than spread over a lazy arc.
    */
-  missOvershoot: 1.5,
+  beamSeconds: 0.1,
+  /**
+   * Lock to contact when the shot is on target. Barely longer than the beam
+   * takes to arrive, so the crack, the hit and the explosion are one event.
+   */
+  strikeSeconds: 0.16,
+  /**
+   * Lock to contact when the shot is NOT taken: the aim was wrong, our guns
+   * stay quiet, and the scout takes this long to line up and fire back. The
+   * silence is the point -- a beat of nothing coming from the ship before
+   * the hull is hit.
+   */
+  returnDelaySeconds: 0.85,
   /**
    * How hard a miss lands. Error 1 is the edge of tolerance and costs
    * `severityFloor` of a full impact; error `severityFullAt` and beyond costs
@@ -300,8 +334,18 @@ export const ALIEN = {
   /** A glancing hit: seconds of the spin, and how far it is knocked back. */
   glanceSeconds: 0.9,
   glanceKick: 7,
-  /** Return fire: seconds for the red beam, and the warp-out run. */
-  returnFireSeconds: 0.5,
+  /**
+   * Return fire: seconds for the red beam to cross, and the warp-out run.
+   * The scout's shot is as quick as ours -- the dread is in the beat before
+   * it (`VECTOR.returnDelaySeconds`), not in a slow bolt.
+   */
+  returnFireSeconds: 0.18,
+  /**
+   * The scout's gun, as a transposition of the ship's. Under 1 is bigger and
+   * further off: the same discharge from something you would rather not be
+   * in front of.
+   */
+  gunPitch: 0.62,
   warpOutSeconds: 1.2,
   /** Seconds the hull takes to come apart on a kill. */
   destroySeconds: 0.9,
@@ -344,6 +388,9 @@ export const FX = {
     directShake: 1.0,
     glanceShake: 0.45,
     returnFireShake: 1.3,
+    /** Firing: the recoil through the rig, and the lens kicking with it. */
+    fireShake: 0.7,
+    fireKick: 4.5,
     /** Salvage capsule flight time to the ship. */
     salvageSeconds: 0.6,
   },
@@ -489,10 +536,60 @@ export const AUDIO = {
   },
 
   /**
+   * The launch countdown. Three pips and a GO: the pips are one clean tone
+   * with a click on the front, the GO is the same note an octave up with a
+   * fifth over it and the room behind it, so the last one reads as a start
+   * rather than a fourth pip.
+   */
+  countdown: {
+    pipHz: 660,
+    goHz: 1320,
+    seconds: 0.16,
+    goSeconds: 0.5,
+    gain: 0.2,
+    send: 0.35,
+  },
+
+  /**
    * A pass: the Doppler of something going by. The filter rises to `peak` as
    * it approaches and falls away behind, and the pan crosses with it.
    */
   whoosh: { q: 5.5, peakBias: 0.42, bodyGain: 0.5, send: 0.35 },
+
+  /**
+   * The ship's gun. Not a pew: a discharge.
+   *
+   * The crack is the capacitor letting go and is over in a fortieth of a
+   * second -- it is the whole reason the shot reads as sudden. Under it a
+   * pair of detuned saws fall from the top of their range to the bottom in
+   * the same breath, driven so they tear, and a sub lands with them so the
+   * hull feels it. The bolt itself is noise sweeping down and out across the
+   * stereo field, which is the sound of it leaving.
+   */
+  laser: {
+    crack: { seconds: 0.025, gain: 0.5, hz: [8200, 2600], q: 1.1 },
+    body: { seconds: 0.26, gain: 0.3, hz: [2400, 180], detuneCents: 22, q: 9 },
+    sub: { seconds: 0.3, gain: 0.26, hz: [160, 40] },
+    bolt: { seconds: 0.34, gain: 0.22, hz: [5200, 700], q: 3.2, pan: [0, 0.45] },
+    send: 0.45,
+    duck: 0.3,
+  },
+
+  /**
+   * Something going up at a distance: the scout when the shot lands. Sharper
+   * and drier at the front than a hull crash, because it is happening over
+   * there, and with most of its length in the tail -- the room is what says
+   * "far away", and there is nothing else out here to say it.
+   */
+  blast: {
+    crack: { seconds: 0.04, gain: 0.34, hz: [6400, 1500] },
+    body: { seconds: 0.55, gain: 0.34, hz: [1800, 120], q: 1.4 },
+    sub: { seconds: 0.6, gain: 0.3, hz: [110, 32] },
+    /** Pieces coming off, scattered so no two blasts are the same. */
+    rubble: { count: 9, spread: 0.55, gain: 0.1, hz: [900, 4800], seconds: 0.1 },
+    send: 0.7,
+    duck: 0.42,
+  },
 
   /** Boost, slingshot and the burn: thrust you can hear winding up. */
   boost: {
@@ -735,6 +832,14 @@ export const CAMERA = {
   lateralFollow: 0.72,
   /** Positional damping. Higher = tighter, stiffer chase. */
   positionDamping: 4.2,
+  /**
+   * How fast the rig eases in and out of a lane lock. The lock swings the
+   * camera's whole job around -- from following the ship's X to holding the
+   * centreline -- and flipping that in one frame snaps the aim, which reads
+   * as a glitch the instant a lane is tapped. Blending it over a few frames
+   * makes the same change invisible. Higher = quicker, harder changeover.
+   */
+  laneLockResponse: 6.5,
   /** How far ahead (on -Z) the camera aims. Makes steering read as intent. */
   lookAheadZ: 30,
   /**

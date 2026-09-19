@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
+import { launch } from "./helpers";
 
 /**
  * Sound is synthesised, not sampled, so there is no file to assert on. What
@@ -88,6 +89,7 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   await page.addInitScript(probe);
   await page.goto("/play?replay=1");
 
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
   // Browsers hold a context suspended until a gesture; the toggle is one.
   // Off and straight back on leaves the run where it started, sound on.
@@ -145,6 +147,7 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
 
   // And the choice survives a reload.
   await page.goto("/play?replay=1");
+  await launch(page);
   await expect(page.getByTestId("sound")).toHaveAttribute("data-muted", "true", {
     timeout: 20_000,
   });

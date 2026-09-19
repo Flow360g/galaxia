@@ -76,7 +76,6 @@ export class Engine {
   private readonly alien: Alien;
   private readonly beam: Beam;
   private readonly returnBeam: Beam;
-  private readonly aimLine: Beam;
   private readonly landmark: Landmark;
   private readonly salvage: Salvage;
   private readonly debris: Debris;
@@ -126,8 +125,6 @@ export class Engine {
    * the first would leave the second vector with nothing to shoot at.
    */
   private readonly vectorTotal: number;
-  /** World X the aim line points down while the player drags. */
-  private aimX = 0;
   /** Field density, current and target, so the belt thins smoothly. */
   private density = 1;
   private densityTarget = 1;
@@ -204,8 +201,7 @@ export class Engine {
 
     this.beam = new Beam(0.35);
     this.returnBeam = new Beam(0.5);
-    this.aimLine = new Beam(0.12);
-    this.scene.add(this.beam.group, this.returnBeam.group, this.aimLine.group);
+    this.scene.add(this.beam.group, this.returnBeam.group);
 
     this.landmark = new Landmark();
     this.chase.camera.add(this.landmark.group);
@@ -229,11 +225,12 @@ export class Engine {
     this.run = new Run(
       options.round,
       {
+        onCountdown: (step) => this.audio.countdown(step),
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
         onPick: (lane, correct) => this.onPick(lane, correct),
         onCollect: (lane, charge) => this.onCollect(lane, charge),
         onAim: (t) => this.onAim(t),
-        onVectorLock: (outcome, aimT, truthT) => this.onVectorLock(outcome, aimT, truthT),
+        onVectorLock: (outcome, truthT) => this.onVectorLock(outcome, truthT),
         onWaypoint: (info) => this.onWaypoint(info),
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
@@ -282,7 +279,6 @@ export class Engine {
     this.alien.dispose();
     this.beam.dispose();
     this.returnBeam.dispose();
-    this.aimLine.dispose();
     this.landmark.dispose();
     this.salvage.dispose();
     this.debris.dispose();
@@ -389,7 +385,6 @@ export class Engine {
       this.landmark.sink();
       this.densityTarget = 1;
     }
-    this.aimLine.hide();
     this.incoming.retire();
     this.chase.releaseLane();
     this.ship.recentre();
@@ -401,32 +396,48 @@ export class Engine {
     return this.chase.laneX(0.5 + (t - 0.5) * LANE.reach);
   }
 
+  /**
+   * The aim moved. The ship slides to it and that is the only tell: nothing
+   * is drawn out of the nose until the shot is taken, so the sky gives away
+   * neither the aim nor the answer.
+   */
   private onAim(t: number): void {
-    this.aimX = this.aimWorldX(t);
     this.chase.lockLane(LANE.lockSeconds);
-    this.ship.holdLane(this.aimX);
+    this.ship.holdLane(this.aimWorldX(t));
   }
 
-  private onVectorLock(outcome: Outcome, aimT: number, truthT: number): void {
-    this.audio.strike();
-    // The scout slides to the truth: that IS the answer being shown, and the
-    // shot is already on its way to where it will be.
+  /**
+   * The player locked. The scout slides to the truth either way -- that IS
+   * the answer being shown -- but the gun only goes off if the aim was good
+   * enough to take the shot.
+   *
+   * A wrong answer fires nothing. The ship sits there with the scout lined
+   * up on it and the silence is the tell; `onVectorContact` has the alien
+   * fire back a beat later.
+   */
+  private onVectorLock(outcome: Outcome, truthT: number): void {
     const truthX = this.aimWorldX(truthT);
     this.alien.reveal(truthX);
-    this.aimLine.hide();
 
+    if (!outcome.correct) {
+      // The scout winding up to fire: a swell under the beat of nothing
+      // happening, so the return fire is heard coming.
+      this.audio.strike();
+      return;
+    }
+
+    // On target, and the whole shot lands in one instant: the crack, the
+    // recoil through the rig and a bolt across the gap in a tenth of a
+    // second. The debris pool is left alone here on purpose -- it is one
+    // shared pool, and it is owed to the explosion that lands next frame.
+    this.audio.laser();
     this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
     this.alien.target(this.scratchB);
-    if (outcome.correct) {
-      // On target: the beam ends on the hull, at the truth.
-      this.scratchB.x = truthX;
-    } else {
-      // Wide: the shot runs along the aim and carries on past the scout, so
-      // a miss reads as a miss rather than as a hit that did nothing.
-      this.scratchB.x = this.aimWorldX(aimT);
-      this.scratchB.sub(this.scratch).multiplyScalar(VECTOR.missOvershoot).add(this.scratch);
-    }
+    this.scratchB.x = truthX;
     this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds, 1);
+    this.chase.shake(FX.vector.fireShake);
+    this.chase.burst(0, FX.vector.fireKick);
+    this.ship.pulseExhaust(FX.exhaustPulse.thread);
   }
 
   private onWaypoint(info: WaypointState): void {
@@ -578,6 +589,9 @@ export class Engine {
       const heavy = kind === "slingshot";
       const burst = heavy ? "slingshot" : "thread";
       this.alien.hit(kill ? "direct" : "glance");
+      // The bolt arrives and the scout goes up in the same instant: the hull
+      // comes apart and a blast lands out there with it.
+      this.audio.blast(kill ? 1 : heavy ? 0.8 : 0.55);
       this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.anomaly);
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
@@ -588,8 +602,10 @@ export class Engine {
         this.salvage.launch(this.scratchB, this.scratch);
       }
     } else {
-      // Miss or timeout: the alien fires back.
+      // Miss or timeout: our guns never went off, and the scout has spent the
+      // beat since the lock lining up. Now it fires, and the hull wears it.
       this.alien.returnFire();
+      this.audio.laser(ALIEN.gunPitch);
       this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
       this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
       this.chase.shake(FX.vector.returnFireShake);
@@ -674,15 +690,6 @@ export class Engine {
     // Only the anomaly still has a rock hanging ahead of the ship to loom as
     // the clock drains. Lane questions keep the sky clear.
     if (open && !this.laneEncounter && !this.inVector) this.rock.setLoom(1 - this.run.thrust);
-
-    // The aim line: from the nose to the alien's depth, only while aiming.
-    if (this.inVector && phase === "approach") {
-      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
-      this.scratchB.set(this.aimX, VECTOR.holdY, this.alien.group.position.z);
-      this.aimLine.hold(this.scratch, this.scratchB, COLOR.cyan, 0.3);
-    } else if (phase !== "approach") {
-      this.aimLine.hide();
-    }
 
     // Waypoint beats: the rating stamp shakes the camera; the alien warps in
     // as the "entering" line lands.

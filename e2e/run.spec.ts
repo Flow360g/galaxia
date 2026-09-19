@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
+import { launch } from "./helpers";
 
 const SHOTS = process.env.SHOT_DIR;
 
@@ -11,10 +12,16 @@ async function shot(page: Page, name: string) {
 /**
  * Nothing advances on a timer any more: a verdict or a waypoint card sits
  * there until the player taps. Wait for TAP TO CONTINUE to arm, then tap.
+ *
+ * Either target counts, and both are exercised below: the banner itself,
+ * which is what a player aims at, and anywhere else on the screen, which is
+ * the catcher behind the band.
  */
-async function advance(page: Page) {
-  await expect(page.getByTestId("tap-prompt")).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId("continue").click();
+async function advance(page: Page, via: "banner" | "anywhere" = "anywhere") {
+  const prompt = page.getByTestId("tap-prompt");
+  await expect(prompt).toBeVisible({ timeout: 15_000 });
+  if (via === "banner") await prompt.click();
+  else await page.getByTestId("continue").click();
 }
 
 test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, scan, share", async ({
@@ -25,8 +32,23 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const question = page.getByTestId("question");
   const toast = page.getByTestId("toast");
 
+  // Every run opens on the launch card: what Phase 1 is, and one button.
+  const ready = page.getByTestId("ready");
+  await expect(ready).toBeVisible({ timeout: 20_000 });
+  await expect(ready).toContainText("CLUSTER");
+  // Nothing is flying behind it.
+  await expect(question).toHaveCount(0);
+  await shot(page, "00-ready");
+  await launch(page);
+
+  // READY, then 3, 2, 1, GO over the engines lighting.
+  await expect(page.getByTestId("countdown")).toBeVisible({ timeout: 10_000 });
+  await shot(page, "00-countdown");
+
   // Encounter 1: cluster. Two correct picks, then BURN at 2 plasma.
   await expect(question).toBeVisible({ timeout: 20_000 });
+  // GO has cleared by the time the first prompt lands.
+  await expect(page.getByTestId("countdown")).toHaveCount(0);
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "0");
   await expect(page.getByTestId("burn")).toBeDisabled();
   await shot(page, "01-cluster");
@@ -50,7 +72,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const velocityAfterBurn = await readVelocity(page);
   expect(velocityAfterBurn).toBeGreaterThan(4000);
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
-  await advance(page);
+  // The words are a target, not just a label.
+  await advance(page, "banner");
 
   // Encounter 2: cluster. One correct, then a wrong lane. A boulder in the
   // lane: COLLISION, and one of the three shields is gone.
@@ -79,8 +102,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "05-waypoint-rating");
   await expect(waypoint).toContainText("ALIEN CONTACT", { timeout: 6_000 });
   await shot(page, "06-waypoint-entering");
-  // The stage card waits to be tapped on too.
-  await advance(page);
+  // The stage card waits to be tapped on too, banner included.
+  await advance(page, "banner");
 
   // Encounter 3: vector. Aim dead on. DIRECT HIT, salvage restores a shield.
   await expect(question).toBeVisible({ timeout: 15_000 });
@@ -95,10 +118,14 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   await advance(page);
 
-  // Encounter 4: vector, aim at the far end. MISS, the alien fires back, a shield goes.
+  // Encounter 4: vector, aim at the far end. The ship never fires: the scout
+  // does, and the screen says the hull wore it.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("aim").fill("1000");
   await page.keyboard.press("Enter");
+  await expect(page.getByTestId("damage")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "damage");
+  await shot(page, "09-damage");
   await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
   await expect(toast).toContainText("MISS");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
@@ -182,6 +209,7 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
   await page.goto("/play?replay=1");
   const toast = page.getByTestId("toast");
 
+  await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
   const lanes = answersOf(0);
   for (const lane of lanes.slice(0, -1)) {

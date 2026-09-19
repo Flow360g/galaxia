@@ -79,6 +79,12 @@ interface Settings {
   clockSeconds: number;
   hintModel: "auto" | "manual";
   answerMode: "lanes" | "typed";
+  /** Whether the first rung of the ladder, the prose clue, is already up and free. */
+  opening: "blind" | "clue";
+  /** Whether the landmark pin exists as a rung at all. */
+  landmark: boolean;
+  /** Which tiers are in the deck. */
+  deck: "all" | "gentle";
 }
 
 const DEFAULTS: Settings = {
@@ -87,16 +93,41 @@ const DEFAULTS: Settings = {
   clockSeconds: 30,
   hintModel: "manual",
   answerMode: "lanes",
+  opening: "clue",
+  landmark: true,
+  deck: "all",
 };
+
+/**
+ * The intel ladder, in order. Each rung past the free opening costs a hint.
+ * Order matters: the clue orients you, the wide scan gives back the macro
+ * pattern a tight crop cut off, the landmark puts a finger on one building,
+ * and the territory is the last resort.
+ */
+type Rung = "clue" | "wide" | "landmark" | "territory";
+
+function ladderFor(settings: Settings, target: Target | undefined): Rung[] {
+  const rungs: Rung[] = ["clue", "wide"];
+  if (settings.landmark && target?.landmark) rungs.push("landmark");
+  rungs.push("territory");
+  return rungs;
+}
 
 /** Base value of the encounter, and what each intel drop costs. */
 const BASE_SCORE = 200;
 const HINT_COST = 50;
 const MIN_SCORE = 50;
-/** Fractions of the clock at which auto mode drops intel. */
-const AUTO_AT = [0.33, 0.6, 0.83];
+/**
+ * Fractions of the clock at which auto mode drops intel. Spread evenly across
+ * however many rungs are actually buyable, which the dials now change.
+ */
+function autoAt(count: number): number[] {
+  return Array.from({ length: Math.max(0, count) }, (_, i) => (i + 1) / (count + 1));
+}
 /** How far the wide scan pulls back. */
 const WIDE_SCAN_STEPS = 2;
+/** Longest the clock will wait for imagery before starting regardless. */
+const ACQUIRE_GRACE_MS = 6000;
 
 function worthNow(hints: number): number {
   return Math.max(MIN_SCORE, BASE_SCORE - HINT_COST * hints);
@@ -185,11 +216,15 @@ function Feed({
   zoom,
   source,
   onError,
+  onReady,
+  showLandmark,
 }: {
   target: Target;
   zoom: number;
   source: SourceKey;
   onError: () => void;
+  onReady: () => void;
+  showLandmark: boolean;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(360);
@@ -230,6 +265,50 @@ function Feed({
     }
   }
 
+  /**
+   * The mosaic is ready when every tile in it has settled, loaded or failed.
+   * The clock hangs on this: tiles come off a public service over the phone's
+   * wifi and can take tens of seconds, and a round spent staring at a black
+   * square while the countdown drains tells us nothing about difficulty.
+   *
+   * `onLoad` alone is not enough. A cached tile can already be complete before
+   * React attaches the handler, and that round would then never start, so the
+   * ref checks `complete` as each image mounts.
+   */
+  const signature = tiles.map((tile) => tile.src).join("|");
+  const settled = useRef(new Set<string>());
+  const readyRef = useRef(onReady);
+  useEffect(() => {
+    readyRef.current = onReady;
+  }, [onReady]);
+  useEffect(() => {
+    settled.current = new Set<string>();
+  }, [signature]);
+
+  const settle = useCallback(
+    (src: string, total: number) => {
+      settled.current.add(src);
+      if (settled.current.size >= total) readyRef.current();
+    },
+    [],
+  );
+
+  /**
+   * The pin rides the same projection as the tiles, so it lands on the
+   * structure at any zoom. It is positioned in frame pixels rather than inside
+   * the scaled mosaic, so the marker keeps its size while the imagery zooms.
+   */
+  const pin = (() => {
+    const mark = target.landmark;
+    if (!showLandmark || !mark) return null;
+    const mx = (lonToTile(mark.lon, z) - fx) * TILE;
+    const my = (latToTile(mark.lat, z) - fy) * TILE;
+    const left = size / 2 + mx * scale;
+    const top = size / 2 + my * scale;
+    if (left < 0 || top < 0 || left > size || top > size) return null;
+    return { left, top, name: mark.name };
+  })();
+
   return (
     <div className={styles.frame} ref={frame}>
       <div
@@ -244,16 +323,27 @@ function Feed({
             width={TILE}
             height={TILE}
             style={{ left: tile.left, top: tile.top }}
+            ref={(node) => {
+              if (node?.complete) settle(tile.src, tiles.length);
+            }}
+            onLoad={() => settle(tile.src, tiles.length)}
             onError={(event) => {
               // A broken-image glyph in the feed reads as a bug. Hide the tile
               // and let the notice below the frame do the explaining.
               event.currentTarget.style.visibility = "hidden";
+              settle(tile.src, tiles.length);
               onError();
             }}
             draggable={false}
           />
         ))}
       </div>
+      {pin ? (
+        <div className={styles.pin} style={{ left: pin.left, top: pin.top }}>
+          <span className={styles.pinRing} aria-hidden="true" />
+          <span className={`${styles.pinLabel} arcade`}>{pin.name}</span>
+        </div>
+      ) : null}
       <div className={styles.reticle} aria-hidden="true" />
       <div className={`${styles.frameTag} arcade`}>Z{z}</div>
     </div>
@@ -276,20 +366,31 @@ export function SatelliteMock() {
   const [timedOut, setTimedOut] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [tilesFailed, setTilesFailed] = useState(false);
+  /** False until this target's mosaic has arrived. The clock waits on it. */
+  const [feedReady, setFeedReady] = useState(false);
 
   const target = queue[index];
   const remaining = Math.max(0, settings.clockSeconds - elapsed);
 
+  const ladder = useMemo(() => ladderFor(settings, target), [settings, target]);
+  const buyable = ladder.length;
+  /** Rungs bought so far. The opener is free and sits outside the ladder. */
+  const shown = useMemo(() => new Set<Rung>(ladder.slice(0, hints)), [ladder, hints]);
+
+
   const start = useCallback(() => {
-    setQueue(seededShuffle(TARGETS, `${Date.now()}`));
+    const deck =
+      settings.deck === "gentle" ? TARGETS.filter((t) => t.tier !== "hard") : TARGETS;
+    setQueue(seededShuffle(deck, `${Date.now()}`));
     setIndex(0);
     setHints(0);
     setElapsed(0);
     setTyped("");
     setResults([]);
     setTilesFailed(false);
+    setFeedReady(false);
     setPhase("playing");
-  }, []);
+  }, [settings.deck]);
 
   const finish = useCallback(
     (wasCorrect: boolean, ranOut: boolean) => {
@@ -333,13 +434,13 @@ export function SatelliteMock() {
    * countdown honest when the tab is throttled.
    */
   useEffect(() => {
-    if (phase !== "playing") return;
+    if (phase !== "playing" || !feedReady) return;
     const started = Date.now();
     const id = window.setInterval(() => {
       const seconds = (Date.now() - started) / 1000;
       setElapsed(seconds);
       if (settings.hintModel === "auto") {
-        const due = AUTO_AT.filter((at) => seconds >= at * settings.clockSeconds).length;
+        const due = autoAt(buyable).filter((at) => seconds >= at * settings.clockSeconds).length;
         setHints((prior) => (due > prior ? due : prior));
       }
       if (seconds >= settings.clockSeconds) {
@@ -348,7 +449,18 @@ export function SatelliteMock() {
       }
     }, 100);
     return () => window.clearInterval(id);
-  }, [phase, index, settings.hintModel, settings.clockSeconds]);
+  }, [phase, index, feedReady, buyable, settings.hintModel, settings.clockSeconds]);
+
+  /**
+   * A tile that neither loads nor errors, a slow phone on a slow service, would
+   * otherwise hold the clock and the disabled lanes for ever. The wait is a
+   * courtesy, never a gate: past this the round starts with whatever arrived.
+   */
+  useEffect(() => {
+    if (phase !== "playing" || feedReady) return;
+    const id = window.setTimeout(() => setFeedReady(true), ACQUIRE_GRACE_MS);
+    return () => window.clearTimeout(id);
+  }, [phase, index, feedReady]);
 
   const next = useCallback(() => {
     if (index + 1 >= queue.length) {
@@ -359,6 +471,7 @@ export function SatelliteMock() {
     setHints(0);
     setElapsed(0);
     setTyped("");
+    setFeedReady(false);
     setPhase("playing");
   }, [index, queue.length]);
 
@@ -384,7 +497,9 @@ export function SatelliteMock() {
     return seededShuffle([target.name, ...target.decoys], target.id);
   }, [target]);
 
-  const zoom = target ? target.zoom + settings.zoomOffset - (hints >= 1 ? WIDE_SCAN_STEPS : 0) : 12;
+  const zoom = target
+    ? target.zoom + settings.zoomOffset - (shown.has("wide") ? WIDE_SCAN_STEPS : 0)
+    : 12;
 
   if (phase === "setup") {
     return (
@@ -439,7 +554,13 @@ export function SatelliteMock() {
         zoom={zoom}
         source={settings.source}
         onError={() => setTilesFailed(true)}
+        onReady={() => setFeedReady(true)}
+        showLandmark={shown.has("landmark")}
       />
+
+      {!feedReady ? (
+        <p className={`${styles.acquiring} arcade`}>Acquiring feed</p>
+      ) : null}
 
       {tilesFailed ? (
         <p className={styles.warn}>
@@ -449,26 +570,37 @@ export function SatelliteMock() {
       ) : null}
 
       <div className={styles.intel}>
-        {hints >= 1 ? (
+        {settings.opening === "clue" ? (
+          <p className={styles.intelOpener}>{target.opener}</p>
+        ) : null}
+        {shown.has("clue") ? <p className={styles.intelLine}>{target.clue}</p> : null}
+        {shown.has("wide") ? (
           <p className={`${styles.intelLine} ${styles.cyan}`}>
             <span className="arcade">Wide scan</span> Pulled back {WIDE_SCAN_STEPS} zoom steps.
           </p>
         ) : null}
-        {hints >= 2 ? <p className={styles.intelLine}>{target.clue}</p> : null}
-        {hints >= 3 ? (
+        {shown.has("landmark") && target.landmark ? (
+          <p className={`${styles.intelLine} ${styles.cyan}`}>
+            <span className="arcade">Landmark</span> {target.landmark.name}, pinned in frame.
+          </p>
+        ) : null}
+        {shown.has("territory") ? (
           <p className={styles.intelLine}>
             Territory: {target.country}. Designation begins with {target.name.charAt(0)}.
           </p>
         ) : null}
-        {hints === 0 ? <p className={styles.intelMuted}>No intel taken. Full value.</p> : null}
+        {hints === 0 ? (
+          <p className={styles.intelMuted}>No intel taken. Full value.</p>
+        ) : null}
       </div>
 
       {phase === "playing" ? (
         <>
-          {settings.hintModel === "manual" && hints < 3 ? (
+          {settings.hintModel === "manual" && hints < buyable ? (
             <button
               type="button"
               className={`${styles.intelButton} arcade`}
+              disabled={!feedReady}
               onClick={() => setHints((prior) => prior + 1)}
             >
               Request intel &middot; costs {HINT_COST}
@@ -482,6 +614,9 @@ export function SatelliteMock() {
                   key={option}
                   type="button"
                   className={`${styles.lane} arcade`}
+                  // Answering before the picture is up would be a coin flip,
+                  // and a coin flip in the readout is worse than no data.
+                  disabled={!feedReady}
                   onClick={() => finish(option === target.name, false)}
                 >
                   {option}
@@ -505,8 +640,9 @@ export function SatelliteMock() {
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}
+                disabled={!feedReady}
               />
-              <button type="submit" className={`${styles.submit} arcade`}>
+              <button type="submit" className={`${styles.submit} arcade`} disabled={!feedReady}>
                 Send
               </button>
             </form>
@@ -617,6 +753,44 @@ function Setup({
         ))}
       </Row>
 
+      <Row label="Opening">
+        <Chip
+          on={settings.opening === "clue"}
+          onClick={() => set("opening", "clue")}
+          label="Clue up"
+        />
+        <Chip
+          on={settings.opening === "blind"}
+          onClick={() => set("opening", "blind")}
+          label="Blind"
+        />
+      </Row>
+      <p className={styles.note}>
+        Clue up: a free orienting line, continent and climate only, is showing from the start.
+        Blind: nothing but the picture. Either way the strong clue is still bought.
+      </p>
+
+      <Row label="Landmark">
+        <Chip on={settings.landmark} onClick={() => set("landmark", true)} label="On" />
+        <Chip on={!settings.landmark} onClick={() => set("landmark", false)} label="Off" />
+      </Row>
+      <p className={styles.note}>
+        A rung that pins one structure in frame and describes it without naming the place. Fifteen
+        of the sixteen targets have one; Uluru is the whole picture, so it does not.
+      </p>
+
+      <Row label="Deck">
+        <Chip on={settings.deck === "all"} onClick={() => set("deck", "all")} label="All 16" />
+        <Chip
+          on={settings.deck === "gentle"}
+          onClick={() => set("deck", "gentle")}
+          label="Drop the hard four"
+        />
+      </Row>
+      <p className={styles.note}>
+        The hard four are Mexico City, Mumbai, Tokyo and Buenos Aires.
+      </p>
+
       <Row label="Intel">
         <Chip
           on={settings.hintModel === "manual"}
@@ -631,8 +805,10 @@ function Setup({
       </Row>
       <p className={styles.note}>
         You ask: hints only cost points if you take them. Auto: they land at{" "}
-        {AUTO_AT.map((at) => `${Math.round(at * settings.clockSeconds)}s`).join(", ")} whether you
-        want them or not.
+        {autoAt(ladderFor(settings, TARGETS[0]).length)
+          .map((at) => `${Math.round(at * settings.clockSeconds)}s`)
+          .join(", ")}{" "}
+        whether you want them or not.
       </p>
 
       <Row label="Answer">
