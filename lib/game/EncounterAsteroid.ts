@@ -11,8 +11,8 @@ import { COLOR, ENCOUNTER, SHIP, WORLD } from "./Tuning";
  * fast, accelerating run at the ship. A threaded rock then streams past the
  * camera; a hit one shatters.
  *
- * The anomaly is the same mesh in violet with a slow pulse, so it reads as
- * something other than rock before a word of the prompt is read.
+ * Nothing spawns it since every answer became a lane; it is kept for a
+ * round that wants a rock ahead of the ship again.
  */
 
 type Mode = "idle" | "hold" | "strike" | "pass" | "shatter";
@@ -21,7 +21,6 @@ export class EncounterAsteroid {
   readonly group = new THREE.Group();
 
   active = false;
-  anomaly = false;
 
   private mode: Mode = "idle";
   private readonly mesh: THREE.Mesh;
@@ -68,33 +67,22 @@ export class EncounterAsteroid {
   }
 
   /** Call the rock in at the far hold. */
-  spawn(anomaly: boolean): void {
+  spawn(): void {
     this.active = true;
-    this.anomaly = anomaly;
     this.mode = "hold";
     this.holdTarget = ENCOUNTER.holdFar;
     this.shatterT = 0;
     this.group.visible = true;
 
-    const radius = anomaly ? ENCOUNTER.anomalyRadius : ENCOUNTER.radius;
+    const radius = ENCOUNTER.radius;
     this.mesh.scale.setScalar(radius);
     this.wireframe.scale.setScalar(radius * 1.02);
     this.group.scale.setScalar(1);
     this.group.position.set(0, ENCOUNTER.offsetY, ENCOUNTER.holdFar);
 
-    if (anomaly) {
-      this.material.color.setHex(0x2a1b4a);
-      this.material.emissive.setHex(COLOR.anomaly);
-      this.material.emissiveIntensity = 0.55;
-      this.wireMaterial.color.setHex(COLOR.anomaly);
-      this.wireMaterial.opacity = 1;
-    } else {
-      this.material.color.setHex(COLOR.panelLabel);
-      this.material.emissive.setHex(0x000000);
-      this.material.emissiveIntensity = 0;
-      this.wireMaterial.color.setHex(COLOR.accent);
-      this.wireMaterial.opacity = 0.9;
-    }
+    this.material.color.setHex(COLOR.panelLabel);
+    this.wireMaterial.color.setHex(COLOR.accent);
+    this.wireMaterial.opacity = 0.9;
   }
 
   /** 0 = full thrust (far), 1 = empty (close). */
@@ -113,8 +101,7 @@ export class EncounterAsteroid {
 
     // The tint is the verdict, shown before contact so the eye is already on
     // the rock when the consequence lands.
-    const hex = correct ? COLOR.pos : COLOR.neg;
-    if (!this.anomaly) this.material.color.setHex(hex);
+    this.material.color.setHex(correct ? COLOR.pos : COLOR.neg);
     this.wireMaterial.color.setHex(correct ? COLOR.cyan : COLOR.neg);
     this.wireMaterial.opacity = 1;
   }
@@ -143,12 +130,6 @@ export class EncounterAsteroid {
     this.group.rotation.x += this.spin.x * dt;
     this.group.rotation.y += this.spin.y * dt;
     this.group.rotation.z += this.spin.z * dt;
-
-    if (this.anomaly && this.mode !== "shatter") {
-      const pulse = 1 + Math.sin(this.elapsed * 3.1) * 0.05;
-      this.group.scale.setScalar(pulse);
-      this.material.emissiveIntensity = 0.45 + (Math.sin(this.elapsed * 2.3) + 1) * 0.2;
-    }
 
     switch (this.mode) {
       case "hold": {

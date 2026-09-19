@@ -98,8 +98,6 @@ export const ENCOUNTER = {
    * decisions rather than one long one.
    */
   thrustSeconds: 5,
-  /** The anomaly needs typing time. */
-  anomalyThrustSeconds: 40,
   /** Asteroid Z at full thrust and at empty thrust. It looms as you think. */
   holdFar: -170,
   holdNear: -48,
@@ -119,16 +117,13 @@ export const ENCOUNTER = {
    * CONTINUE arms, so the tap that answered cannot skip its own verdict.
    */
   confirmArmSeconds: 0.7,
-  /** Radius of an encounter asteroid, and of the anomaly. */
+  /** Radius of an encounter asteroid. */
   radius: 4.6,
-  anomalyRadius: 5.2,
   /** Vertical offset of the encounter rock so it sits in the ship's eyeline. */
   offsetY: 0.6,
   /** Lateral swerve when threading past, and the tighter skim on a slingshot. */
   threadOffsetX: 9.5,
   skimOffsetX: 6.6,
-  /** How long the scorer may take before the anomaly is marked locally. */
-  scanTimeoutSeconds: 9,
 } as const;
 
 export const CLUSTER = {
@@ -210,11 +205,6 @@ export const SCORE = {
   /** Vector: share of the base for a direct hit and for a glancing hit. */
   vectorDirect: 1,
   vectorGlance: 0.5,
-  /** Anomaly: share at full marks, and for a partial answer. */
-  anomalyFull: 1,
-  anomalyPartial: 0.5,
-  /** Scanner score at or above which the anomaly is full marks. */
-  anomalyFullAt: 0.8,
   /**
    * Multiplier by the streak carried INTO the encounter; the last value holds
    * for anything longer. Whole numbers on purpose: x2 is a thing a player can
@@ -315,7 +305,101 @@ export const LANDMARK = {
   /** Slow spin, radians per second. */
   spin: 0.02,
   moonUrl: "/models/moon.glb",
-  planetUrl: "/models/planet.glb",
+  planetUrl: "/models/earth.glb",
+} as const;
+
+/**
+ * WHERE ON EARTH: the relay station. Two appearances, one model.
+ *
+ * On the flight it comes up out of the distance dead ahead, projected the
+ * way the landmark is (see `LANDMARK.farDepth`), and the ship throttles back
+ * to come alongside. Aboard, it hangs in the foreground of its own scene
+ * with the docking module aimed at Earth.
+ */
+export const STATION = {
+  modelUrl: "/models/station.glb",
+  /** Distance in front of the camera; must be < CAMERA.far. */
+  depth: 300,
+  /** Where the approach starts, a projection figure only, like the landmark's. */
+  farDepth: 3200,
+  /**
+   * Camera-space offsets at `depth`. Dead ahead on X; below centre on Y so
+   * it sits in the gap between the HUD band and the ship in the lower third.
+   */
+  offsetX: 0,
+  offsetY: -34,
+  /** The model's longest axis at `depth`. */
+  length: 120,
+  /** Yaw so the dish and the solar wings read side-on, like a station should. */
+  yaw: 0.35,
+  /** Slow roll about the docking axis, radians per second. */
+  spin: 0.04,
+  /** Seconds from first sight to alongside. Arrival is this timer, never an asset. */
+  approachSeconds: 7,
+  /** Ambient rock density on the approach: a station does not sit in a belt. */
+  fieldDensity: 0.05,
+  /** The cruise floor while docking, as a fraction of normal. See Flight.throttle. */
+  dockThrottle: 0.12,
+
+  /** Aboard: the model's longest axis, in the orbit scene's units. */
+  dockedLength: 9,
+  /**
+   * Where it hangs, with Earth at `EARTH.position`. Below the band's third
+   * of the frame, above Earth, so the docking module reads as aimed down at
+   * the planet rather than off the edge of the screen.
+   */
+  dockedPosition: [0.4, -6.5, 0] as [number, number, number],
+  /** Roll about the docking axis while aboard, radians per second. */
+  dockedSpin: 0.06,
+  /**
+   * The docking module lies on the model's tube axis, and the loader centres
+   * the model on its bounds, which the solar wings drag off that axis. This
+   * is how far, as a fraction of the model length, to slide the model back so
+   * the tube axis passes through the pivot the station is aimed with.
+   */
+  axisOffset: 0.156,
+} as const;
+
+/** Earth, as seen from the station. */
+export const EARTH = {
+  modelUrl: "/models/earth.glb",
+  /** Diameter in the orbit scene's units. */
+  diameter: 10,
+  /**
+   * Centre: below the station and well behind it, so it reads as a planet
+   * in the distance with the docking module aimed at it, not a wall.
+   */
+  position: [1.2, -15.5, -2] as [number, number, number],
+  /** Radians per second. */
+  spin: 0.025,
+  /** Axial lean, radians. Earth's own is 23.4 degrees. */
+  tilt: 0.41,
+  /** Atmosphere: two additive shells, inside-out and outside, as scale and opacity. */
+  haloInner: { scale: 1.035, opacity: 0.22 },
+  haloOuter: { scale: 1.09, opacity: 0.08 },
+} as const;
+
+/** The orbit scene's camera and sun. */
+export const ORBIT = {
+  fov: 42,
+  near: 0.1,
+  /** Far enough to hold the backdrop plane at `BACKDROP.depth`. */
+  far: 600,
+  /** Where the camera sits, and what it looks at. Side-on to the station, a little above it. */
+  cameraPosition: [-7, -4, 31] as [number, number, number],
+  lookAt: [0.3, -8.6, 0] as [number, number, number],
+  /**
+   * The composition is authored wide. In portrait the camera backs off along
+   * its own line until the frame is at least this many degrees across.
+   */
+  minHorizontalFov: 28,
+  /** A slow drift so the frame is never a still: amplitude in units, rate in rad/s. */
+  driftAmplitude: 0.35,
+  driftRate: 0.18,
+  /** The sun: warm, from the side, so Earth has a terminator and the station a dark face. */
+  sunPosition: [18, 8, 6] as [number, number, number],
+  sunIntensity: 2.4,
+  fillIntensity: 0.55,
 } as const;
 
 export const ALIEN = {
@@ -378,6 +462,8 @@ export const FX = {
     wreck: 2.2,
     timeout: 1.1,
     burn: 0.8,
+    /** Docking never strikes the ship. */
+    dock: 0,
   },
   /** Camera pull-back (extra +Z offset) on a burst, and its decay per second. */
   pullback: { thread: 2.2, slingshot: 5.5, burn: 4.5 },
@@ -672,6 +758,21 @@ export const AUDIO = {
     rubble: { count: 9, spread: 0.55, gain: 0.1, hz: [900, 4800], seconds: 0.1 },
     send: 0.7,
     duck: 0.42,
+  },
+
+  /**
+   * Docking: an airlock, not a hit. The clamps taking the hull, the hull
+   * ringing off them on one low inharmonic partial, and the seal hissing
+   * after. Ducks the bed the way an impact does, since a mass has just met
+   * a bigger one.
+   */
+  dock: {
+    clamp: { seconds: 0.22, gain: 0.42, hz: [900, 90], q: 1.6 },
+    sub: { seconds: 0.5, gain: 0.3, hz: [90, 38] },
+    ring: { hz: 146, seconds: 1.6, gain: 0.16, delay: 0.05, ratio: 2.76, index: 260 },
+    hiss: { seconds: 1.4, gain: 0.09, hz: [3200, 900], q: 0.9, attack: 0.15, delay: 0.3 },
+    send: 0.6,
+    duck: 0.35,
   },
 
   /** Boost, slingshot and the burn: thrust you can hear winding up. */
@@ -999,8 +1100,11 @@ export const COLOR = {
   /** Arcade signal colours. */
   yellow: 0xffe03d,
   cyan: 0x4ff1ff,
-  /** The anomaly glows violet, unlike any normal rock. */
-  anomaly: 0xb28cff,
+  /**
+   * Violet: contact. The alien scout, and the relay station of WHERE ON
+   * EARTH. Nothing else in the game is this colour.
+   */
+  contact: 0xb28cff,
   /** Shield flash. */
   shield: 0x6fd6ff,
   /** Boost / slingshot heat. */

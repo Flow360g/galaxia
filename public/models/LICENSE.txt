@@ -8,3 +8,10 @@ flamingo.glb: "Spaceship" by Quaternius (quaternius.com), released under CC0 1.0
 seraph.glb: "1" by Eric Finn. Supplied by the project owner; the upstream
   licence was not stated with the file. Confirm the terms before shipping
   this hull publicly, especially as paid content.
+
+station.glb: "Wikiplanet Space Station (WSS)" by Alan Zimmerman, via Poly Pizza,
+  released under CC-BY 4.0. Normals and UVs stripped, parts joined by material,
+  welded and decimated to 40% for the mobile budget; the colours are the author's.
+
+earth.glb: "Earth" by Poly by Google, from the Poly by Google archive, released
+  under CC-BY 4.0.

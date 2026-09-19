@@ -39,6 +39,9 @@ export function maxScoreFor(round: Round): number {
  */
 export function scoreOutcome(outcome: Outcome): { base: number; multiplier: number; points: number } {
   const multiplier = multiplierFor(outcome.streakBefore);
+  // Docking is neutral until the satellite feed scores: nothing earned,
+  // nothing docked, and the streak carried in is left exactly as it was.
+  if (outcome.kind === "dock") return { base: 0, multiplier, points: 0 };
   const share = shareOf(outcome);
 
   if (share <= 0) {
@@ -65,9 +68,6 @@ function shareOf(outcome: Outcome): number {
     if (charge <= 0) return 0;
     return SCORE.clusterShare[Math.min(charge, SCORE.clusterShare.length) - 1] ?? 0;
   }
-  if (outcome.anomalyScore !== undefined) {
-    return outcome.anomalyScore >= SCORE.anomalyFullAt ? SCORE.anomalyFull : SCORE.anomalyPartial;
-  }
   if (outcome.error !== undefined) {
     return outcome.kind === "slingshot" ? SCORE.vectorDirect : SCORE.vectorGlance;
   }
@@ -86,7 +86,8 @@ export function scoreLines(round: Round, outcomes: Outcome[]): ScoreLine[] {
       multiplier: outcome.multiplier ?? 1,
       points: outcome.points ?? 0,
       max: maxPointsAt(index),
-      full: (outcome.base ?? 0) >= SCORE.perEncounter,
+      // A dock left nothing on the table: there was nothing on it yet.
+      full: outcome.kind === "dock" || (outcome.base ?? 0) >= SCORE.perEncounter,
     };
   });
 }
@@ -97,8 +98,8 @@ function labelFor(question: Question | undefined, index: number): string {
       return "CLUSTER";
     case "vector":
       return "VECTOR";
-    case "anomaly":
-      return "ANOMALY";
+    case "earth":
+      return "WHERE ON EARTH";
     case "mcq":
       return "LANE";
     default:
@@ -108,14 +109,12 @@ function labelFor(question: Question | undefined, index: number): string {
 
 /** The one short line the tally shows under a result. Arcade voice, no prose. */
 function detailFor(outcome: Outcome): string {
+  if (outcome.kind === "dock") return "FEED STANDING BY";
   if (outcome.timedOut) return "OUT OF TIME";
   if (!outcome.correct) return outcome.kind === "wreck" ? "WRECKED" : "MISSED";
   if (outcome.kind === "burn") {
     const charge = outcome.charge ?? 0;
     return `${charge} PLASMA BANKED`;
-  }
-  if (outcome.anomalyScore !== undefined) {
-    return outcome.anomalyScore >= SCORE.anomalyFullAt ? "SCANNER: FULL MARKS" : "SCANNER: PARTIAL";
   }
   if (outcome.error !== undefined) {
     return outcome.kind === "slingshot" ? "DIRECT HIT" : "GLANCING HIT";

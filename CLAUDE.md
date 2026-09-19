@@ -110,10 +110,9 @@ Concrete constraints when building or changing a component:
 - Type is legible on a 5.5 inch screen: prose 14 to 16px, arcade pixel
   type never below 9px, tabular figures for any number that changes so the
   counters do not jitter.
-- Inputs use `font-size: 16px` so iOS does not zoom on focus. The anomaly
-  text field is the only text input in the game; if you add another,
-  reserve space for the software keyboard and keep the submit button
-  visible above it.
+- Inputs use `font-size: 16px` so iOS does not zoom on focus. There are no
+  text inputs in the game today; if you add one, reserve space for the
+  software keyboard and keep the submit button visible above it.
 - Check the `@media (max-width: 720px)` and `(max-height: 620px)` blocks in
   `components/Hud.module.css` when adding HUD elements. Short phones are the
   binding constraint, not narrow ones: every new row in the band pushes the
@@ -138,9 +137,10 @@ for three.js in `COLOR` inside `lib/game/Tuning.ts`. Keep them in sync.
   backdrop blur, no drop shadows except glows.
 - Signal colours: yellow `#ffe03d` (score, slingshot), cyan `#4ff1ff`
   (streak, lane clear, NOVA, plasma pods), orange `#ff8a1f` (Boost, BURN),
-  violet `#b28cff` (the AI Anomaly, and nothing else), red `#ff6b5c` for
-  damage and boulders. Each colour means one thing. Do not reuse violet
-  for a non-anomaly element or cyan for a warning.
+  violet `#b28cff` (contact: the alien scout and Wikiplanet Station, and
+  nothing else), red `#ff6b5c` for damage and boulders. Each colour means
+  one thing. Do not reuse violet for anything that is not contact, or cyan
+  for a warning.
 - Type: Press Start 2P (`.arcade`, always uppercase, tracked) for titles,
   figures, buttons and outcome labels. The sans stack for prompts and
   prose. The mono stack for units.
@@ -181,26 +181,28 @@ codebase: the engine calls cues, nothing else makes a noise.
 ## Architecture in one screen
 
 ```
-app/                  routes: / (title), /play, /hangar (ship bay), /api/anomaly,
-                      layout, globals.css
+app/                  routes: / (title), /play, /hangar (ship bay), layout, globals.css
 components/           GameCanvas (React/three.js boundary), Hud, ScoreTally, ShareCard,
                       BestRun, Briefing (first-flight explainer), Hangar (ship bay),
-                      TitleMenu, DebugStats
-lib/game/Run.ts       pure state machine: intro -> approach -> collecting|scanning -> resolving -> aftermath
+                      Station (aboard Wikiplanet Station), TitleMenu, DebugStats
+lib/game/Run.ts       pure state machine: intro -> approach -> collecting -> resolving -> aftermath,
+                      then station -> docked -> finished for WHERE ON EARTH
 lib/game/Flight.ts    pure velocity model: cruise, streak floor, impulse, collision retain
 lib/game/Score.ts     pure scoring: base per encounter, streak multiplier, penalties, tally
 lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the canvas and loop
 lib/game/ShipBay.ts   the hangar's own tiny shell: one hull, turning on a lit deck
+lib/game/Station.ts   the station on the flight: comes up dead ahead, arms the door
+lib/game/Orbit.ts     the station screen's own tiny shell: the station over Earth
 lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
                       CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, SHIPS, HANGAR, ...)
 lib/game/Incoming.ts  the one pod or boulder that comes down a picked lane
 lib/game/Audio.ts     all sound, synthesised: engine bed, music loop, one-shot cues
 lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, Backdrop,
-                      AsteroidField, Starfield, quality, nova, anomaly, share (card + text),
+                      AsteroidField, Starfield, quality, nova, share (card + text),
                       storage (localStorage), gltf (GLB loader + merge), format, types
 lib/content/round.ts  round loader with build-time validation
-content/rounds/       one JSON per daily round: 2 cluster + 4 mcq + 1 anomaly
+content/rounds/       one JSON per daily round: 2 cluster + 2 vector + 2 mcq + 1 earth
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
 e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
 e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks included
@@ -212,7 +214,7 @@ Rules that fall out of this:
   neither three.js nor React. Game rules go there so they can be stepped with a
   fake clock. Visuals go in `Engine.ts` and the scene modules. The HUD is
   a view of `GameState` plus method calls on the engine (`answer`, `pick`,
-  `burn`, `toggleBoost`, `useNova`, `submitAnomaly`, `confirm`,
+  `burn`, `toggleBoost`, `useNova`, `enterStation`, `endTransmission`, `confirm`,
   `setLaneFractions`).
 - **Every answer is a lane.** MCQ and Cluster both go through the same
   pick -> veer -> incoming -> verdict flow, so the run reads one way. The
@@ -231,10 +233,14 @@ Rules that fall out of this:
   sampled at 12Hz; do not put objects with identity or methods in it. A
   one-shot `Pulse` carries a fresh `id` each time so the HUD can replay
   the animation.
-- **Anomaly scoring never blocks a run.** `/api/anomaly` calls a model
-  when `ANTHROPIC_API_KEY` is set, and the client falls back to the
-  keyword scorer on any failure or after the scan timeout. Keep the rubric
-  server-side; never send it to the client.
+- **The station is a screen, not an engine mode.** WHERE ON EARTH's dock
+  hands the display to `components/Station.tsx`, which has its own tiny
+  shell (`Orbit.ts`) like the hangar does. The flight engine parks under it
+  and never draws again that run; it keeps the sound bed going and nothing
+  else. The encounter resolves through `Run.endTransmission`, which records
+  a neutral `dock` outcome and finishes the run. Arrival on the approach is
+  a timer (`STATION.approachSeconds`), never an asset: the door arms on the
+  same beat whether or not the model has loaded.
 - **Storage is best effort.** localStorage can be missing or full; every
   read and write is wrapped and a failure must never break play.
 
@@ -305,7 +311,9 @@ overlays FPS, draw calls, triangles, tier and DPR.
 ## Authoring a round
 
 `content/rounds/YYYY-MM-DD.json`, seven questions in order: two `cluster`,
-four `mcq`, one `anomaly`. The loader validates cluster shape at import.
+two `vector`, two `mcq`, one `earth`. The loader validates cluster, vector
+and earth shape at import. Stages carry an optional `phase` number for the
+card to announce, so a round can skip a phase that is not built yet.
 
 - Cluster: exactly six `options`, exactly three distinct `answers`
   (indices), a `fact`. All three right lanes must be unarguably right and
@@ -313,9 +321,10 @@ four `mcq`, one `anomaly`. The loader validates cluster shape at import.
   encounter.
 - MCQ: four `options`, one `answer` index, optional `hint` (what a NOVA
   clue reveals), a `fact`.
-- Anomaly: `kind` (`open` or `visual`), optional `image` under `/public`
-  with `imageAlt`, a `rubric` for the model (never shown), `accept`
-  keywords for the offline scorer, `answerText`, a `fact`.
+- Earth: the landing site as `name`, `country`, `lat`, `lon` and a
+  slippy-map `zoom` that frames the giveaway; exactly four `options` with
+  `answer` indexing the one equal to `name`; a `fact`. The feed that reads
+  these is the next build.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.

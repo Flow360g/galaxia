@@ -52,11 +52,9 @@ const STATS_VALUE_Y = 1088;
 const STATS_LABEL_FONT = 11;
 const STATS_VALUE_FONT = 24;
 
-const ANOMALY_RULE_Y = 1132;
-const ANOMALY_TEXT_Y = 1172;
-const ANOMALY_FONT = 15;
-const ANOMALY_BAR_Y = 1194;
-const ANOMALY_BAR_H = 10;
+const EARTH_RULE_Y = 1132;
+const EARTH_TEXT_Y = 1172;
+const EARTH_FONT = 15;
 
 const RAIL_RULE_Y = 1236;
 const RAIL_CELL = 48;
@@ -69,7 +67,6 @@ const GLOW_WIDTH = 14;
 const MARKER_SMALL = 11;
 const MARKER_LARGE = 18;
 const SHATTER_LINES = 5;
-const ANOMALY_RING_PAD = 9;
 
 // ----------------------------------------------------------------- palette
 
@@ -105,7 +102,7 @@ export function renderShareCard(
     drawHero(ctx, summary, arcade);
     drawChart(ctx, summary, arcade);
     drawStats(ctx, summary, arcade);
-    drawAnomaly(ctx, summary, arcade);
+    drawEarthLine(ctx, summary, arcade);
     drawRail(ctx, summary, arcade);
   } catch {
     // A share card must never take the run screen down with it.
@@ -135,8 +132,7 @@ export function shareText(summary: RunSummary): string {
   const glyphs: string[] = [];
   for (let i = 0; i < total; i += 1) {
     const kind = kindAt(summary, i);
-    const glyph = kind ? TEXT_GLYPH[kind] : "·";
-    glyphs.push(isAnomalyIndex(summary, i) ? `◆${glyph}` : glyph);
+    glyphs.push(kind ? TEXT_GLYPH[kind] : "·");
   }
 
   // A stored run from before the score has nothing to quote, so that one
@@ -155,9 +151,6 @@ export function shareText(summary: RunSummary): string {
   }
   if (summary.ratings?.length) {
     stats.push(`Stage ${summary.ratings.join(" · ")}`);
-  }
-  if (summary.anomaly) {
-    stats.push(`Anomaly ${percent(summary.anomaly.score)}%`);
   }
 
   const headline = scored
@@ -180,6 +173,7 @@ const TEXT_GLYPH: Record<OutcomeKind, string> = {
   wreck: "✖",
   timeout: "○",
   burn: "»",
+  dock: "◎",
 };
 
 /**
@@ -230,14 +224,6 @@ function kindAt(summary: RunSummary, index: number): OutcomeKind | null {
   return event ? event.kind : null;
 }
 
-function isAnomalyIndex(summary: RunSummary, index: number): boolean {
-  return summary.events.some((e) => e.index === index && e.anomaly);
-}
-
-function percent(score: number): number {
-  if (!Number.isFinite(score)) return 0;
-  return Math.round(Math.min(1, Math.max(0, score)) * 100);
-}
 
 function safe(n: number, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
@@ -260,6 +246,8 @@ function kindColor(kind: OutcomeKind): string {
       return YELLOW;
     case "burn":
       return ORANGE;
+    case "dock":
+      return VIOLET;
     default:
       return RED;
   }
@@ -580,7 +568,7 @@ function drawChart(ctx: Ctx, summary: RunSummary, arcade: string): void {
         x,
         MARKER_NUMBER_Y,
         arcadeFont(MARKER_NUMBER_FONT, arcade),
-        event.anomaly ? VIOLET : LABEL,
+        LABEL,
         "center",
       );
     }
@@ -685,20 +673,26 @@ function drawMarker(ctx: Ctx, event: RunEvent, x: number, y: number): void {
       ctx.arc(x, y, MARKER_SMALL, 0, Math.PI * 2);
       ctx.stroke();
       break;
-  }
-  if (event.anomaly) {
-    const r = (event.kind === "thread" || event.kind === "timeout" || event.kind === "collision" || event.kind === "burn"
-      ? MARKER_SMALL
-      : MARKER_LARGE) + ANOMALY_RING_PAD;
-    ctx.shadowColor = VIOLET;
-    ctx.shadowBlur = 14;
-    ctx.strokeStyle = VIOLET;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.stroke();
+    case "dock":
+      drawDockRing(ctx, x, y, MARKER_SMALL + 2, VIOLET);
+      break;
   }
   ctx.restore();
+}
+
+/** The station: a ring with a point at its centre, the docking axis seen end on. */
+function drawDockRing(ctx: Ctx, x: number, y: number, r: number, color: string): void {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(r * 0.28, 2), 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawDiamond(ctx: Ctx, x: number, y: number, r: number, color: string): void {
@@ -824,38 +818,28 @@ function drawStats(ctx: Ctx, summary: RunSummary, arcade: string): void {
   });
 }
 
-function drawAnomaly(ctx: Ctx, summary: RunSummary, arcade: string): void {
-  hairline(ctx, ANOMALY_RULE_Y);
-  const anomaly = summary.anomaly;
-  if (!anomaly) {
-    text(ctx, "ANOMALY: NOT ENCOUNTERED", PAD, ANOMALY_TEXT_Y, arcadeFont(ANOMALY_FONT, arcade), LABEL);
+/**
+ * WHERE ON EARTH gets its own line between the stats and the rail. Once the
+ * satellite feed scores, this is where the invasion landed; until then it
+ * says whether the station was reached at all.
+ */
+function drawEarthLine(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  hairline(ctx, EARTH_RULE_Y);
+  const docked = summary.outcomes.some((outcome) => outcome.kind === "dock");
+  if (!docked) {
+    text(ctx, "WHERE ON EARTH: NOT REACHED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), LABEL);
     return;
   }
-  const pct = percent(anomaly.score);
-  const verdict = fitText(ctx, anomaly.verdict.toUpperCase(), arcadeFont(ANOMALY_FONT, arcade), W - PAD * 2 - 220);
-  text(ctx, `ANOMALY: ${verdict}`, PAD, ANOMALY_TEXT_Y, arcadeFont(ANOMALY_FONT, arcade), VIOLET);
-  text(ctx, `${pct}%`, W - PAD, ANOMALY_TEXT_Y, arcadeFont(ANOMALY_FONT + 5, arcade), VIOLET, "right");
-
-  const barW = W - PAD * 2;
-  ctx.fillStyle = "rgba(178, 140, 255, 0.18)";
-  ctx.fillRect(PAD, ANOMALY_BAR_Y, barW, ANOMALY_BAR_H);
-  ctx.save();
-  ctx.shadowColor = VIOLET;
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = VIOLET;
-  ctx.fillRect(PAD, ANOMALY_BAR_Y, (barW * pct) / 100, ANOMALY_BAR_H);
-  ctx.restore();
-}
-
-/** Trims with an ellipsis until the string fits `maxWidth` in `font`. */
-function fitText(ctx: Ctx, value: string, font: string, maxWidth: number): string {
-  ctx.font = font;
-  if (ctx.measureText(value).width <= maxWidth) return value;
-  let out = value;
-  while (out.length > 1 && ctx.measureText(`${out}...`).width > maxWidth) {
-    out = out.slice(0, -1);
-  }
-  return `${out.trimEnd()}...`;
+  text(ctx, "WHERE ON EARTH: DOCKED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), VIOLET);
+  text(
+    ctx,
+    "FEED STANDING BY",
+    W - PAD,
+    EARTH_TEXT_Y,
+    arcadeFont(EARTH_FONT - 3, arcade),
+    LABEL,
+    "right",
+  );
 }
 
 // -------------------------------------------------------------------- rail
@@ -865,9 +849,7 @@ function drawRail(ctx: Ctx, summary: RunSummary, arcade: string): void {
   const total = stripLength(summary);
   for (let i = 0; i < total; i += 1) {
     const x = PAD + i * (RAIL_CELL + RAIL_CELL_GAP);
-    const kind = kindAt(summary, i);
-    const anomaly = isAnomalyIndex(summary, i);
-    drawRailCell(ctx, x, RAIL_Y, kind, anomaly);
+    drawRailCell(ctx, x, RAIL_Y, kindAt(summary, i));
   }
 
   const footerY = RAIL_Y + RAIL_CELL - 14;
@@ -875,13 +857,7 @@ function drawRail(ctx: Ctx, summary: RunSummary, arcade: string): void {
   text(ctx, summary.date, W - PAD, footerY + 22, arcadeFont(FOOTER_FONT - 3, arcade), LABEL, "right");
 }
 
-function drawRailCell(
-  ctx: Ctx,
-  x: number,
-  y: number,
-  kind: OutcomeKind | null,
-  anomaly: boolean,
-): void {
+function drawRailCell(ctx: Ctx, x: number, y: number, kind: OutcomeKind | null): void {
   const cx = x + RAIL_CELL / 2;
   const cy = y + RAIL_CELL / 2;
   ctx.save();
@@ -905,8 +881,8 @@ function drawRailCell(
         : YELLOW
     : "rgba(7, 17, 34, 0.9)";
   ctx.fillRect(x, y, RAIL_CELL, RAIL_CELL);
-  ctx.strokeStyle = anomaly ? VIOLET : color;
-  ctx.lineWidth = anomaly ? 3 : 2;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, RAIL_CELL - 2, RAIL_CELL - 2);
 
   const glyphColor = filled ? INK : color;
@@ -939,6 +915,9 @@ function drawRailCell(
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.stroke();
+      break;
+    case "dock":
+      drawDockRing(ctx, cx, cy, r, glyphColor);
       break;
   }
   ctx.restore();

@@ -243,7 +243,7 @@
   backdrop-filter: blur(2px);
 }
 
-.panelAnomaly {
+.panelEarth {
   border-color: rgba(178, 140, 255, 0.55);
   box-shadow: 0 0 28px rgba(178, 140, 255, 0.25);
 }
@@ -265,7 +265,7 @@
   letter-spacing: 0.12em;
 }
 
-.anomalyTag {
+.earthTag {
   font-size: 9px;
   color: #b28cff;
   letter-spacing: var(--track-eyebrow);
@@ -511,57 +511,46 @@
   animation: pulseGlow 900ms ease-in-out infinite;
 }
 
-/* Anomaly form. */
-.anomaly {
+/* WHERE ON EARTH, on the approach: a status line and the door. One target,
+   thumb-sized, in the phase's violet; dim until the ship is alongside. */
+.station {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.anomalyImage {
-  display: block;
+.stationStatus {
+  font-size: 9px;
+  color: var(--panel-label);
+  letter-spacing: var(--track-label);
+}
+
+.enterStation {
   width: 100%;
-  max-width: 170px;
-  height: auto;
-  align-self: center;
-  border: 1px solid rgba(178, 140, 255, 0.4);
-}
-
-.anomalyRow {
-  display: flex;
-  gap: 8px;
-}
-
-.anomalyInput {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 14px;
-  font: inherit;
-  font-size: 16px;
-  color: #ffffff;
-  background: rgba(13, 27, 46, 0.9);
-  border: 1px solid var(--rule-dark);
-  border-radius: 0;
-}
-
-.anomalyInput:focus {
-  outline: none;
-  border-color: #b28cff;
-}
-
-.transmit {
-  flex: none;
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: 10px;
+  min-height: 52px;
+  padding: 14px 16px;
+  font-size: 11px;
   background: #b28cff;
   color: var(--ink);
-  border: none;
+  border: 1px solid #b28cff;
+  transition: opacity 240ms, box-shadow 240ms;
 }
 
-.transmit:disabled {
-  opacity: 0.5;
+.enterStation:disabled {
+  opacity: 0.35;
+  background: transparent;
+  color: #b28cff;
+  cursor: default;
+}
+
+.enterStationReady {
+  box-shadow: 0 0 22px rgba(178, 140, 255, 0.55);
+  animation: pulseGlow 900ms ease-in-out infinite;
+}
+
+.enterStation:not(:disabled):active {
+  background: #ffffff;
+  border-color: #ffffff;
 }
 
 /* Outcome toast. Sits in the same band as the question it replaces, so the
@@ -1457,10 +1446,6 @@
     font-size: 20px;
   }
 
-  .anomalyImage {
-    max-width: 130px;
-  }
-
   .wpRating {
     font-size: 52px;
   }
@@ -1483,10 +1468,6 @@
 
   .lane {
     min-height: 44px;
-  }
-
-  .anomalyImage {
-    max-width: 100px;
   }
 
   .wpHint {

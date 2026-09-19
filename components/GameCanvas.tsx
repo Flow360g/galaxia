@@ -18,6 +18,7 @@ import { selectedShip } from "@/lib/game/ships";
 import { Briefing } from "./Briefing";
 import { Ready } from "./Ready";
 import { Hud } from "./Hud";
+import { Station } from "./Station";
 import { ScoreTally } from "./ScoreTally";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
@@ -136,6 +137,17 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   }, []);
 
   const launch = useCallback(() => setLaunched(true), []);
+  const endTransmission = useCallback(() => engineRef.current?.endTransmission(), []);
+
+  /**
+   * WHERE ON EARTH: aboard the station. Gated on the run's phase rather than
+   * on `playing`, because the station screen stays up as the backdrop for the
+   * tally and the share card: the run ends from inside it, and the last state
+   * the engine emits is the docked one.
+   */
+  const docked = state?.phase === "docked";
+  const stages = round.stages ?? [];
+  const stationPhase = stages[stages.length - 1]?.phase ?? stages.length;
 
   const toggleSound = useCallback(() => {
     setMuted((current) => {
@@ -195,7 +207,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           EngineOptions.container for why React must not supply it. */}
       <div ref={containerRef} className={styles.stage} />
 
-      {playing ? (
+      {playing && !docked ? (
         <Hud
           state={state}
           round={round}
@@ -206,12 +218,16 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           onLockVector={() => engineRef.current?.lockVector()}
           onToggleBoost={() => engineRef.current?.toggleBoost()}
           onNova={() => engineRef.current?.useNova()}
-          onAnomaly={(text) => engineRef.current?.submitAnomaly(text)}
+          onEnterStation={() => engineRef.current?.enterStation()}
           onConfirm={() => engineRef.current?.confirm()}
           onLanes={(fractions) => engineRef.current?.setLaneFractions(fractions)}
           muted={muted}
           onToggleSound={toggleSound}
         />
+      ) : null}
+
+      {docked ? (
+        <Station phase={stationPhase} showPanel={summary === null} onEnd={endTransmission} />
       ) : null}
 
       {briefing ? (
@@ -264,6 +280,8 @@ function stateBeat(state: GameState): string {
     // not up to a sample later.
     state.countdown ?? -1,
     state.awaitingTap ? 1 : 0,
+    // The door arms on the frame the station comes alongside, not a sample later.
+    state.stationReady ? 1 : 0,
     state.boostArmed ? 1 : 0,
     state.novaLeft,
     state.nova ? 1 : 0,

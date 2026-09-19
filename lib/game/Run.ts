@@ -1,11 +1,18 @@
-import { anomalyCorrect, scoreLocally } from "./anomaly";
 import { Flight, clamp01, outcomeKind } from "./Flight";
 import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
 import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
-import { CLUSTER, COUNTDOWN, ENCOUNTER, LANE, NOVA, SHIELDS, VECTOR, WAYPOINT } from "./Tuning";
+import {
+  CLUSTER,
+  COUNTDOWN,
+  ENCOUNTER,
+  LANE,
+  NOVA,
+  SHIELDS,
+  STATION,
+  VECTOR,
+  WAYPOINT,
+} from "./Tuning";
 import type {
-  AnomalyQuestion,
-  AnomalyVerdict,
   ClusterQuestion,
   ClusterState,
   FlightSample,
@@ -26,7 +33,8 @@ import type {
 /**
  * The run: seven encounters, one after another, each a state machine step.
  *
- *   intro -> approach -> (scanning | collecting) -> resolving -> aftermath -> approach ...
+ *   intro -> approach -> collecting -> resolving -> aftermath -> approach ...
+ *                                                  ... -> station -> docked -> finished
  *
  * Pure game logic. The engine subscribes through `RunHooks` to fly the ship,
  * launch what comes down the lane and light the fireworks; the HUD reads
@@ -73,8 +81,8 @@ export interface RunHooks {
   /** Contact. Velocity has just changed; play the burst or the impact. */
   onContact(index: number, outcome: Outcome): void;
   onFinished(): void;
-  /** Score an anomaly answer. Must never reject; fall back locally instead. */
-  scoreAnomaly(question: AnomalyQuestion, answer: string): Promise<AnomalyVerdict>;
+  /** WHERE ON EARTH: the ship is aboard. The station screen takes over from the scene. */
+  onDock(): void;
 }
 
 const SAMPLE_INTERVAL = 0.25;
@@ -145,8 +153,8 @@ export class Run {
   private vectorStrength = 1;
   private waypoint: WaypointState | null = null;
   private readonly ratings: Rating[] = [];
-  /** Bumped on every lock so a late scan result cannot land on a later rock. */
-  private scanToken = 0;
+  /** WHERE ON EARTH: the engine has reported the ship alongside the station. */
+  private stationReady = false;
 
   constructor(
     private readonly round: Round,
@@ -168,7 +176,7 @@ export class Run {
   /** Whether a NOVA scan would land right now. The HUD and the sound ask. */
   get canNova(): boolean {
     const question = this.question;
-    if (!this.answering || !question || question.type === "anomaly") return false;
+    if (!this.answering || !question || question.type === "earth") return false;
     return this.novaLeft > 0 && !this.nova;
   }
 
@@ -190,6 +198,7 @@ export class Run {
       cluster: this.clusterState(),
       vector: this.vectorState(),
       waypoint: this.phase === "waypoint" ? this.waypoint : null,
+      stationReady: this.stationReady,
       clockSeconds: this.thrustSeconds,
       countdown: this.countdown,
       shields: this.shields,
@@ -384,14 +393,14 @@ export class Run {
   toggleBoost(): void {
     if (!this.answering) return;
     const type = this.question?.type;
-    if (type === "cluster" || type === "vector") return;
+    if (type === "cluster" || type === "vector" || type === "earth") return;
     this.boostArmed = !this.boostArmed;
   }
 
   /** Spend a NOVA scan on the current question. */
   useNova(): void {
     const question = this.question;
-    if (!this.canNova || !question || question.type === "anomaly") return;
+    if (!this.canNova || !question || question.type === "earth") return;
 
     this.novaLeft -= 1;
     this.novasUsed += 1;
@@ -406,50 +415,54 @@ export class Run {
       this.vectorWindow = scan.window;
       this.nova = { kind: "narrow", eliminated: [], highlighted: [], clue: null };
       this.aim(this.vectorT);
-    } else {
+    } else if (question.type === "mcq") {
       this.nova = resolveNova(question, this.random);
     }
   }
 
-  /** Send an anomaly answer to the scorer. Thrust freezes while it scans. */
-  submitAnomaly(text: string): void {
+  // ------------------------------------------------------- WHERE ON EARTH
+
+  /**
+   * The engine's fly-in is over: the ship is alongside the station. Arms
+   * ENTER SPACE STATION. Idempotent, and ignored outside the approach.
+   */
+  arriveAtStation(): void {
+    if (this.phase !== "station") return;
+    this.stationReady = true;
+  }
+
+  /** ENTER SPACE STATION. The station screen takes over from the scene. */
+  enterStation(): void {
+    if (this.phase !== "station" || !this.stationReady) return;
+    this.phase = "docked";
+    this.pulse = null;
+    this.hooks.onDock();
+  }
+
+  /**
+   * END TRANSMISSION. Until the satellite feed lands this is a neutral
+   * resolution: no points, no penalty, no streak change, no shield. It goes
+   * straight to the tally, never through a strike or a toast: the station
+   * screen is up, and the tally is the verdict.
+   */
+  endTransmission(): void {
     const question = this.question;
-    if (!this.answering || !question || question.type !== "anomaly") return;
-
-    const answer = text.trim().slice(0, 400);
-    const thrustLeft = this.thrust;
-    const boosted = this.boostArmed;
-    const token = ++this.scanToken;
-
-    this.phase = "scanning";
-    this.timer = ENCOUNTER.scanTimeoutSeconds;
-
-    const settle = (verdict: AnomalyVerdict) => {
-      if (token !== this.scanToken || this.phase !== "scanning") return;
-      const score = clamp01(verdict.score);
-      const correct = anomalyCorrect(score);
-      this.lock({
-        kind: outcomeKind(correct, boosted, false, this.shields > 0),
-        correct,
-        boosted,
-        timedOut: false,
-        thrustLeft,
-        velocityBefore: this.flight.velocity,
-        velocityAfter: this.flight.velocity,
-        streakBefore: this.flight.streak,
-        streakAfter: this.flight.streak,
-        chosen: null,
-        guessText: answer || "(no answer)",
-        answerText: question.answerText,
-        anomalyScore: score,
-        anomalyVerdict: verdict.verdict,
-      });
-    };
-
-    this.hooks
-      .scoreAnomaly(question, answer)
-      .then(settle)
-      .catch(() => settle(scoreLocally(question, answer)));
+    if (this.phase !== "docked" || !question || question.type !== "earth") return;
+    this.record({
+      kind: "dock",
+      correct: true,
+      boosted: false,
+      timedOut: false,
+      thrustLeft: 1,
+      velocityBefore: this.flight.velocity,
+      velocityAfter: this.flight.velocity,
+      streakBefore: this.flight.streak,
+      streakAfter: this.flight.streak,
+      chosen: null,
+      guessText: "",
+      answerText: answerTextFor(question),
+    });
+    this.finish();
   }
 
   // ---------------------------------------------------------------- update
@@ -496,17 +509,10 @@ export class Run {
         if (this.timer <= 0) this.resolvePick();
         break;
 
-      case "scanning":
-        // The scorer has a hard deadline; past it the local marker decides.
-        this.timer -= dt;
-        if (this.timer <= 0) {
-          const question = this.question;
-          if (question && question.type === "anomaly") {
-            this.scanToken += 1;
-            this.phase = "approach";
-            this.forceLocal(question);
-          }
-        }
+      case "station":
+      case "docked":
+        // WHERE ON EARTH runs on the player, not the clock: the engine says
+        // when the ship has arrived, and the player says when they are done.
         break;
 
       case "resolving":
@@ -561,6 +567,8 @@ export class Run {
       stage: stage.name,
       next: next.name,
       nextType: nextQuestion.type,
+      // Stages count from phase 1, so the stage after this one is index + 2.
+      nextPhase: next.phase ?? stageIndex + 2,
       rating,
       plasma,
       shields: this.shields,
@@ -583,7 +591,13 @@ export class Run {
     }
 
     this.index = index;
-    this.phase = "approach";
+    // WHERE ON EARTH is untimed: the ship flies in, nothing is tappable
+    // until it arrives, and the clock never starts.
+    this.phase = question.type === "earth" ? "station" : "approach";
+    this.stationReady = false;
+    // Throttle back to dock. Velocity relaxes to the crawl on the flight
+    // model's own curve, so the readout, the FOV and the drone fall together.
+    if (question.type === "earth") this.flight.throttle = STATION.dockThrottle;
     this.awaitingTap = false;
     this.thrust = 1;
     this.boostArmed = false;
@@ -600,15 +614,13 @@ export class Run {
     const vectorSlot = Math.min(this.vectorsFlown, VECTOR.thrustSeconds.length - 1);
     if (question.type === "vector") this.vectorsFlown += 1;
     this.thrustSeconds =
-      question.type === "anomaly"
-        ? ENCOUNTER.anomalyThrustSeconds
-        : question.type === "vector"
-          ? VECTOR.thrustSeconds[vectorSlot]!
-          : question.type === "cluster"
-            ? // Six options and a prompt to read before the first tap. Every
-              // pick after it drops back to the plain five.
-              ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds
-            : ENCOUNTER.thrustSeconds;
+      question.type === "vector"
+        ? VECTOR.thrustSeconds[vectorSlot]!
+        : question.type === "cluster"
+          ? // Six options and a prompt to read before the first tap. Every
+            // pick after it drops back to the plain five.
+            ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds
+          : ENCOUNTER.thrustSeconds;
     this.grace = 0;
 
     this.hooks.onEncounterStart(index, question);
@@ -771,14 +783,7 @@ export class Run {
       this.burn();
       return;
     }
-    const answerText =
-      question.type === "mcq"
-        ? (question.options[question.answer] ?? "")
-        : question.type === "cluster"
-          ? clusterAnswerText(question)
-          : question.type === "vector"
-            ? formatValue(question.answer, question.unit)
-            : question.answerText;
+    const answerText = answerTextFor(question);
 
     this.lock({
       kind: "timeout",
@@ -794,28 +799,6 @@ export class Run {
       guessText: "No answer",
       answerText,
       ...(this.cluster ? { charge: 0, picks: [...this.cluster.picked] } : {}),
-    });
-  }
-
-  private forceLocal(question: AnomalyQuestion): void {
-    // Answer text is not retained past submit; the deadline case marks as a
-    // blank so the run keeps moving rather than stalling on a dead scorer.
-    const verdict = scoreLocally(question, "");
-    this.lock({
-      kind: outcomeKind(false, this.boostArmed, false, this.shields > 0),
-      correct: false,
-      boosted: this.boostArmed,
-      timedOut: false,
-      thrustLeft: this.thrust,
-      velocityBefore: this.flight.velocity,
-      velocityAfter: this.flight.velocity,
-      streakBefore: this.flight.streak,
-      streakAfter: this.flight.streak,
-      chosen: null,
-      guessText: "Scanner timed out",
-      answerText: question.answerText,
-      anomalyScore: 0,
-      anomalyVerdict: verdict.verdict,
     });
   }
 
@@ -836,7 +819,7 @@ export class Run {
     if (!outcome) return;
     this.struck = true;
 
-    const strength = outcome.anomalyScore ?? (outcome.error !== undefined ? this.vectorStrength : 1);
+    const strength = outcome.error !== undefined ? this.vectorStrength : 1;
     const multiplier =
       outcome.kind === "burn" ? (CLUSTER.chargeMultiplier[outcome.charge ?? 0] ?? 0) : 1;
     outcome.velocityBefore = this.flight.velocity;
@@ -870,6 +853,12 @@ export class Run {
       this.flash("plasma", "SALVAGE", "+1 NOVA");
     }
 
+    this.record(outcome);
+    this.hooks.onContact(this.index, outcome);
+  }
+
+  /** Score an outcome and write it into the record: the tally, the strip, the path. */
+  private record(outcome: Outcome): void {
     // The score: fixed points, whole multipliers, a flat dock for a miss.
     const scored = scoreOutcome(outcome);
     outcome.base = scored.base;
@@ -886,15 +875,12 @@ export class Run {
       kind: outcome.kind,
       correct: outcome.correct,
       boosted: outcome.boosted,
-      anomaly: outcome.anomalyScore !== undefined,
       d: this.flight.distance,
       v: outcome.velocityAfter,
       streak: outcome.streakAfter,
       ...(outcome.kind === "burn" ? { charge: outcome.charge ?? 0 } : {}),
     });
     this.sample();
-
-    this.hooks.onContact(this.index, outcome);
   }
 
   private finish(): void {
@@ -914,7 +900,6 @@ export class Run {
   }
 
   summary(): RunSummary {
-    const anomaly = this.outcomes.find((o) => o.anomalyScore !== undefined);
     let bestStreak = 0;
     for (const outcome of this.outcomes) {
       bestStreak = Math.max(bestStreak, outcome.streakAfter);
@@ -943,13 +928,6 @@ export class Run {
       shieldLost: this.shieldLost,
       shieldsLeft: this.shields,
       ratings: [...this.ratings],
-      anomaly: anomaly
-        ? {
-            score: anomaly.anomalyScore ?? 0,
-            correct: anomaly.correct,
-            verdict: anomaly.anomalyVerdict ?? "",
-          }
-        : null,
       outcomes: [...this.outcomes],
       samples: [...this.samples],
       events: [...this.events],
@@ -989,6 +967,19 @@ export function formatValue(value: number, unit: string | undefined): string {
 /** The three right answers, for the toast and the share record. */
 function clusterAnswerText(question: ClusterQuestion): string {
   return question.answers.map((lane) => question.options[lane] ?? "").join(", ");
+}
+
+/** The right answer of any question, as the toast and the share record show it. */
+function answerTextFor(question: Question): string {
+  switch (question.type) {
+    case "mcq":
+    case "earth":
+      return question.options[question.answer] ?? "";
+    case "cluster":
+      return clusterAnswerText(question);
+    case "vector":
+      return formatValue(question.answer, question.unit);
+  }
 }
 
 /**

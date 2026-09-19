@@ -5,9 +5,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
-  useState,
   type CSSProperties,
-  type FormEvent,
 } from "react";
 import type {
   ClusterState,
@@ -43,7 +41,8 @@ interface Props {
   onLockVector: () => void;
   onToggleBoost: () => void;
   onNova: () => void;
-  onAnomaly: (text: string) => void;
+  /** WHERE ON EARTH: ENTER SPACE STATION, once the engine reports the ship alongside. */
+  onEnterStation: () => void;
   /** Tap to move past a verdict or a waypoint card. Nothing else advances them. */
   onConfirm: () => void;
   /**
@@ -64,6 +63,7 @@ const OUTCOME_LABEL: Record<OutcomeKind, string> = {
   wreck: "WRECKED",
   timeout: "TOO SLOW",
   burn: "BURN",
+  dock: "DOCKED",
 };
 
 const NOVA_LABEL = {
@@ -124,7 +124,7 @@ export function Hud({
   onLockVector,
   onToggleBoost,
   onNova,
-  onAnomaly,
+  onEnterStation,
   onConfirm,
   onLanes,
   muted,
@@ -134,12 +134,14 @@ export function Hud({
     state && state.encounter >= 0 ? round.questions[state.encounter] : undefined;
   const answering = state?.phase === "approach";
   const collecting = state?.phase === "collecting";
-  const scanning = state?.phase === "scanning";
-  const open = answering || collecting || scanning;
+  // WHERE ON EARTH: the question is up while the ship flies in, but nothing
+  // is tappable until it arrives and no clock runs.
+  const station = state?.phase === "station";
+  const open = answering || collecting || station;
   const total = round.questions.length;
   const outcome = state?.outcome ?? null;
   const isCluster = question?.type === "cluster";
-  const isAnomaly = question?.type === "anomaly";
+  const isEarth = question?.type === "earth";
   const isVector = question?.type === "vector";
   const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
 
@@ -154,6 +156,7 @@ export function Hud({
     onLockVector,
     onToggleBoost,
     onNova,
+    onEnterStation,
     onConfirm,
   });
   // The overlay's CSS animations end invisible, so they can simply live as
@@ -259,14 +262,14 @@ export function Hud({
 
         {question && open ? (
           <section
-            className={`${styles.panel} ${isAnomaly ? styles.panelAnomaly : ""} ${
+            className={`${styles.panel} ${isEarth ? styles.panelEarth : ""} ${
               isCluster ? styles.panelCluster : ""
             } ${isVector ? styles.panelVector : ""}`}
             data-testid="question"
           >
             <div className={styles.panelHead}>
-              {isAnomaly ? (
-                <span className={`${styles.anomalyTag} arcade`}>AI ANOMALY</span>
+              {isEarth ? (
+                <span className={`${styles.earthTag} arcade`}>WHERE ON EARTH</span>
               ) : isCluster ? (
                 <span className={`${styles.clusterTag} arcade`}>CLUSTER · 3 OF 6</span>
               ) : isVector ? (
@@ -274,7 +277,7 @@ export function Hud({
               ) : (
                 <span className={`${styles.clusterTag} arcade`}>PICK A LANE</span>
               )}
-              {answering || scanning ? (
+              {answering ? (
                 <span
                   className={`${styles.clock} ${thrustLow ? styles.clockLow : ""} arcade`}
                   data-testid="clock"
@@ -287,7 +290,7 @@ export function Hud({
             <p className={styles.prompt}>{question.prompt}</p>
 
             {/* The clock, drawn as thrust draining rather than as a dial. */}
-            {answering || scanning ? (
+            {answering ? (
               <div
                 className={styles.thrustTrack}
                 aria-label={`Thrust ${Math.round(thrust * 100)}%`}
@@ -300,7 +303,7 @@ export function Hud({
               </div>
             ) : null}
 
-            {state?.nova && !isAnomaly ? (
+            {state?.nova && !isEarth ? (
               <p className={styles.novaLine} data-testid="nova-result">
                 <span className={`${styles.novaLabel} arcade`}>
                   {isVector ? "NOVA: WINDOW NARROWED" : NOVA_LABEL[state.nova.kind]}
@@ -311,12 +314,10 @@ export function Hud({
 
             {isCluster ? <Reactor cluster={state?.cluster ?? null} /> : null}
 
-            {question.type === "anomaly" ? (
-              <AnomalyForm
-                question={question}
-                disabled={!answering}
-                scanning={scanning}
-                onSubmit={onAnomaly}
+            {question.type === "earth" ? (
+              <StationApproach
+                ready={state?.stationReady ?? false}
+                onEnter={onEnterStation}
               />
             ) : question.type === "vector" ? (
               <VectorPanel
@@ -338,13 +339,14 @@ export function Hud({
               />
             )}
 
+            {/* No tools on the approach to the station: there is nothing to
+                scan and nothing to boost through. */}
+            {!isEarth ? (
             <div className={styles.tools}>
               <button
                 type="button"
                 className={`${styles.tool} ${styles.nova} arcade`}
-                disabled={
-                  !answering || isAnomaly || !state || state.novaLeft <= 0 || !!state.nova
-                }
+                disabled={!answering || !state || state.novaLeft <= 0 || !!state.nova}
                 onClick={onNova}
                 data-testid="nova"
               >
@@ -380,7 +382,7 @@ export function Hud({
                   className={`${styles.tool} ${styles.boost} ${
                     state?.boostArmed ? styles.boostOn : ""
                   } arcade`}
-                  disabled={!answering || isAnomaly}
+                  disabled={!answering}
                   onClick={onToggleBoost}
                   aria-pressed={state?.boostArmed ?? false}
                   data-testid="boost"
@@ -389,6 +391,7 @@ export function Hud({
                 </button>
               )}
             </div>
+            ) : null}
           </section>
         ) : null}
 
@@ -697,9 +700,22 @@ function WaypointCard({
         </>
       ) : (
         <>
-          <span className={`${styles.wpEntering} arcade`}>ENTERING PHASE 2</span>
+          <span className={`${styles.wpEntering} arcade`}>
+            ENTERING PHASE {waypoint.nextPhase}
+          </span>
           <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
-          {waypoint.nextType === "vector" ? (
+          {waypoint.nextType === "earth" ? (
+            <>
+              <span className={styles.wpHint}>
+                The scout is down, but its fleet has already landed on Earth. Dock at
+                Wikiplanet Station ahead and read its satellite feed: find where they came
+                down, then call the fleet in. No clock on the approach.
+              </span>
+              <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
+                SATELLITE FEED · STANDING BY
+              </span>
+            </>
+          ) : waypoint.nextType === "vector" ? (
             <>
               <span className={styles.wpHint}>
                 An alien scout is shadowing you. Every question now wants a number. Slide
@@ -876,12 +892,6 @@ function OutcomeToast({
             <> &middot; {outcome.picks.length - 1} plasma lost</>
           ) : null}
         </span>
-      ) : outcome.anomalyVerdict ? (
-        <span className={styles.toastAnswer}>
-          <strong>{outcome.anomalyVerdict}</strong>
-          {" "}
-          &middot; Scanner score {Math.round((outcome.anomalyScore ?? 0) * 100)}%
-        </span>
       ) : (
         <span className={styles.toastAnswer}>
           Answer: <strong>{outcome.answerText}</strong>
@@ -901,64 +911,28 @@ function OutcomeToast({
   );
 }
 
-function AnomalyForm({
-  question,
-  disabled,
-  scanning,
-  onSubmit,
-}: {
-  question: Extract<Round["questions"][number], { type: "anomaly" }>;
-  disabled: boolean;
-  scanning: boolean;
-  onSubmit: (text: string) => void;
-}) {
-  const [text, setText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (disabled) return;
-    onSubmit(text);
-  };
-
+/**
+ * WHERE ON EARTH, on the flight: the station is coming alongside and the
+ * one thing in the band is the door. Always rendered, so the band does not
+ * jump when the engine reports arrival; the button simply arms.
+ */
+function StationApproach({ ready, onEnter }: { ready: boolean; onEnter: () => void }) {
   return (
-    <form className={styles.anomaly} onSubmit={submit}>
-      {question.kind === "visual" && question.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          className={styles.anomalyImage}
-          src={question.image}
-          alt={question.imageAlt ?? ""}
-          width={512}
-          height={512}
-        />
-      ) : null}
-      <div className={styles.anomalyRow}>
-        <input
-          ref={inputRef}
-          className={styles.anomalyInput}
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          autoCapitalize="off"
-          enterKeyHint="send"
-          maxLength={200}
-          placeholder={scanning ? "Scanning..." : "Type your answer"}
-          value={text}
-          disabled={disabled}
-          onChange={(event) => setText(event.target.value)}
-          data-testid="anomaly-input"
-        />
-        <button
-          type="submit"
-          className={`${styles.transmit} arcade`}
-          disabled={disabled}
-          data-testid="anomaly-submit"
-        >
-          {scanning ? "SCANNING" : "TRANSMIT"}
-        </button>
-      </div>
-    </form>
+    <div className={styles.station}>
+      <span className={`${styles.stationStatus} arcade`} data-testid="station-status">
+        {ready ? "WIKIPLANET STATION · ALONGSIDE" : "WIKIPLANET STATION · ON APPROACH"}
+      </span>
+      <button
+        type="button"
+        className={`${styles.enterStation} ${ready ? styles.enterStationReady : ""} arcade`}
+        disabled={!ready}
+        onClick={onEnter}
+        data-testid="enter-station"
+        data-ready={String(ready)}
+      >
+        {ready ? "ENTER SPACE STATION" : "CLOSING..."}
+      </button>
+    </div>
   );
 }
 
@@ -976,6 +950,7 @@ function useKeyboard({
   onLockVector,
   onToggleBoost,
   onNova,
+  onEnterStation,
   onConfirm,
 }: Pick<
   Props,
@@ -987,6 +962,7 @@ function useKeyboard({
   | "onLockVector"
   | "onToggleBoost"
   | "onNova"
+  | "onEnterStation"
   | "onConfirm"
 > & {
   question: Round["questions"][number] | undefined;
@@ -1001,6 +977,7 @@ function useKeyboard({
     onLockVector,
     onToggleBoost,
     onNova,
+    onEnterStation,
     onConfirm,
   });
   useEffect(() => {
@@ -1014,6 +991,7 @@ function useKeyboard({
       onLockVector,
       onToggleBoost,
       onNova,
+      onEnterStation,
       onConfirm,
     };
   });
@@ -1031,6 +1009,14 @@ function useKeyboard({
         if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
           event.preventDefault();
           current.onConfirm();
+        }
+        return;
+      }
+      // Alongside the station: Enter is the door. Desktop convenience only.
+      if (current.state?.phase === "station") {
+        if (current.state.stationReady && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          current.onEnterStation();
         }
         return;
       }

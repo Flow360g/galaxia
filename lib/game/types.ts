@@ -20,25 +20,27 @@ export interface McqQuestion {
 }
 
 /**
- * The AI Anomaly: one per run. An open-ended text answer, optionally about an
- * image, scored by a model on the server. `accept` keeps the run playable
- * when no model is configured.
+ * WHERE ON EARTH: the last encounter, one per run. The ship docks at the
+ * relay station and reads its satellite feed to find where the invasion
+ * landed, then calls the fleet in. The feed fields (name, country, lat, lon,
+ * zoom, options) are authored now so the round is ready for that; this build
+ * flies the approach and the dock.
  */
-export interface AnomalyQuestion {
+export interface EarthQuestion {
   id: string;
-  type: "anomaly";
-  kind: "open" | "visual";
+  type: "earth";
   prompt: string;
-  /** Visual anomalies: image path under /public. PNG or JPEG. */
-  image?: string;
-  /** Description of the image for screen readers and the text-only fallback. */
-  imageAlt?: string;
-  /** What a full-marks answer must contain. Read by the model, never shown. */
-  rubric: string;
-  /** Keywords for the offline scorer. Case-insensitive substring match. */
-  accept: string[];
-  /** The answer, as shown to the player afterwards. */
-  answerText: string;
+  /** The landing site, as shown on reveal. */
+  name: string;
+  country: string;
+  lat: number;
+  lon: number;
+  /** Slippy-map zoom that frames the giveaway. */
+  zoom: number;
+  /** Exactly four lane names, the answer among them. */
+  options: string[];
+  /** Index into `options`; `options[answer] === name`. */
+  answer: number;
   fact?: string;
 }
 
@@ -79,7 +81,7 @@ export interface VectorQuestion {
   fact?: string;
 }
 
-export type Question = McqQuestion | ClusterQuestion | VectorQuestion | AnomalyQuestion;
+export type Question = McqQuestion | ClusterQuestion | VectorQuestion | EarthQuestion;
 
 /** A stage of the run. A waypoint plays after the last encounter of each stage but the final one. */
 export interface Stage {
@@ -88,6 +90,12 @@ export interface Stage {
   after: number;
   /** Landmark that rises at the waypoint closing this stage. */
   landmark?: "moon" | "planet";
+  /**
+   * The phase number the card announces when this stage begins. Defaults to
+   * the stage's position, so a round can skip a number (phase 3 is not built
+   * yet, and phase 4 is still phase 4).
+   */
+  phase?: number;
 }
 
 export interface Round {
@@ -110,8 +118,10 @@ export type Phase =
   | "collecting"
   /** Between stages: rating card, landmark, alien arrival. No input. */
   | "waypoint"
-  /** Anomaly answer sent, waiting on the scorer. Thrust frozen. */
-  | "scanning"
+  /** WHERE ON EARTH: flying in to the station. Question open, nothing tappable, no clock. */
+  | "station"
+  /** Aboard the station. The station screen owns the display. */
+  | "docked"
   /** Answer locked, asteroid striking, outcome animating. */
   | "resolving"
   /** Outcome toast up, velocity settling, next asteroid queued. */
@@ -158,6 +168,8 @@ export interface WaypointState {
    * everything else on `GameState`.
    */
   nextType: Question["type"];
+  /** The number the card announces: ENTERING PHASE n. */
+  nextPhase: number;
   rating: Rating;
   plasma: number;
   shields: number;
@@ -203,7 +215,12 @@ export type OutcomeKind =
   /** Cluster: banked the reactor charge. Impulse scales with `charge`. */
   | "burn"
   /** Thrust ran out before an answer locked. Treated as a collision. */
-  | "timeout";
+  | "timeout"
+  /**
+   * WHERE ON EARTH: docked and ended the transmission. Neutral until the
+   * satellite feed lands: no points, no penalty, no streak, no shield.
+   */
+  | "dock";
 
 export interface Outcome {
   kind: OutcomeKind;
@@ -218,13 +235,10 @@ export interface Outcome {
   velocityAfter: number;
   streakBefore: number;
   streakAfter: number;
-  /** MCQ: chosen option index. Anomaly and timeout: null. */
+  /** MCQ: chosen option index. Burn, vector, dock and timeout: null. */
   chosen: number | null;
   guessText: string;
   answerText: string;
-  /** Anomaly only: model score 0..1 and its one-line verdict. */
-  anomalyScore?: number;
-  anomalyVerdict?: string;
   /** Cluster only: PLASMA banked by a burn (0 on a miss or a vent). */
   charge?: number;
   /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
@@ -254,7 +268,7 @@ export interface Outcome {
 /** One encounter's line in the end-of-run tally. */
 export interface ScoreLine {
   index: number;
-  /** CLUSTER, VECTOR, LANE, ANOMALY. */
+  /** CLUSTER, VECTOR, LANE, WHERE ON EARTH. */
   label: string;
   /** One short line: "3 PLASMA BANKED", "DIRECT HIT", "MISSED". */
   detail: string;
@@ -302,6 +316,11 @@ export interface GameState {
   vector: VectorState | null;
   /** Waypoint card in progress, or null. */
   waypoint: WaypointState | null;
+  /**
+   * WHERE ON EARTH: the engine has reported the ship alongside the station,
+   * so ENTER SPACE STATION is armed. Only ever true in the `station` phase.
+   */
+  stationReady: boolean;
   /** Seconds on a full clock for the current encounter. */
   clockSeconds: number;
   /** Shields left. Each wrong lane costs one; at zero, a miss is a wreck. */
@@ -342,7 +361,6 @@ export interface RunEvent {
   kind: OutcomeKind;
   correct: boolean;
   boosted: boolean;
-  anomaly: boolean;
   /** Distance and velocity at the moment it happened. */
   d: number;
   v: number;
@@ -381,21 +399,10 @@ export interface RunSummary {
   shieldsLeft: number;
   /** One rating per waypoint, in order. */
   ratings: Rating[];
-  anomaly: { score: number; correct: boolean; verdict: string } | null;
   outcomes: Outcome[];
   samples: FlightSample[];
   events: RunEvent[];
   durationSeconds: number;
-}
-
-/** What the anomaly scorer returns, on the server and from the fallback. */
-export interface AnomalyVerdict {
-  /** 0..1. */
-  score: number;
-  /** One short line the player sees. */
-  verdict: string;
-  /** "model" when a model scored it, "local" for the keyword fallback. */
-  source: "model" | "local";
 }
 
 /** Debug counters surfaced by ?debug=1. */

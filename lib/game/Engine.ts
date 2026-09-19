@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { requestAnomalyScore } from "./anomaly";
 import { Alien } from "./Alien";
 import { AsteroidField } from "./AsteroidField";
 import { AudioEngine } from "./Audio";
@@ -15,8 +14,21 @@ import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
+import { Station } from "./Station";
 import { isMaxThrust } from "./Flight";
-import { ALIEN, CLUSTER, COLOR, ENCOUNTER, FX, LANE, PERF, VECTOR, WAYPOINT, WORLD } from "./Tuning";
+import {
+  ALIEN,
+  CLUSTER,
+  COLOR,
+  ENCOUNTER,
+  FX,
+  LANE,
+  PERF,
+  STATION,
+  VECTOR,
+  WAYPOINT,
+  WORLD,
+} from "./Tuning";
 import { QualityGovernor, detectTier, dprForTier, prefersReducedMotion } from "./quality";
 import { DEFAULT_SHIP, type ShipSpec } from "./ships";
 import type {
@@ -77,6 +89,7 @@ export class Engine {
   private readonly beam: Beam;
   private readonly returnBeam: Beam;
   private readonly landmark: Landmark;
+  private readonly station: Station;
   private readonly salvage: Salvage;
   private readonly debris: Debris;
   private readonly shield: Shield;
@@ -90,6 +103,12 @@ export class Engine {
   private resizeObserver: ResizeObserver | null = null;
   private disposed = false;
   private ended = false;
+  /**
+   * WHERE ON EARTH: the ship is aboard and the station screen owns the
+   * display. The loop keeps ticking so the sound bed carries on under it,
+   * but nothing is drawn: the flight is never seen again this run.
+   */
+  private parked = false;
 
   private readonly canvas: HTMLCanvasElement;
   private tier: QualityTier;
@@ -206,6 +225,11 @@ export class Engine {
     this.landmark = new Landmark();
     this.chase.camera.add(this.landmark.group);
 
+    // Fetched now so the bytes are in by the last encounter; see Station.
+    this.station = new Station();
+    this.chase.camera.add(this.station.group);
+    void this.station.load();
+
     this.salvage = new Salvage();
     this.scene.add(this.salvage.mesh);
 
@@ -235,7 +259,7 @@ export class Engine {
         onLock: (index, outcome) => this.onLock(outcome),
         onContact: (index, outcome) => this.onContact(index, outcome),
         onFinished: () => this.endRun(),
-        scoreAnomaly: (question, answer) => requestAnomalyScore(question, answer),
+        onDock: () => this.onDock(),
       },
       random,
     );
@@ -281,6 +305,7 @@ export class Engine {
     this.beam.dispose();
     this.returnBeam.dispose();
     this.landmark.dispose();
+    this.station.dispose();
     this.salvage.dispose();
     this.debris.dispose();
     this.audio.dispose();
@@ -353,8 +378,22 @@ export class Engine {
     this.audio.setMuted(muted);
   }
 
-  submitAnomaly(text: string): void {
-    this.run.submitAnomaly(text);
+  /**
+   * WHERE ON EARTH: ENTER SPACE STATION. The station screen takes the
+   * display, and the flight parks under it for the rest of the run.
+   */
+  enterStation(): void {
+    this.run.enterStation();
+    if (this.run.phase !== "docked") return;
+    // React mounts the station screen off this frame's state, so it goes out
+    // now rather than waiting on a loop that is about to stop drawing.
+    this.options.onState?.(this.state);
+    this.parked = true;
+  }
+
+  /** WHERE ON EARTH: END TRANSMISSION. Resolves the encounter and ends the run. */
+  endTransmission(): void {
+    this.run.endTransmission();
   }
 
   get state(): GameState {
@@ -372,9 +411,7 @@ export class Engine {
     this.inVector = question.type === "vector";
     this.waypoint = null;
     // A lane question opens on an empty sky: the ambient field and nothing
-    // else. A vector opens on the cloaked alien. Only the anomaly still rides
-    // in on its own rock.
-    if (question.type === "anomaly") this.rock.spawn(true);
+    // else. A vector opens on the cloaked alien.
     if (this.inVector) {
       const slot = Math.min(this.vectorsFlown, VECTOR.holdFar.length - 1);
       this.vectorsFlown += 1;
@@ -386,6 +423,12 @@ export class Engine {
       this.landmark.pass();
       this.audio.setMood("cruise");
       this.densityTarget = 1;
+    }
+    // WHERE ON EARTH opens on the station coming up out of the distance, and
+    // the belt thins to nothing: a station does not sit in a rock field.
+    if (question.type === "earth") {
+      this.station.approach();
+      this.densityTarget = STATION.fieldDensity;
     }
     this.incoming.retire();
     this.chase.releaseLane();
@@ -568,11 +611,7 @@ export class Engine {
       } else {
         this.rock.contact(true);
         this.scratch.copy(this.rock.group.position);
-        this.debris.burst(
-          this.scratch,
-          strength,
-          this.rock.anomaly ? COLOR.anomaly : COLOR.panelLabel,
-        );
+        this.debris.burst(this.scratch, strength, COLOR.panelLabel);
       }
       this.shield.flash(kind === "wreck" ? 1.4 : 1);
       this.ship.impact(kind, this.side);
@@ -594,7 +633,7 @@ export class Engine {
       // The bolt arrives and the scout goes up in the same instant: the hull
       // comes apart and a blast lands out there with it.
       this.audio.blast(kill ? 1 : heavy ? 0.8 : 0.55);
-      this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.anomaly);
+      this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.contact);
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
       this.ship.pulseExhaust(FX.exhaustPulse[burst]);
@@ -615,6 +654,11 @@ export class Engine {
       this.ship.impact(kind, this.side);
     }
     this.chase.releaseLane();
+  }
+
+  /** Aboard. The station screen is up; the airlock is the one thing the scene adds. */
+  private onDock(): void {
+    this.audio.dock();
   }
 
   private endRun(): void {
@@ -666,6 +710,12 @@ export class Engine {
     const raw = this.clock.getDelta();
     const dt = Math.min(raw, PERF.maxDelta);
 
+    if (this.parked) {
+      // Aboard the station: the bed idles on at a standstill, and that is all.
+      this.audio.update(dt, 0, 1, false);
+      return;
+    }
+
     this.update(dt);
     this.renderer.render(this.scene, this.chase.camera);
     this.emitDebug(raw);
@@ -689,9 +739,6 @@ export class Engine {
 
     const phase = this.run.phase;
     const open = phase === "approach" || phase === "collecting";
-    // Only the anomaly still has a rock hanging ahead of the ship to loom as
-    // the clock drains. Lane questions keep the sky clear.
-    if (open && !this.laneEncounter && !this.inVector) this.rock.setLoom(1 - this.run.thrust);
 
     // Waypoint beats: the rating stamp shakes the camera; the alien warps in
     // as the "entering" line lands.
@@ -703,18 +750,22 @@ export class Engine {
       }
       if (this.waypointBeat < 2 && t >= WAYPOINT.enteringAt) {
         this.waypointBeat = 2;
-        this.alien.warpIn(VECTOR.holdFar[0]!);
-        this.shield.flash(FX.waypoint.warpFlash, COLOR.anomaly);
-        this.chase.shake(0.4);
-        // The bed turns on the same beat the scout arrives, and the arrival
-        // itself covers the key change. Only when the stage ahead is really
-        // the scout's: a round whose next stage is lanes keeps its music.
+        // The scout only comes for the scout's stage. A round whose next
+        // stage is lanes, or the station, keeps its sky and its music.
         if (this.waypoint.nextType === "vector") {
+          this.alien.warpIn(VECTOR.holdFar[0]!);
+          this.shield.flash(FX.waypoint.warpFlash, COLOR.contact);
+          this.chase.shake(0.4);
+          // The bed turns on the same beat the scout arrives, and the arrival
+          // itself covers the key change.
           this.audio.alienArrival();
           this.audio.setMood("dread");
         }
       }
     }
+
+    // WHERE ON EARTH: the station coming alongside is what arms the door.
+    if (this.station.update(dt)) this.run.arriveAtStation();
 
     this.density += (this.densityTarget - this.density) * (1 - Math.exp(-1.2 * dt));
     this.field.setDensity(this.density);

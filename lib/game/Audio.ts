@@ -602,8 +602,8 @@ export class AudioEngine {
 
   /** A new encounter is called. */
   encounter(question: Question): void {
-    if (question.type === "anomaly") {
-      // The anomaly is the odd one out on screen, so it is the odd one out
+    if (question.type === "earth") {
+      // The station is the odd one out on screen, so it is the odd one out
       // here too: a violet shimmer rather than the usual alert.
       this.tone(220, 0, {
         duration: 1.6,
@@ -884,6 +884,56 @@ export class AudioEngine {
         send: cfg.send,
       });
     }
+  }
+
+  /**
+   * Docking. An airlock, not a hit: the clamps taking the hull, the hull
+   * ringing off them on one low inharmonic partial, and the pressure hiss
+   * of the seal a beat after. Ducks the bed the way an impact does, since a
+   * mass has just met a bigger one. Numbers in `AUDIO.dock`.
+   */
+  dock(): void {
+    const cfg = AUDIO.dock;
+    this.duck(cfg.duck);
+
+    // The clamps: a filtered thump with grit on it, and a sub under it.
+    this.noiseVoice(0, {
+      duration: cfg.clamp.seconds,
+      gain: cfg.clamp.gain,
+      type: "lowpass",
+      from: cfg.clamp.hz[0]!,
+      to: cfg.clamp.hz[1]!,
+      q: cfg.clamp.q,
+      drive: true,
+      send: cfg.send,
+    });
+    this.tone(cfg.sub.hz[0]!, 0, {
+      duration: cfg.sub.seconds,
+      gain: cfg.sub.gain,
+      type: "sine",
+      sweepTo: cfg.sub.hz[1]!,
+      send: cfg.send * 0.5,
+    });
+    // The hull ringing off it.
+    this.bell(cfg.ring.hz, {
+      duration: cfg.ring.seconds,
+      gain: cfg.ring.gain,
+      delay: cfg.ring.delay,
+      ratio: cfg.ring.ratio,
+      index: cfg.ring.index,
+    });
+    // The seal: air, arriving late and dying away.
+    this.noiseVoice(0, {
+      duration: cfg.hiss.seconds,
+      gain: cfg.hiss.gain,
+      type: "bandpass",
+      from: cfg.hiss.hz[0]!,
+      to: cfg.hiss.hz[1]!,
+      q: cfg.hiss.q,
+      attack: cfg.hiss.attack,
+      delay: cfg.hiss.delay,
+      send: cfg.send,
+    });
   }
 
   /**

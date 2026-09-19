@@ -24,7 +24,7 @@ async function advance(page: Page, via: "banner" | "anywhere" = "anywhere") {
   else await page.getByTestId("continue").click();
 }
 
-test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, scan, share", async ({
+test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, share", async ({
   page,
 }) => {
   await page.goto("/play?replay=1");
@@ -152,21 +152,50 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "11-timeout");
   await advance(page);
 
-  // Encounter 7: the anomaly. No API key, so the local scorer marks it.
+  // Waypoint: Alien Contact rated, then the card briefs WHERE ON EARTH as
+  // phase 4 (phase 3 is not built, and the round says so).
+  await expect(waypoint).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("rating")).toBeVisible({ timeout: 5_000 });
+  await expect(waypoint).toContainText("PHASE 4", { timeout: 6_000 });
+  await expect(waypoint).toContainText("WHERE ON EARTH");
+  await expect(page.getByTestId("waypoint-standby")).toBeVisible();
+  await shot(page, "12-waypoint-earth");
+  await advance(page, "banner");
+
+  // Encounter 7: WHERE ON EARTH. No lanes, no clock, no tools: the station
+  // comes alongside and arms the door. The score does not move for docking.
   await expect(question).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("AI ANOMALY")).toBeVisible();
-  await page.getByTestId("anomaly-input").fill("Orion");
-  await page.getByTestId("anomaly-submit").click();
-  await expect(toast).toHaveAttribute("data-outcome", "thread", { timeout: 20_000 });
-  await expect(toast).toContainText("100%");
-  await advance(page);
+  await expect(question.getByText("WHERE ON EARTH")).toBeVisible();
+  await expect(page.getByTestId("clock")).toHaveCount(0);
+  await expect(page.getByTestId("thrust")).toHaveCount(0);
+  await expect(page.getByTestId("option-0")).toHaveCount(0);
+  await expect(page.getByTestId("nova")).toHaveCount(0);
+  const enter = page.getByTestId("enter-station");
+  await expect(enter).toBeDisabled();
+  await expect(enter).toHaveText("CLOSING...");
+  const scoreBefore = await page.getByTestId("score").innerText();
+  await expect(enter).toBeEnabled({ timeout: 15_000 });
+  await expect(enter).toHaveText("ENTER SPACE STATION");
+  await expect(page.getByTestId("station-status")).toContainText("ALONGSIDE");
+  await shot(page, "13-station-approach");
+  await enter.click();
+
+  // Aboard: the station screen owns the display; the HUD is gone under it.
+  const station = page.getByTestId("station");
+  await expect(station).toBeVisible();
+  await expect(station).toContainText("SATELLITE FEED");
+  await expect(station).toContainText("STANDING BY");
+  await expect(question).toHaveCount(0);
+  await shot(page, "14-station");
+  await page.getByTestId("end-transmission").click();
 
   // The scorecard: one line per encounter, then the total out of the perfect
   // run. It is the beat before the share card, and it waits for a tap.
   const tally = page.getByTestId("tally");
   await expect(tally).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("tally-line-0")).toContainText("2 PLASMA BANKED");
-  await expect(page.getByTestId("tally-line-6")).toContainText("SCANNER");
+  await expect(page.getByTestId("tally-line-6")).toContainText("WHERE ON EARTH");
+  await expect(page.getByTestId("tally-line-6")).toContainText("FEED STANDING BY");
   // The lines land one at a time and the total lands after them. Text is in
   // the DOM the whole time, so the reveal is asserted on the class that
   // actually makes a line visible rather than on its content.
@@ -176,12 +205,14 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // The total stamps in a beat after the last line.
   await expect(page.getByTestId("tally-total")).toBeVisible();
   await page.waitForTimeout(700);
-  await shot(page, "12-tally");
+  await shot(page, "15-tally");
   const scored = Number(
     (await page.getByTestId("tally-total").innerText()).split("/")[0]!.replace(/[^0-9]/g, ""),
   );
   expect(scored).toBeGreaterThan(0);
   expect(scored).toBeLessThan(1500);
+  // Docking is neutral until the feed scores: the total is the HUD's last figure.
+  expect(scored).toBe(Number(scoreBefore.split("/")[0]!.replace(/[^0-9]/g, "")));
   await page.getByTestId("tally-continue").click();
 
   // Share card.
@@ -193,7 +224,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const distance = await page.getByTestId("final-distance").innerText();
   expect(Number(distance.replace(/[^0-9]/g, ""))).toBeGreaterThan(1000);
   await expect(page.getByTestId("final-score")).toBeVisible();
-  await shot(page, "13-share");
+  await shot(page, "16-share");
 
   // The run is persisted: a reload shows the card, not a fresh run.
   await page.goto("/play");
