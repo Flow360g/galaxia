@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { BestRun } from "@/components/BestRun";
 import { TitleMenu } from "@/components/TitleMenu";
@@ -35,11 +36,16 @@ export default async function Home({
       </header>
 
       <div className={styles.body}>
-        <h1 className={`${styles.title} arcade`}>
-          <span className={styles.titleGlow} aria-hidden="true">
-            GALAXIA
-          </span>
-          GALAXIA
+        <h1 className={styles.title}>
+          <Image
+            src="/astro-run-logo.png"
+            width={1400}
+            height={473}
+            alt="Astro Run"
+            className={styles.logo}
+            priority
+            sizes="(max-width: 720px) 92vw, 560px"
+          />
         </h1>
 
         <p className={styles.lede}>

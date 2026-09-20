@@ -1,4 +1,8 @@
-# Galaxia
+# Astro Run
+
+The game is called Astro Run. The repository, package, storage keys
+(`galaxia:*`) and debug globals (`window.galaxiaAudio`) keep the working
+name Galaxia; renaming a storage key would wipe every player's flight log.
 
 A daily space run. Seven encounters, each an asteroid; your score is the
 distance you travel. Correct answers accelerate you. Wrong answers do not
