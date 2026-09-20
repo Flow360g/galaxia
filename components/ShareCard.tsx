@@ -100,7 +100,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
       if (canShareFile) {
         await navigator.share({
           files: [file],
-          title: `Galaxia #${formatRoundNumber(round.roundNumber)}`,
+          title: `Astro Run #${formatRoundNumber(round.roundNumber)}`,
           text: shareText(summary),
         });
         setShareState("idle");
@@ -172,7 +172,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
             <img
               className={styles.image}
               src={imageUrl}
-              alt={`Galaxia round ${formatRoundNumber(round.roundNumber)}: ${formatDistance(summary.distance)} km`}
+              alt={`Astro Run round ${formatRoundNumber(round.roundNumber)}: ${formatDistance(summary.distance)} km`}
               data-testid="share-image"
             />
           ) : (

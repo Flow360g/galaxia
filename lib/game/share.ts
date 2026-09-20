@@ -159,7 +159,7 @@ export function shareText(summary: RunSummary): string {
     : `${formatDistance(summary.distance)} km`;
 
   return [
-    `GALAXIA #${formatRoundNumber(summary.roundNumber)} · ${headline}`,
+    `ASTRO RUN #${formatRoundNumber(summary.roundNumber)} · ${headline}`,
     glyphs.join(""),
     stats.join(" · "),
   ].join("\n");
@@ -314,7 +314,7 @@ function drawBackground(ctx: Ctx): void {
 function drawHeader(ctx: Ctx, summary: RunSummary, arcade: string): void {
   text(
     ctx,
-    `GALAXIA / ROUND ${formatRoundNumber(summary.roundNumber)}`,
+    `ASTRO RUN / ROUND ${formatRoundNumber(summary.roundNumber)}`,
     PAD,
     HEADER_Y,
     arcadeFont(16, arcade),
@@ -869,7 +869,7 @@ function drawRail(ctx: Ctx, summary: RunSummary, arcade: string): void {
   }
 
   const footerY = RAIL_Y + RAIL_CELL - 14;
-  text(ctx, "GALAXIA", W - PAD, footerY, arcadeFont(FOOTER_FONT + 4, arcade), WHITE, "right");
+  text(ctx, "ASTRO RUN", W - PAD, footerY, arcadeFont(FOOTER_FONT + 4, arcade), WHITE, "right");
   text(ctx, summary.date, W - PAD, footerY + 22, arcadeFont(FOOTER_FONT - 3, arcade), LABEL, "right");
 }
 

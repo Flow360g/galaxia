@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Hangar } from "@/components/Hangar";
 
 export const metadata: Metadata = {
-  title: "Galaxia / Ship bay",
+  title: "Astro Run / Ship bay",
   description: "Your hull, on the deck. Pick what you fly today.",
 };
 

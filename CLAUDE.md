@@ -1,6 +1,12 @@
 @AGENTS.md
 
-# Galaxia
+# Galaxia (shipped as Astro Run)
+
+The player-facing name is **Astro Run**: the title screen carries the logo
+in `public/astro-run-logo.png`, and the share text, share card, page titles
+and bay stencils say ASTRO RUN. Galaxia stays as the working name for the
+repo, the package, the localStorage keys (`galaxia:*`) and the debug
+globals; renaming a storage key would wipe every player's flight log.
 
 A daily quiz flight. Eight encounters, one run a day, scored out of a fixed
 total (1,800 as tuned). Distance is still flown and still tracked; the score

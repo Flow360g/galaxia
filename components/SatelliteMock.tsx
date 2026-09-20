@@ -898,7 +898,7 @@ function Setup({
           </button>
         </aside>
       ) : null}
-      <p className={`${styles.eyebrow} arcade`}>Galaxia prototype</p>
+      <p className={`${styles.eyebrow} arcade`}>Astro Run prototype</p>
       <h1 className={`${styles.title} arcade`}>Satellite recon</h1>
       <p className={styles.blurb}>
         Not the game. A dial board for one question: at what settings is naming a place from orbit
