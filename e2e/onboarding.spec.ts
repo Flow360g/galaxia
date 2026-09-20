@@ -67,7 +67,9 @@ test("a first flight is briefed on the rules before the round starts", async ({
   expect(everything).toMatch(/a streak of correct answers keeps your ship fast/i);
   expect(everything).toMatch(/PICK ONE/);
   expect(everything).toMatch(/NAME THE PLACE/);
-  expect(everything).toMatch(/SHIELDS\s+3 FOR THE RUN/i);
+  // The last page is about hints: the free ones, and the ones that cost.
+  expect(everything).toMatch(/HINTS\s+2 FOR THE RUN/i);
+  expect(everything).toMatch(/NAME THE PLACE HINT\s+-45 POINTS/i);
   // No flight-model figures: distance is a speedometer, not the score.
   expect(everything).not.toMatch(/km\/h/i);
   await shot(page, "b02-briefing-last");
