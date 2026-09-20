@@ -1060,6 +1060,12 @@ export class AudioEngine {
         break;
       }
 
+      case "graze":
+        // The bolt clips the scout and carries on past: a pass with no weight
+        // behind it, and nothing lands on the hull.
+        this.pass(0.35, 0.1, [-0.4, 0.4]);
+        break;
+
       case "collision":
       case "wreck":
         this.crash(kind === "wreck");

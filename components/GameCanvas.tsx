@@ -15,8 +15,14 @@ import {
   saveRun,
 } from "@/lib/game/storage";
 import { selectedShip } from "@/lib/game/ships";
+import {
+  EARTH_SAVED_TRANSMISSION,
+  MISSION_TRANSMISSION,
+  earthSaved,
+} from "@/lib/game/phases";
 import { Briefing } from "./Briefing";
 import { Ready } from "./Ready";
+import { Transmission } from "./Transmission";
 import { Hud } from "./Hud";
 import { Station } from "./Station";
 import { ScoreTally } from "./ScoreTally";
@@ -80,6 +86,17 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   /** Dismissed this visit, by reading the briefing through or skipping it. */
   const [briefed, setBriefed] = useState(false);
   /**
+   * The mission transmission is up. It follows the briefing on a first flight
+   * and sits between it and the launch card: the Mayday that says why the
+   * ship is out here at all, before the card says what Phase 1 is.
+   */
+  const [transmission, setTransmission] = useState(false);
+  /**
+   * The debrief after the tally has been read. Only a run that named every
+   * landing site gets one, and the share card waits behind it.
+   */
+  const [debriefed, setDebriefed] = useState(false);
+  /**
    * Today's stored run, if any. `undefined` on the server and until hydration
    * so the engine never starts before storage has been checked.
    */
@@ -128,13 +145,19 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   /** The briefing holds the run back until it is closed. */
   const briefing = unbriefed === true && !briefed;
   /** Then the launch card holds it back until READY. */
-  const readying = !briefing && !launched && stored === null && summary === null;
+  const readying =
+    !briefing && !transmission && !launched && stored === null && summary === null;
   const playing = stored === null && summary === null && !briefing && launched;
 
   const closeBriefing = useCallback(() => {
     saveBriefed(true);
     setBriefed(true);
+    setTransmission(true);
   }, []);
+  const closeTransmission = useCallback(() => setTransmission(false), []);
+  const closeDebrief = useCallback(() => setDebriefed(true), []);
+  /** The debrief is owed only to a run just flown that saved Earth. */
+  const debrief = summary !== null && tallied && !debriefed && earthSaved(round, summary);
 
   const launch = useCallback(() => setLaunched(true), []);
   // WHERE ON EARTH, played at the station. The engine is parked while docked,
@@ -201,6 +224,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     storedCache.set(round.date, null);
     setSummary(null);
     setTallied(false);
+    setDebriefed(false);
     setState(null);
     setLaunched(false);
     setAttempt((n) => n + 1);
@@ -256,13 +280,21 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
         <Briefing round={round} onDone={closeBriefing} firstFlight />
       ) : null}
 
+      {transmission && !briefing ? (
+        <Transmission script={MISSION_TRANSMISSION} kind="incoming" onDone={closeTransmission} />
+      ) : null}
+
       {readying ? <Ready round={round} onReady={launch} /> : null}
 
       {summary && !tallied ? (
         <ScoreTally summary={summary} onDone={() => setTallied(true)} />
       ) : null}
 
-      {shown && (tallied || summary === null) ? (
+      {debrief ? (
+        <Transmission script={EARTH_SAVED_TRANSMISSION} kind="debrief" onDone={closeDebrief} />
+      ) : null}
+
+      {shown && !debrief && (tallied || summary === null) ? (
         <ShareCard round={round} summary={shown} onReplay={replayRun} />
       ) : null}
       {debug && debugInfo ? <DebugStats info={debugInfo} /> : null}

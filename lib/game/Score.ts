@@ -54,9 +54,12 @@ export function scoreOutcome(
   question?: Question,
 ): { base: number; multiplier: number; points: number } {
   const multiplier = multiplierFor(outcome.streakBefore);
-  // Docking is neutral until the satellite feed scores: nothing earned,
-  // nothing docked, and the streak carried in is left exactly as it was.
-  if (outcome.kind === "dock") return { base: 0, multiplier, points: 0 };
+  // Docking is neutral until the satellite feed scores, and a vector graze is
+  // neutral full stop: nothing earned, nothing docked, and the streak carried
+  // in is left exactly as it was.
+  if (outcome.kind === "dock" || outcome.kind === "graze") {
+    return { base: 0, multiplier, points: 0 };
+  }
   const share = shareOf(outcome);
 
   if (share <= 0) {
@@ -96,7 +99,9 @@ function shareOf(outcome: Outcome): number {
   if (outcome.error !== undefined) {
     return outcome.kind === "slingshot" ? SCORE.vectorDirect : SCORE.vectorGlance;
   }
-  return 1;
+  // A lane: full marks only with boost pressed before the answer. The perfect
+  // run assumes it was, so the fixed total is the boosted one.
+  return outcome.boosted ? 1 : SCORE.laneShare;
 }
 
 /** One line of the end-of-run tally, per encounter that was actually flown. */
@@ -111,7 +116,8 @@ export function scoreLines(round: Round, outcomes: Outcome[]): ScoreLine[] {
       multiplier: outcome.multiplier ?? 1,
       points: outcome.points ?? 0,
       max: question ? maxPointsAt(question, index) : SCORE.perEncounter * multiplierFor(index),
-      // A dock left nothing on the table: there was nothing on it yet.
+      // A dock left nothing on the table: there was nothing on it yet. A
+      // graze left all of it, and says so.
       full:
         outcome.kind === "dock" ||
         (question ? (outcome.base ?? 0) >= baseFor(question) : false),
@@ -137,6 +143,7 @@ function labelFor(question: Question | undefined, index: number): string {
 /** The one short line the tally shows under a result. Arcade voice, no prose. */
 function detailFor(outcome: Outcome): string {
   if (outcome.kind === "dock") return "FEED STANDING BY";
+  if (outcome.kind === "graze") return "GRAZED";
   if (outcome.timedOut) return "OUT OF TIME";
   if (!outcome.correct) return outcome.kind === "wreck" ? "WRECKED" : "MISSED";
   if (outcome.kind === "burn") {
@@ -144,7 +151,7 @@ function detailFor(outcome: Outcome): string {
     return `${charge} PLASMA BANKED`;
   }
   if (outcome.error !== undefined) {
-    return outcome.kind === "slingshot" ? "DIRECT HIT" : "GLANCING HIT";
+    return outcome.kind === "slingshot" ? "DIRECT HIT" : "CLOSE HIT";
   }
   return outcome.kind === "slingshot" ? "SLINGSHOT" : "LANE CLEAR";
 }

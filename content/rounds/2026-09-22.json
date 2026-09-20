@@ -50,7 +50,6 @@
       "min": 50,
       "max": 200,
       "unit": "years",
-      "tolerance": 10,
       "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
     },
     {
@@ -61,7 +60,6 @@
       "min": 20,
       "max": 200,
       "unit": "keys",
-      "tolerance": 6,
       "fact": "88: 52 white and 36 black, a range settled on in the 1880s and never changed."
     },
     {
@@ -111,13 +109,16 @@
     },
     {
       "name": "Alien Contact",
-      "after": 5,
+      "after": 3,
       "landmark": "planet"
     },
     {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
       "name": "Where on Earth",
-      "after": 7,
-      "phase": 4
+      "after": 7
     }
   ]
 }

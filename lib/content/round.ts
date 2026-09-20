@@ -111,8 +111,8 @@ function validate(round: Round): Round {
     if (previous && previous.after >= stage.after) {
       throw new Error(`Round ${round.date} stage ${stage.name}: stages must end in ascending order`);
     }
-    // A stage may skip a phase number (phase 3 is not built yet) but never
-    // go backwards: the card announces these, and they have to count up.
+    // A stage may skip a phase number but never go backwards: the card
+    // announces these, and they have to count up.
     if (stage.phase !== undefined) {
       const previousPhase = previous ? (previous.phase ?? i) : 0;
       if (!Number.isInteger(stage.phase) || stage.phase <= previousPhase) {
@@ -141,12 +141,13 @@ function validate(round: Round): Round {
       continue;
     }
     if (question.type === "vector") {
-      const { min, max, answer, tolerance, log } = question;
+      const { min, max, answer, log } = question;
       if (!(min < answer && answer < max)) {
         throw new Error(`Round ${round.date} vector ${question.id}: answer must sit inside min..max`);
       }
-      if (!(tolerance > 0)) {
-        throw new Error(`Round ${round.date} vector ${question.id}: tolerance must be positive`);
+      // The scoring bands are fractions of the answer, so zero has no bands.
+      if (!(Math.abs(answer) > 0)) {
+        throw new Error(`Round ${round.date} vector ${question.id}: answer must not be zero`);
       }
       if (log && !(min > 0)) {
         throw new Error(`Round ${round.date} vector ${question.id}: log scale needs min > 0`);

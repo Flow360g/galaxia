@@ -489,7 +489,7 @@ export class Engine {
     const truthX = this.aimWorldX(truthT);
     this.alien.reveal(truthX);
 
-    if (!outcome.correct) {
+    if (!outcome.correct && outcome.kind !== "graze") {
       // The scout winding up to fire: a swell under the beat of nothing
       // happening, so the return fire is heard coming.
       this.audio.strike();
@@ -647,7 +647,13 @@ export class Engine {
   private onVectorContact(outcome: Outcome): void {
     const kind = outcome.kind;
     this.alien.target(this.scratchB);
-    if (outcome.correct) {
+    if (kind === "graze") {
+      // The bolt clips the scout and it is knocked about, nothing more. No
+      // blast, no burst, no shield: the ship neither gained nor wore anything.
+      this.alien.hit("glance");
+      this.debris.burst(this.scratchB, 0.3, COLOR.contact);
+      this.chase.shake(FX.vector.glanceShake);
+    } else if (outcome.correct) {
       // Anything on target hits the hull. On the last vector of the run that
       // hit is the kill; before it the scout is knocked about and stays up.
       const kill = this.vectorsFlown >= this.vectorTotal;

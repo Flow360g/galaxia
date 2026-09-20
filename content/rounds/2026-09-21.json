@@ -51,7 +51,6 @@
       "max": 3000000,
       "unit": "km/s",
       "log": true,
-      "tolerance": 40000,
       "fact": "299,792 km every second. The sunlight on your face left the Sun about eight minutes ago."
     },
     {
@@ -61,7 +60,6 @@
       "answer": 206,
       "min": 50,
       "max": 500,
-      "tolerance": 20,
       "fact": "206. A baby is born with around 270, and many of them fuse together as the skeleton grows."
     },
     {
@@ -111,13 +109,16 @@
     },
     {
       "name": "Alien Contact",
-      "after": 5,
+      "after": 3,
       "landmark": "planet"
     },
     {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
       "name": "Where on Earth",
-      "after": 7,
-      "phase": 4
+      "after": 7
     }
   ]
 }

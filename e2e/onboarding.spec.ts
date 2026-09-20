@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { launch } from "./helpers";
+import { acknowledge, launch } from "./helpers";
 
 /**
  * The two things that wrap a run: the briefing a first-time player is walked
@@ -34,7 +34,14 @@ test("a first flight is briefed on the rules before the round starts", async ({
   const briefing = page.getByTestId("briefing");
   await expect(briefing).toBeVisible({ timeout: 20_000 });
   await expect(briefing).toContainText(/first flight/i);
-  await expect(briefing).toContainText(/every answer is a lane/i);
+  await expect(briefing).toContainText(/welcome aboard/i);
+  // The welcome page names every phase and what a perfect run scores on it,
+  // and those figures add up to the total in the title.
+  const phases = page.getByTestId("briefing-phases");
+  await expect(phases).toContainText("Cluster Belt");
+  await expect(phases).toContainText("Open Sky");
+  await expect(phases).toContainText("Where on Earth");
+  await expect(briefing).toContainText("2,400");
   // The run is held back: no question is open behind the briefing.
   await expect(page.getByTestId("question")).toHaveCount(0);
   await shot(page, "b01-briefing");
@@ -51,22 +58,41 @@ test("a first flight is briefed on the rules before the round starts", async ({
   const everything = read.join("\n");
 
   // The scoring system is the half of this a player cannot work out by
-  // playing, and every figure in it is read from Tuning.
-  expect(everything).toMatch(/distance is the score/i);
-  expect(everything).toContain("1,800 km/h");
-  expect(everything).toMatch(/5,040 km\/h/);
-  expect(everything).toMatch(/shields x3/i);
-  expect(everything).toMatch(/thrust is the timer/i);
+  // playing, and every figure in it is read from Tuning. One page per phase,
+  // each with its table, in plain words.
+  expect(everything).toMatch(/3 PLASMA\s+100/);
+  expect(everything).toMatch(/WITHIN 5%/);
+  expect(everything).toMatch(/WITHIN 15%\s+0 · NO DAMAGE/);
+  expect(everything).toMatch(/RIGHT WITH BOOST\s+100/);
+  expect(everything).toMatch(/2 right in a row doubles your points/i);
+  expect(everything).toMatch(/GENERAL KNOWLEDGE/);
+  expect(everything).toMatch(/WHERE ON EARTH/);
+  expect(everything).toMatch(/SHIELDS\s+x3/i);
+  // No flight-model figures: distance is a speedometer, not the score.
+  expect(everything).not.toMatch(/km\/h/i);
   await shot(page, "b02-briefing-last");
   await expect(next).toHaveText(/launch/i);
   await next.click();
 
-  // Briefing gone, and the launch card behind it.
+  // Briefing gone. The Mayday from Earth Command comes in, then the launch
+  // card behind it, with its scoring shut until it is asked for.
   await expect(briefing).toHaveCount(0);
+  await expect(page.getByTestId("transmission")).toContainText(/mayday/i, { timeout: 15_000 });
+  await shot(page, "b02b-transmission");
+  await acknowledge(page);
+  const toggle = page.getByTestId("scoring-toggle");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByTestId("scoring")).toHaveCount(0);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByTestId("scoring")).toContainText("1 PLASMA");
+  // Opening the table did not launch the run.
+  await expect(page.getByTestId("ready")).toBeVisible();
+  await shot(page, "b02c-ready-scoring");
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 
-  // It was read once and does not come back.
+  // It was read once and does not come back, and nor does the Mayday.
   await page.goto("/play");
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
@@ -78,6 +104,8 @@ test("the briefing can be skipped from the first card", async ({ page }) => {
   await expect(page.getByTestId("briefing")).toBeVisible({ timeout: 20_000 });
   await page.getByTestId("briefing-back").click();
   await expect(page.getByTestId("briefing")).toHaveCount(0);
+  // Skipping the rules does not skip the mission.
+  await acknowledge(page);
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 });
