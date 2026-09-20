@@ -18,18 +18,13 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, WAYPOINT } from "@/lib/game/Tuning";
+import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, SCORE, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
+import { multiplierFor } from "@/lib/game/Score";
 import { phaseGuide } from "@/lib/game/phases";
 import { ScoringDisclosure } from "./ScoringTable";
-import {
-  formatDelta,
-  formatDistance,
-  formatPoints,
-  formatScore,
-  formatVelocity,
-} from "@/lib/game/format";
+import { formatPoints, formatScore, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
 
 interface Props {
@@ -59,24 +54,40 @@ interface Props {
   onToggleSound: () => void;
 }
 
+/**
+ * The verdict, in the plainest word for it. The arcade flavour (plasma, the
+ * reactor, the hull) rides on the pulse below the band and on the toast's
+ * second line, never on the headline: a first-time player reads CORRECT or
+ * WRONG before anything else.
+ */
 const OUTCOME_LABEL: Record<OutcomeKind, string> = {
-  thread: "LANE CLEAR",
-  slingshot: "SLINGSHOT!",
-  collision: "COLLISION",
-  wreck: "WRECKED",
+  thread: "CORRECT",
+  slingshot: "CORRECT · BOOSTED",
+  collision: "WRONG",
+  wreck: "WRONG · NO SHIELDS",
   timeout: "TOO SLOW",
-  burn: "BURN",
-  dock: "DOCKED",
-  graze: "GRAZED",
+  burn: "BANKED",
+  dock: "ARRIVED",
+  graze: "NEAR MISS",
 };
 
-/** What the scan did, after the (HINT FROM NOVA) tag. A clue prints itself. */
+/** What the hint did, after the HINT: tag. A clue prints itself. */
 const NOVA_DETAIL = {
-  eliminate: "One wrong lane ruled out.",
+  eliminate: "One wrong answer removed.",
   clue: "",
-  narrow: "The two likeliest lanes are lit.",
-  vector: "The scout is inside the window.",
+  narrow: "Two answers left lit. One is correct.",
+  vector: "The answer is inside the lit part of the slider.",
 } as const;
+
+/**
+ * What BANK pays right now: the cluster share for this many found, times the
+ * streak carried in. The dial used to quote the km/h a burn would add, which
+ * is a speedometer figure next to a game played for points.
+ */
+function bankPoints(charge: number, streak: number): number {
+  const share = SCORE.clusterShare[Math.min(charge, SCORE.clusterShare.length) - 1] ?? 0;
+  return Math.round(SCORE.perEncounter * share) * multiplierFor(streak);
+}
 
 /** Slider step for a nudge button or an arrow key. */
 const NUDGE = 0.01;
@@ -137,6 +148,8 @@ export function Hud({
   /** Lanes are up: the cockpit corners belong on screen. */
   const flying = answering || collecting;
   const total = round.questions.length;
+  // Every FIND THE 3 answer in the round, for the waypoint's "4 OF 6 FOUND".
+  const foundMax = round.questions.filter((q) => q.type === "cluster").length * FULL_CHARGE;
   const outcome = state?.outcome ?? null;
   const isCluster = question?.type === "cluster";
   const isEarth = question?.type === "earth";
@@ -201,7 +214,7 @@ export function Hud({
           <div className={styles.readout}>
             <span className="label">
               {state && state.encounter >= 0
-                ? `Encounter ${state.encounter + 1} / ${total}`
+                ? `Question ${state.encounter + 1} of ${total}`
                 : state?.phase === "finished"
                   ? "Run complete"
                   : "Engines lit"}
@@ -215,22 +228,24 @@ export function Hud({
               {/* What the last encounter did to it, on the number it did it
                   to. Keyed per encounter so the pop replays on every verdict;
                   it lives while the toast does and goes with it. */}
-              {outcome && outcome.points !== undefined && state ? (
-                <span
-                  key={state.encounter}
-                  className={`${styles.scoreDelta} ${
-                    outcome.points < 0 ? styles.scoreDeltaDown : ""
-                  }`}
-                  data-testid="score-delta"
-                >
-                  {formatPoints(outcome.points)}
-                </span>
-              ) : null}
             </span>
-            <span className={`${styles.distance} arcade`} data-testid="distance">
-              {formatDistance(state?.distance ?? 0)}
-              <span className={styles.unit}>KM</span>
-            </span>
+            {/* What the last answer did to the score, on its own row under
+                it, in the slot the distance readout used to take. Distance is
+                still flown and still tracked, and it comes back on the results
+                and the share card; during the run a kilometre count next to a
+                points score is one number too many. Keyed per question so the
+                pop replays on every verdict; it lives while the toast does. */}
+            {outcome && outcome.points !== undefined && state ? (
+              <span
+                key={state.encounter}
+                className={`${styles.scoreDelta} ${
+                  outcome.points < 0 ? styles.scoreDeltaDown : ""
+                } arcade`}
+                data-testid="score-delta"
+              >
+                {formatPoints(outcome.points)} POINTS
+              </span>
+            ) : null}
           </div>
 
           {/* The one control outside the question panel, and small enough to
@@ -287,15 +302,13 @@ export function Hud({
             data-testid="question"
           >
             <div className={styles.panelHead}>
-              {isEarth ? (
-                <span className={`${styles.earthTag} arcade`}>WHERE ON EARTH</span>
-              ) : isCluster ? (
-                <span className={`${styles.clusterTag} arcade`}>CLUSTER · 3 OF 6</span>
-              ) : isVector ? (
-                <span className={`${styles.vectorTag} arcade`}>VECTOR · FIRING SOLUTION</span>
-              ) : (
-                <span className={`${styles.clusterTag} arcade`}>PICK A LANE</span>
-              )}
+              <span
+                className={`${
+                  isEarth ? styles.earthTag : isVector ? styles.vectorTag : styles.clusterTag
+                } arcade`}
+              >
+                {phaseGuide(question.type).title}
+              </span>
               {clockShown ? (
                 <span
                   className={`${styles.clock} ${thrustLow ? styles.clockLow : ""} arcade`}
@@ -325,12 +338,12 @@ export function Hud({
 
             {state?.nova && !isEarth ? (
               <p className={styles.novaLine} data-testid="nova-result">
-                <span className={`${styles.novaLabel} arcade`}>(HINT FROM NOVA)</span>
+                <span className={`${styles.novaLabel} arcade`}>HINT:</span>
                 <span>
                   {" "}
                   {state.nova.clue ?? NOVA_DETAIL[isVector ? "vector" : state.nova.kind]}
                   {" "}
-                  <span className={`${styles.novaBonus} arcade`}>+{NOVA.bonusSeconds}S</span>
+                  <span className={`${styles.novaBonus} arcade`}>+{NOVA.bonusSeconds} SEC</span>
                 </span>
               </p>
             ) : null}
@@ -377,7 +390,7 @@ export function Hud({
                 onClick={onNova}
                 data-testid="nova"
               >
-                NOVA <span className={styles.pips}>{"◆".repeat(state?.novaLeft ?? 0)}</span>
+                HINT <span className={styles.pips}>{"◆".repeat(state?.novaLeft ?? 0)}</span>
               </button>
               {isCluster ? null : isVector ? (
                 <button
@@ -387,7 +400,7 @@ export function Hud({
                   onClick={onLockVector}
                   data-testid="lock"
                 >
-                  LOCK &amp; FIRE
+                  FIRE
                 </button>
               ) : (
                 <button
@@ -418,11 +431,16 @@ export function Hud({
         ) : null}
 
         {waypoint ? (
-          <WaypointCard waypoint={waypoint} awaitingTap={awaitingTap} onConfirm={onConfirm} />
+          <WaypointCard
+            waypoint={waypoint}
+            foundMax={foundMax}
+            awaitingTap={awaitingTap}
+            onConfirm={onConfirm}
+          />
         ) : null}
 
         {state?.phase === "intro" ? (
-          <p className={`${styles.hint} arcade`}>Pick fast. The clock is your thrust.</p>
+          <p className={`${styles.hint} arcade`}>Answer before the clock runs out.</p>
         ) : null}
       </div>
 
@@ -460,7 +478,7 @@ export function Hud({
             </span>
             <span className={styles.burnDialValue}>
               {(state?.cluster?.charge ?? 0) > 0
-                ? `+${formatVelocity(state?.cluster?.projected ?? 0)}`
+                ? `+${bankPoints(state?.cluster?.charge ?? 0, state?.streak ?? 0)} PTS`
                 : "BOOST"}
             </span>
           </span>
@@ -721,10 +739,13 @@ function TapPrompt({ shown }: { shown: boolean }) {
 /** Between stages: what you just flew, the rating, and what is coming. */
 function WaypointCard({
   waypoint,
+  foundMax,
   awaitingTap,
   onConfirm,
 }: {
   waypoint: WaypointState;
+  /** Every FIND THE 3 answer in the round, so "4 OF 6 FOUND" has its 6. */
+  foundMax: number;
   awaitingTap: boolean;
   onConfirm: () => void;
 }) {
@@ -755,9 +776,10 @@ function WaypointCard({
               </span>
               <span className={`${styles.wpRatingText} arcade`}>{RATING_TEXT[waypoint.rating]}</span>
               <ul className={styles.wpTally}>
-                <li>{waypoint.plasma} / 6 PLASMA</li>
+                <li>
+                  {waypoint.plasma} OF {foundMax} FOUND
+                </li>
                 <li>{waypoint.shields} SHIELD{waypoint.shields === 1 ? "" : "S"} UP</li>
-                <li>PEAK {formatVelocity(waypoint.peakVelocity)} KM/H</li>
               </ul>
             </>
           ) : null}
@@ -772,7 +794,7 @@ function WaypointCard({
           <span className={styles.wpHint}>{guide.how.join(" ")}</span>
           {waypoint.nextType === "earth" ? (
             <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
-              SATELLITE FEED · STANDING BY
+              SATELLITE VIEW · LOADING
             </span>
           ) : null}
           <ScoringDisclosure rows={guide.scoring} />
@@ -849,7 +871,7 @@ function BoostGauge({
       aria-valuemin={0}
       aria-valuemax={FULL_CHARGE}
       aria-valuenow={charge}
-      aria-label={`Boost gauge, ${charge} of ${FULL_CHARGE} plasma`}
+      aria-label={`Boost gauge, ${charge} of ${FULL_CHARGE} found`}
     >
       <svg viewBox="0 0 100 60" className={styles.gaugeDial} aria-hidden="true">
         <path d={GAUGE.path} className={styles.gaugeTrack} pathLength={100} />
@@ -959,23 +981,23 @@ function OutcomeToast({
   awaitingTap: boolean;
   onConfirm: () => void;
 }) {
-  const delta = outcome.velocityAfter - outcome.velocityBefore;
   const points = outcome.points ?? 0;
   const full = isMaxThrust(outcome);
   const vector = outcome.error !== undefined;
   const label = full
-    ? "MAXIMUM THRUST"
+    ? `ALL ${FULL_CHARGE} FOUND!`
     : vector
       ? outcome.kind === "slingshot"
-        ? "DIRECT HIT!"
+        ? "SPOT ON!"
         : outcome.kind === "thread"
-          ? "CLOSE HIT"
+          ? "CLOSE"
           : outcome.kind === "graze"
-            ? "GRAZED · NO DAMAGE"
+            ? "NEAR MISS · NOTHING LOST"
             : outcome.timedOut
-              ? "NO SOLUTION"
-              : "MISS"
+              ? "TOO SLOW"
+              : "WAY OFF"
       : OUTCOME_LABEL[outcome.kind];
+  const picked = !outcome.correct && outcome.chosen !== null;
   return (
     <section
       className={`${styles.toast} ${styles[`toast_${outcome.kind}`]} ${
@@ -993,7 +1015,8 @@ function OutcomeToast({
             className={`${styles.toastPoints} ${points < 0 ? styles.toastPointsDown : ""} arcade`}
             data-testid="toast-points"
           >
-            {formatPoints(points)}
+            {formatPoints(points)}{" "}
+            <span className={styles.toastPointsUnit}>POINTS</span>
           </span>
           {outcome.base && (outcome.multiplier ?? 1) > 1 ? (
             <span className={`${styles.toastMultiplier} arcade`}>
@@ -1002,58 +1025,69 @@ function OutcomeToast({
           ) : null}
         </span>
       </div>
+      {/* One fact per line. The toast used to chain the answer, the guess,
+          the error, the bonus and a km/h delta with middle dots, and a first
+          time player read it as an equation. */}
       {vector ? (
-        <span className={styles.toastAnswer}>
-          Truth: <strong>{outcome.answerText}</strong>
-          {!outcome.timedOut ? <> &middot; You aimed {outcome.guessText}</> : null}
-          {!outcome.timedOut && outcome.error !== undefined ? (
-            <>
-              {" "}
-              &middot; <strong data-testid="wide-by">{formatError(outcome.error)} off</strong>
-            </>
-          ) : null}
-          {outcome.salvage ? (
-            <>
-              {" "}
-              &middot;{" "}
-              <strong data-testid="salvage">
-                SALVAGE: {outcome.salvage === "shield" ? "SHIELD RESTORED" : "+1 NOVA"}
-              </strong>
-            </>
-          ) : null}
-        </span>
-      ) : outcome.kind === "burn" ? (
-        <span className={styles.toastAnswer}>
-          Banked <strong>{outcome.charge} plasma</strong>
-          {(outcome.charge ?? 0) < FULL_CHARGE ? <> &middot; All three: {outcome.answerText}</> : null}
-        </span>
-      ) : outcome.picks ? (
-        <span className={styles.toastAnswer}>
-          The three: <strong>{outcome.answerText}</strong>
-          {!outcome.correct && outcome.chosen !== null ? <> &middot; You hit: {outcome.guessText}</> : null}
-          {!outcome.correct && (outcome.lost ?? 0) > 0 ? (
-            <> &middot; {outcome.lost} plasma lost</>
-          ) : null}
-        </span>
-      ) : (
-        <span className={styles.toastAnswer}>
-          Answer: <strong>{outcome.answerText}</strong>
-          {!outcome.correct && outcome.chosen !== null ? <> &middot; You: {outcome.guessText}</> : null}
-        </span>
-      )}
-      {/* The streak and the speedometer, one rung under the points. The
-          velocity change used to share the head with the points and pulled
-          the eye off the score. */}
-      <span className={`${styles.toastMeta} arcade`}>
-        {outcome.streakAfter >= 2 ? (
-          <span className={styles.toastStreak}>STREAK x{outcome.streakAfter}</span>
-        ) : outcome.streakBefore >= 2 && !outcome.correct && outcome.kind !== "graze" ? (
-          <span className={`${styles.toastStreak} ${styles.toastStreakLost}`}>
-            STREAK x{outcome.streakBefore} LOST
+        <>
+          <span className={styles.toastAnswer}>
+            Correct answer: <strong>{outcome.answerText}</strong>
           </span>
-        ) : null}
-        <span className={styles.toastDelta}>{formatDelta(delta)} KM/H</span>
-      </span>
+          {!outcome.timedOut ? (
+            <span className={styles.toastAnswer}>
+              Your guess: {outcome.guessText}
+              {outcome.error !== undefined ? (
+                <>
+                  {" "}
+                  (<strong data-testid="wide-by">{formatError(outcome.error)} off</strong>)
+                </>
+              ) : null}
+            </span>
+          ) : null}
+        </>
+      ) : outcome.kind === "burn" ? (
+        <>
+          <span className={styles.toastAnswer}>
+            <strong>
+              {outcome.charge} of {FULL_CHARGE} found
+            </strong>
+          </span>
+          {(outcome.charge ?? 0) < FULL_CHARGE ? (
+            <span className={styles.toastAnswer}>The {FULL_CHARGE} were: {outcome.answerText}</span>
+          ) : null}
+        </>
+      ) : outcome.picks ? (
+        <>
+          <span className={styles.toastAnswer}>
+            The {FULL_CHARGE} were: <strong>{outcome.answerText}</strong>
+          </span>
+          {picked ? <span className={styles.toastAnswer}>You picked: {outcome.guessText}</span> : null}
+          {!outcome.correct && (outcome.lost ?? 0) > 0 ? (
+            <span className={styles.toastAnswer}>{outcome.lost} plasma lost</span>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <span className={styles.toastAnswer}>
+            Correct answer: <strong>{outcome.answerText}</strong>
+          </span>
+          {picked ? <span className={styles.toastAnswer}>You picked: {outcome.guessText}</span> : null}
+        </>
+      )}
+      {outcome.salvage ? (
+        <span className={`${styles.toastBonus} arcade`} data-testid="salvage">
+          BONUS: {outcome.salvage === "shield" ? "SHIELD BACK" : "+1 HINT"}
+        </span>
+      ) : null}
+      {outcome.streakAfter >= 2 ? (
+        <span className={`${styles.toastMeta} ${styles.toastStreak} arcade`}>
+          STREAK x{outcome.streakAfter}
+        </span>
+      ) : outcome.streakBefore >= 2 && !outcome.correct && outcome.kind !== "graze" ? (
+        <span className={`${styles.toastMeta} ${styles.toastStreak} ${styles.toastStreakLost} arcade`}>
+          STREAK x{outcome.streakBefore} LOST
+        </span>
+      ) : null}
       {fact ? <span className={styles.toastFact}>{fact}</span> : null}
       <TapPrompt shown={awaitingTap} />
     </section>
@@ -1071,17 +1105,14 @@ function ClusterRead({ shields, onReady }: { shields: number; onReady: () => voi
       <span className={`${styles.readShield} arcade`} data-testid="cluster-shields">
         YOU HAVE {shields} SHIELD{shields === 1 ? "" : "S"}
       </span>
-      <span className={styles.readNote}>
-        A wrong lane costs it and you keep your plasma. Another wrong lane and the cluster
-        is lost, for zero points.
-      </span>
+      <span className={styles.readNote}>{phaseGuide("cluster").readNote}</span>
       <button
         type="button"
         className={`${styles.readyButton} arcade`}
         onClick={onReady}
         data-testid="cluster-ready"
       >
-        READY!
+        READY
       </button>
     </div>
   );

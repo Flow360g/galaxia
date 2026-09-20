@@ -34,7 +34,7 @@
   color: #ffffff;
   font-variant-numeric: tabular-nums;
   text-align: right;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
 .row_good dd {
@@ -52,7 +52,7 @@
 /* Collapsed by default. The button is a 44px target like everything else. */
 .disclosure {
   width: 100%;
-  max-width: 300px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   gap: 6px;

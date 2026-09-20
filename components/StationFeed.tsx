@@ -3,18 +3,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  clampTile,
   commonsUrl,
   earthLadder,
   latToTile,
   lonToTile,
-  MAX_ZOOM,
+  opticZoom,
   TILE,
-  tileUrl,
+  tilesAround,
   WINDOW,
-  wrapTile,
   type EarthRung,
 } from "@/lib/game/feed";
+import { directUrl, groundUrl, warmUrl } from "@/lib/game/prefetch";
 import { SCORE, STATION } from "@/lib/game/Tuning";
 import type { EarthQuestion, EarthShot, GameState } from "@/lib/game/types";
 import styles from "./StationFeed.module.css";
@@ -81,7 +80,7 @@ export function StationFeed({
   // Per-site state is reset by keying this component on the question id in the
   // parent, which is cheaper and clearer than clearing it in an effect.
 
-  const zoom = clampTile(Math.round(question.zoom + optics), 2, MAX_ZOOM);
+  const zoom = opticZoom(question.zoom, optics);
   const remaining = state.feedSeconds;
 
   const pickOptics = useCallback(
@@ -100,7 +99,10 @@ export function StationFeed({
             className={styles.clockFill}
             style={{
               width: `${(remaining / STATION.answerSeconds) * 100}%`,
-              background: remaining < STATION.answerSeconds * 0.25 ? "#ff6b5c" : "#4ff1ff",
+              background:
+                remaining < STATION.answerSeconds * 0.25
+                  ? "#ff6b5c"
+                  : "#4ff1ff",
             }}
           />
         </div>
@@ -110,17 +112,22 @@ export function StationFeed({
       </div>
 
       <div className={styles.scroll} ref={scroll} data-testid="feed-scroll">
-        <Optic question={question} zoom={zoom} pin={shown.has("landmark")} onReady={onFeedReady} />
+        <Optic
+          question={question}
+          zoom={zoom}
+          pin={shown.has("landmark")}
+          onReady={onFeedReady}
+        />
 
         {!state.feedReady ? (
-          <p className={`${styles.acquiring} arcade`}>Acquiring feed</p>
+          <p className={`${styles.acquiring} arcade`}>Loading the view</p>
         ) : null}
 
         {!revealed ? (
           <div className={styles.optics}>
-            <span className={`${styles.opticsLabel} arcade`}>Optics</span>
+            <span className={`${styles.opticsLabel} arcade`}>Zoom</span>
             <div className={styles.opticsDial}>
-              {[-1, 0, 1].map((value) => {
+              {STATION.zoomSteps.map((value) => {
                 const free = value === 0 || state.earthOptics.includes(value);
                 return (
                   <button
@@ -130,10 +137,11 @@ export function StationFeed({
                     disabled={!state.feedReady}
                     onClick={() => pickOptics(value)}
                   >
-                    {value === -1 ? "Wider" : value === 0 ? "Standard" : "Closer"}
+                    {value === -1 ? "Out" : value === 0 ? "Normal" : "In"}
                     {free ? null : (
                       <span className={styles.opticsCost}>
-                        -{Math.round(SCORE.earthBase * SCORE.earthOpticsCost)}
+                        -{Math.round(SCORE.earthBase * SCORE.earthOpticsCost)}{" "}
+                        PTS
                       </span>
                     )}
                   </button>
@@ -145,43 +153,61 @@ export function StationFeed({
 
         <div className={styles.intel}>
           <p className={styles.opener}>{question.opener}</p>
-          {shown.has("clue") ? <p className={styles.line}>{question.clue}</p> : null}
+          {shown.has("clue") ? (
+            <p className={styles.line}>{question.clue}</p>
+          ) : null}
           {shown.has("street") && question.street ? (
-            <Ground shot={question.street} label="Ground probe" caption={STREET_CAPTION} />
+            <Ground
+              shot={question.street}
+              label="Street view"
+              caption={STREET_CAPTION}
+            />
           ) : null}
           {shown.has("landmark") && question.landmark ? (
             <p className={`${styles.line} ${styles.cyan}`}>
-              <span className="arcade">Landmark</span> {question.landmark.name}, pinned in frame.
+              <span className="arcade">Landmark:</span> {question.landmark.name}
+              . It is marked on the view.
             </p>
           ) : null}
           {shown.has("structure") && question.structure && question.landmark ? (
-            <Ground shot={question.structure} label="Structure" caption={question.landmark.name} />
+            <Ground
+              shot={question.structure}
+              label="Building"
+              caption={question.landmark.name}
+            />
           ) : null}
           {shown.has("territory") ? (
             <p className={styles.line}>
-              Territory: {question.country}. Designation begins with {question.name.charAt(0)}.
+              Country: {question.country}. The name starts with{" "}
+              {question.name.charAt(0)}.
             </p>
           ) : null}
         </div>
 
         {revealed ? (
           <div className={styles.reveal}>
-            <p className={`${styles.verdict} arcade ${outcome.correct ? styles.cyan : styles.red}`}>
+            <p
+              className={`${styles.verdict} arcade ${outcome.correct ? styles.cyan : styles.red}`}
+            >
               {outcome.correct
-                ? "Site identified"
+                ? "Correct"
                 : outcome.timedOut
-                  ? "Signal lost"
-                  : "Wrong coordinates"}
+                  ? "Too slow"
+                  : "Wrong"}
             </p>
             <p className={`${styles.answer} arcade`}>
               {question.name}, {question.country}
             </p>
             <p className={`${styles.gained} mono`}>
               {(outcome.points ?? 0) >= 0 ? "+" : ""}
-              {outcome.points ?? 0} &middot; {state.earthIntel} intel &middot;{" "}
-              {state.earthOptics.length} optics
+              {outcome.points ?? 0} points &middot; {state.earthIntel} hint
+              {state.earthIntel === 1 ? "" : "s"} &middot;{" "}
+              {state.earthOptics.length} zoom
+              {state.earthOptics.length === 1 ? "" : "s"}
             </p>
-            {question.fact ? <p className={styles.fact}>{question.fact}</p> : null}
+            {question.fact ? (
+              <p className={styles.fact}>{question.fact}</p>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -190,8 +216,13 @@ export function StationFeed({
           is the one control that cannot be scrolled away from. */}
       <div className={styles.controls}>
         {revealed ? (
-          <button type="button" className={`${styles.next} arcade`} onClick={onNext} data-testid="next-site">
-            {more ? "Next site" : "Call the fleet"}
+          <button
+            type="button"
+            className={`${styles.next} arcade`}
+            onClick={onNext}
+            data-testid="next-site"
+          >
+            {more ? "Next place" : "Finish the run"}
           </button>
         ) : (
           <>
@@ -203,7 +234,8 @@ export function StationFeed({
                 onClick={onBuyIntel}
                 data-testid="request-intel"
               >
-                Request intel &middot; costs {Math.round(SCORE.earthBase * SCORE.earthIntelCost)}
+                Get a hint &middot; -
+                {Math.round(SCORE.earthBase * SCORE.earthIntelCost)} points
               </button>
             ) : null}
 
@@ -244,22 +276,61 @@ export function StationFeed({
 }
 
 /** Fixed: per-site wording would risk naming the place. */
-const STREET_CAPTION = "An ordinary street. Read the signage, the traffic, the build.";
+const STREET_CAPTION =
+  "An ordinary street. Look at the signs, the cars and the buildings.";
 
-function Ground({ shot, label, caption }: { shot: EarthShot; label: string; caption: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return <p className={styles.muted}>{label} unavailable. The clue stands without it.</p>;
+function Ground({
+  shot,
+  label,
+  caption,
+}: {
+  shot: EarthShot;
+  label: string;
+  caption: string;
+}) {
+  /**
+   * Warmed at launch (see `preloadGround`), so on a bought hint the picture is
+   * already in hand and lands on the same frame as the caption. If it is not,
+   * or the warmed copy fails, the figure loads it itself: the direct address,
+   * then the slow road, which still finds a file that has moved on Commons.
+   */
+  const candidates = useMemo(() => {
+    const roads = [
+      groundUrl(shot),
+      directUrl(shot),
+      commonsUrl(shot.file, STATION.groundWidth),
+    ];
+    return roads.filter((url, index) => roads.indexOf(url) === index);
+  }, [shot]);
+  const [road, setRoad] = useState(0);
+  const src = candidates[road];
+  if (src === undefined) {
+    return (
+      <p className={styles.muted}>
+        {label} did not load. The clue still counts.
+      </p>
+    );
+  }
   return (
     <figure className={styles.ground}>
       <span className={`${styles.groundLabel} arcade`}>{label}</span>
-      <img
-        className={styles.groundImg}
-        src={commonsUrl(shot.file, 640)}
-        alt=""
-        decoding="async"
-        draggable={false}
-        onError={() => setFailed(true)}
-      />
+      {/* The same screen the optic is viewed on: scanlines, a sweep and a
+          vignette over the picture, in a rectangular housing rather than the
+          aperture's circle. */}
+      <div className={styles.groundScreen}>
+        <img
+          className={styles.groundImg}
+          src={src}
+          alt=""
+          decoding="async"
+          draggable={false}
+          onError={() => setRoad((current) => current + 1)}
+          data-testid="ground-photo"
+        />
+        <div className={styles.raster} aria-hidden="true" />
+        <div className={styles.sweep} aria-hidden="true" />
+        <div className={styles.groundVignette} aria-hidden="true" />
+      </div>
       <figcaption className={styles.groundCap}>
         {caption}
         <span className={styles.groundCredit}>
@@ -296,7 +367,6 @@ function Optic({
     return () => observer.disconnect();
   }, []);
 
-  const span = 2 ** zoom;
   const fx = lonToTile(question.lon, zoom);
   const fy = latToTile(question.lat, zoom);
   const ix = Math.floor(fx);
@@ -305,19 +375,13 @@ function Optic({
   const dy = (fy - iy) * TILE;
   const scale = size / WINDOW;
 
-  const tiles = [];
-  for (let ty = -1; ty <= 1; ty += 1) {
-    for (let tx = -1; tx <= 1; tx += 1) {
-      const x = wrapTile(ix + tx, span);
-      const y = clampTile(iy + ty, 0, span - 1);
-      tiles.push({
-        key: `${zoom}-${x}-${y}`,
-        src: tileUrl(zoom, x, y),
-        left: (tx + 1) * TILE,
-        top: (ty + 1) * TILE,
-      });
-    }
-  }
+  const tiles = tilesAround(question.lat, question.lon, zoom).map((tile) => ({
+    key: `${zoom}-${tile.x}-${tile.y}`,
+    // Warmed at launch (see `preloadFeed`), so a zoom step paints at once.
+    src: warmUrl(tile.url),
+    left: (tile.tx + 1) * TILE,
+    top: (tile.ty + 1) * TILE,
+  }));
 
   /**
    * Ready when every tile has settled, loaded or failed. `onLoad` alone is not
@@ -368,6 +432,7 @@ function Optic({
               key={tile.key}
               src={tile.src}
               alt=""
+              data-testid="feed-tile"
               width={TILE}
               height={TILE}
               style={{ left: tile.left, top: tile.top }}
@@ -385,7 +450,10 @@ function Optic({
         </div>
 
         {marker ? (
-          <div className={styles.pin} style={{ left: marker.left, top: marker.top }}>
+          <div
+            className={styles.pin}
+            style={{ left: marker.left, top: marker.top }}
+          >
             <span className={styles.pinRing} aria-hidden="true" />
             <span className={`${styles.pinLabel} arcade`}>{marker.name}</span>
           </div>

@@ -33,12 +33,15 @@ things that make those games sticky:
   interaction is a single tap. Nothing requires precision, reading a manual,
   or two hands.
 - **A score you can hold in your head.** Every encounter is worth the same
-  base, the streak multiplies it in whole steps, and most wrong answers score
-  nothing: points come off only where the player chose the stake, a boosted
-  lane or a wild shot at the scout. A run is quoted out of what a perfect run
-  would have scored, so "1,240 of 1,800" means the same to everyone
-  comparing. The first test player finished on zero under flat docks for
-  every miss; do not bring them back. Distance is a
+  base, so the four phases weight evenly: 400, 400, 400, and WHERE ON EARTH
+  the 600 finale, 1,800 in all. The streak lifts the ship's speed, not the
+  score (it used to multiply points, which quietly made the phases worth
+  200/400/600 by position), and most wrong answers score nothing: points come
+  off only where the player chose the stake, a boosted lane or a wild shot at
+  the scout. A run is quoted out of what a perfect run would have scored, so
+  "1,240 of 1,800" means the same to everyone comparing. The first test player
+  finished on zero under flat docks for every miss; do not bring them back.
+  Distance is a
   speedometer reading and makes a poor anchor: nobody knows whether 12,000 km
   is a good day. See `SCORE` in `Tuning.ts` and `lib/game/Score.ts`; the end
   of the run tallies it line by line before the share card. The rules are
@@ -60,9 +63,9 @@ things that make those games sticky:
   cluster opens on its question alone (`reading` phase): no lanes, a ten
   second read clock and a READY! button, so nobody is timed on reading. Its
   first pick then gets two seconds more for the six options. Each cluster
-  carries one shield of its own: the first wrong lane costs the shield and
-  keeps the plasma, the second loses the cluster for zero, and the run's
-  shields are never touched by a cluster. NOVA puts a second back on the
+  carries one shield of its own: the first wrong lane costs the shield and the
+  banked plasma but lets you keep answering, the second loses the cluster for
+  zero, and the run's shields are never touched by a cluster. NOVA puts a second back on the
   clock rather than spending thrust; a lifeline that costs time is not one.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
   to crawling. The Cluster is push-your-luck: every right lane winds the
@@ -99,10 +102,11 @@ works, but it is the fallback, not the target. Test on a real phone
 
 The screen has two zones. Respect them:
 
-- **Top band: the whole HUD.** Readouts (distance, velocity, streak, shield
-  pips), then the question panel: tag and countdown, prompt, thrust bar,
-  the row of answer squares, the tools (NOVA, and Boost or LOCK & FIRE; a
-  Cluster's own two controls are in the corners, below). The
+- **Top band: the whole HUD.** Readouts (score, velocity, streak, shield
+  pips; distance is tracked but not shown until the results), then the
+  question panel: tag and countdown, prompt, thrust bar, the row of answer
+  squares, the tools (HINT, and BOOST or FIRE; a Cluster's own two controls
+  are in the corners, below). The
   outcome toast lands here too. The band is sized by its contents and
   capped at roughly 60vh so it can never creep down over the ship. Padded
   by `env(safe-area-inset-top)` for notches and Dynamic Island.
@@ -172,6 +176,58 @@ Concrete constraints when building or changing a component:
 - Performance is a design constraint on mobile. See the budget below. A
   HUD re-render at 60fps costs more than the scene, which is why React
   samples engine state at about 12Hz.
+
+## Copy: plain English, always
+
+Every word a player reads is written for a 10 year old who has never seen
+the game. This is the rule that has been broken most often, and it is the
+one to check before any other when writing or changing copy.
+
+- **No made-up terms in explanations.** Thrust, Boost, Cluster, Plasma,
+  Vector, NOVA, encounter, sector, lane and dock are the code's words. On a
+  screen that explains the game (the title screen, the profile, the briefing,
+  a phase card, the read screen, a verdict) only Plasma, Shield and Boost
+  survive, and each is defined in plain words the first time it appears with
+  that definition still in view. "8 asteroids, one run a day. Answer fast to
+  keep your thrust, arm Boost when you are sure" is what not to write: a new
+  player does not know what thrust or Boost are.
+- **Define on first use, in the same sentence.** "If it is correct you
+  collect plasma, which speeds your ship up and is worth points." Say what
+  it is, what it does for the player and what it is worth, in that order,
+  in one breath.
+- **The vocabulary, on screen.** The four games are FIND THE 3, GUESS THE
+  NUMBER, PICK ONE and NAME THE PLACE (`lib/game/phaseTitles.ts`, read by
+  the cards, the HUD tag and the tally alike). The stage names (Cluster
+  Belt, Alien Contact, Open Sky, Where on Earth) are places, not
+  explanations, and stay. NOVA is HINT wherever a player reads it; the
+  identifiers (`nova`, `novaLeft`, `useNova`, the `NOVA` constants, the
+  `nova` test ids) keep their names. An answer is "correct" or "wrong",
+  never "right", because "right" is also a side of the lane row. Intel is a
+  hint, optics is zoom, a graze is a near miss, a wild shot is way off, an
+  encounter is a question, a sector is a topic.
+- **Every score figure says POINTS.** The run also counts speed and
+  distance, so a bare +100 could be either. The toast, the running score
+  pop, the tally and every scoring table row spell it out; the one
+  abbreviation allowed is PTS on a chip too small for the word (the zoom
+  cost, the FIRE dial).
+- **Kilometres are for the results.** During a run the only speed figure is
+  the velocity readout in the top band. The verdict toast, the waypoint card
+  and the FIRE dial quote points, never km or km/h. Distance comes back on
+  the tally, the share card and the profile, where it is a fun extra.
+- **Plain verdict first, flavour second.** The headline of a toast or a
+  pulse is CORRECT, WRONG, TOO SLOW, NEAR MISS, WAY OFF, SPOT ON or ALL 3
+  FOUND. The arcade line (+1 PLASMA · SPEED UP, SHIELD USED · 2 LEFT, the
+  MAXIMUM THRUST overlay) is the second line or the celebration, never the
+  thing that explains what happened.
+- **One fact per line.** A verdict lists the correct answer, the guess, the
+  bonus and the streak on separate lines. Chaining them with middle dots
+  reads as an equation to a first-time player.
+- **Prefer the everyday word.** Questions, not encounters. Topic, not sector.
+  Correct and wrong, not clear and struck. Runs played, not flights logged.
+  Not played yet, not NOT FLOWN. A phase name says what the player does in
+  it, in words they already own.
+- **The test.** Read the line aloud to someone who has not played. If they
+  ask what a word means, the word is wrong or the definition is missing.
 
 ## Design language
 
@@ -260,7 +316,8 @@ lib/game/Incoming.ts  the one pod or boulder that comes down a picked lane
 lib/game/Audio.ts     all sound, synthesised: engine bed, music loop, one-shot cues
 lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, Backdrop,
                       AsteroidField, Starfield, quality, nova, share (card + text),
-                      storage (localStorage), gltf (GLB loader + merge), format, types
+                      storage (localStorage), gltf (GLB loader + merge), format, types,
+                      feed (tile maths + photo addresses), prefetch (feed imagery), md5
 lib/content/round.ts  round loader with build-time validation
 content/rounds/       one JSON per daily round: 2 cluster + 2 vector + 2 mcq + 1 earth
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
@@ -305,6 +362,24 @@ Rules that fall out of this:
   and by the same rule the answer clock does not start until the imagery has
   settled or `STATION.feedGraceMs` has passed. Never gate the clock on a
   ground photograph, only on the tiles.
+- **The feed's imagery is fetched at launch, not on the tap.** A hint is
+  bought and a zoom step taken against a running clock, and a photograph
+  asked for on the tap took three seconds to arrive (Commons'
+  `Special:FilePath` answers with two uncacheable redirects before the
+  picture) while a zoom step waited on nine fresh tiles. `lib/game/prefetch.ts`
+  fetches both sites' photographs and their 3x3 mosaics at every step of the
+  zoom dial into blobs when the run launches (`preloadFeed`, from
+  `GameCanvas`), and the view mounts on the blob (`groundUrl`, `warmUrl`).
+  It can fetch them because both sources are one CORS-readable hop: the tile
+  server, and `thumbUrl` in `feed.ts`, which builds the thumbnail's own
+  address on upload.wikimedia.org the way a Wikipedia article embeds it;
+  that needs an MD5 of the filename (`lib/game/md5.ts`) and a width from
+  Wikimedia's fixed list (`STATION.groundWidth`, 640 is refused). The
+  figure falls back to the direct address and then the slow road on error,
+  so a file renamed on Commons still loads; a tile that was not warmed loads
+  from the network as before. The optic and the prefetch share
+  `tilesAround` and `opticZoom` so they cannot disagree about which tiles a
+  zoom needs. The e2e asserts the mounted photos and tiles are blobs.
 - **Storage is best effort.** localStorage can be missing or full; every
   read and write is wrapped and a failure must never break play.
 

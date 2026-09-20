@@ -7,6 +7,7 @@ import {
   ENCOUNTER,
   LANE,
   NOVA,
+  SCORE,
   SHIELDS,
   STATION,
   VECTOR,
@@ -886,8 +887,8 @@ export class Run {
       const full = cluster.charge >= question.answers.length;
       this.flash(
         "plasma",
-        full ? "GAUGE FULL" : "PLASMA COLLECTED",
-        full ? "FIRE THE BOOST" : `+1 · ${cluster.charge} IN THE REACTOR`,
+        full ? `ALL ${question.answers.length} FOUND` : "CORRECT",
+        full ? "TAP FIRE TO BANK IT" : "+1 PLASMA · SPEED UP",
       );
       this.hooks.onCollect(lane, cluster.charge);
       this.phase = "approach";
@@ -910,7 +911,7 @@ export class Run {
       return;
     }
 
-    this.flash("plasma", "BOOSTER COLLECTED", "LANE CLEAR");
+    this.flash("plasma", "CORRECT", "SPEED UP");
     this.hooks.onCollect(lane, 0);
     this.phase = "approach";
     this.lock(
@@ -935,10 +936,10 @@ export class Run {
   /**
    * A boulder in the lane.
    *
-   * On a cluster the cluster's own shield takes the first one: the plasma
-   * stays banked, the lane is struck out, and the clock comes back for the
-   * next pick. With no cluster shield left the reactor empties and the
-   * cluster is over, for zero points and none of the run's shields.
+   * On a cluster the cluster's own shield takes the first one: the lane is
+   * struck out and the clock comes back for the next pick, but the banked
+   * plasma is lost (see `absorbHit`). With no cluster shield left the cluster
+   * is over, for zero points and none of the run's shields.
    *
    * Everywhere else it costs one of the run's shields.
    */
@@ -961,7 +962,7 @@ export class Run {
       const lost = cluster.charge;
       cluster.picked.push(lane);
       cluster.charge = 0;
-      this.flash("shield", "CLUSTER LOST", lost > 0 ? `${lost} PLASMA GONE` : "NO SHIELD LEFT");
+      this.flash("shield", `WRONG · ${SCORE.penalty.cluster} POINTS`, lost > 0 ? `${lost} PLASMA LOST` : "NO SHIELD LEFT");
       this.phase = "approach";
       this.lock({
         kind: "collision",
@@ -989,11 +990,11 @@ export class Run {
       this.shieldLost = true;
       this.flash(
         "shield",
-        "SHIELD DOWN",
-        this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
+        "WRONG",
+        this.shields > 0 ? `SHIELD USED · ${this.shields} LEFT` : "NO SHIELDS LEFT",
       );
     } else {
-      this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
+      this.flash("shield", "WRONG", "NO SHIELDS LEFT");
     }
 
     if (question.type !== "mcq") {
@@ -1030,10 +1031,11 @@ export class Run {
   }
 
   /**
-   * Contact on a shielded lane. The boulder breaks on the shield, the plasma
-   * is untouched, and the clock comes back fresh for the next pick after the
-   * same beat a collect gets. Velocity and streak are left exactly as they
-   * were: the shield took all of it.
+   * Contact on a shielded lane. The boulder breaks on the shield, so the ship
+   * flies on and the question stays open, but the reactor is knocked out: the
+   * banked plasma is lost and the next pick starts from empty. The shield saves
+   * the player from skipping the rest of the question, not from the loss.
+   * Velocity and streak are left where they were: the shield took the hit.
    */
   private absorbHit(): void {
     const lane = this.absorbing;
@@ -1043,13 +1045,9 @@ export class Run {
       this.phase = "approach";
       return;
     }
-    this.flash(
-      "shield",
-      "SHIELD DOWN",
-      cluster.shields > 0
-        ? `PLASMA KEPT · ${cluster.shields} SHIELD${cluster.shields === 1 ? "" : "S"} LEFT`
-        : "PLASMA KEPT · NO SHIELD LEFT",
-    );
+    const lost = cluster.charge;
+    cluster.charge = 0;
+    this.flash("shield", "WRONG", lost > 0 ? "PLASMA LOST · KEEP GOING" : "SHIELD USED · KEEP GOING");
     this.hooks.onShieldHit(lane);
     this.phase = "approach";
     this.thrust = 1;
@@ -1127,20 +1125,20 @@ export class Run {
     // and the moment the screen says so.
     if (this.question?.type === "vector" && !outcome.correct && outcome.kind !== "graze") {
       const detail = outcome.timedOut
-        ? "NO SHOT TAKEN"
+        ? "NO GUESS MADE"
         : outcome.kind === "wreck"
           ? "NO SHIELDS LEFT"
-          : `SHIELD DOWN \u00b7 ${this.shields} LEFT`;
-      this.flash("damage", outcome.kind === "wreck" ? "HULL BREACH" : "HULL HIT", detail);
+          : `SHIELD USED \u00b7 ${this.shields} LEFT`;
+      this.flash("damage", outcome.timedOut ? "TOO SLOW" : "WAY OFF", detail);
     }
 
     // Salvage lands with the burst, so the HUD change and the FX line up.
     if (outcome.salvage === "shield") {
       this.shields = Math.min(this.shields + 1, SHIELDS.perRun);
-      this.flash("plasma", "SALVAGE", "SHIELD RESTORED");
+      this.flash("plasma", "BONUS", "SHIELD BACK");
     } else if (outcome.salvage === "nova") {
       this.novaLeft += 1;
-      this.flash("plasma", "SALVAGE", "+1 NOVA");
+      this.flash("plasma", "BONUS", "+1 HINT");
     }
 
     this.record(outcome);

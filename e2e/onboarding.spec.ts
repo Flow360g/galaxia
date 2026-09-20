@@ -60,14 +60,14 @@ test("a first flight is briefed on the rules before the round starts", async ({
   // The scoring system is the half of this a player cannot work out by
   // playing, and every figure in it is read from Tuning. One page per phase,
   // each with its table, in plain words.
-  expect(everything).toMatch(/3 PLASMA\s+100/);
+  expect(everything).toMatch(/ALL 3 FOUND\s+200 POINTS/);
   expect(everything).toMatch(/WITHIN 5%/);
-  expect(everything).toMatch(/WITHIN 15%\s+0 · NO DAMAGE/);
-  expect(everything).toMatch(/RIGHT WITH BOOST\s+100/);
-  expect(everything).toMatch(/2 right in a row doubles your points/i);
-  expect(everything).toMatch(/GENERAL KNOWLEDGE/);
-  expect(everything).toMatch(/WHERE ON EARTH/);
-  expect(everything).toMatch(/SHIELDS\s+x3/i);
+  expect(everything).toMatch(/WITHIN 15%\s+0 POINTS · NO HARM/);
+  expect(everything).toMatch(/CORRECT \+ BOOST\s+200 POINTS/);
+  expect(everything).toMatch(/a streak of correct answers keeps your ship fast/i);
+  expect(everything).toMatch(/PICK ONE/);
+  expect(everything).toMatch(/NAME THE PLACE/);
+  expect(everything).toMatch(/SHIELDS\s+3 FOR THE RUN/i);
   // No flight-model figures: distance is a speedometer, not the score.
   expect(everything).not.toMatch(/km\/h/i);
   await shot(page, "b02-briefing-last");
@@ -85,7 +85,7 @@ test("a first flight is briefed on the rules before the round starts", async ({
   await expect(page.getByTestId("scoring")).toHaveCount(0);
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByTestId("scoring")).toContainText("1 PLASMA");
+  await expect(page.getByTestId("scoring")).toContainText("1 FOUND");
   // Opening the table did not launch the run.
   await expect(page.getByTestId("ready")).toBeVisible();
   await shot(page, "b02c-ready-scoring");

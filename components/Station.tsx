@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
+import { PHASE_TITLE } from "@/lib/game/phaseTitles";
 import { Orbit } from "@/lib/game/Orbit";
 import { StationFeed } from "./StationFeed";
 import type { EarthQuestion, GameState } from "@/lib/game/types";
@@ -81,10 +82,10 @@ export function Station({
         <div className={styles.band} style={{ bottom: keyboard }}>
           <section className={styles.panel}>
             <div className={styles.head}>
-              <span className={`${styles.tag} arcade`}>WHERE ON EARTH</span>
+              <span className={`${styles.tag} arcade`}>{PHASE_TITLE.earth}</span>
               <span className={`${styles.phase} arcade`}>PHASE {phase}</span>
             </div>
-            <h2 className={`${styles.title} arcade`}>SATELLITE FEED</h2>
+            <h2 className={`${styles.title} arcade`}>SATELLITE VIEW</h2>
 
             {/* Keyed on the site, so a new one starts with a clear box and dial. */}
             <StationFeed

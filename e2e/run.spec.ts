@@ -35,7 +35,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // Every run opens on the launch card: what Phase 1 is, and one button.
   const ready = page.getByTestId("ready");
   await expect(ready).toBeVisible({ timeout: 20_000 });
-  await expect(ready).toContainText("CLUSTER");
+  await expect(ready).toContainText("FIND THE 3");
   // Nothing is flying behind it.
   await expect(question).toHaveCount(0);
   await shot(page, "00-ready");
@@ -79,9 +79,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
   await expect(toast).toHaveAttribute("data-charge", "2");
   await shot(page, "03-burn");
-  // The verdict names the points, not just the velocity: 3 plasma at x1.
-  await expect(page.getByTestId("toast-points")).toHaveText(/\+60/);
-  await expect(page.getByTestId("score")).toContainText("60");
+  // The verdict names the points: 2 of 3 found is 0.6 of a 200 base, 120.
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+120/);
+  await expect(page.getByTestId("score")).toContainText("120");
   const velocityAfterBurn = await readVelocity(page);
   expect(velocityAfterBurn).toBeGreaterThan(4000);
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
@@ -89,25 +89,30 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await advance(page, "banner");
 
   // Encounter 2: cluster. One correct, then a wrong lane. The cluster's own
-  // shield takes the boulder: the plasma stays banked, the lane is struck out
-  // and the question is still open. A second wrong lane loses the cluster,
-  // for zero points and none of the run's three shields.
+  // shield takes the boulder, so the question stays open, but the banked plasma
+  // is knocked out: the reactor drops back to empty. The player banks again and
+  // a second wrong lane, with no shield left, ends the cluster for zero points
+  // and none of the run's three shields.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await readUp(page);
-  const [right] = answersOf(1);
-  await page.getByTestId(`option-${right}`).click();
+  const [firstRight, secondRight] = answersOf(1);
+  await page.getByTestId(`option-${firstRight}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
   const [wrongA, wrongB] = wrongLanesOf(1);
   await page.getByTestId(`option-${wrongA}`).click();
-  // The boulder's run-in and its final strike play out first.
+  // The boulder's run-in and its final strike play out first. The shield saves
+  // the question, but the plasma is gone: the reactor is back to empty.
   await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "shield", {
     timeout: 10_000,
   });
-  await expect(page.getByTestId("pulse")).toContainText("PLASMA KEPT");
+  await expect(page.getByTestId("pulse")).toContainText("PLASMA LOST");
   await expect(page.getByTestId(`option-${wrongA}`)).toHaveAttribute("data-struck", "true");
-  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1");
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "0");
   await expect(toast).toHaveCount(0);
   await shot(page, "04a-cluster-shield");
+  // Play continues: bank one more, then a second wrong ends the cluster.
+  await page.getByTestId(`option-${secondRight}`).click();
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
   await page.getByTestId(`option-${wrongB}`).click();
   await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
   await expect(toast).toContainText("1 plasma lost");
@@ -116,7 +121,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   expect(await readVelocity(page)).toBeLessThan(velocityAfterBurn);
   // A lost cluster costs velocity and the streak, never points.
-  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0$/);
+  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0 POINTS$/);
   await advance(page);
 
   // Waypoint: Stage 1 rated (3 plasma of 6: B), then ALIEN CONTACT.
@@ -142,13 +147,13 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // Encounter 3: vector. Aim dead on. DIRECT HIT. Every shield is still up,
   // so the salvage is a NOVA rather than a shield.
   await expect(question).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("VECTOR")).toBeVisible();
+  await expect(page.getByText("GUESS THE NUMBER").first()).toBeVisible();
   await page.getByTestId("aim").fill(String(sliderOf(2)));
   await expect(page.getByTestId("aim-value")).toContainText("10,9", { timeout: 5_000 });
   await shot(page, "07-vector-aim");
   await page.getByTestId("lock").click();
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
-  await expect(page.getByTestId("salvage")).toContainText("+1 NOVA");
+  await expect(page.getByTestId("salvage")).toContainText("+1 HINT");
   await shot(page, "08-direct-hit");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   await advance(page);
@@ -162,7 +167,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "damage");
   await shot(page, "09-damage");
   await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
-  await expect(toast).toContainText("MISS");
+  await expect(toast).toContainText("WAY OFF");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
   await shot(page, "09-miss");
   await advance(page);
@@ -172,7 +177,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("rating")).toBeVisible({ timeout: 5_000 });
   await expect(waypoint).toContainText("PHASE 3", { timeout: 6_000 });
   await expect(waypoint).toContainText("OPEN SKY");
-  await expect(waypoint).toContainText("GENERAL KNOWLEDGE");
+  await expect(waypoint).toContainText("PICK ONE");
   await shot(page, "09b-waypoint-open-sky");
   await advance(page);
 
@@ -184,8 +189,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("nova-result")).toBeVisible();
   // A lifeline, not a trade: the hint arrives with a second put back on the
   // clock rather than thrust taken off it.
-  await expect(page.getByTestId("nova-result")).toContainText("HINT FROM NOVA");
-  await expect(page.getByTestId("nova-result")).toContainText("+1S");
+  await expect(page.getByTestId("nova-result")).toContainText("HINT:");
+  await expect(page.getByTestId("nova-result")).toContainText("+1 SEC");
   expect(Number((await page.getByTestId("clock").innerText()).replace(/\D/g, ""))).toBeGreaterThanOrEqual(
     clockBefore,
   );
@@ -196,7 +201,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     timeout: 5_000,
   });
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
-  await expect(page.getByTestId("toast-points")).toHaveText(/\+100/);
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+200/);
   await shot(page, "10-slingshot");
   await advance(page);
 
@@ -210,7 +215,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(waypoint).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("rating")).toBeVisible({ timeout: 5_000 });
   await expect(waypoint).toContainText("PHASE 4", { timeout: 6_000 });
-  await expect(waypoint).toContainText("WHERE ON EARTH");
+  await expect(waypoint).toContainText("NAME THE PLACE");
   await expect(page.getByTestId("waypoint-standby")).toBeVisible();
   await shot(page, "12-waypoint-earth");
   await advance(page, "banner");
@@ -218,7 +223,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // Encounter 7: WHERE ON EARTH. No lanes, no clock, no tools: the station
   // comes alongside and arms the door. The score does not move for docking.
   await expect(question).toBeVisible({ timeout: 15_000 });
-  await expect(question.getByText("WHERE ON EARTH")).toBeVisible();
+  await expect(question.getByText("NAME THE PLACE")).toBeVisible();
   await expect(page.getByTestId("clock")).toHaveCount(0);
   await expect(page.getByTestId("thrust")).toHaveCount(0);
   await expect(page.getByTestId("option-0")).toHaveCount(0);
@@ -238,7 +243,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // answered rather than back at the approach.
   const station = page.getByTestId("station");
   await expect(station).toBeVisible();
-  await expect(station).toContainText(/satellite feed/i);
+  await expect(station).toContainText(/satellite view/i);
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
 
@@ -247,6 +252,12 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     // until the feed is up. The grace timeout guarantees it opens regardless.
     const box = page.getByTestId("site-answer");
     await expect(box).toBeEnabled({ timeout: 20_000 });
+
+    // The mosaic was fetched at launch too, so the optic mounts on blobs and a
+    // zoom step never waits on the tile server. Nine tiles, all warm.
+    const tiles = page.getByTestId("feed-tile");
+    await expect(tiles).toHaveCount(9);
+    await expect(tiles.first(), "the tiles were not preloaded").toHaveAttribute("src", /^blob:/);
 
     // Buy every rung on the first site, which is what broke in play: the two
     // photographs grew the panel until the input sat under the fold of a fixed,
@@ -268,6 +279,23 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
         await intel.click({ force: true });
       }
       await expect(intel).toHaveCount(0);
+
+      // Both photographs were fetched at launch, six questions ago, so a bought
+      // hint shows its picture at once: the figure mounts on the blob that was
+      // fetched then, not on a Wikimedia address, and is already painted. The
+      // timeout is tight on purpose; a picture that takes seconds here is the
+      // slow tap this exists to prevent.
+      const photos = page.getByTestId("ground-photo");
+      await expect(photos).toHaveCount(2);
+      for (const photo of await photos.all()) {
+        await expect(photo, "the photograph was not preloaded").toHaveAttribute("src", /^blob:/);
+        await expect
+          .poll(() => photo.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth), {
+            message: "the preloaded photograph was not painted at once",
+            timeout: 2_000,
+          })
+          .toBeGreaterThan(0);
+      }
 
       // Playwright's own clicks scroll an `overflow: hidden` ancestor to bring
       // their target into view, and a thumb cannot: that is why this bug reached
@@ -322,7 +350,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     if (index === 0) {
       await expect(page.getByTestId("next-site")).toBeVisible({ timeout: 60_000 });
     } else {
-      await expect(station).toContainText(/site identified/i);
+      await expect(station).toContainText(/correct/i);
     }
     if (index === 0) await shot(page, "15-station-site");
     await page.getByTestId("next-site").click();
@@ -332,14 +360,14 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // run. It is the beat before the share card, and it waits for a tap.
   const tally = page.getByTestId("tally");
   await expect(tally).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByTestId("tally-line-0")).toContainText("2 PLASMA BANKED");
-  await expect(page.getByTestId("tally-line-6")).toContainText("WHERE ON EARTH");
-  await expect(page.getByTestId("tally-line-7")).toContainText("WHERE ON EARTH");
+  await expect(page.getByTestId("tally-line-0")).toContainText("2 OF 3 FOUND");
+  await expect(page.getByTestId("tally-line-6")).toContainText("NAME THE PLACE");
+  await expect(page.getByTestId("tally-line-7")).toContainText("NAME THE PLACE");
   // The lines land one at a time and the total lands after them. Text is in
   // the DOM the whole time, so the reveal is asserted on the class that
   // actually makes a line visible rather than on its content.
   await expect(page.getByTestId("tally-line-7")).toHaveClass(/lineIn/, { timeout: 10_000 });
-  // 8 encounters at 100 each under the streak ladder: 1,800 for a perfect run.
+  // Phases weighted 400/400/400/600 with no points multiplier: 1,800 perfect.
   await expect(page.getByTestId("tally-total")).toContainText("/ 1,800");
   await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE");
   // The total stamps in a beat after the last line.
@@ -379,7 +407,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await page.goto("/play?round=2026-09-18");
   await expect(page.getByTestId("share-card")).toBeVisible({ timeout: 15_000 });
   await page.goto("/?round=2026-09-18");
+  await page.getByTestId("view-profile").click();
   await expect(page.getByTestId("today-run")).toContainText("KM");
+  await expect(page.getByTestId("runs-played")).toHaveText("1");
 
   // And the flight log counted it, which is what earns a hull in the bay.
   expect(await page.evaluate(() => localStorage.getItem("galaxia:flown"))).toBe("1");
@@ -413,14 +443,14 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
   await page.getByTestId("burn").click();
   await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
   await expect(toast).toHaveAttribute("data-charge", "3");
-  await expect(toast).toContainText("MAXIMUM THRUST");
+  await expect(toast).toContainText("ALL 3 FOUND!");
   // The full-screen treatment only a full reactor gets: hazard placard, speed
   // lines, and the shell shaking under both.
   await expect(page.getByTestId("max-thrust")).toBeVisible();
   await expect(page.getByTestId("warp")).toBeAttached();
-  // Full charge at x1: the whole 100 for the encounter.
-  await expect(page.getByTestId("toast-points")).toHaveText(/\+100/);
-  await expect(page.getByTestId("score")).toContainText("100");
+  // Full charge: all 3 found is the whole 200 base for the encounter.
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+200/);
+  await expect(page.getByTestId("score")).toContainText("200");
   await shot(page, "09-max-thrust");
   expect(await readVelocity(page)).toBeGreaterThan(6000);
   await expect(page.getByTestId("streak")).toHaveText("STREAK x1");
@@ -449,8 +479,8 @@ test("a vector graze: no points, no damage, and the streak holds", async ({ page
   await page.getByTestId("aim").fill(String(sliderOf(2, 1.12)));
   await page.getByTestId("lock").click();
   await expect(toast).toHaveAttribute("data-outcome", "graze", { timeout: 10_000 });
-  await expect(toast).toContainText("GRAZED");
-  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0$/);
+  await expect(toast).toContainText("NEAR MISS");
+  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0 POINTS$/);
   await expect(page.getByTestId("wide-by")).toContainText(/1[12](\.\d)?% off/);
   await shot(page, "17-graze");
   // Nothing taken: every shield still up, no damage banner, streak as it was.

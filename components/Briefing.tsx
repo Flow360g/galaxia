@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  kitRows,
+  hintRows,
   phaseGuide,
   stageMaxima,
   streakLine,
-  streakRows,
   type ScoringRow,
 } from "@/lib/game/phases";
 import { maxScoreFor } from "@/lib/game/Score";
-import { CLUSTER, NOVA, SHIELDS } from "@/lib/game/Tuning";
+import { PHASE_TITLE } from "@/lib/game/phaseTitles";
+import { NOVA } from "@/lib/game/Tuning";
 import type { Round } from "@/lib/game/types";
 import { formatScore } from "@/lib/game/format";
 import { ScoringTable } from "./ScoringTable";
@@ -37,7 +37,7 @@ interface Card {
 
 /**
  * Pre-flight briefing. What the run is, one page per phase with its scoring
- * at the bottom, and the kit.
+ * at the bottom, and the hints.
  *
  * Shown once, on a first flight, and reachable again from the title screen
  * afterwards. It is a full-screen card rather than something in the HUD band
@@ -170,18 +170,18 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
 
 /**
  * The briefing, built against the round in front of the player: a welcome
- * page, one page per phase the round actually holds, and the kit.
+ * page, one page per phase the round actually holds, and the hints.
  */
 function buildCards(round: Round): Card[] {
   const stages = stageMaxima(round);
   const total = maxScoreFor(round);
-  const encounters = round.questions.length;
+  const questions = round.questions.length;
 
   const welcome: Card = {
     tag: "Welcome aboard",
-    title: `One run a day. ${formatScore(total)} points on the table.`,
+    title: `One run a day. ${formatScore(total)} points to play for.`,
     lines: [
-      `${encounters} questions in ${stages.length} phases, the same round for everyone today. Every right answer scores. Most wrong answers score nothing: only a boosted lane or a wild shot at the scout costs points.`,
+      `${questions} questions, the same for everyone today. Correct answers score points. Most wrong answers cost nothing.`,
       streakLine(),
     ],
     phases: stages.map((stage) => ({
@@ -202,16 +202,15 @@ function buildCards(round: Round): Card[] {
     };
   });
 
-  const kit: Card = {
-    tag: "Your kit",
-    title: "Shields, NOVA, and the clock",
+  const hints: Card = {
+    tag: "Hints",
+    title: "Stuck? Use a hint.",
     lines: [
-      `${SHIELDS.perRun} shields for the whole run, and every cluster brings ${CLUSTER.shields} of its own. A wrong answer costs a shield. With none left, a hit lands twice as hard.`,
-      `${NOVA.perRun} NOVA scans. One tap rules out a wrong answer or hands you a clue, and puts ${NOVA.bonusSeconds} second back on the clock. Everyone gets the same help on the same question.`,
-      "The clock is short and it refills for every answer. A cluster shows you its question first: tap READY when you have read it. Nothing else in the run moves until you tap.",
+      `You get ${NOVA.perRun} hints for the whole run, and they are free. Tap HINT and it removes a wrong answer or gives you a clue, and puts ${NOVA.bonusSeconds} extra second${NOVA.bonusSeconds === 1 ? "" : "s"} on the clock. Everyone gets the same hint on the same question.`,
+      `${PHASE_TITLE.earth} is different. You can take as many hints as you like, and zoom out too, but each one costs a few points. If you are stuck, take them: a correct answer with hints still beats a wrong one.`,
     ],
-    scoring: [...streakRows(), ...kitRows()],
+    scoring: hintRows(),
   };
 
-  return [welcome, ...phases, kit];
+  return [welcome, ...phases, hints];
 }
