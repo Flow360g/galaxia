@@ -4,7 +4,6 @@ import { BestRun } from "@/components/BestRun";
 import { TitleMenu } from "@/components/TitleMenu";
 import { getRound } from "@/lib/content/round";
 import { formatRoundNumber } from "@/lib/game/format";
-import logo from "../public/astro-run-logo.png";
 import styles from "./page.module.css";
 
 /**
@@ -39,7 +38,9 @@ export default async function Home({
       <div className={styles.body}>
         <h1 className={styles.title}>
           <Image
-            src={logo}
+            src="/astro-run-logo.png"
+            width={1400}
+            height={473}
             alt="Astro Run"
             className={styles.logo}
             priority
