@@ -64,7 +64,7 @@ export async function stubImagery(page: Page) {
 }
 
 /**
- * A cluster opens on its question alone. Tap READY! to bring the lanes up;
+ * A cluster opens on its question alone. Tap READY to bring the lanes up;
  * the pick clock does not start until then.
  */
 export async function readUp(page: Page) {

@@ -1,15 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BestRun } from "@/components/BestRun";
 import { TitleMenu } from "@/components/TitleMenu";
 import { getRound } from "@/lib/content/round";
 import { formatRoundNumber } from "@/lib/game/format";
 import styles from "./page.module.css";
 
 /**
- * Title screen. An arcade attract mode: one big mark, one blinking prompt,
- * the day's stats along the bottom rail. The fastest path from a shared link
- * to flying is still one tap.
+ * Title screen. An arcade attract mode: one big mark, one plain welcome, one
+ * yellow prompt. The day's stats and the player's record live on the profile
+ * page, not here: they cluttered the screen a new player lands on, and the
+ * fastest path from a shared link to flying has to stay one tap.
  */
 export default async function Home({
   searchParams,
@@ -21,8 +21,10 @@ export default async function Home({
   // /play, and Press Start carries it through.
   const params = await searchParams;
   const round = getRound(params.round);
-  const encounters = round.questions.length;
-  const playHref = params.round ? `/play?round=${encodeURIComponent(params.round)}` : "/play";
+  const questions = round.questions.length;
+  const phases = (round.stages ?? []).length;
+  const query = params.round ? `?round=${encodeURIComponent(params.round)}` : "";
+  const playHref = `/play${query}`;
 
   return (
     <main className={styles.main}>
@@ -49,33 +51,18 @@ export default async function Home({
         </h1>
 
         <p className={styles.lede}>
-          {encounters} asteroids, one run a day. Answer fast to keep your
-          thrust, arm Boost when you are sure, and run your score as high as it
-          will go. Every wrong answer costs points and speed.
+          Welcome to Astro Run, a daily trivia game on a mission to save Earth.
+          One run a day: {phases} phases, {questions} questions. Score the most
+          points by answering correctly, quickly and with confidence.
         </p>
 
         <Link href={playHref} className={`${styles.start} arcade`}>
           Press Start
         </Link>
 
-        <TitleMenu round={round} />
+        <TitleMenu round={round} query={query} />
       </div>
 
-      <footer className={styles.footer}>
-        <div className={styles.meta}>
-          <span className="label">Sector</span>
-          <span className={`${styles.metaValue} arcade`}>{round.theme}</span>
-        </div>
-        <div className={styles.meta}>
-          <span className="label">Encounters</span>
-          <span className={`${styles.metaValue} arcade`}>{encounters}</span>
-        </div>
-        <div className={styles.meta}>
-          <span className="label">Run time</span>
-          <span className={`${styles.metaValue} arcade`}>2-3 MIN</span>
-        </div>
-        <BestRun date={round.date} className={styles.meta ?? ""} />
-      </footer>
     </main>
   );
 }

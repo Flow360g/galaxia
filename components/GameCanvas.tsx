@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Engine } from "@/lib/game/Engine";
 import { isMaxThrust } from "@/lib/game/Flight";
+import { preloadFeed } from "@/lib/game/prefetch";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
 import {
   clearRun,
@@ -148,6 +149,17 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   const readying =
     !briefing && !transmission && !launched && stored === null && summary === null;
   const playing = stored === null && summary === null && !briefing && launched;
+
+  /**
+   * WHERE ON EARTH is six questions away when the run launches, and its
+   * photographs and tiles take seconds to arrive. Fetch them now, while the
+   * player is flying, so a bought hint or a zoom step paints at once. Only for
+   * a run being flown: a returning player looking at the share card does not
+   * download a megabyte of imagery.
+   */
+  useEffect(() => {
+    if (playing) preloadFeed(round);
+  }, [playing, round]);
 
   const closeBriefing = useCallback(() => {
     saveBriefed(true);

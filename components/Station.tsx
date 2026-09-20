@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
+import { PHASE_TITLE } from "@/lib/game/phaseTitles";
 import { Orbit } from "@/lib/game/Orbit";
 import { earthLadder } from "@/lib/game/feed";
 import { StationFeed } from "./StationFeed";
@@ -87,12 +88,12 @@ export function Station({
         <div className={styles.band} style={{ bottom: keyboard }}>
           <section className={styles.panel}>
             <div className={styles.head}>
-              <span className={`${styles.tag} arcade`}>WHERE ON EARTH</span>
+              <span className={`${styles.tag} arcade`}>{PHASE_TITLE.earth}</span>
               <span className={`${styles.phase} arcade`}>PHASE {phase}</span>
             </div>
-            {/* The task first, then the one thing a first-timer missed in play:
-                that there are hints at all, and how many. */}
-            <h2 className={`${styles.title} arcade`}>NAME THE PLACE</h2>
+            <h2 className={`${styles.title} arcade`}>SATELLITE VIEW</h2>
+            {/* The one thing a first-timer missed in play: that there are
+                hints at all, and how many. The task itself is the tag above. */}
             {!revealed ? (
               <span className={`${styles.hints} arcade`} data-testid="station-hints">
                 YOU HAVE {countWord(hints)} {hints === 1 ? "HINT" : "HINTS"} TO USE
@@ -100,8 +101,8 @@ export function Station({
             ) : null}
             {tipShown ? (
               <p className={styles.tip}>
-                Stuck? GET INTEL buys a hint. ZOOM changes the view. Both cost points, so
-                guess first if you can.
+                Stuck? GET A HINT gives you a clue. ZOOM changes the view. Both cost
+                points, so guess first if you can.
               </p>
             ) : null}
 

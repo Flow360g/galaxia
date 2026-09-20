@@ -7,14 +7,16 @@ import { Briefing } from "./Briefing";
 import styles from "./TitleMenu.module.css";
 
 /**
- * The two things on the title screen that are not Press Start: the ship bay,
- * and the briefing again.
+ * The three things on the title screen that are not Press Start: the ship
+ * bay, the profile (the player's record and today's round), and the briefing
+ * again.
  *
  * A client component only because the briefing is an overlay with state. The
- * bay is a plain link, so a shared link still lands one tap from flying and
- * nothing here gets in front of that.
+ * bay and the profile are plain links, so a shared link still lands one tap
+ * from flying and nothing here gets in front of that. `?round=` carries
+ * through to the profile so it shows the same round the title does.
  */
-export function TitleMenu({ round }: { round: Round }) {
+export function TitleMenu({ round, query = "" }: { round: Round; query?: string }) {
   const [briefing, setBriefing] = useState(false);
 
   return (
@@ -22,6 +24,9 @@ export function TitleMenu({ round }: { round: Round }) {
       <nav className={styles.nav}>
         <Link href="/hangar" className={`${styles.item} arcade`} data-testid="view-ship">
           View ship
+        </Link>
+        <Link href={`/profile${query}`} className={`${styles.item} arcade`} data-testid="view-profile">
+          Profile
         </Link>
         <button
           type="button"

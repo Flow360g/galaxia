@@ -148,7 +148,7 @@ export function shareText(summary: RunSummary): string {
   ];
   if (scored) stats.unshift(`${formatDistance(summary.distance)} km`);
   if (summary.fullBurns > 0) {
-    stats.push(`Full burn${summary.fullBurns > 1 ? "s" : ""} ${summary.fullBurns}`);
+    stats.push(`All 3 found x${summary.fullBurns}`);
   }
   if (summary.ratings?.length) {
     stats.push(`Stage ${summary.ratings.join(" · ")}`);
@@ -325,7 +325,7 @@ function drawHeader(ctx: Ctx, summary: RunSummary, arcade: string): void {
 
   const theme = summary.theme.trim();
   if (theme) {
-    text(ctx, "SECTOR", PAD, THEME_Y, arcadeFont(11, arcade), LABEL);
+    text(ctx, "TOPIC", PAD, THEME_Y, arcadeFont(11, arcade), LABEL);
     text(ctx, theme.toUpperCase(), PAD + 120, THEME_Y, arcadeFont(11, arcade), WHITE);
   }
 }
@@ -824,7 +824,7 @@ function drawStats(ctx: Ctx, summary: RunSummary, arcade: string): void {
     ["BEST STREAK", `${Math.max(0, Math.floor(safe(summary.bestStreak)))}`],
     ["CORRECT", `${Math.max(0, Math.floor(safe(summary.correct)))}/${Math.max(0, Math.floor(safe(summary.total)))}`],
     ["BOOSTS", `${Math.max(0, Math.floor(safe(summary.boostHits)))}/${Math.max(0, Math.floor(safe(summary.boosts)))}`],
-    ["COLLISIONS", `${Math.max(0, Math.floor(safe(summary.collisions)))}`],
+    ["WRONG", `${Math.max(0, Math.floor(safe(summary.collisions)))}`],
   ];
   const span = (W - PAD * 2) / cells.length;
   cells.forEach(([label, value], i) => {
@@ -846,16 +846,7 @@ function drawEarthLine(ctx: Ctx, summary: RunSummary, arcade: string): void {
     text(ctx, "WHERE ON EARTH: NOT REACHED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), LABEL);
     return;
   }
-  text(ctx, "WHERE ON EARTH: DOCKED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), VIOLET);
-  text(
-    ctx,
-    "FEED STANDING BY",
-    W - PAD,
-    EARTH_TEXT_Y,
-    arcadeFont(EARTH_FONT - 3, arcade),
-    LABEL,
-    "right",
-  );
+  text(ctx, "WHERE ON EARTH: ARRIVED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), VIOLET);
 }
 
 // -------------------------------------------------------------------- rail

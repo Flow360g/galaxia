@@ -5,13 +5,13 @@
   display: flex;
   gap: 10px;
   width: 100%;
-  max-width: 340px;
+  max-width: 420px;
 }
 
 .item {
   flex: 1;
   min-height: 46px;
-  padding: 14px 10px;
+  padding: 14px 6px;
   font-size: 10px;
   text-align: center;
   text-decoration: none;

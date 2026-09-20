@@ -69,7 +69,9 @@
 /* The last encounter's points, on the score they just landed in. Pops once
    per verdict and sits there until the toast is tapped away. */
 .scoreDelta {
-  font-size: 12px;
+  display: block;
+  font-size: 11px;
+  white-space: nowrap;
   color: var(--arcade-yellow);
   text-shadow: 0 0 10px rgba(255, 224, 61, 0.6);
   animation: scorePop 360ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
@@ -90,17 +92,6 @@
     opacity: 1;
     transform: scale(1);
   }
-}
-
-/* Distance is the speedometer, still tracked, no longer a headline: the
-   smallest figure in the band, in the label grey. */
-.distance {
-  font-size: 10px;
-  line-height: 1;
-  color: var(--panel-label);
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
 }
 
 /* The whole screen, invisible, and only while the run is parked on a verdict.
@@ -157,8 +148,16 @@
 .toastPoints {
   font-size: 26px;
   line-height: 1;
+  white-space: nowrap;
   color: var(--arcade-yellow);
   text-shadow: 0 0 14px rgba(255, 224, 61, 0.5);
+}
+
+/* The word, small, so "+100 POINTS" reads as a figure with its unit and
+   leaves the verdict its half of the head. */
+.toastPointsUnit {
+  font-size: 10px;
+  margin-left: 6px;
 }
 
 .toastPointsDown {
@@ -815,6 +814,7 @@
 
 .toastKind {
   font-size: 15px;
+  white-space: nowrap;
   color: #ffffff;
 }
 
@@ -832,21 +832,22 @@
   color: #ff6b5c;
 }
 
-/* Streak and speedometer, one rung under the points. */
+/* The streak, one rung under the answer lines. */
 .toastMeta {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
   font-size: 9px;
 }
 
-.toastDelta {
-  color: var(--panel-label);
-}
-
+/* One fact per line: the answer, the guess, what was lost. */
 .toastAnswer {
+  display: block;
   font-size: 13px;
   color: #ffffff;
+}
+
+/* A shield back or a hint back: its own line, in the plasma colour. */
+.toastBonus {
+  font-size: 9px;
+  color: var(--arcade-cyan);
 }
 
 .toastStreak {
@@ -1689,11 +1690,7 @@
   }
 
   .scoreDelta {
-    font-size: 11px;
-  }
-
-  .distance {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .velocity {

@@ -1,3 +1,4 @@
+import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
 import { SCORE } from "./Tuning";
 import type { Outcome, Question, Round, ScoreLine } from "./types";
 
@@ -7,13 +8,14 @@ import type { Outcome, Question, Round, ScoreLine } from "./types";
  * Pure, like `Flight`, and deliberately separate from it. Distance is a
  * speedometer integrated over the run and makes a poor anchor, because
  * nobody knows whether 12,000 km is a good day. The score is countable: eight
- * encounters, the same base each, a streak multiplier in whole steps, and a
- * flat dock only where the player took a risk on. "1,240 out of 1,800" reads
- * the same to everyone, which is what makes a run comparable in a group chat.
+ * encounters at a fixed base, no points multiplier, and a flat dock only where
+ * the player took a risk on. The four phases weight evenly (400, 400, 400,
+ * with WHERE ON EARTH the 600 finale), so "1,240 out of 1,800" reads the same
+ * to everyone, which is what makes a run comparable in a group chat.
  *
- * The maximum is the perfect run: every encounter at full marks, so the
- * streak going into encounter `i` is exactly `i`. That gives every line of
- * the end-of-run tally an honest "of a possible" figure to sit against.
+ * The maximum is the perfect run: every encounter at full marks. The streak
+ * multiplier is flat, so that is simply every base summed, and every line of
+ * the end-of-run tally has an honest "of a possible" figure to sit against.
  */
 
 /** Multiplier for the streak carried INTO an encounter. The top step holds. */
@@ -24,10 +26,10 @@ export function multiplierFor(streak: number): number {
 }
 
 /**
- * What an encounter is worth before the multiplier. WHERE ON EARTH has a
- * base of its own in `SCORE` so it can be weighted apart from the flight; it
- * is the same figure today, after a spell at double that made the finale
- * half the run.
+ * What an encounter is worth at full marks. WHERE ON EARTH has a base of its
+ * own in `SCORE` so the finale can be weighted apart from the flight; it is
+ * heavier than the rest (300 a site against 200), which is what makes its
+ * phase the 600 to every other phase's 400.
  */
 export function baseFor(question: Question): number {
   return question.type === "earth" ? SCORE.earthBase : SCORE.perEncounter;
@@ -145,32 +147,21 @@ export function scoreLines(round: Round, outcomes: Outcome[]): ScoreLine[] {
 }
 
 function labelFor(question: Question | undefined, index: number): string {
-  switch (question?.type) {
-    case "cluster":
-      return "CLUSTER";
-    case "vector":
-      return "VECTOR";
-    case "earth":
-      return "WHERE ON EARTH";
-    case "mcq":
-      return "LANE";
-    default:
-      return `ENCOUNTER ${index + 1}`;
-  }
+  return question ? PHASE_TITLE[question.type] : `QUESTION ${index + 1}`;
 }
 
 /** The one short line the tally shows under a result. Arcade voice, no prose. */
 function detailFor(outcome: Outcome): string {
-  if (outcome.kind === "dock") return "FEED STANDING BY";
-  if (outcome.kind === "graze") return "GRAZED";
-  if (outcome.timedOut) return "OUT OF TIME";
-  if (!outcome.correct) return outcome.kind === "wreck" ? "WRECKED" : "MISSED";
+  if (outcome.kind === "dock") return "ARRIVED";
+  if (outcome.kind === "graze") return "NEAR MISS";
+  if (outcome.timedOut) return "TOO SLOW";
+  if (!outcome.correct) return outcome.kind === "wreck" ? "WRONG · NO SHIELDS" : "WRONG";
   if (outcome.kind === "burn") {
     const charge = outcome.charge ?? 0;
-    return `${charge} PLASMA BANKED`;
+    return `${charge} OF ${CLUSTER_FIND} FOUND`;
   }
   if (outcome.error !== undefined) {
-    return outcome.kind === "slingshot" ? "DIRECT HIT" : "CLOSE HIT";
+    return outcome.kind === "slingshot" ? "SPOT ON" : "CLOSE";
   }
-  return outcome.kind === "slingshot" ? "SLINGSHOT" : "LANE CLEAR";
+  return outcome.kind === "slingshot" ? "CORRECT · BOOSTED" : "CORRECT";
 }

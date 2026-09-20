@@ -246,8 +246,11 @@ export const LANE = {
  * a boosted lane or a wild shot at the scout.
  */
 export const SCORE = {
-  /** Points an encounter is worth at full marks, before the multiplier. */
-  perEncounter: 100,
+  /**
+   * Points an encounter is worth at full marks. WHERE ON EARTH aside this is
+   * every encounter, so a two-encounter phase is worth 400.
+   */
+  perEncounter: 200,
   /** Cluster: share of the base for 1, 2 and 3 plasma banked. */
   clusterShare: [0.3, 0.6, 1],
   /**
@@ -266,18 +269,21 @@ export const SCORE = {
    */
   laneShare: 0.5,
   /**
-   * Multiplier by the streak carried INTO the encounter; the last value holds
-   * for anything longer. Whole numbers on purpose: x2 is a thing a player can
-   * hold in their head mid-run, x1.65 is not.
+   * Multiplier by the streak carried INTO the encounter. Flat now: a streak
+   * lifts the ship's speed (see `FLIGHT.streakCruiseGain`), it no longer
+   * scales the score. It used to ramp 1,1,2,2,3,3,3, which quietly made the
+   * phases worth 200, 400, 600, 600 by position alone. Even phases are what
+   * the game wants, and evenness with a ramping multiplier is impossible while
+   * every encounter shares a base. Left as an array so scaling is one edit off.
    */
-  streakMultipliers: [1, 1, 2, 2, 3, 3, 3],
+  streakMultipliers: [1],
   /**
-   * WHERE ON EARTH is worth the same base as every other encounter. It was
-   * double for a while, and with two sites at the top of the multiplier the
-   * finale was half the run: a player who flew the belt and the scout well
-   * and missed the feed had nothing to show for it.
+   * WHERE ON EARTH is the heavier finale: 300 a site, so its two sites are
+   * worth 600 against 400 for every other phase. It was level with the rest
+   * for a while, and double before that; 300 keeps the finale the biggest
+   * phase without making it half the run the way the old streak ramp did.
    */
-  earthBase: 100,
+  earthBase: 300,
   /**
    * What working the feed costs, as a share of `earthBase`. Intel is the
    * expensive one because someone else is handing you the answer; the optics
@@ -415,6 +421,16 @@ export const STATION = {
   answerSeconds: 40,
   /** Longest the clock waits for tiles before starting regardless. */
   feedGraceMs: 6000,
+  /**
+   * Width of a ground photograph, in pixels. Wikimedia only renders a fixed
+   * list of thumbnail widths now (640 is refused, 960 and 500 are served), and
+   * 960 is what a 320px figure on a 3x phone wants. See `thumbUrl` in feed.ts.
+   */
+  groundWidth: 960,
+  /** The zoom dial's steps from the site's own framing; 0 is the framing itself. */
+  zoomSteps: [-1, 0, 1],
+  /** The widest the optic goes; the tile source caps the other end (`MAX_ZOOM`). */
+  minZoom: 2,
   modelUrl: "/models/station.glb",
   /** Distance in front of the camera; must be < CAMERA.far. */
   depth: 300,

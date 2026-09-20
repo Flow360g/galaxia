@@ -6,7 +6,6 @@
   color: #ffffff;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 48px 56px;
   padding-top: max(48px, env(safe-area-inset-top));
   padding-bottom: max(40px, env(safe-area-inset-bottom));
@@ -26,8 +25,7 @@
 }
 
 .header,
-.body,
-.footer {
+.body {
   position: relative;
 }
 
@@ -50,6 +48,10 @@
   align-items: center;
   text-align: center;
   gap: 32px;
+  /* With the stats rail gone to the profile page, the body is the only
+     thing under the header; centring it keeps the mark off the top edge. */
+  flex: 1;
+  justify-content: center;
 }
 
 /* The mark is a painted logo, glow baked in, so the h1 is just its frame. It
@@ -98,29 +100,6 @@
   background: #ffffff;
 }
 
-.footer {
-  display: flex;
-  gap: 40px;
-  border-top: 1px solid var(--rule-dark);
-  padding-top: 20px;
-  flex-wrap: wrap;
-}
-
-.meta {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.metaValue {
-  font-size: 11px;
-  color: #ffffff;
-}
-
-.hiScore {
-  color: var(--arcade-yellow);
-}
-
 @media (max-width: 720px) {
   .main {
     padding-left: 20px;
@@ -142,13 +121,5 @@
     text-align: center;
     padding: 20px 24px;
     font-size: 13px;
-  }
-
-  .footer {
-    gap: 20px 28px;
-  }
-
-  .metaValue {
-    font-size: 9px;
   }
 }

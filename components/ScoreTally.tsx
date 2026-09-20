@@ -86,9 +86,8 @@ export function ScoreTally({ summary, onDone }: { summary: RunSummary; onDone: (
         <ol className={styles.lines}>
           {lines.map((line, index) => {
             const shown = index < revealed;
-            // Called out only when the encounter itself left points behind. A
-            // full-marks answer at x1 is short of `max` through the streak
-            // alone, and flagging that red would call a clean answer a miss.
+            // Called out only when the encounter itself left points behind, so
+            // a clean answer is never flagged red for falling short of `max`.
             const missed = !line.full;
             return (
               <li
@@ -100,7 +99,7 @@ export function ScoreTally({ summary, onDone }: { summary: RunSummary; onDone: (
                 <span className={`${styles.lineLabel} arcade`}>{line.label}</span>
                 <span className={styles.lineDetail}>{line.detail}</span>
                 <span className={styles.lineSum}>
-                  {line.points > 0 ? (
+                  {line.points > 0 && line.multiplier > 1 ? (
                     <span className={`${styles.lineMath} arcade`}>
                       {line.base} x{line.multiplier}
                     </span>
@@ -110,7 +109,7 @@ export function ScoreTally({ summary, onDone }: { summary: RunSummary; onDone: (
                       line.points < 0 ? styles.linePointsDown : ""
                     } ${line.points === 0 ? styles.linePointsNil : ""} arcade`}
                   >
-                    {formatPoints(line.points)}
+                    {formatPoints(line.points)} POINTS
                   </span>
                   <span className={`${styles.lineMax} ${missed ? styles.lineMissed : ""} arcade`}>
                     / {line.max}
