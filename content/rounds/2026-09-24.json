@@ -8,16 +8,38 @@
       "id": "q1",
       "type": "cluster",
       "prompt": "Which of these are dwarf planets?",
-      "options": ["Pluto", "Titan", "Ceres", "Europa", "Eris", "Io"],
-      "answers": [0, 2, 4],
+      "options": [
+        "Pluto",
+        "Titan",
+        "Ceres",
+        "Europa",
+        "Eris",
+        "Io"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
       "fact": "Ceres sits in the asteroid belt and is the only dwarf planet inside Neptune's orbit. The others are moons."
     },
     {
       "id": "q2",
       "type": "cluster",
       "prompt": "Which of these animals are marsupials?",
-      "options": ["Kangaroo", "Koala", "Sloth", "Wombat", "Lemur", "Otter"],
-      "answers": [0, 1, 3],
+      "options": [
+        "Kangaroo",
+        "Koala",
+        "Sloth",
+        "Wombat",
+        "Lemur",
+        "Otter"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
       "fact": "Wombat droppings are cube-shaped, which stops them rolling off the rocks and logs they mark."
     },
     {
@@ -46,7 +68,12 @@
       "id": "q5",
       "type": "mcq",
       "prompt": "What is the largest animal that has ever lived?",
-      "options": ["Megalodon", "Blue whale", "Mammoth", "Sperm whale"],
+      "options": [
+        "Megalodon",
+        "Blue whale",
+        "Mammoth",
+        "Sperm whale"
+      ],
       "answer": 1,
       "hint": "It is still alive today.",
       "fact": "A blue whale's heart is the size of a small car and beats as slowly as twice a minute on a deep dive."
@@ -55,7 +82,12 @@
       "id": "q6",
       "type": "mcq",
       "prompt": "Which planet spins on its side?",
-      "options": ["Venus", "Mars", "Uranus", "Neptune"],
+      "options": [
+        "Venus",
+        "Mars",
+        "Uranus",
+        "Neptune"
+      ],
       "answer": 2,
       "hint": "Each of its seasons lasts about 21 years.",
       "fact": "Uranus is tilted 98 degrees, so each pole gets 42 years of sunlight followed by 42 years of dark."
@@ -63,20 +95,29 @@
     {
       "id": "q7",
       "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed.",
-      "name": "Cape Town",
-      "country": "South Africa",
-      "lat": -33.925,
-      "lon": 18.424,
-      "zoom": 13,
-      "options": ["Valparaiso", "Cape Town", "Hobart", "Durban"],
-      "answer": 1,
-      "fact": "Table Mountain's summit is roughly 260 million years older than the Himalayas."
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 5, "landmark": "planet" },
-    { "name": "Where on Earth", "after": 6, "phase": 4 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7,
+      "phase": 4
+    }
   ]
 }

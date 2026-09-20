@@ -223,7 +223,7 @@ export const LANE = {
  * is a speedometer reading, and a speedometer is a poor anchor: nobody knows
  * whether 12,000 km is good. The score is fixed and countable instead. Every
  * encounter is worth the same base, the streak multiplies it in whole steps,
- * and a wrong answer docks a flat amount, so "1,180 out of 1,500" means the
+ * and a wrong answer docks a flat amount, so "1,880 out of 2,400" means the
  * same thing to everyone comparing runs.
  */
 export const SCORE = {
@@ -240,6 +240,23 @@ export const SCORE = {
    * hold in their head mid-run, x1.65 is not.
    */
   streakMultipliers: [1, 1, 2, 2, 3, 3, 3],
+  /**
+   * WHERE ON EARTH is the finale and is worth double a normal encounter: it is
+   * the longest, the hardest, and the one the whole run builds toward. Two
+   * sites are flown, so the station is worth 400 of a perfect run before
+   * multipliers.
+   */
+  earthBase: 200,
+  /**
+   * What working the feed costs, as a share of `earthBase`. Intel is the
+   * expensive one because someone else is handing you the answer; the optics
+   * dial is cheap and reversible because the player is working their own
+   * instrument. Tuned at /satellite-mock: 25 and 10 against a base of 200.
+   */
+  earthIntelCost: 0.125,
+  earthOpticsCost: 0.05,
+  /** However much was bought, a correct call is never worth less than this. */
+  earthFloor: 0.25,
   /** Points docked for getting it wrong. A wreck costs double a collision. */
   penalty: { collision: 25, wreck: 50, timeout: 25 },
 } as const;
@@ -346,6 +363,14 @@ export const LANDMARK = {
  * with the docking module aimed at Earth.
  */
 export const STATION = {
+  /**
+   * Seconds to name a site once the feed is up. Longer than a lane because the
+   * player is reading a picture, not four words, and may work the optics first.
+   * The clock is held until the imagery has actually arrived.
+   */
+  answerSeconds: 40,
+  /** Longest the clock waits for tiles before starting regardless. */
+  feedGraceMs: 6000,
   modelUrl: "/models/station.glb",
   /** Distance in front of the camera; must be < CAMERA.far. */
   depth: 300,

@@ -1,0 +1,484 @@
+/**
+ * WHERE ON EARTH: the satellite feed.
+ *
+ * The optic's chrome is carried over from the /satellite-mock playtest
+ * unchanged, because it is what was actually tuned against real imagery. The
+ * one rule worth remembering if any of it is edited: in a radial-gradient a
+ * percentage stop resolves against the RAY length, and the default
+ * farthest-corner ray on a square is the half-diagonal, so `50%` lands at
+ * about 0.35x the width. `circle closest-side` is what makes 100% the radius,
+ * and it is why the tick ring sits on the rim instead of scattered across the
+ * picture.
+ */
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The player's own text. 16px or iOS zooms the whole surface on focus. */
+.muted {
+  margin: 0;
+  font-size: 12px;
+  color: #6f7a8c;
+}
+
+.opener {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #9fb0c6;
+  border-left: 2px solid var(--rule-dark);
+  padding-left: 8px;
+}
+
+.line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #e8ecf3;
+}
+
+.cyan {
+  color: var(--arcade-cyan);
+}
+
+.red {
+  color: #ff6b5c;
+}
+
+.scope {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.optic {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #01040a;
+  /* Safari still needs a paint hint to clip the scaled mosaic to the radius. */
+  transform: translateZ(0);
+}
+.raster {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(4, 12, 22, 0.16) 0px,
+    rgba(4, 12, 22, 0.16) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+.sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 11%;
+  top: -11%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(79, 241, 255, 0.05) 60%,
+    rgba(79, 241, 255, 0.13) 92%,
+    rgba(162, 250, 255, 0.34)
+  );
+  animation: sweep 4.6s linear infinite;
+}
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 58%,
+    rgba(1, 4, 10, 0.22) 78%,
+    rgba(1, 4, 10, 0.6) 91%,
+    rgba(1, 4, 10, 0.93) 98%,
+    rgba(1, 4, 10, 1) 100%
+  );
+}
+.graticule {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to right,
+      transparent 6%,
+      rgba(79, 241, 255, 0.16) 6%,
+      rgba(79, 241, 255, 0.16) 42%,
+      transparent 42%,
+      transparent 58%,
+      rgba(79, 241, 255, 0.16) 58%,
+      rgba(79, 241, 255, 0.16) 94%,
+      transparent 94%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 6%,
+      rgba(79, 241, 255, 0.16) 6%,
+      rgba(79, 241, 255, 0.16) 42%,
+      transparent 42%,
+      transparent 58%,
+      rgba(79, 241, 255, 0.16) 58%,
+      rgba(79, 241, 255, 0.16) 94%,
+      transparent 94%
+    );
+  background-size:
+    100% 1px,
+    1px 100%;
+  background-position:
+    center center,
+    center center;
+  background-repeat: no-repeat;
+}
+.bezel {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(120, 245, 255, 0.85) 0deg 0.45deg,
+    transparent 0.45deg 6deg
+  );
+  -webkit-mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 11px),
+    #000 calc(100% - 11px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+  mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 11px),
+    #000 calc(100% - 11px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+}
+.bezelMajor {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(162, 250, 255, 0.95) 0deg 0.7deg,
+    transparent 0.7deg 30deg
+  );
+  -webkit-mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 19px),
+    #000 calc(100% - 19px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+  mask: radial-gradient(
+    circle closest-side at 50% 50%,
+    transparent 0 calc(100% - 19px),
+    #000 calc(100% - 19px) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  );
+}
+.rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1px solid rgba(79, 241, 255, 0.4);
+  box-shadow:
+    inset 0 0 0 3px rgba(2, 6, 13, 0.9),
+    inset 0 0 22px rgba(79, 241, 255, 0.16),
+    0 0 26px rgba(79, 241, 255, 0.09);
+}
+.brackets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--arcade-cyan) 0 14px, transparent 14px) 0 0 / 14px 1px no-repeat,
+    linear-gradient(to bottom, var(--arcade-cyan) 0 14px, transparent 14px) 0 0 / 1px 14px no-repeat,
+    linear-gradient(to left, var(--arcade-cyan) 0 14px, transparent 14px) 100% 0 / 14px 1px no-repeat,
+    linear-gradient(to bottom, var(--arcade-cyan) 0 14px, transparent 14px) 100% 0 / 1px 14px no-repeat,
+    linear-gradient(to right, var(--arcade-cyan) 0 14px, transparent 14px) 0 100% / 14px 1px no-repeat,
+    linear-gradient(to top, var(--arcade-cyan) 0 14px, transparent 14px) 0 100% / 1px 14px no-repeat,
+    linear-gradient(to left, var(--arcade-cyan) 0 14px, transparent 14px) 100% 100% / 14px 1px no-repeat,
+    linear-gradient(to top, var(--arcade-cyan) 0 14px, transparent 14px) 100% 100% / 1px 14px no-repeat;
+  opacity: 0.8;
+}
+.opticTop,
+.opticBottom {
+  top: 7%;
+}
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  pointer-events: none;
+  border: 1px solid rgba(79, 241, 255, 0.75);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(79, 241, 255, 0.35);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+.mosaic {
+  filter: contrast(1.07) saturate(1.04);
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  width: 768px;
+  height: 768px;
+}
+.pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+.pinRing {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #4ff1ff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(4, 8, 15, 0.9), 0 0 12px rgba(79, 241, 255, 0.65);
+  animation: pinPulse 1.6s ease-out infinite;
+}
+.pinLabel {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #04080f;
+  background: #4ff1ff;
+  padding: 3px 5px;
+  max-width: 150px;
+  text-align: center;
+  line-height: 1.3;
+}
+.acquiring {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #4ff1ff;
+  opacity: 0.85;
+  animation: acquire 1.1s ease-in-out infinite;
+}
+.optics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.opticsLabel {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: #6f7a8c;
+  flex-shrink: 0;
+}
+.opticsDial {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+.opticsStep {
+  flex: 1;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #c3cad6;
+  background: rgba(2, 6, 12, 0.86);
+  border: 1px solid var(--rule-dark);
+  cursor: pointer;
+  padding: 4px 2px;
+}
+.opticsOn {
+  color: #03070e;
+  background: var(--arcade-cyan);
+  border-color: var(--arcade-cyan);
+}
+.opticsCost {
+  font-size: 8px;
+  color: var(--arcade-yellow);
+}
+.ground {
+  margin: 0;
+  border: 1px solid var(--rule-dark);
+  background: rgba(2, 6, 12, 0.86);
+  padding: 6px;
+}
+.groundLabel {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--arcade-cyan);
+  margin-bottom: 5px;
+}
+.groundImg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #01040a;
+  border: 1px solid rgba(79, 241, 255, 0.22);
+}
+.groundCap {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #c3cad6;
+}
+.groundCredit {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #6f7a8c;
+}
+.clockRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.clockTrack {
+  flex: 1;
+  height: 8px;
+  background: rgba(228, 231, 236, 0.1);
+  overflow: hidden;
+}
+.clockFill {
+  height: 100%;
+  transition: width 0.1s linear;
+}
+.clockValue {
+  font-size: 13px;
+  min-width: 42px;
+  text-align: right;
+  color: var(--panel-label);
+}
+.intel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 42px;
+}
+.intelButton {
+  width: 100%;
+  min-height: 44px;
+  font-size: 10px;
+  letter-spacing: var(--track-label);
+  color: #071122;
+  background: var(--arcade-yellow);
+  border: none;
+  cursor: pointer;
+}
+.typedRow {
+  display: flex;
+  gap: 8px;
+}
+.input {
+  flex: 1;
+  min-height: 48px;
+  font-size: 16px;
+  padding: 0 10px;
+  color: #e8ecf3;
+  background: rgba(13, 27, 46, 0.9);
+  border: 1px solid var(--rule-dark);
+}
+.submit {
+  min-height: 48px;
+  padding: 0 14px;
+  font-size: 10px;
+  color: #071122;
+  background: var(--arcade-cyan);
+  border: none;
+  cursor: pointer;
+}
+.reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.verdict {
+  margin: 0;
+  font-size: 13px;
+}
+.answer {
+  margin: 0;
+  font-size: 15px;
+  color: var(--arcade-yellow);
+}
+.gained {
+  margin: 0;
+  font-size: 13px;
+  color: var(--panel-label);
+}
+.fact {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #c3cad6;
+}
+.next {
+  min-height: 48px;
+  font-size: 10px;
+  letter-spacing: var(--track-label);
+  color: #071122;
+  background: var(--arcade-cyan);
+  border: none;
+  cursor: pointer;
+}
+@keyframes sweep {
+  to {
+    transform: translateY(1010%);
+  }
+}
+@keyframes pinPulse {
+  0% {
+    box-shadow: 0 0 0 1px rgba(4, 8, 15, 0.9), 0 0 0 0 rgba(79, 241, 255, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 1px rgba(4, 8, 15, 0.9), 0 0 0 16px rgba(79, 241, 255, 0);
+  }
+}
+@keyframes breathe {
+  50% {
+    transform: scale(1.14);
+    border-color: rgba(162, 250, 255, 0.95);
+  }
+}
+@keyframes acquire {
+  50% {
+    opacity: 0.35;
+  }
+}
+.opticTop {
+  top: 7%;
+}
+
+.opticBottom {
+  bottom: 7%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    animation: none;
+    opacity: 0.25;
+    top: 40%;
+  }
+
+  .reticle,
+  .pinRing {
+    animation: none;
+  }
+}

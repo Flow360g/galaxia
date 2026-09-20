@@ -8,16 +8,38 @@
       "id": "q1",
       "type": "cluster",
       "prompt": "Which of these are noble gases?",
-      "options": ["Neon", "Nitrogen", "Argon", "Oxygen", "Helium", "Hydrogen"],
-      "answers": [0, 2, 4],
+      "options": [
+        "Neon",
+        "Nitrogen",
+        "Argon",
+        "Oxygen",
+        "Helium",
+        "Hydrogen"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
       "fact": "Noble gases have full outer electron shells, which is why they barely react. Helium was found in the Sun's light before it was found on Earth."
     },
     {
       "id": "q2",
       "type": "cluster",
       "prompt": "Which of these animals are mammals?",
-      "options": ["Dolphin", "Shark", "Bat", "Penguin", "Platypus", "Crocodile"],
-      "answers": [0, 2, 4],
+      "options": [
+        "Dolphin",
+        "Shark",
+        "Bat",
+        "Penguin",
+        "Platypus",
+        "Crocodile"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
       "fact": "The platypus lays eggs and still feeds its young on milk, which is the rule that makes it a mammal."
     },
     {
@@ -46,7 +68,12 @@
       "id": "q5",
       "type": "mcq",
       "prompt": "Which planet has the most known moons?",
-      "options": ["Jupiter", "Saturn", "Uranus", "Neptune"],
+      "options": [
+        "Jupiter",
+        "Saturn",
+        "Uranus",
+        "Neptune"
+      ],
       "answer": 1,
       "hint": "The ringed one pulled ahead in 2023.",
       "fact": "Saturn overtook Jupiter in 2023 and now has well over a hundred confirmed moons, most of them tiny."
@@ -55,7 +82,12 @@
       "id": "q6",
       "type": "mcq",
       "prompt": "What is the hardest naturally occurring substance?",
-      "options": ["Quartz", "Diamond", "Titanium", "Graphite"],
+      "options": [
+        "Quartz",
+        "Diamond",
+        "Titanium",
+        "Graphite"
+      ],
       "answer": 1,
       "hint": "It is pure carbon, and so is one of the wrong answers.",
       "fact": "Diamond and graphite are both pure carbon. The only difference is how the atoms are bonded together."
@@ -63,20 +95,29 @@
     {
       "id": "q7",
       "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed.",
-      "name": "Tokyo",
-      "country": "Japan",
-      "lat": 35.659,
-      "lon": 139.7,
-      "zoom": 14,
-      "options": ["Seoul", "Osaka", "Tokyo", "Taipei"],
-      "answer": 2,
-      "fact": "Shinjuku station handles around 3.5 million passengers a day, more than any other station anywhere."
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 5, "landmark": "planet" },
-    { "name": "Where on Earth", "after": 6, "phase": 4 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7,
+      "phase": 4
+    }
   ]
 }

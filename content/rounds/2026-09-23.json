@@ -8,16 +8,38 @@
       "id": "q1",
       "type": "cluster",
       "prompt": "Which of these countries have won the men's football World Cup?",
-      "options": ["Uruguay", "Belgium", "France", "Portugal", "Spain", "Mexico"],
-      "answers": [0, 2, 4],
+      "options": [
+        "Uruguay",
+        "Belgium",
+        "France",
+        "Portugal",
+        "Spain",
+        "Mexico"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
       "fact": "Uruguay won the first World Cup in 1930, at home, and did it again in 1950 in Brazil's own stadium."
     },
     {
       "id": "q2",
       "type": "cluster",
       "prompt": "Which of these are citrus fruits?",
-      "options": ["Lime", "Mango", "Lemon", "Kiwi", "Yuzu", "Papaya"],
-      "answers": [0, 2, 4],
+      "options": [
+        "Lime",
+        "Mango",
+        "Lemon",
+        "Kiwi",
+        "Yuzu",
+        "Papaya"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
       "fact": "Yuzu is a Japanese citrus that shrugs off frost, which almost nothing else in the family can do."
     },
     {
@@ -46,7 +68,12 @@
       "id": "q5",
       "type": "mcq",
       "prompt": "Which country is the croissant originally from?",
-      "options": ["France", "Austria", "Italy", "Belgium"],
+      "options": [
+        "France",
+        "Austria",
+        "Italy",
+        "Belgium"
+      ],
       "answer": 1,
       "hint": "Think of the kipferl.",
       "fact": "The kipferl came from Vienna. Paris bakers turned it into the buttery croissant in the 1830s."
@@ -55,7 +82,12 @@
       "id": "q6",
       "type": "mcq",
       "prompt": "Which spice is the most expensive by weight?",
-      "options": ["Vanilla", "Saffron", "Cardamom", "Cloves"],
+      "options": [
+        "Vanilla",
+        "Saffron",
+        "Cardamom",
+        "Cloves"
+      ],
       "answer": 1,
       "hint": "It is picked by hand from crocus flowers.",
       "fact": "It takes around 150,000 crocus flowers, each picked by hand, to make one kilogram of saffron."
@@ -63,20 +95,29 @@
     {
       "id": "q7",
       "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed.",
-      "name": "Barcelona",
-      "country": "Spain",
-      "lat": 41.392,
-      "lon": 2.165,
-      "zoom": 15,
-      "options": ["Valencia", "Marseille", "Turin", "Barcelona"],
-      "answer": 3,
-      "fact": "Cerda's Eixample cut the corner off every block so horse trams could turn. The octagons are visible from orbit."
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 5, "landmark": "planet" },
-    { "name": "Where on Earth", "after": 6, "phase": 4 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7,
+      "phase": 4
+    }
   ]
 }

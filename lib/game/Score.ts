@@ -8,7 +8,7 @@ import type { Outcome, Question, Round, ScoreLine } from "./types";
  * speedometer integrated over the run and makes a poor anchor, because
  * nobody knows whether 12,000 km is a good day. The score is countable: seven
  * encounters, the same base each, a streak multiplier in whole steps, and a
- * flat dock for a wrong answer. "1,180 out of 1,500" reads the same to
+ * flat dock for a wrong answer. "1,880 out of 2,400" reads the same to
  * everyone, which is what makes a run comparable in a group chat.
  *
  * The maximum is the perfect run: every encounter at full marks, so the
@@ -23,21 +23,36 @@ export function multiplierFor(streak: number): number {
   return steps[index]!;
 }
 
+/**
+ * What an encounter is worth before the multiplier. WHERE ON EARTH is the
+ * finale and carries double, so the quoted total rises with it rather than the
+ * finale being worth no more than an mcq.
+ */
+export function baseFor(question: Question): number {
+  return question.type === "earth" ? SCORE.earthBase : SCORE.perEncounter;
+}
+
 /** Points on offer at encounter `index` of a perfect run. */
-export function maxPointsAt(index: number): number {
-  return SCORE.perEncounter * multiplierFor(index);
+export function maxPointsAt(question: Question, index: number): number {
+  return baseFor(question) * multiplierFor(index);
 }
 
 /** The perfect run's total: what every score is quoted out of. */
 export function maxScoreFor(round: Round): number {
-  return round.questions.reduce((sum, _question, index) => sum + maxPointsAt(index), 0);
+  return round.questions.reduce(
+    (sum, question, index) => sum + maxPointsAt(question, index),
+    0,
+  );
 }
 
 /**
  * What an encounter earned, or cost. `base` is before the multiplier so the
  * tally can show the sum the player is being credited with.
  */
-export function scoreOutcome(outcome: Outcome): { base: number; multiplier: number; points: number } {
+export function scoreOutcome(
+  outcome: Outcome,
+  question?: Question,
+): { base: number; multiplier: number; points: number } {
   const multiplier = multiplierFor(outcome.streakBefore);
   // Docking is neutral until the satellite feed scores: nothing earned,
   // nothing docked, and the streak carried in is left exactly as it was.
@@ -55,13 +70,23 @@ export function scoreOutcome(outcome: Outcome): { base: number; multiplier: numb
     return { base: 0, multiplier, points: -penalty };
   }
 
-  const base = Math.round(SCORE.perEncounter * share);
+  const base = Math.round((question ? baseFor(question) : SCORE.perEncounter) * share);
   return { base, multiplier, points: base * multiplier };
 }
 
 /** The fraction of an encounter's base points the outcome earned, 0..1. */
 function shareOf(outcome: Outcome): number {
   if (!outcome.correct) return 0;
+
+  // WHERE ON EARTH: a right call, less whatever was bought to get there. The
+  // floor keeps a fully assisted call worth having, so a player who needs the
+  // help is not better off guessing blind.
+  if (outcome.earthIntel !== undefined || outcome.earthOptics !== undefined) {
+    const spent =
+      SCORE.earthIntelCost * (outcome.earthIntel ?? 0) +
+      SCORE.earthOpticsCost * (outcome.earthOptics ?? 0);
+    return Math.max(SCORE.earthFloor, 1 - spent);
+  }
 
   if (outcome.kind === "burn") {
     const charge = outcome.charge ?? 0;
@@ -85,9 +110,11 @@ export function scoreLines(round: Round, outcomes: Outcome[]): ScoreLine[] {
       base: outcome.base ?? 0,
       multiplier: outcome.multiplier ?? 1,
       points: outcome.points ?? 0,
-      max: maxPointsAt(index),
+      max: question ? maxPointsAt(question, index) : SCORE.perEncounter * multiplierFor(index),
       // A dock left nothing on the table: there was nothing on it yet.
-      full: outcome.kind === "dock" || (outcome.base ?? 0) >= SCORE.perEncounter,
+      full:
+        outcome.kind === "dock" ||
+        (question ? (outcome.base ?? 0) >= baseFor(question) : false),
     };
   });
 }

@@ -1,17 +1,29 @@
 /**
- * Satellite geoguess mockup: the target list.
+ * WHERE ON EARTH: the site pool.
  *
- * Throwaway prototype data. This exists to answer one question, "is a satellite
- * geoguess actually guessable", and nothing in the game imports it. If the
- * mechanic survives the playtest, the shipping version generates this from a
- * seeded city list instead of hand authoring it.
+ * Every site the satellite feed can land on, and everything an encounter needs
+ * to run one: where to point the optic, what the free opener says, what intel
+ * sells, which structure to pin, and two photographs from the ground.
  *
- * Tiers are a guess, not a measurement. The playtest is what corrects them.
+ * These began as a throwaway difficulty mockup at /satellite-mock and were
+ * promoted once the playtest settled the framing. Each `zoom` is the framing at
+ * which that city's giveaway actually fits: Amsterdam's canal ring is about
+ * 2.5km across, so a tighter crop cannot show the one feature that identifies
+ * it. Every Commons file here was opened and looked at, not trusted from its
+ * filename.
+ *
+ * AUTOMATION SEAM. `pickSites` is the only thing the game calls, and it is
+ * deliberately the whole interface. A future build can replace the constant
+ * pool with a generated one (Wikidata for the city and its landmark, Commons
+ * geosearch for the photographs) without touching the encounter, the scoring
+ * or the UI. What must not change is the contract: for a given date key every
+ * player gets the same pair, in the same order, or two runs stop being
+ * comparable and the whole daily format goes with it.
  */
 
 export type Tier = "easy" | "medium" | "hard";
 
-/** One Commons photograph. `file` is the "File:" name, never shown to a player. */
+/** One Commons photograph. `file` is the "File:" name and is never rendered. */
 export interface Shot {
   file: string;
   /** The author, because CC BY and CC BY-SA both require the credit. */
@@ -19,7 +31,7 @@ export interface Shot {
   licence: string;
 }
 
-export interface Target {
+export interface Site {
   id: string;
   /** The answer, as shown on reveal. */
   name: string;
@@ -27,45 +39,26 @@ export interface Target {
   lat: number;
   lon: number;
   tier: Tier;
-  /** Zoom that frames the giveaway. The settings drawer shifts every target by the same offset. */
+  /** Slippy-map zoom that frames the giveaway. */
   zoom: number;
-  /**
-   * The free opening line when the dial asks for one. Orients only: continent,
-   * climate, terrain. It must never be enough to name the place on its own.
-   */
+  /** Free at the start: continent, climate, terrain. Never enough on its own. */
   opener: string;
-  /**
-   * A paid intel drop, and a strong one. Most of these are close to decisive by
-   * design, which is why they are bought rather than given.
-   */
+  /** Bought. Strong by design, which is why it is not given away. */
   clue: string;
-  /** Third intel drop: the country, plus the first letter of the answer. */
-  lastResort?: string;
-  /**
-   * Optional intel rung: a structure in frame, pinned and described. The
-   * description never names the city or the country, so it stays a clue.
-   */
+  /** Bought: a structure pinned in the optic, described without naming the place. */
   landmark?: { name: string; lat: number; lon: number };
-  /**
-   * Ground imagery, hosted by Wikimedia Commons and resolved through
-   * Special:FilePath, so no key and no server hop. `street` is an ordinary road
-   * and `structure` is the pinned landmark.
-   *
-   * There is deliberately no caption field. A Commons filename names the place
-   * outright ("A street in Cairo", "Barcelona - Casa Mila"), so the file is
-   * never rendered; the street rung uses one fixed label and the structure rung
-   * borrows `landmark.name`, which is already written not to give the game away.
-   */
+  /** Bought: an ordinary road. Signage, traffic, build. */
   street?: Shot;
+  /** Bought: the pinned structure itself. */
   structure?: Shot;
-  /** Lane mode: three wrong cities that should be genuinely tempting. */
+  /** Lane mode kept for the tally's "you could have picked" line. */
   decoys: [string, string, string];
   /** Typed mode: lowercase substrings that count as correct. */
   accept: string[];
   fact: string;
 }
 
-export const TARGETS: Target[] = [
+export const SITES: Site[] = [
   {
     id: "palm",
     name: "Dubai",
@@ -338,3 +331,26 @@ export const TARGETS: Target[] = [
     fact: "The Rio de la Plata is 220 km wide at its mouth, so wide that the far bank is over the horizon.",
   },
 ];
+
+/**
+ * The two sites for a date. Seeded by the date key alone, so every player on
+ * the same day gets the same pair in the same order, which is the whole basis
+ * of comparing two runs.
+ *
+ * The pair is always two different sites. With sixteen sites the pool repeats
+ * after eight days; topping it up is the only thing needed to run longer, and
+ * nothing else has to change.
+ */
+export function pickSites(dateKey: string): [Site, Site] {
+  let hash = 0;
+  for (let i = 0; i < dateKey.length; i += 1) {
+    hash = (hash * 31 + dateKey.charCodeAt(i)) | 0;
+  }
+  const span = SITES.length;
+  const first = Math.abs(hash) % span;
+  // A second, independent step so the pair is not always adjacent, and never
+  // the same site twice.
+  const stride = 1 + (Math.abs(Math.imul(hash, 2246822519)) % (span - 1));
+  const second = (first + stride) % span;
+  return [SITES[first] as Site, SITES[second] as Site];
+}

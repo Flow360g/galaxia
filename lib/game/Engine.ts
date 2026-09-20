@@ -392,9 +392,33 @@ export class Engine {
     this.parked = true;
   }
 
-  /** WHERE ON EARTH: END TRANSMISSION. Resolves the encounter and ends the run. */
-  endTransmission(): void {
-    this.run.endTransmission();
+  /**
+   * WHERE ON EARTH. The engine is parked while docked, so each of these pushes
+   * a state frame itself rather than waiting on a loop that is not drawing.
+   */
+  feedArrived(): void {
+    this.run.feedArrived();
+    this.options.onState?.(this.state);
+  }
+
+  buyIntel(): void {
+    this.run.buyIntel();
+    this.options.onState?.(this.state);
+  }
+
+  setOptics(step: number): void {
+    this.run.setOptics(step);
+    this.options.onState?.(this.state);
+  }
+
+  submitSite(text: string): void {
+    this.run.submitSite(text);
+    this.options.onState?.(this.state);
+  }
+
+  nextSite(): void {
+    this.run.nextSite();
+    this.options.onState?.(this.state);
   }
 
   get state(): GameState {

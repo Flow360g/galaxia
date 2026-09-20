@@ -4,7 +4,8 @@ import round20260921 from "@/content/rounds/2026-09-21.json";
 import round20260922 from "@/content/rounds/2026-09-22.json";
 import round20260923 from "@/content/rounds/2026-09-23.json";
 import round20260924 from "@/content/rounds/2026-09-24.json";
-import type { Round } from "@/lib/game/types";
+import { pickSites } from "@/lib/content/sites";
+import type { EarthQuestion, Round } from "@/lib/game/types";
 
 /**
  * Round loading.
@@ -28,12 +29,73 @@ const POOL: Round[] = [
   round20260923,
   round20260924,
 ]
-  .map((round) => validate(round as Round))
+  // Hydrate before validating: the earth slots carry no site of their own, so
+  // validation has nothing to check until the pool has filled them in.
+  .map((round) => validate(hydrateEarth(round as unknown as Round)))
   .sort((a, b) => a.date.localeCompare(b.date));
 
 const ROUNDS: Record<string, Round> = Object.fromEntries(POOL.map((round) => [round.date, round]));
 
 const sampleRound = POOL[0]!;
+
+/**
+ * WHERE ON EARTH slots carry only an id and a prompt; the site itself comes
+ * from the pool, seeded by the round's own date. That is what lets a day be
+ * generated rather than authored, and it keeps the pair identical for every
+ * player on that date, which is the basis of comparing two runs.
+ *
+ * Seeded on `round.date` rather than on today, so a round is the same round
+ * whenever it is loaded: replays, tests and the fallback all agree.
+ */
+function hydrateEarth(round: Round): Round {
+  const sites = pickSites(round.date);
+  let next = 0;
+  const questions = round.questions.map((question) => {
+    if (question.type !== "earth") return question;
+    const site = sites[Math.min(next, sites.length - 1)];
+    next += 1;
+    if (!site) return question;
+    // Lane order is seeded on the site id, so two players comparing runs saw
+    // the same four names in the same order.
+    const options = seededShuffle([site.name, ...site.decoys], site.id);
+    const filled: EarthQuestion = {
+      ...question,
+      name: site.name,
+      country: site.country,
+      lat: site.lat,
+      lon: site.lon,
+      zoom: site.zoom,
+      options,
+      answer: options.indexOf(site.name),
+      opener: site.opener,
+      clue: site.clue,
+      landmark: site.landmark,
+      street: site.street,
+      structure: site.structure,
+      accept: site.accept,
+      fact: site.fact,
+    };
+    return filled;
+  });
+  return { ...round, questions };
+}
+
+/** Stable shuffle: the same seed always gives the same order. */
+function seededShuffle(items: string[], seed: string): string[] {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
+    const j = hash % (i + 1);
+    const a = out[i] as string;
+    out[i] = out[j] as string;
+    out[j] = a;
+  }
+  return out;
+}
 
 /**
  * A malformed round should fail at import, in the build, not mid-flight for
@@ -131,7 +193,10 @@ export function getRound(date: string | undefined = todayKey()): Round {
   const exact = ROUNDS[key];
   if (exact) return exact;
   const rotated = POOL[((dayNumber(key) % POOL.length) + POOL.length) % POOL.length]!;
-  return { ...rotated, date: key };
+  // The quiz repeats, but the landing sites should not: re-seed them on the
+  // date actually being played, so two days rotating to the same round still
+  // get their own pair. Everyone on that day still sees the same two.
+  return hydrateEarth({ ...rotated, date: key });
 }
 
 /** Whole days since the epoch for a `YYYY-MM-DD` key. */

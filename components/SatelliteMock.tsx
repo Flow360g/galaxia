@@ -1,8 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TARGETS, type Target, type Tier } from "@/lib/mock/targets";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { TARGETS, type Shot, type Target, type Tier } from "@/lib/mock/targets";
 import styles from "./SatelliteMock.module.css";
 
 /**
@@ -18,6 +25,20 @@ import styles from "./SatelliteMock.module.css";
  */
 
 // ------------------------------------------------------------------ imagery
+
+/**
+ * Commons serves a stable image from a filename alone, so ground photography
+ * costs us no key, no token and no server hop. The filename itself names the
+ * place, so it goes in the URL and nowhere else.
+ */
+function commons(file: string, width: number): string {
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(
+    file.replace(/ /g, "_"),
+  )}?width=${width}`;
+}
+
+/** Fixed label for the street rung: per-target wording risks naming the place. */
+const STREET_LABEL = "An ordinary street. Read the signage, the traffic, the build.";
 
 const TILE = 256;
 /** Side of the crop taken from the 3x3 mosaic, in mosaic pixels. */
@@ -83,6 +104,8 @@ interface Settings {
   opening: "blind" | "clue";
   /** Whether the landmark pin exists as a rung at all. */
   landmark: boolean;
+  /** Whether the two ground-photography rungs exist at all. */
+  street: boolean;
   /** Which tiers are in the deck. */
   deck: "all" | "gentle";
 }
@@ -95,27 +118,32 @@ const DEFAULTS: Settings = {
   answerMode: "lanes",
   opening: "clue",
   landmark: true,
+  street: true,
   deck: "all",
 };
 
 /**
  * The intel ladder, in order. Each rung past the free opening costs a hint.
- * Order matters: the clue orients you, the wide scan gives back the macro
- * pattern a tight crop cut off, the landmark puts a finger on one building,
- * and the territory is the last resort.
+ * Order matters: the clue orients you, the street and the structure put you on
+ * the ground, the landmark puts a finger on one building, and the territory is
+ * the last resort. Pulling the framing back is not on this ladder: the optics
+ * dial does that, cheaper and reversibly, and selling it twice was confusing.
  */
-type Rung = "clue" | "wide" | "landmark" | "territory";
+type Rung = "clue" | "street" | "landmark" | "structure" | "territory";
 
 function ladderFor(settings: Settings, target: Target | undefined): Rung[] {
-  const rungs: Rung[] = ["clue", "wide"];
+  const rungs: Rung[] = ["clue"];
+  if (settings.street && target?.street) rungs.push("street");
   if (settings.landmark && target?.landmark) rungs.push("landmark");
+  if (settings.street && target?.structure) rungs.push("structure");
   rungs.push("territory");
   return rungs;
 }
 
 /** Base value of the encounter, and what each intel drop costs. */
 const BASE_SCORE = 200;
-const HINT_COST = 50;
+/** 25, not 50: six rungs at 50 would hit the floor halfway and go flat. */
+const HINT_COST = 25;
 const MIN_SCORE = 50;
 /**
  * Fractions of the clock at which auto mode drops intel. Spread evenly across
@@ -124,13 +152,20 @@ const MIN_SCORE = 50;
 function autoAt(count: number): number[] {
   return Array.from({ length: Math.max(0, count) }, (_, i) => (i + 1) / (count + 1));
 }
-/** How far the wide scan pulls back. */
-const WIDE_SCAN_STEPS = 2;
 /** Longest the clock will wait for imagery before starting regardless. */
 const ACQUIRE_GRACE_MS = 6000;
 
-function worthNow(hints: number): number {
-  return Math.max(MIN_SCORE, BASE_SCORE - HINT_COST * hints);
+/**
+ * Working the optics costs less than asking for intel, and is charged once per
+ * level per target: stepping back to a level already paid for is free, so the
+ * dial can be worked without being punished for changing your mind.
+ */
+const ZOOM_COST = 10;
+/** One step either side of the target's authored framing. */
+type ZoomStep = -1 | 0 | 1;
+
+function worthNow(hints: number, zoomSpend: number): number {
+  return Math.max(MIN_SCORE, BASE_SCORE - HINT_COST * hints - zoomSpend);
 }
 
 // ------------------------------------------------------------------ results
@@ -146,6 +181,8 @@ interface Result {
   correct: boolean;
   timedOut: boolean;
   hints: number;
+  /** Points given up working the zoom dial. */
+  zoomSpend: number;
   score: number;
   seconds: number;
   zoom: number;
@@ -156,6 +193,37 @@ interface Result {
 }
 
 const STORE_KEY = "galaxia:satmock";
+const BRIEF_KEY = "galaxia:satmock:brief";
+
+function briefDismissed(): boolean {
+  try {
+    return window.localStorage.getItem(BRIEF_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mounted flag without a setState in an effect. The server and the first client
+ * render both say false, so hydration matches; the client then says true and
+ * localStorage can be read safely during render.
+ */
+const noopSubscribe = () => () => {};
+function useMounted(): boolean {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
+
+function dismissBrief(): void {
+  try {
+    window.localStorage.setItem(BRIEF_KEY, "1");
+  } catch {
+    // Best effort. A blocked store just means the line shows again.
+  }
+}
 
 function loadStored(): Result[] {
   try {
@@ -207,6 +275,38 @@ function matches(target: Target, answer: string): boolean {
   const given = normalise(answer);
   if (given.length < 3) return false;
   return target.accept.some((entry) => given.includes(normalise(entry)));
+}
+
+/**
+ * One ground photograph. Deliberately outside the clock's readiness gate: only
+ * satellite tiles hold the countdown, and a slow photo must never freeze a
+ * round. A failure hides itself rather than showing a broken-image glyph.
+ */
+function Ground({ shot, label, caption }: { shot: Shot; label: string; caption: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <p className={styles.intelMuted}>{label} unavailable. The clue stands without it.</p>;
+  }
+  return (
+    <figure className={styles.ground}>
+      <span className={`${styles.groundLabel} arcade`}>{label}</span>
+      <img
+        className={styles.groundImg}
+        src={commons(shot.file, 640)}
+        alt=""
+        loading="eager"
+        decoding="async"
+        draggable={false}
+        onError={() => setFailed(true)}
+      />
+      <figcaption className={styles.groundCap}>
+        {caption}
+        <span className={styles.groundCredit}>
+          {shot.credit} &middot; {shot.licence} &middot; Wikimedia Commons
+        </span>
+      </figcaption>
+    </figure>
+  );
 }
 
 // --------------------------------------------------------------------- feed
@@ -310,42 +410,62 @@ function Feed({
   })();
 
   return (
-    <div className={styles.frame} ref={frame}>
-      <div
-        className={styles.mosaic}
-        style={{ transform: `scale(${scale}) translate(${-dx}px, ${-dy}px)` }}
-      >
-        {tiles.map((tile) => (
-          <img
-            key={tile.key}
-            src={tile.src}
-            alt=""
-            width={TILE}
-            height={TILE}
-            style={{ left: tile.left, top: tile.top }}
-            ref={(node) => {
-              if (node?.complete) settle(tile.src, tiles.length);
-            }}
-            onLoad={() => settle(tile.src, tiles.length)}
-            onError={(event) => {
-              // A broken-image glyph in the feed reads as a bug. Hide the tile
-              // and let the notice below the frame do the explaining.
-              event.currentTarget.style.visibility = "hidden";
-              settle(tile.src, tiles.length);
-              onError();
-            }}
-            draggable={false}
-          />
-        ))}
-      </div>
-      {pin ? (
-        <div className={styles.pin} style={{ left: pin.left, top: pin.top }}>
-          <span className={styles.pinRing} aria-hidden="true" />
-          <span className={`${styles.pinLabel} arcade`}>{pin.name}</span>
+    <div className={styles.scope}>
+      {/* The optic. Measured, so the tile maths keys off the visible aperture. */}
+      <div className={styles.optic} ref={frame}>
+        <div
+          className={styles.mosaic}
+          style={{ transform: `scale(${scale}) translate(${-dx}px, ${-dy}px)` }}
+        >
+          {tiles.map((tile) => (
+            <img
+              key={tile.key}
+              src={tile.src}
+              alt=""
+              width={TILE}
+              height={TILE}
+              style={{ left: tile.left, top: tile.top }}
+              ref={(node) => {
+                if (node?.complete) settle(tile.src, tiles.length);
+              }}
+              onLoad={() => settle(tile.src, tiles.length)}
+              onError={(event) => {
+                // A broken-image glyph in the feed reads as a bug. Hide the tile
+                // and let the notice below the frame do the explaining.
+                event.currentTarget.style.visibility = "hidden";
+                settle(tile.src, tiles.length);
+                onError();
+              }}
+              draggable={false}
+            />
+          ))}
         </div>
-      ) : null}
-      <div className={styles.reticle} aria-hidden="true" />
-      <div className={`${styles.frameTag} arcade`}>Z{z}</div>
+
+        {pin ? (
+          <div className={styles.pin} style={{ left: pin.left, top: pin.top }}>
+            <span className={styles.pinRing} aria-hidden="true" />
+            <span className={`${styles.pinLabel} arcade`}>{pin.name}</span>
+          </div>
+        ) : null}
+
+        {/* Glass, in layers: raster lines, a sweep, then falloff at the edge. */}
+        <div className={styles.raster} aria-hidden="true" />
+        <div className={styles.sweep} aria-hidden="true" />
+        <div className={styles.vignette} aria-hidden="true" />
+        <div className={styles.graticule} aria-hidden="true" />
+        <div className={styles.reticle} aria-hidden="true" />
+
+        {/* Readouts ride inside the aperture: the corners belong to the bezel.
+            Nothing here may narrow the target down, so no coordinates. */}
+        <span className={`${styles.opticTop} arcade`}>Optical array</span>
+        <span className={`${styles.opticBottom} arcade`}>Z{z}</span>
+      </div>
+
+      {/* Instrument housing, drawn over the glass edge. */}
+      <div className={styles.bezel} aria-hidden="true" />
+      <div className={styles.bezelMajor} aria-hidden="true" />
+      <div className={styles.rim} aria-hidden="true" />
+      <div className={styles.brackets} aria-hidden="true" />
     </div>
   );
 }
@@ -360,6 +480,9 @@ export function SatelliteMock() {
   const [queue, setQueue] = useState<Target[]>([]);
   const [index, setIndex] = useState(0);
   const [hints, setHints] = useState(0);
+  const [zoomStep, setZoomStep] = useState<ZoomStep>(0);
+  /** Levels already paid for on this target, so a revisit is free. */
+  const [zoomPaid, setZoomPaid] = useState<ZoomStep[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [typed, setTyped] = useState("");
   const [correct, setCorrect] = useState(false);
@@ -371,6 +494,14 @@ export function SatelliteMock() {
 
   const target = queue[index];
   const remaining = Math.max(0, settings.clockSeconds - elapsed);
+
+  const zoomSpend = zoomPaid.length * ZOOM_COST;
+
+  /** Move the dial, charging only the first visit to a level. */
+  const setZoom = useCallback((next: ZoomStep) => {
+    setZoomStep(next);
+    if (next !== 0) setZoomPaid((prior) => (prior.includes(next) ? prior : [...prior, next]));
+  }, []);
 
   const ladder = useMemo(() => ladderFor(settings, target), [settings, target]);
   const buyable = ladder.length;
@@ -384,6 +515,8 @@ export function SatelliteMock() {
     setQueue(seededShuffle(deck, `${Date.now()}`));
     setIndex(0);
     setHints(0);
+    setZoomStep(0);
+    setZoomPaid([]);
     setElapsed(0);
     setTyped("");
     setResults([]);
@@ -407,7 +540,8 @@ export function SatelliteMock() {
           correct: wasCorrect,
           timedOut: ranOut,
           hints,
-          score: wasCorrect ? worthNow(hints) : 0,
+          zoomSpend,
+          score: wasCorrect ? worthNow(hints, zoomSpend) : 0,
           seconds: Math.min(elapsed, settings.clockSeconds),
           zoom: target.zoom + settings.zoomOffset,
           source: settings.source,
@@ -418,7 +552,7 @@ export function SatelliteMock() {
       ]);
       setPhase("revealed");
     },
-    [target, hints, elapsed, settings],
+    [target, hints, zoomSpend, elapsed, settings],
   );
 
   // `finish` closes over the tick's own state, so the clock reads it through a
@@ -469,6 +603,8 @@ export function SatelliteMock() {
     }
     setIndex((prior) => prior + 1);
     setHints(0);
+    setZoomStep(0);
+    setZoomPaid([]);
     setElapsed(0);
     setTyped("");
     setFeedReady(false);
@@ -498,7 +634,7 @@ export function SatelliteMock() {
   }, [target]);
 
   const zoom = target
-    ? target.zoom + settings.zoomOffset - (shown.has("wide") ? WIDE_SCAN_STEPS : 0)
+    ? target.zoom + settings.zoomOffset + zoomStep
     : 12;
 
   if (phase === "setup") {
@@ -526,7 +662,7 @@ export function SatelliteMock() {
         </div>
         <div className={styles.readout}>
           <span className={`${styles.readoutLabel} arcade`}>Worth now</span>
-          <span className={`${styles.readoutValue} ${styles.gold} mono`}>{worthNow(hints)}</span>
+          <span className={`${styles.readoutValue} ${styles.gold} mono`}>{worthNow(hints, zoomSpend)}</span>
         </div>
         <div className={styles.readout}>
           <span className={`${styles.readoutLabel} arcade`}>Banked</span>
@@ -558,6 +694,31 @@ export function SatelliteMock() {
         showLandmark={shown.has("landmark")}
       />
 
+      {/* Optics. Its own control, deliberately not the intel button: this is a
+          cheap, reversible adjustment, not a clue someone hands you. */}
+      {phase === "playing" ? (
+        <div className={styles.optics}>
+          <span className={`${styles.opticsLabel} arcade`}>Optics</span>
+          <div className={styles.opticsDial}>
+            {([-1, 0, 1] as ZoomStep[]).map((step) => {
+              const free = step === 0 || zoomPaid.includes(step);
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  className={`${styles.opticsStep} ${zoomStep === step ? styles.opticsOn : ""} arcade`}
+                  disabled={!feedReady}
+                  onClick={() => setZoom(step)}
+                >
+                  {step === -1 ? "Wider" : step === 0 ? "Standard" : "Closer"}
+                  {free ? null : <span className={styles.opticsCost}>-{ZOOM_COST}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {!feedReady ? (
         <p className={`${styles.acquiring} arcade`}>Acquiring feed</p>
       ) : null}
@@ -574,15 +735,20 @@ export function SatelliteMock() {
           <p className={styles.intelOpener}>{target.opener}</p>
         ) : null}
         {shown.has("clue") ? <p className={styles.intelLine}>{target.clue}</p> : null}
-        {shown.has("wide") ? (
-          <p className={`${styles.intelLine} ${styles.cyan}`}>
-            <span className="arcade">Wide scan</span> Pulled back {WIDE_SCAN_STEPS} zoom steps.
-          </p>
+        {shown.has("street") && target.street ? (
+          <Ground shot={target.street} label="Ground probe" caption={STREET_LABEL} />
         ) : null}
         {shown.has("landmark") && target.landmark ? (
           <p className={`${styles.intelLine} ${styles.cyan}`}>
             <span className="arcade">Landmark</span> {target.landmark.name}, pinned in frame.
           </p>
+        ) : null}
+        {shown.has("structure") && target.structure && target.landmark ? (
+          <Ground
+            shot={target.structure}
+            label="Structure"
+            caption={target.landmark.name}
+          />
         ) : null}
         {shown.has("territory") ? (
           <p className={styles.intelLine}>
@@ -657,7 +823,8 @@ export function SatelliteMock() {
             {target.name}, {target.country}
           </p>
           <p className={`${styles.gained} mono`}>
-            {correct ? `+${worthNow(hints)}` : "+0"} &middot; {hints} intel &middot;{" "}
+            {correct ? `+${worthNow(hints, zoomSpend)}` : "+0"} &middot; {hints} intel &middot;{" "}
+            {zoomSpend > 0 ? `${zoomSpend} optics · ` : ""}
             {Math.min(elapsed, settings.clockSeconds).toFixed(1)}s
           </p>
           <p className={styles.fact}>{target.fact}</p>
@@ -707,8 +874,30 @@ function Setup({
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     onChange({ ...settings, [key]: value });
 
+  const mounted = useMounted();
+  const [closed, setClosed] = useState(false);
+  const brief = mounted && !closed && !briefDismissed();
+
   return (
     <div className={styles.sheet}>
+      {brief ? (
+        <aside className={styles.brief}>
+          <p className={`${styles.briefLine} arcade`}>
+            Identify the city so we can send reinforcements to save humanity
+          </p>
+          <button
+            type="button"
+            className={styles.briefClose}
+            aria-label="Dismiss"
+            onClick={() => {
+              dismissBrief();
+              setClosed(true);
+            }}
+          >
+            &times;
+          </button>
+        </aside>
+      ) : null}
       <p className={`${styles.eyebrow} arcade`}>Galaxia prototype</p>
       <h1 className={`${styles.title} arcade`}>Satellite recon</h1>
       <p className={styles.blurb}>
@@ -777,6 +966,15 @@ function Setup({
       <p className={styles.note}>
         A rung that pins one structure in frame and describes it without naming the place. Fifteen
         of the sixteen targets have one; Uluru is the whole picture, so it does not.
+      </p>
+
+      <Row label="Ground">
+        <Chip on={settings.street} onClick={() => set("street", true)} label="On" />
+        <Chip on={!settings.street} onClick={() => set("street", false)} label="Off" />
+      </Row>
+      <p className={styles.note}>
+        Two rungs of photography from the ground: an ordinary street, then the pinned
+        structure itself. Fifteen of the sixteen targets carry both.
       </p>
 
       <Row label="Deck">

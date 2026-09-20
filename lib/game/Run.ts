@@ -167,6 +167,11 @@ export class Run {
   private readonly ratings: Rating[] = [];
   /** WHERE ON EARTH: the engine has reported the ship alongside the station. */
   private stationReady = false;
+  /** WHERE ON EARTH: intel rungs bought and optics levels paid for, this site. */
+  private earthIntel = 0;
+  private earthOptics: number[] = [];
+  /** True once the feed's imagery has arrived and the clock may run. */
+  private feedReady = false;
 
   constructor(
     private readonly round: Round,
@@ -218,9 +223,16 @@ export class Run {
       clockSeconds: this.thrustSeconds,
       countdown: this.countdown,
       shields: this.shields,
+      feedReady: this.feedReady,
+      feedSeconds: this.phase === "docked" ? Math.max(0, this.timer) : 0,
+      earthIntel: this.earthIntel,
+      earthOptics: this.earthOptics,
       maxShields: SHIELDS.perRun,
       pulse: this.pulse,
-      outcome: this.phase === "aftermath" || this.phase === "finished" ? this.outcome : null,
+      outcome:
+        this.phase === "aftermath" || this.phase === "docked" || this.phase === "finished"
+          ? this.outcome
+          : null,
       awaitingTap: this.awaitingTap,
       running: true,
     };
@@ -459,32 +471,113 @@ export class Run {
     if (this.phase !== "station" || !this.stationReady) return;
     this.phase = "docked";
     this.pulse = null;
+    this.earthIntel = 0;
+    this.earthOptics = [];
+    this.feedReady = false;
+    this.awaitingTap = false;
+    this.timer = STATION.answerSeconds;
     this.hooks.onDock();
   }
 
   /**
-   * END TRANSMISSION. Until the satellite feed lands this is a neutral
-   * resolution: no points, no penalty, no streak change, no shield. It goes
-   * straight to the tally, never through a strike or a toast: the station
-   * screen is up, and the tally is the verdict.
+   * The feed's imagery has arrived. Until this lands the clock is held: tiles
+   * come off a public service over the player's own connection and can take
+   * tens of seconds, and a site spent staring at a black square while the
+   * countdown drains is not a question, it is a coin flip. The engine also
+   * calls this on a grace timeout, so a tile that never resolves cannot
+   * freeze the run.
    */
-  endTransmission(): void {
+  feedArrived(): void {
+    if (this.phase !== "docked" || this.feedReady) return;
+    this.feedReady = true;
+    this.timer = STATION.answerSeconds;
+  }
+
+  /** Buy the next rung of intel on this site. Costs a share of the base. */
+  buyIntel(): void {
+    if (this.phase !== "docked" || !this.feedReady) return;
+    this.earthIntel += 1;
+  }
+
+  /**
+   * Work the optics. Charged once per level per site, so stepping back to a
+   * level already paid for is free and the dial can be worked without being
+   * punished for changing your mind.
+   */
+  setOptics(step: number): void {
+    if (this.phase !== "docked" || !this.feedReady) return;
+    if (step !== 0 && !this.earthOptics.includes(step)) this.earthOptics.push(step);
+  }
+
+  /**
+   * Name the site. A right call scores the finale's double base less whatever
+   * was bought; a wrong one costs a shield and the streak, exactly like any
+   * other miss, because the station is an encounter and not a cutscene.
+   *
+   * With two sites on the feed the run stays docked between them: the approach
+   * is flown once, and the second site begins where the first was answered.
+   */
+  submitSite(text: string, timedOut = false): void {
     const question = this.question;
     if (this.phase !== "docked" || !question || question.type !== "earth") return;
+
+    const guess = normaliseGuess(text);
+    const correct =
+      !timedOut &&
+      guess.length >= 3 &&
+      question.accept.some((entry) => guess.includes(normaliseGuess(entry)));
+
+    const kind = correct ? "thread" : outcomeKind(false, false, timedOut, this.shields > 0);
+    if (!correct && this.shields > 0) {
+      this.shields -= 1;
+      this.shieldLost = true;
+    }
+
+    const streakBefore = this.flight.streak;
+    const velocityBefore = this.flight.velocity;
+    const thrustLeft = Math.max(0, this.timer / STATION.answerSeconds);
+    // The feed has no lane to fly down, so the outcome lands here rather than
+    // through `lock` and `contact`: there is nothing in flight to wait for.
+    const velocityAfter = this.flight.applyOutcome(kind, thrustLeft);
+
     this.record({
-      kind: "dock",
-      correct: true,
+      kind,
+      correct,
       boosted: false,
-      timedOut: false,
-      thrustLeft: 1,
-      velocityBefore: this.flight.velocity,
-      velocityAfter: this.flight.velocity,
-      streakBefore: this.flight.streak,
+      timedOut,
+      thrustLeft,
+      velocityBefore,
+      velocityAfter,
+      streakBefore,
       streakAfter: this.flight.streak,
       chosen: null,
-      guessText: "",
+      guessText: text.trim(),
       answerText: answerTextFor(question),
+      earthIntel: this.earthIntel,
+      earthOptics: this.earthOptics.length,
     });
+
+    this.awaitingTap = true;
+  }
+
+  /**
+   * Past the verdict on a site. The next site, if there is one, starts here
+   * rather than back at the approach; otherwise the run is over.
+   */
+  nextSite(): void {
+    if (this.phase !== "docked" || !this.awaitingTap) return;
+    const next = this.round.questions[this.index + 1];
+    if (next && next.type === "earth") {
+      this.index += 1;
+      this.earthIntel = 0;
+      this.earthOptics = [];
+      this.feedReady = false;
+      this.awaitingTap = false;
+      this.outcome = null;
+      this.timer = STATION.answerSeconds;
+      this.hooks.onEncounterStart(this.index, next);
+      return;
+    }
     this.finish();
   }
 
@@ -543,9 +636,19 @@ export class Run {
         break;
 
       case "station":
+        // The approach runs on the engine, not the clock: it says when the
+        // ship is alongside, and the player says when to go aboard.
+        break;
+
       case "docked":
-        // WHERE ON EARTH runs on the player, not the clock: the engine says
-        // when the ship has arrived, and the player says when they are done.
+        // The clock starts when the imagery does, never before, and stops the
+        // moment a verdict is up.
+        if (this.awaitingTap || !this.feedReady) break;
+        this.timer -= dt;
+        if (this.timer <= 0) {
+          this.timer = 0;
+          this.submitSite("", true);
+        }
         break;
 
       case "resolving":
@@ -896,7 +999,7 @@ export class Run {
   /** Score an outcome and write it into the record: the tally, the strip, the path. */
   private record(outcome: Outcome): void {
     // The score: fixed points, whole multipliers, a flat dock for a miss.
-    const scored = scoreOutcome(outcome);
+    const scored = scoreOutcome(outcome, this.question);
     outcome.base = scored.base;
     outcome.multiplier = scored.multiplier;
     outcome.points = scored.points;
@@ -970,6 +1073,18 @@ export class Run {
       durationSeconds: this.elapsed,
     };
   }
+}
+
+/**
+ * Typed answers are compared on letters and digits only, so punctuation,
+ * accents and spacing never decide whether a player got it right.
+ */
+function normaliseGuess(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**

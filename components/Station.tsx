@@ -2,18 +2,28 @@
 
 import { useEffect, useRef } from "react";
 import { Orbit } from "@/lib/game/Orbit";
+import { StationFeed } from "./StationFeed";
+import type { EarthQuestion, GameState } from "@/lib/game/types";
 import styles from "./Station.module.css";
 
 interface Props {
   /** The phase number the run is on, for the rail. */
   phase: number;
   /**
-   * Whether the feed panel and END TRANSMISSION are up. Off once the run has
-   * ended, so the tally and the share card sit over the bare scene.
+   * Whether the feed panel is up. Off once the run has ended, so the tally and
+   * the share card sit over the bare scene.
    */
   showPanel: boolean;
-  /** END TRANSMISSION: resolve the encounter and end the run. */
-  onEnd: () => void;
+  /** The site on the feed, and the live run state it is played against. */
+  question: EarthQuestion | null;
+  state: GameState | null;
+  /** Whether another site follows this one. */
+  more: boolean;
+  onFeedReady: () => void;
+  onBuyIntel: () => void;
+  onOptics: (step: number) => void;
+  onSubmit: (text: string) => void;
+  onNext: () => void;
 }
 
 /**
@@ -30,7 +40,18 @@ interface Props {
  * screen, which is the scene's. The satellite feed is a placeholder here;
  * the imagery is the next build.
  */
-export function Station({ phase, showPanel, onEnd }: Props) {
+export function Station({
+  phase,
+  showPanel,
+  question,
+  state,
+  more,
+  onFeedReady,
+  onBuyIntel,
+  onOptics,
+  onSubmit,
+  onNext,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,18 +61,6 @@ export function Station({ phase, showPanel, onEnd }: Props) {
     orbit.start();
     return () => orbit.dispose();
   }, []);
-
-  // Desktop convenience only; the button is the real target.
-  useEffect(() => {
-    if (!showPanel) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      onEnd();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [showPanel, onEnd]);
 
   return (
     <div
@@ -64,7 +73,7 @@ export function Station({ phase, showPanel, onEnd }: Props) {
       {/* Orbit creates and owns its canvas inside this container. */}
       <div ref={containerRef} className={styles.orbit} />
 
-      {showPanel ? (
+      {showPanel && question && state ? (
         <div className={styles.band}>
           <section className={styles.panel}>
             <div className={styles.head}>
@@ -73,26 +82,18 @@ export function Station({ phase, showPanel, onEnd }: Props) {
             </div>
             <h2 className={`${styles.title} arcade`}>SATELLITE FEED</h2>
 
-            <div className={styles.feed} data-testid="feed" aria-live="polite">
-              <span className={styles.scanlines} aria-hidden="true" />
-              <span className={`${styles.standby} arcade`}>
-                LINK STANDING BY<span className={styles.cursor}>_</span>
-              </span>
-            </div>
-
-            <p className={styles.copy}>
-              Docked at Wikiplanet Station. Uplink established, imagery not on this build yet.
-              The fleet is holding for your call.
-            </p>
-
-            <button
-              type="button"
-              className={`${styles.end} arcade`}
-              onClick={onEnd}
-              data-testid="end-transmission"
-            >
-              END TRANSMISSION
-            </button>
+            {/* Keyed on the site, so a new one starts with a clear box and dial. */}
+            <StationFeed
+              key={question.id}
+              question={question}
+              state={state}
+              more={more}
+              onFeedReady={onFeedReady}
+              onBuyIntel={onBuyIntel}
+              onOptics={onOptics}
+              onSubmit={onSubmit}
+              onNext={onNext}
+            />
           </section>
         </div>
       ) : null}
