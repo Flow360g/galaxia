@@ -2,26 +2,26 @@
   "date": "2026-09-21",
   "roundNumber": 3,
   "seed": 20260921,
-  "theme": "Science",
+  "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "prompt": "Which of these are noble gases?",
+      "prompt": "Which of these countries share a land border with Germany?",
       "options": [
-        "Neon",
-        "Nitrogen",
-        "Argon",
-        "Oxygen",
-        "Helium",
-        "Hydrogen"
+        "Poland",
+        "Portugal",
+        "Denmark",
+        "Norway",
+        "Austria",
+        "Ireland"
       ],
       "answers": [
         0,
         2,
         4
       ],
-      "fact": "Noble gases have full outer electron shells, which is why they barely react. Helium was found in the Sun's light before it was found on Earth."
+      "fact": "Germany has nine land neighbours, from Denmark in the north round to Austria and Switzerland in the south."
     },
     {
       "id": "q2",
@@ -45,50 +45,50 @@
     {
       "id": "q3",
       "type": "vector",
-      "prompt": "How fast does light travel, in kilometres per second?",
-      "answer": 299792,
-      "min": 10000,
-      "max": 3000000,
-      "unit": "km/s",
-      "log": true,
-      "fact": "299,792 km every second. The sunlight on your face left the Sun about eight minutes ago."
+      "prompt": "How many years did the Hundred Years' War actually last?",
+      "answer": 116,
+      "min": 50,
+      "max": 200,
+      "unit": "years",
+      "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
     },
     {
       "id": "q4",
       "type": "vector",
-      "prompt": "How many bones are in an adult human body?",
-      "answer": 206,
-      "min": 50,
-      "max": 500,
-      "fact": "206. A baby is born with around 270, and many of them fuse together as the skeleton grows."
+      "prompt": "How long does sunlight take to reach Earth, in minutes?",
+      "answer": 8.3,
+      "min": 1,
+      "max": 60,
+      "unit": "min",
+      "fact": "About 8 minutes 20 seconds. From the next nearest star it takes more than four years."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "prompt": "Which planet has the most known moons?",
+      "prompt": "Who painted the ceiling of the Sistine Chapel?",
       "options": [
-        "Jupiter",
-        "Saturn",
-        "Uranus",
-        "Neptune"
+        "Leonardo",
+        "Raphael",
+        "Michelangelo",
+        "Donatello"
       ],
-      "answer": 1,
-      "hint": "The ringed one pulled ahead in 2023.",
-      "fact": "Saturn overtook Jupiter in 2023 and now has well over a hundred confirmed moons, most of them tiny."
+      "answer": 2,
+      "hint": "He considered himself a sculptor, not a painter.",
+      "fact": "Michelangelo painted it standing on scaffolding, craning upward, over four years from 1508."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "prompt": "What is the hardest naturally occurring substance?",
+      "prompt": "Which country has the most islands?",
       "options": [
-        "Quartz",
-        "Diamond",
-        "Titanium",
-        "Graphite"
+        "Indonesia",
+        "Philippines",
+        "Sweden",
+        "Canada"
       ],
-      "answer": 1,
-      "hint": "It is pure carbon, and so is one of the wrong answers.",
-      "fact": "Diamond and graphite are both pure carbon. The only difference is how the atoms are bonded together."
+      "answer": 2,
+      "hint": "Think Scandinavia, and count the tiny ones.",
+      "fact": "Sweden counts about 267,000 islands, and only around a thousand of them are inhabited."
     },
     {
       "id": "q7",

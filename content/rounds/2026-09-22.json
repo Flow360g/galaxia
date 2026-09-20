@@ -2,79 +2,79 @@
   "date": "2026-09-22",
   "roundNumber": 4,
   "seed": 20260922,
-  "theme": "History and culture",
+  "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "prompt": "Which of these people were Roman emperors?",
+      "prompt": "Which of these countries have won the men's football World Cup?",
       "options": [
-        "Nero",
-        "Hannibal",
-        "Augustus",
-        "Pericles",
-        "Hadrian",
-        "Cleopatra"
+        "Uruguay",
+        "Belgium",
+        "France",
+        "Portugal",
+        "Spain",
+        "Mexico"
       ],
       "answers": [
         0,
         2,
         4
       ],
-      "fact": "Hadrian's Wall took about six years to build across northern Britain, and much of it still stands."
+      "fact": "Uruguay won the first World Cup in 1930, at home, and did it again in 1950 in Brazil's own stadium."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "prompt": "Which of these instruments have strings?",
+      "prompt": "Which of these are noble gases?",
       "options": [
-        "Cello",
-        "Oboe",
-        "Harp",
-        "Trumpet",
-        "Banjo",
-        "Flute"
+        "Neon",
+        "Nitrogen",
+        "Argon",
+        "Oxygen",
+        "Helium",
+        "Hydrogen"
       ],
       "answers": [
         0,
         2,
         4
       ],
-      "fact": "A concert harp has 47 strings and seven pedals, each of which retunes a whole set of strings at once."
+      "fact": "Noble gases have full outer electron shells, which is why they barely react. Helium was found in the Sun's light before it was found on Earth."
     },
     {
       "id": "q3",
       "type": "vector",
-      "prompt": "How many years did the Hundred Years' War actually last?",
-      "answer": 116,
-      "min": 50,
-      "max": 200,
-      "unit": "years",
-      "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
+      "prompt": "How long is the Nile?",
+      "answer": 6650,
+      "min": 1000,
+      "max": 12000,
+      "unit": "km",
+      "fact": "About 6,650 km. The Amazon runs it close, and some surveys put the Amazon ahead."
     },
     {
       "id": "q4",
       "type": "vector",
-      "prompt": "How many keys does a standard piano have?",
-      "answer": 88,
-      "min": 20,
-      "max": 200,
-      "unit": "keys",
-      "fact": "88: 52 white and 36 black, a range settled on in the 1880s and never changed."
+      "prompt": "How fast can a cheetah run, in km/h?",
+      "answer": 110,
+      "min": 30,
+      "max": 250,
+      "unit": "km/h",
+      "fact": "Around 110 km/h in a short burst, and 0 to 100 in about three seconds, quicker than most sports cars."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "prompt": "Who painted the ceiling of the Sistine Chapel?",
+      "prompt": "Which planet has the shortest day?",
       "options": [
-        "Leonardo",
-        "Raphael",
-        "Michelangelo",
-        "Donatello"
+        "Mars",
+        "Jupiter",
+        "Saturn",
+        "Neptune"
       ],
-      "answer": 2,
-      "hint": "He considered himself a sculptor, not a painter.",
-      "fact": "Michelangelo painted it standing on scaffolding, craning upward, over four years from 1508."
+      "answer": 1,
+      "hint": "The biggest one spins the fastest.",
+      "fact": "Jupiter spins once every 9 hours 56 minutes."
     },
     {
       "id": "q6",

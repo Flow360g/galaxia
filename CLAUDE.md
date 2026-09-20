@@ -434,6 +434,13 @@ to announce, so a round can skip a number if it has to.
   distinctive word of its opener, which matters most when this prose is
   generated rather than written. A Commons filename is never rendered: it
   usually names the answer.
+- **Every day is mixed general knowledge, never a themed round.** The six
+  quiz questions come from six different corners (geography, space, animals,
+  history, food, sport, science, the arts) and never more than two from any
+  one, placed apart in the run. A day of all-geography or all-space reads as
+  a specialist's quiz and drives off everyone else. `theme` stays "General
+  knowledge" for every round; it is the sector label on the title screen and
+  the share card, not a subject.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.
