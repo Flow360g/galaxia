@@ -6,10 +6,10 @@ import type { Outcome, Question, Round, ScoreLine } from "./types";
  *
  * Pure, like `Flight`, and deliberately separate from it. Distance is a
  * speedometer integrated over the run and makes a poor anchor, because
- * nobody knows whether 12,000 km is a good day. The score is countable: seven
+ * nobody knows whether 12,000 km is a good day. The score is countable: eight
  * encounters, the same base each, a streak multiplier in whole steps, and a
- * flat dock for a wrong answer. "1,880 out of 2,400" reads the same to
- * everyone, which is what makes a run comparable in a group chat.
+ * flat dock only where the player took a risk on. "1,240 out of 1,800" reads
+ * the same to everyone, which is what makes a run comparable in a group chat.
  *
  * The maximum is the perfect run: every encounter at full marks, so the
  * streak going into encounter `i` is exactly `i`. That gives every line of
@@ -24,12 +24,34 @@ export function multiplierFor(streak: number): number {
 }
 
 /**
- * What an encounter is worth before the multiplier. WHERE ON EARTH is the
- * finale and carries double, so the quoted total rises with it rather than the
- * finale being worth no more than an mcq.
+ * What an encounter is worth before the multiplier. WHERE ON EARTH has a
+ * base of its own in `SCORE` so it can be weighted apart from the flight; it
+ * is the same figure today, after a spell at double that made the finale
+ * half the run.
  */
 export function baseFor(question: Question): number {
   return question.type === "earth" ? SCORE.earthBase : SCORE.perEncounter;
+}
+
+/**
+ * What a wrong answer costs, by where it went wrong. A cluster never docks:
+ * losing one is worth zero and no less. A general knowledge lane docks only
+ * with Boost pressed first, because that is the player choosing the stake.
+ * The scout and the station keep the flat dock, doubled with no shields up.
+ */
+export function penaltyFor(outcome: Outcome, question?: Question): number {
+  switch (question?.type) {
+    case "cluster":
+      return SCORE.penalty.cluster;
+    case "mcq":
+      return outcome.boosted ? SCORE.penalty.laneBoosted : SCORE.penalty.lane;
+    default:
+      return outcome.timedOut
+        ? SCORE.penalty.timeout
+        : outcome.kind === "wreck"
+          ? SCORE.penalty.wreck
+          : SCORE.penalty.collision;
+  }
 }
 
 /** Points on offer at encounter `index` of a perfect run. */
@@ -63,14 +85,11 @@ export function scoreOutcome(
   const share = shareOf(outcome);
 
   if (share <= 0) {
-    // Wrong, or out of time. A flat dock, and the streak is gone anyway,
-    // which is the bigger half of what it costs.
-    const penalty = outcome.timedOut
-      ? SCORE.penalty.timeout
-      : outcome.kind === "wreck"
-        ? SCORE.penalty.wreck
-        : SCORE.penalty.collision;
-    return { base: 0, multiplier, points: -penalty };
+    // Wrong, or out of time. Usually nothing, sometimes a flat dock, and the
+    // streak is gone either way, which is the bigger half of what it costs.
+    const penalty = penaltyFor(outcome, question);
+    // `-0` would print as a dock of nothing; a zero penalty is a plain 0.
+    return { base: 0, multiplier, points: penalty > 0 ? -penalty : 0 };
   }
 
   const base = Math.round((question ? baseFor(question) : SCORE.perEncounter) * share);

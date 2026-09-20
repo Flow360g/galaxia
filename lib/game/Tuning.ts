@@ -136,9 +136,23 @@ export const CLUSTER = {
   firstPickBonusSeconds: 2,
   /**
    * A breather after a plasma pod is collected, before the clock for the next
-   * pick starts draining. Long enough to see what was banked.
+   * pick starts draining. Long enough to see what was banked. The same beat
+   * follows a boulder the cluster's own shield took.
    */
   collectPauseSeconds: 1.1,
+  /**
+   * The read screen. A cluster opens on its question alone, no lanes and no
+   * pick clock, with a READY button and this many seconds before the lanes
+   * come up on their own. The first test player lost the first cluster to a
+   * clock they had not noticed start; nobody should be timed on reading.
+   */
+  readSeconds: 10,
+  /**
+   * Shields a cluster carries of its own, on top of the run's. A wrong lane
+   * costs one and the plasma stays banked; with none left the next wrong lane
+   * loses the cluster for zero points. A cluster never docks points.
+   */
+  shields: 1,
   /**
    * Impulse multiplier by PLASMA banked. Index = charge. One plasma is a
    * plain thread; the full charge is the biggest burst in the game.
@@ -223,8 +237,13 @@ export const LANE = {
  * is a speedometer reading, and a speedometer is a poor anchor: nobody knows
  * whether 12,000 km is good. The score is fixed and countable instead. Every
  * encounter is worth the same base, the streak multiplies it in whole steps,
- * and a wrong answer docks a flat amount, so "1,880 out of 2,400" means the
- * same thing to everyone comparing runs.
+ * and most wrong answers simply score nothing, so "1,240 out of 1,800" means
+ * the same thing to everyone comparing runs.
+ *
+ * Penalties are rare on purpose. The first version docked every miss and the
+ * first test player finished on zero: a run that ends at nothing is a run
+ * nobody shares. Points now come off only where the player chose the risk,
+ * a boosted lane or a wild shot at the scout.
  */
 export const SCORE = {
   /** Points an encounter is worth at full marks, before the multiplier. */
@@ -241,10 +260,11 @@ export const SCORE = {
   /**
    * General knowledge: share of the base for a right answer WITHOUT boost.
    * Boost, pressed before the answer, lifts it to the full base; a wrong
-   * boosted answer is a wreck and costs `penalty.wreck`. The perfect run in
-   * `maxScoreFor` assumes every lane was boosted, so the total stays fixed.
+   * boosted answer costs `penalty.laneBoosted`, and a wrong plain answer
+   * costs nothing. The perfect run in `maxScoreFor` assumes every lane was
+   * boosted, so the total stays fixed.
    */
-  laneShare: 0.75,
+  laneShare: 0.5,
   /**
    * Multiplier by the streak carried INTO the encounter; the last value holds
    * for anything longer. Whole numbers on purpose: x2 is a thing a player can
@@ -252,24 +272,29 @@ export const SCORE = {
    */
   streakMultipliers: [1, 1, 2, 2, 3, 3, 3],
   /**
-   * WHERE ON EARTH is the finale and is worth double a normal encounter: it is
-   * the longest, the hardest, and the one the whole run builds toward. Two
-   * sites are flown, so the station is worth 400 of a perfect run before
-   * multipliers.
+   * WHERE ON EARTH is worth the same base as every other encounter. It was
+   * double for a while, and with two sites at the top of the multiplier the
+   * finale was half the run: a player who flew the belt and the scout well
+   * and missed the feed had nothing to show for it.
    */
-  earthBase: 200,
+  earthBase: 100,
   /**
    * What working the feed costs, as a share of `earthBase`. Intel is the
    * expensive one because someone else is handing you the answer; the optics
    * dial is cheap and reversible because the player is working their own
-   * instrument. Tuned at /satellite-mock: 25 and 10 against a base of 200.
+   * instrument. 15 and 5 against a base of 100.
    */
-  earthIntelCost: 0.125,
+  earthIntelCost: 0.15,
   earthOpticsCost: 0.05,
   /** However much was bought, a correct call is never worth less than this. */
   earthFloor: 0.25,
-  /** Points docked for getting it wrong. A wreck costs double a collision. */
-  penalty: { collision: 25, wreck: 50, timeout: 25 },
+  /**
+   * Points docked for getting it wrong, by where it went wrong. A cluster
+   * never docks: its second wrong lane is worth zero and no less. A general
+   * knowledge lane docks only with Boost pressed first. The scout and the
+   * station keep the flat dock; a wreck (no shields left) costs double.
+   */
+  penalty: { cluster: 0, lane: 0, laneBoosted: 25, collision: 25, wreck: 50, timeout: 25 },
 } as const;
 
 /** The run's shields. Each wrong lane costs one; at zero, a miss is a wreck. */
@@ -520,8 +545,12 @@ export const ALIEN = {
 
 export const NOVA = {
   perRun: 2,
-  /** Thrust spent on a scan, as a fraction of full thrust. */
-  thrustCost: 0.22,
+  /**
+   * Seconds a scan puts BACK on the clock. It used to spend thrust, and a
+   * lifeline that costs time to pull is not one; the hint arrives with a
+   * second to read it in.
+   */
+  bonusSeconds: 1,
   /** How many options a narrow scan keeps lit (always including the answer). */
   narrowKeep: 2,
 } as const;

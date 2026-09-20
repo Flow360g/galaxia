@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
-import { launch } from "./helpers";
+import { launch, readUp } from "./helpers";
 
 /**
  * Sound is synthesised, not sampled, so there is no file to assert on. What
@@ -99,6 +99,8 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
 
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+  // Past the read screen: the bed is measured with the lanes up, as in play.
+  await readUp(page);
   // Browsers hold a context suspended until a gesture; the toggle is one.
   // Off and straight back on leaves the run where it started, sound on.
   const toggle = page.getByTestId("sound");
@@ -144,7 +146,14 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
     window.__peak = 0;
     window.__brightest = 0;
   });
-  await page.getByTestId(`option-${wrongLaneOf(0)}`).click();
+  // The cluster's own shield takes the first boulder and the second one loses
+  // the cluster. Both are the same crack on the hull; the peak is the louder.
+  const [wrongA, wrongB] = wrongLanesOf(0);
+  await page.getByTestId(`option-${wrongA}`).click();
+  await expect(page.getByTestId(`option-${wrongA}`)).toHaveAttribute("data-struck", "true", {
+    timeout: 10_000,
+  });
+  await page.getByTestId(`option-${wrongB}`).click();
   await expect(page.getByTestId("toast")).toHaveAttribute("data-outcome", "collision", {
     timeout: 10_000,
   });
@@ -184,11 +193,12 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   });
 });
 
-function wrongLaneOf(index: number): number {
+/** The wrong lanes of a cluster, in lane order. There are always three. */
+function wrongLanesOf(index: number): number[] {
   const question = round.questions[index];
   if (!question || question.type !== "cluster") throw new Error(`no cluster at ${index}`);
   const answers = question.answers as number[];
-  const lane = question.options.findIndex((_, i) => !answers.includes(i));
-  if (lane < 0) throw new Error(`no wrong lane at ${index}`);
-  return lane;
+  const lanes = question.options.map((_, i) => i).filter((i) => !answers.includes(i));
+  if (lanes.length < 2) throw new Error(`not enough wrong lanes at ${index}`);
+  return lanes;
 }
