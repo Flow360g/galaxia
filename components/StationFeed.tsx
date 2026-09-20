@@ -234,7 +234,7 @@ export function StationFeed({
                 className={styles.input}
                 value={typed}
                 onChange={(event) => setTyped(event.target.value)}
-                placeholder="Name the city"
+                placeholder="Name the place"
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}

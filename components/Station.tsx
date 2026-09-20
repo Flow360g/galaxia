@@ -92,7 +92,7 @@ export function Station({
             </div>
             {/* The task first, then the one thing a first-timer missed in play:
                 that there are hints at all, and how many. */}
-            <h2 className={`${styles.title} arcade`}>NAME THE CITY</h2>
+            <h2 className={`${styles.title} arcade`}>NAME THE PLACE</h2>
             {!revealed ? (
               <span className={`${styles.hints} arcade`} data-testid="station-hints">
                 YOU HAVE {countWord(hints)} {hints === 1 ? "HINT" : "HINTS"} TO USE

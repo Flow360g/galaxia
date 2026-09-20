@@ -209,7 +209,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(station).toContainText(/where on earth/i);
   // The task and the hint count are the first things on the panel: a tester
   // once played the whole phase without knowing hints existed.
-  await expect(station).toContainText(/name the city/i);
+  await expect(station).toContainText(/name the place/i);
   await expect(page.getByTestId("station-hints")).toContainText(/hints to use/i);
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
