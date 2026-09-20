@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Orbit } from "@/lib/game/Orbit";
 import { StationFeed } from "./StationFeed";
 import type { EarthQuestion, GameState } from "@/lib/game/types";
@@ -35,10 +35,12 @@ interface Props {
  * the backdrop for the tally and the share card too, which is why it is
  * gated on the run's phase rather than on whether the run is still live.
  *
- * The band at the top follows the HUD's rule: sized by its contents, capped
- * well short of the middle, and nothing of it over the lower half of the
- * screen, which is the scene's. The satellite feed is a placeholder here;
- * the imagery is the next build.
+ * The panel is the exception to the HUD's keep-out rule, and deliberately so.
+ * That rule exists to leave the lower screen to the ship, and there is no ship
+ * here: the flight is parked and the orbit scene is a backdrop. An optic, an
+ * intel stack and a text input do not fit in the band's usual 62vh, so the
+ * panel takes the screen and `StationFeed` scrolls inside itself. The page
+ * still never scrolls, and the band lifts when the keyboard opens.
  */
 export function Station({
   phase,
@@ -62,6 +64,8 @@ export function Station({
     return () => orbit.dispose();
   }, []);
 
+  const keyboard = useSyncExternalStore(subscribeViewport, keyboardInset, () => 0);
+
   return (
     <div
       className={styles.station}
@@ -74,7 +78,7 @@ export function Station({
       <div ref={containerRef} className={styles.orbit} />
 
       {showPanel && question && state ? (
-        <div className={styles.band}>
+        <div className={styles.band} style={{ bottom: keyboard }}>
           <section className={styles.panel}>
             <div className={styles.head}>
               <span className={`${styles.tag} arcade`}>WHERE ON EARTH</span>
@@ -99,4 +103,39 @@ export function Station({
       ) : null}
     </div>
   );
+}
+
+/**
+ * How much of the screen the software keyboard has taken, in CSS pixels.
+ *
+ * WHERE ON EARTH is the game's only text input, and the screen it sits on is
+ * `position: fixed`, so the browser cannot scroll it clear: on a phone the
+ * keyboard would simply cover the input and the Send button. The visual
+ * viewport shrinks when the keyboard opens while the layout viewport does not,
+ * and the difference is exactly how far the band has to lift. Nothing here
+ * matters on a desktop, where the inset stays 0.
+ *
+ * Read through `useSyncExternalStore` rather than an effect, so the server and
+ * the first client render agree on 0 and nothing sets state during a commit.
+ */
+function subscribeViewport(onChange: () => void): () => void {
+  const viewport = typeof window === "undefined" ? null : window.visualViewport;
+  if (!viewport) return () => {};
+  viewport.addEventListener("resize", onChange);
+  // iOS scrolls the visual viewport as well as resizing it when a focused
+  // input is brought into view, and the offset counts toward the inset.
+  viewport.addEventListener("scroll", onChange);
+  return () => {
+    viewport.removeEventListener("resize", onChange);
+    viewport.removeEventListener("scroll", onChange);
+  };
+}
+
+function keyboardInset(): number {
+  const viewport = typeof window === "undefined" ? null : window.visualViewport;
+  if (!viewport) return 0;
+  const hidden = window.innerHeight - viewport.height - viewport.offsetTop;
+  // Rounded, so a fractional pixel of browser chrome cannot make every scroll
+  // event a new snapshot and re-render the panel on a loop.
+  return Math.max(0, Math.round(hidden));
 }

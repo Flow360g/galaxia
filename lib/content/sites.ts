@@ -68,7 +68,7 @@ export const SITES: Site[] = [
     tier: "easy",
     zoom: 13,
     opener: "Hot desert coast. Low, flat, and conspicuously new.",
-    clue: "A desert coast on the Persian Gulf. Everything you can see was built since 2001.",
+    clue: "The water is the Persian Gulf. Every island and frond in frame was dredged after 2001.",
     landmark: { name: "Resort at the crown of a man-made frond", lat: 25.1304, lon: 55.1172 },
     street: { file: "Al Karama dubai street.jpg", credit: "Vicharam", licence: "CC BY-SA 4.0" },
     structure: { file: "UAE (5522283768).jpg", credit: "skhakirov from Donetsk, Ukraine", licence: "CC BY-SA 2.0" },
@@ -85,7 +85,7 @@ export const SITES: Site[] = [
     tier: "easy",
     zoom: 13,
     opener: "Southern Europe, built out over shallow water.",
-    clue: "A lagoon city in southern Europe, built on 118 islands in a shallow tidal basin.",
+    clue: "It stands on 118 islands in a tidal lagoon, and it has no roads at all.",
     landmark: { name: "Bell tower on the waterfront square", lat: 45.4341, lon: 12.3388 },
     street: { file: "Venice alleys (39475218242).jpg", credit: "Fernando Coelho from Utrecht, The Nederlands", licence: "CC BY 2.0" },
     structure: { file: "Campanile St. Mark's Basilica Venezia 06 2017 2925.jpg", credit: "Mariordo (Mario Roberto Durán Ortiz)", licence: "CC BY-SA 4.0" },
@@ -102,7 +102,7 @@ export const SITES: Site[] = [
     tier: "easy",
     zoom: 13,
     opener: "North Atlantic seaboard. Dense, and gridded throughout.",
-    clue: "A rectangle of green cut into a dense grid on a North Atlantic island.",
+    clue: "The green rectangle was cut into the grid on purpose in the 1850s. The whole district is an island.",
     landmark: { name: "Reservoir, drained of its role in 1993", lat: 40.7857, lon: -73.9615 },
     street: { file: "East side of Manhattan street looking west with trees and cars.jpg", credit: "Tomwsulcer", licence: "CC0" },
     structure: { file: "Fountain in Jacqueline Kennedy Onassis Central Park Reservoir Upper West Side Manhattan Skyline View.jpg", credit: "EgorovaSvetlana", licence: "CC BY-SA 4.0" },
@@ -119,7 +119,7 @@ export const SITES: Site[] = [
     tier: "easy",
     zoom: 14,
     opener: "North Africa. Hot, dry, and abruptly irrigated.",
-    clue: "Where the desert stops dead against irrigated land, in North Africa.",
+    clue: "One river feeds everything green here. The oldest stone monuments on Earth stand on the dry side of the line.",
     landmark: { name: "Tomb complex, c.2560 BC", lat: 29.9792, lon: 31.1342 },
     street: { file: "A street in Cairo 03289.jpg", credit: "Al Jazeera English", licence: "CC BY-SA 2.0" },
     structure: { file: "The Great Pyramid of Giza (Pyramid of Cheops or Khufu) (14797814994).jpg", credit: "Jorge Láscar from Melbourne, Australia", licence: "CC BY 2.0" },
@@ -136,7 +136,7 @@ export const SITES: Site[] = [
     tier: "easy",
     zoom: 13,
     opener: "Southern hemisphere, arid interior. Nothing for miles.",
-    clue: "Red arid interior of a southern hemisphere continent. Nearest town is 450 km away.",
+    clue: "The nearest town is 450 km off. The single sandstone dome in frame rises 348 m out of the sand.",
     decoys: ["Kata Tjuta", "Kings Canyon", "Mount Augustus"],
     accept: ["uluru", "ayers rock", "ayers"],
     fact: "Most of Uluru is underground. The visible rock is the tip of a slab extending several kilometres down.",
@@ -151,7 +151,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 15,
     opener: "Mediterranean coast, tightly and regularly gridded.",
-    clue: "A Mediterranean port. The grid has chamfered corners on every single block.",
+    clue: "Every block in the grid has its corners chamfered, to an 1859 plan that was never finished.",
     landmark: { name: "Undulating stone apartment block, 1912", lat: 41.3953, lon: 2.1619 },
     street: { file: "Aymar 10-16.jpg", credit: "Xavier Badia Castellà", licence: "CC BY-SA 3.0" },
     structure: { file: "Barcelona - Casa Milà.jpg", credit: "Fred Romero", licence: "CC BY 2.0" },
@@ -168,7 +168,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 12,
     opener: "Inland South America, on a high open plateau.",
-    clue: "A capital built from nothing in 41 months, on an empty inland plateau.",
+    clue: "A capital raised from bare ground in 41 months, and laid out as one deliberate shape.",
     landmark: { name: "Twin towers and two bowls, one up one down", lat: -15.7997, lon: -47.8644 },
     street: { file: "Brasilia street xenia antunes.JPG", credit: "Xenia Antunes", licence: "CC BY-SA 4.0" },
     structure: { file: "Brazilian National Congress.jpg", credit: "Eurico Zimbres", licence: "CC BY-SA 2.5" },
@@ -185,7 +185,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 13,
     opener: "Northern Europe, at sea level, and very wet.",
-    clue: "Northern Europe, at sea level. Four concentric canals wrap the old centre.",
+    clue: "Four concentric canals wrap the old centre, dug as a single 17th century plan.",
     landmark: { name: "National museum with a cycle path through it", lat: 52.36, lon: 4.8852 },
     street: { file: "View on a temporary bike-path along the sidewalk wit walking people and the road Ruijterkade; location is behind Central Station Amsterdam; free photo by Fons Heijnsbroek, April 2022.tif", credit: "Fons Heijnsbroek", licence: "CC0" },
     structure: { file: "Rijksmuseum, Amsterdam, Netherlands (Unsplash).jpg", credit: "Will van Wingerden willvanw", licence: "CC0" },
@@ -202,7 +202,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 14,
     opener: "Southern hemisphere. A deep natural harbour.",
-    clue: "A drowned river valley on a Pacific coast, in the southern hemisphere.",
+    clue: "A drowned river valley, flooded when the sea rose. It opens onto the Pacific.",
     landmark: { name: "Concert hall roofed in precast shells", lat: -33.8568, lon: 151.2153 },
     street: { file: "AUS Sydney, Woollahra, Guilfoyle Avenue 001.jpg", credit: "-wuppertaler", licence: "CC BY 4.0" },
     structure: { file: "Exterior of Sydney Opera House.jpg", credit: "BennyG3255", licence: "CC BY-SA 4.0" },
@@ -219,7 +219,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 13,
     opener: "Eastern Mediterranean, straddling a body of water.",
-    clue: "A strait splits this city between two continents.",
+    clue: "A strait runs through it, putting half the city in Europe and half in Asia.",
     landmark: { name: "Domed basilica, then mosque, 537 AD", lat: 41.0086, lon: 28.9802 },
     street: { file: "Busy road in Istanbul 01.JPG", credit: "Ibrahim Husain Meraj", licence: "CC BY-SA 3.0" },
     structure: { file: "Hagia Sophia Mars 2013.jpg", credit: "Arild Vågen", licence: "CC BY-SA 3.0" },
@@ -236,7 +236,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 13,
     opener: "Southern hemisphere. A port hemmed in by mountains.",
-    clue: "A flat topped mountain pins this port against the sea, near a continent's southern tip.",
+    clue: "The mountain behind it has a flat top, and the end of the continent is a day's drive down the coast.",
     landmark: { name: "Stadium built for the 2010 World Cup", lat: -33.9038, lon: 18.4109 },
     street: { file: "A Street in Meadowridge, Cape Town (1).jpg", credit: "Husskeyy", licence: "CC BY-SA 4.0" },
     structure: { file: "Cape Town Stadium, Cape Town, South Africa (Unsplash).jpg", credit: "Deklerk Basson dkbasson", licence: "CC0" },
@@ -253,7 +253,7 @@ export const SITES: Site[] = [
     tier: "medium",
     zoom: 13,
     opener: "Equatorial South East Asia, on a busy strait.",
-    clue: "Equatorial. One of the busiest anchorages on Earth sits just offshore.",
+    clue: "One of the busiest anchorages on Earth sits just offshore, and what you can see is most of the country.",
     landmark: { name: "Three towers under one boat-shaped deck", lat: 1.2834, lon: 103.8607 },
     street: { file: "2013-01-22 Street in Singapore.jpg", credit: "Karl Baron", licence: "CC BY 2.0" },
     structure: { file: "2016 Singapur, Downtown Core, Marina Bay Sands (01).jpg", credit: "Marcin Konsek", licence: "CC BY-SA 4.0" },
@@ -271,7 +271,7 @@ export const SITES: Site[] = [
     tier: "hard",
     zoom: 13,
     opener: "North America. High, inland, ringed by mountains.",
-    clue: "A high altitude basin in North America, ringed by volcanoes, built on a drained lake.",
+    clue: "The peaks around it are volcanoes, and the ground is a drained lake bed that is still sinking.",
     landmark: { name: "Cathedral on a vast bare civic square", lat: 19.4341, lon: -99.1329 },
     street: { file: "Autobús de transporte público durante una filmación en la Ciudad de México 01.jpg", credit: "Luisalvaz", licence: "CC BY-SA 4.0" },
     structure: { file: "Catedral de Mexico - Mexico 2024.jpg", credit: "José Luiz", licence: "CC BY-SA 4.0" },
@@ -288,7 +288,7 @@ export const SITES: Site[] = [
     tier: "hard",
     zoom: 13,
     opener: "South Asia. A humid coast, extraordinarily dense.",
-    clue: "A monsoon coast in South Asia. The peninsula was seven separate islands until the British joined them.",
+    clue: "The peninsula was seven separate islands until the British filled the water between them.",
     landmark: { name: "Gothic revival railway terminus, 1888", lat: 18.9398, lon: 72.8355 },
     street: { file: "Bandra talao road.JPG", credit: "Karthikndr", licence: "CC BY-SA 3.0" },
     structure: { file: "Chhatrapati Shivaji Maharaj Terminus, Mumbai city.jpg", credit: "Sntshkumar750", licence: "CC0" },
@@ -305,7 +305,7 @@ export const SITES: Site[] = [
     tier: "hard",
     zoom: 14,
     opener: "East Asia. Coastal, low rise, and enormous.",
-    clue: "East Asia. The densest rail network on the planet runs under this ground.",
+    clue: "The densest rail network on the planet runs under this ground.",
     landmark: { name: "The busiest pedestrian crossing on earth", lat: 35.6595, lon: 139.7005 },
     street: { file: "2024-10-20 A street in Tokyo 02.jpg", credit: "Alexkom000", licence: "CC BY 4.0" },
     structure: { file: "1 shibuya crossing 2012.jpg", credit: "chensiyuan", licence: "CC BY-SA 4.0" },
@@ -322,7 +322,7 @@ export const SITES: Site[] = [
     tier: "hard",
     zoom: 14,
     opener: "South America, Atlantic side. Flat and gridded.",
-    clue: "A South American capital on the widest river estuary in the world.",
+    clue: "The estuary offshore is the widest river mouth in the world.",
     landmark: { name: "Obelisk on a sixteen-lane avenue", lat: -34.6037, lon: -58.3816 },
     street: { file: "Beruti Street, Palermo.jpg", credit: "L. W. Yang", licence: "CC BY 2.0" },
     structure: { file: "Obelisco de Buenos Aires (2), AA 2014.jpg", credit: "Green Mostaza", licence: "CC BY 4.0" },
@@ -331,6 +331,61 @@ export const SITES: Site[] = [
     fact: "The Rio de la Plata is 220 km wide at its mouth, so wide that the far bank is over the horizon.",
   },
 ];
+
+/**
+ * The rungs must not repeat each other.
+ *
+ * Every rung is bought with points, so a rung that restates the free opener is
+ * a rung the player paid for and got nothing from. It happened in play: the
+ * opener read "Northern Europe, at sea level, and very wet" and the intel that
+ * cost 25 points opened with "Northern Europe, at sea level". The opener owns
+ * continent, climate and terrain; the clue owns the one structural or historical
+ * detail that the picture cannot show.
+ *
+ * Checked at import, in the build, the way a malformed round is. It matters more
+ * once the AUTOMATION SEAM above is real and this prose is generated rather than
+ * written, because nobody will be reading the pair side by side any more.
+ */
+const OPENER_STOPWORDS = new Set([
+  "about",
+  "against",
+  "along",
+  "another",
+  "around",
+  "built",
+  "every",
+  "other",
+  "since",
+  "their",
+  "there",
+  "these",
+  "thing",
+  "through",
+  "under",
+  "where",
+  "which",
+  "while",
+  "whole",
+  "world",
+]);
+
+/** Words of five letters or more, lowercased and stripped of punctuation. */
+function distinctive(text: string): string[] {
+  return (text.toLowerCase().match(/[a-z]{5,}/g) ?? []).filter(
+    (word) => !OPENER_STOPWORDS.has(word),
+  );
+}
+
+for (const site of SITES) {
+  const opener = new Set(distinctive(site.opener));
+  const repeated = distinctive(site.clue).filter((word) => opener.has(word));
+  if (repeated.length > 0) {
+    throw new Error(
+      `Site ${site.id}: the clue repeats the free opener (${repeated.join(", ")}). ` +
+        `Intel is paid for, so it has to carry something new.`,
+    );
+  }
+}
 
 /**
  * The two sites for a date. Seeded by the date key alone, so every player on

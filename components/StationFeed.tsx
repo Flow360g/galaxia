@@ -65,6 +65,19 @@ export function StationFeed({
   const outcome = state.outcome;
   const revealed = state.awaitingTap && outcome !== null;
 
+  /**
+   * Intel and the verdict both land at the bottom of the stack, which on a
+   * phone is off the bottom of the scroll region. Bring it into view: the
+   * player just spent points on it, so leaving it unseen is the same bug as
+   * not being able to reach the input.
+   */
+  const scroll = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = scroll.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
+  }, [state.earthIntel, revealed]);
+
   // Per-site state is reset by keying this component on the question id in the
   // parent, which is cheaper and clearer than clearing it in an effect.
 
@@ -91,126 +104,141 @@ export function StationFeed({
             }}
           />
         </div>
-        <span className={`${styles.clockValue} mono`}>{remaining.toFixed(1)}</span>
+        <span className={`${styles.clockValue} mono`} data-testid="feed-clock">
+          {remaining.toFixed(1)}
+        </span>
       </div>
 
-      <Optic question={question} zoom={zoom} pin={shown.has("landmark")} onReady={onFeedReady} />
+      <div className={styles.scroll} ref={scroll} data-testid="feed-scroll">
+        <Optic question={question} zoom={zoom} pin={shown.has("landmark")} onReady={onFeedReady} />
 
-      {!state.feedReady ? (
-        <p className={`${styles.acquiring} arcade`}>Acquiring feed</p>
-      ) : null}
+        {!state.feedReady ? (
+          <p className={`${styles.acquiring} arcade`}>Acquiring feed</p>
+        ) : null}
 
-      {!revealed ? (
-        <div className={styles.optics}>
-          <span className={`${styles.opticsLabel} arcade`}>Optics</span>
-          <div className={styles.opticsDial}>
-            {[-1, 0, 1].map((value) => {
-              const free = value === 0 || state.earthOptics.includes(value);
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  className={`${styles.opticsStep} ${optics === value ? styles.opticsOn : ""} arcade`}
-                  disabled={!state.feedReady}
-                  onClick={() => pickOptics(value)}
-                >
-                  {value === -1 ? "Wider" : value === 0 ? "Standard" : "Closer"}
-                  {free ? null : (
-                    <span className={styles.opticsCost}>
-                      -{Math.round(SCORE.earthBase * SCORE.earthOpticsCost)}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        {!revealed ? (
+          <div className={styles.optics}>
+            <span className={`${styles.opticsLabel} arcade`}>Optics</span>
+            <div className={styles.opticsDial}>
+              {[-1, 0, 1].map((value) => {
+                const free = value === 0 || state.earthOptics.includes(value);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`${styles.opticsStep} ${optics === value ? styles.opticsOn : ""} arcade`}
+                    disabled={!state.feedReady}
+                    onClick={() => pickOptics(value)}
+                  >
+                    {value === -1 ? "Wider" : value === 0 ? "Standard" : "Closer"}
+                    {free ? null : (
+                      <span className={styles.opticsCost}>
+                        -{Math.round(SCORE.earthBase * SCORE.earthOpticsCost)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      <div className={styles.intel}>
-        <p className={styles.opener}>{question.opener}</p>
-        {shown.has("clue") ? <p className={styles.line}>{question.clue}</p> : null}
-        {shown.has("street") && question.street ? (
-          <Ground shot={question.street} label="Ground probe" caption={STREET_CAPTION} />
-        ) : null}
-        {shown.has("landmark") && question.landmark ? (
-          <p className={`${styles.line} ${styles.cyan}`}>
-            <span className="arcade">Landmark</span> {question.landmark.name}, pinned in frame.
-          </p>
-        ) : null}
-        {shown.has("structure") && question.structure && question.landmark ? (
-          <Ground shot={question.structure} label="Structure" caption={question.landmark.name} />
-        ) : null}
-        {shown.has("territory") ? (
-          <p className={styles.line}>
-            Territory: {question.country}. Designation begins with {question.name.charAt(0)}.
-          </p>
+        <div className={styles.intel}>
+          <p className={styles.opener}>{question.opener}</p>
+          {shown.has("clue") ? <p className={styles.line}>{question.clue}</p> : null}
+          {shown.has("street") && question.street ? (
+            <Ground shot={question.street} label="Ground probe" caption={STREET_CAPTION} />
+          ) : null}
+          {shown.has("landmark") && question.landmark ? (
+            <p className={`${styles.line} ${styles.cyan}`}>
+              <span className="arcade">Landmark</span> {question.landmark.name}, pinned in frame.
+            </p>
+          ) : null}
+          {shown.has("structure") && question.structure && question.landmark ? (
+            <Ground shot={question.structure} label="Structure" caption={question.landmark.name} />
+          ) : null}
+          {shown.has("territory") ? (
+            <p className={styles.line}>
+              Territory: {question.country}. Designation begins with {question.name.charAt(0)}.
+            </p>
+          ) : null}
+        </div>
+
+        {revealed ? (
+          <div className={styles.reveal}>
+            <p className={`${styles.verdict} arcade ${outcome.correct ? styles.cyan : styles.red}`}>
+              {outcome.correct
+                ? "Site identified"
+                : outcome.timedOut
+                  ? "Signal lost"
+                  : "Wrong coordinates"}
+            </p>
+            <p className={`${styles.answer} arcade`}>
+              {question.name}, {question.country}
+            </p>
+            <p className={`${styles.gained} mono`}>
+              {(outcome.points ?? 0) >= 0 ? "+" : ""}
+              {outcome.points ?? 0} &middot; {state.earthIntel} intel &middot;{" "}
+              {state.earthOptics.length} optics
+            </p>
+            {question.fact ? <p className={styles.fact}>{question.fact}</p> : null}
+          </div>
         ) : null}
       </div>
 
-      {revealed ? (
-        <div className={styles.reveal}>
-          <p className={`${styles.verdict} arcade ${outcome.correct ? styles.cyan : styles.red}`}>
-            {outcome.correct ? "Site identified" : outcome.timedOut ? "Signal lost" : "Wrong coordinates"}
-          </p>
-          <p className={`${styles.answer} arcade`}>
-            {question.name}, {question.country}
-          </p>
-          <p className={`${styles.gained} mono`}>
-            {(outcome.points ?? 0) >= 0 ? "+" : ""}
-            {outcome.points ?? 0} &middot; {state.earthIntel} intel &middot;{" "}
-            {state.earthOptics.length} optics
-          </p>
-          {question.fact ? <p className={styles.fact}>{question.fact}</p> : null}
+      {/* Outside the scroll region, so the one control the player has to reach
+          is the one control that cannot be scrolled away from. */}
+      <div className={styles.controls}>
+        {revealed ? (
           <button type="button" className={`${styles.next} arcade`} onClick={onNext} data-testid="next-site">
             {more ? "Next site" : "Call the fleet"}
           </button>
-        </div>
-      ) : (
-        <>
-          {state.earthIntel < ladder.length ? (
-            <button
-              type="button"
-              className={`${styles.intelButton} arcade`}
-              disabled={!state.feedReady}
-              onClick={onBuyIntel}
-              data-testid="request-intel"
-            >
-              Request intel &middot; costs {Math.round(SCORE.earthBase * SCORE.earthIntelCost)}
-            </button>
-          ) : null}
+        ) : (
+          <>
+            {state.earthIntel < ladder.length ? (
+              <button
+                type="button"
+                className={`${styles.intelButton} arcade`}
+                disabled={!state.feedReady}
+                onClick={onBuyIntel}
+                data-testid="request-intel"
+              >
+                Request intel &middot; costs {Math.round(SCORE.earthBase * SCORE.earthIntelCost)}
+              </button>
+            ) : null}
 
-          <form
-            className={styles.typedRow}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!state.feedReady) return;
-              onSubmit(typed);
-            }}
-          >
-            <input
-              id="station-answer"
-              className={styles.input}
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              placeholder="Name the city"
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              disabled={!state.feedReady}
-              data-testid="site-answer"
-            />
-            <button
-              type="submit"
-              className={`${styles.submit} arcade`}
-              disabled={!state.feedReady}
-              data-testid="site-submit"
+            <form
+              className={styles.typedRow}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!state.feedReady) return;
+                onSubmit(typed);
+              }}
             >
-              Send
-            </button>
-          </form>
-        </>
-      )}
+              <input
+                id="station-answer"
+                className={styles.input}
+                value={typed}
+                onChange={(event) => setTyped(event.target.value)}
+                placeholder="Name the city"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                disabled={!state.feedReady}
+                data-testid="site-answer"
+              />
+              <button
+                type="submit"
+                className={`${styles.submit} arcade`}
+                disabled={!state.feedReady}
+                data-testid="site-submit"
+              >
+                Send
+              </button>
+            </form>
+          </>
+        )}
+      </div>
     </div>
   );
 }

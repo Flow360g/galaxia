@@ -11,7 +11,46 @@
  * picture.
  */
 
+/*
+ * Three bands, and the middle one scrolls.
+ *
+ * The clock is pinned at the top and the controls at the bottom, because the
+ * thing that must never happen is what happened in play: a bought photo grew
+ * the panel, the input went under the fold of a `position: fixed` shell that
+ * cannot scroll, and the screen read as frozen with a clock still running. So
+ * the optic and the intel stack scroll inside `.scroll` and the input is always
+ * on screen, whatever is bought.
+ */
 .feed {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* A flick that reaches the end must not become a page scroll or a browser
+     pull-to-refresh: the surface under this is a game. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The optic is a square measured off its own width. Left shrinkable it would
+   be squeezed by the scroll container instead of overflowing it, which is the
+   opposite of what is wanted here. */
+.scroll > * {
+  flex-shrink: 0;
+}
+
+/* The controls, out of the scroll and always reachable. */
+.controls {
   display: flex;
   flex-direction: column;
   gap: 8px;

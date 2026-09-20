@@ -741,8 +741,23 @@ export class Engine {
     const dt = Math.min(raw, PERF.maxDelta);
 
     if (this.parked) {
-      // Aboard the station: the bed idles on at a standstill, and that is all.
+      // Aboard the station: the world is asleep and the bed idles on at a
+      // standstill. The run is not asleep, though. Its answer clock is the only
+      // thing still ticking, and stepping it here is what keeps the countdown
+      // honest without waking the flight and adding distance to a docked ship.
+      // On `raw`, deliberately, not the clamped `dt`. The clamp exists so a
+      // backgrounded tab cannot hand back a multi-second delta and teleport the
+      // world through the ship; an answer clock has nothing to teleport. Given
+      // the clamp it ran slow whenever frames were slow, so 40 seconds meant 40
+      // seconds only on a fast device, and a daily run has to be the same
+      // question for everyone. A hidden tab is stopped outright by the
+      // visibility handler, so this never counts time the player was away.
+      this.run.tickDocked(raw);
       this.audio.update(dt, 0, 1, false);
+      // The draw is skipped but the emit is not: React reads the countdown off
+      // state, and the end of `update` (where every other frame emits) is not
+      // reached from here. GameCanvas still throttles this to about 12Hz.
+      this.options.onState?.(this.state);
       return;
     }
 

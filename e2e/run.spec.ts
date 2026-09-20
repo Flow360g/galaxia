@@ -214,9 +214,83 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     // until the feed is up. The grace timeout guarantees it opens regardless.
     const box = page.getByTestId("site-answer");
     await expect(box).toBeEnabled({ timeout: 20_000 });
-    await box.fill(site);
-    await page.getByTestId("site-submit").click();
-    await expect(station).toContainText(/site identified/i);
+
+    // Buy every rung on the first site, which is what broke in play: the two
+    // photographs grew the panel until the input sat under the fold of a fixed,
+    // unscrollable shell, and the screen read as frozen with the clock running.
+    // Playwright does not catch that on its own, because an element outside the
+    // viewport still counts as visible and `fill` still fills it. So assert the
+    // geometry: the input and Send must be inside the viewport with everything
+    // bought, and the feed must have absorbed the overflow by scrolling.
+    if (index === 0) {
+      const intel = page.getByTestId("request-intel");
+      // Kept tight on purpose: this runs against the live 40 second answer
+      // clock, so every extra wait in here is time taken off the question.
+      for (let rung = 0; rung < 8 && (await intel.count()) > 0; rung += 1) {
+        await expect(intel).toBeEnabled();
+        // `force` because the last of these clicks removes its own target:
+        // Playwright's stability check retries, re-queries a button that has
+        // just unmounted, and then waits out the entire test. Actionability is
+        // asserted on the line above instead of relying on the implicit check.
+        await intel.click({ force: true });
+      }
+      await expect(intel).toHaveCount(0);
+
+      // Playwright's own clicks scroll an `overflow: hidden` ancestor to bring
+      // their target into view, and a thumb cannot: that is why this bug reached
+      // a real phone with the suite green. Undo that scroll before measuring, so
+      // what is asserted is the screen the player actually gets.
+      await page.getByTestId("station").evaluate((node) => {
+        for (let el: HTMLElement | null = node; el; el = el.parentElement) {
+          el.scrollTop = 0;
+        }
+      });
+
+      const viewport = page.viewportSize()!;
+      for (const id of ["site-answer", "site-submit"]) {
+        const seen = await page.getByTestId(id).boundingBox();
+        expect(seen, `${id} has no box`).not.toBeNull();
+        expect(seen!.y + seen!.height, `${id} is below the fold`).toBeLessThanOrEqual(
+          viewport.height,
+        );
+        expect(seen!.y, `${id} is above the fold`).toBeGreaterThanOrEqual(0);
+      }
+      const overflow = await page
+        .getByTestId("feed-scroll")
+        .evaluate((node) => node.scrollHeight - node.clientHeight);
+      expect(overflow, "the feed should be scrolling with every rung bought").toBeGreaterThan(0);
+      // Last, because a screenshot is slow and the answer clock is running.
+      await shot(page, "14b-station-all-intel");
+    }
+
+    // The clock has to be running, and only the engine can make it: the flight
+    // is parked while this screen is up, so the run's tick comes from the
+    // parked branch of the loop. It sat frozen at its full 40 once, which made
+    // the timed question untimed and the timeout path dead code.
+    if (index === 0) {
+      const clock = page.getByTestId("feed-clock");
+      const first = Number(await clock.innerText());
+      expect(first).toBeGreaterThan(0);
+      await page.waitForTimeout(1500);
+      expect(Number(await clock.innerText()), "the answer clock is not running").toBeLessThan(
+        first,
+      );
+    }
+
+    // Site 0 buys every rung against the live 40 second clock, and on a loaded
+    // machine the clock can win: the answer box unmounts and a verdict is
+    // already up. That is a legitimate outcome of the mechanic, not a failure,
+    // so it is tolerated here and the correct identification is asserted on
+    // site 1, which is played straight.
+    if ((await box.count()) > 0) {
+      await box.fill(site);
+      await page.getByTestId("site-submit").click();
+    }
+    if (index === 0) {
+      await expect(page.getByTestId("next-site")).toBeVisible({ timeout: 60_000 });
+    } else {
+      await expect(station).toContainText(/site identified/i);
+    }
     if (index === 0) await shot(page, "15-station-site");
     await page.getByTestId("next-site").click();
   }
