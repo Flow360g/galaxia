@@ -2,7 +2,7 @@
   "date": "2026-09-24",
   "roundNumber": 6,
   "seed": 20260924,
-  "theme": "Space and animals",
+  "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
@@ -26,69 +26,68 @@
     {
       "id": "q2",
       "type": "cluster",
-      "prompt": "Which of these animals are marsupials?",
+      "prompt": "Which of these are capital cities today?",
       "options": [
-        "Kangaroo",
-        "Koala",
-        "Sloth",
-        "Wombat",
-        "Lemur",
-        "Otter"
+        "Sydney",
+        "Ottawa",
+        "Canberra",
+        "Istanbul",
+        "Lima",
+        "Rio"
       ],
       "answers": [
-        0,
         1,
-        3
+        2,
+        4
       ],
-      "fact": "Wombat droppings are cube-shaped, which stops them rolling off the rocks and logs they mark."
+      "fact": "Canberra was built from scratch as a compromise between Sydney and Melbourne. Rio lost the title to Brasilia in 1960, and Istanbul lost it to Ankara in 1923."
     },
     {
       "id": "q3",
       "type": "vector",
-      "prompt": "How long does sunlight take to reach Earth, in minutes?",
-      "answer": 8.3,
-      "min": 1,
-      "max": 60,
-      "unit": "min",
-      "fact": "About 8 minutes 20 seconds. From the next nearest star it takes more than four years."
+      "prompt": "How many bones are in an adult human body?",
+      "answer": 206,
+      "min": 50,
+      "max": 500,
+      "fact": "206. A baby is born with around 270, and many of them fuse together as the skeleton grows."
     },
     {
       "id": "q4",
       "type": "vector",
-      "prompt": "How fast can a cheetah run, in km/h?",
-      "answer": 110,
-      "min": 30,
-      "max": 250,
-      "unit": "km/h",
-      "fact": "Around 110 km/h in a short burst, and 0 to 100 in about three seconds, quicker than most sports cars."
+      "prompt": "How long is a marathon, in kilometres?",
+      "answer": 42.195,
+      "min": 10,
+      "max": 100,
+      "unit": "km",
+      "fact": "42.195 km, fixed in 1921 to match the 1908 London course from Windsor Castle to the stadium."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "prompt": "What is the largest animal that has ever lived?",
+      "prompt": "Which is the largest desert outside the polar regions?",
       "options": [
-        "Megalodon",
-        "Blue whale",
-        "Mammoth",
-        "Sperm whale"
+        "Gobi",
+        "Sahara",
+        "Arabian",
+        "Kalahari"
       ],
       "answer": 1,
-      "hint": "It is still alive today.",
-      "fact": "A blue whale's heart is the size of a small car and beats as slowly as twice a minute on a deep dive."
+      "hint": "It covers most of North Africa.",
+      "fact": "Antarctica is the largest desert of all. A desert is defined by how little rain falls, not by sand."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "prompt": "Which planet spins on its side?",
+      "prompt": "Which country is the croissant originally from?",
       "options": [
-        "Venus",
-        "Mars",
-        "Uranus",
-        "Neptune"
+        "France",
+        "Austria",
+        "Italy",
+        "Belgium"
       ],
-      "answer": 2,
-      "hint": "Each of its seasons lasts about 21 years.",
-      "fact": "Uranus is tilted 98 degrees, so each pole gets 42 years of sunlight followed by 42 years of dark."
+      "answer": 1,
+      "hint": "Think of the kipferl.",
+      "fact": "The kipferl came from Vienna. Paris bakers turned it into the buttery croissant in the 1830s."
     },
     {
       "id": "q7",
