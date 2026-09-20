@@ -108,7 +108,7 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
     oneLiner: "Read the satellite feed. Name the place.",
     how: [
       "Dock at the station and open the satellite feed. Somewhere on Earth is on screen: name it.",
-      "Intel and a closer zoom help, but each one costs points.",
+      "Stuck? Tap GET INTEL for a hint, or ZOOM the feed in and out. Each one costs a few points.",
     ],
     scoring: [
       { label: "RIGHT", worth: pts(1, SCORE.earthBase), tone: "good" },
