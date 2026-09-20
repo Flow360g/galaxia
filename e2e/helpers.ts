@@ -30,6 +30,40 @@ export async function acknowledge(page: Page) {
 }
 
 /**
+ * Stand in for the satellite tiles and the Commons photographs.
+ *
+ * Both come off public hosts, and a suite that needs the open internet to
+ * pass is a suite that fails on a laptop in a tunnel and in any sandboxed CI.
+ * Worse, the station's geometry assertion depends on the two ground photos
+ * actually arriving: without them the intel stack fits without scrolling and
+ * the test proves nothing. So every request to either host gets the same
+ * small JPEG, generated once in the browser. The feed still goes through its
+ * real load path: the tiles settle, the clock starts, the photos take height.
+ */
+export async function stubImagery(page: Page) {
+  let jpeg: Buffer | null = null;
+  const render = async () => {
+    if (jpeg) return jpeg;
+    const dataUrl = await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#3a5a40";
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.fillStyle = "#8a9a7b";
+      for (let i = 0; i < 256; i += 32) ctx.fillRect(i, 0, 8, 256);
+      return canvas.toDataURL("image/jpeg", 0.7);
+    });
+    jpeg = Buffer.from(dataUrl.split(",")[1]!, "base64");
+    return jpeg;
+  };
+  await page.route(/https:\/\/(tiles\.maps\.eox\.at|commons\.wikimedia\.org)\//, async (route) => {
+    await route.fulfill({ status: 200, contentType: "image/jpeg", body: await render() });
+  });
+}
+
+/**
  * A cluster opens on its question alone. Tap READY! to bring the lanes up;
  * the pick clock does not start until then.
  */

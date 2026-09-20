@@ -1,3 +1,4 @@
+import { earthLadder } from "./feed";
 import { Flight, clamp01, outcomeKind } from "./Flight";
 import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
 import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
@@ -538,9 +539,16 @@ export class Run {
     this.timer = STATION.answerSeconds;
   }
 
-  /** Buy the next rung of intel on this site. Costs a share of the base. */
+  /**
+   * Buy the next rung of intel on this site. Costs a share of the base.
+   * Capped at the site's ladder: a double tap on the last rung must not pay
+   * for a hint that does not exist.
+   */
   buyIntel(): void {
     if (this.phase !== "docked" || !this.feedReady) return;
+    const question = this.question;
+    if (!question || question.type !== "earth") return;
+    if (this.earthIntel >= earthLadder(question).length) return;
     this.earthIntel += 1;
   }
 

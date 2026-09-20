@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Orbit } from "@/lib/game/Orbit";
+import { earthLadder } from "@/lib/game/feed";
 import { StationFeed } from "./StationFeed";
 import type { EarthQuestion, GameState } from "@/lib/game/types";
 import styles from "./Station.module.css";
@@ -65,6 +66,11 @@ export function Station({
   }, []);
 
   const keyboard = useSyncExternalStore(subscribeViewport, keyboardInset, () => 0);
+  // How many hints this site sells, read off its ladder: the count is never
+  // typed, the same rule the briefing keeps for every figure it quotes.
+  const hints = question ? earthLadder(question).length : 0;
+  const revealed = state ? state.awaitingTap : false;
+  const tipShown = state ? state.earthIntel === 0 && !revealed : false;
 
   return (
     <div
@@ -84,7 +90,20 @@ export function Station({
               <span className={`${styles.tag} arcade`}>WHERE ON EARTH</span>
               <span className={`${styles.phase} arcade`}>PHASE {phase}</span>
             </div>
-            <h2 className={`${styles.title} arcade`}>SATELLITE FEED</h2>
+            {/* The task first, then the one thing a first-timer missed in play:
+                that there are hints at all, and how many. */}
+            <h2 className={`${styles.title} arcade`}>NAME THE PLACE</h2>
+            {!revealed ? (
+              <span className={`${styles.hints} arcade`} data-testid="station-hints">
+                YOU HAVE {countWord(hints)} {hints === 1 ? "HINT" : "HINTS"} TO USE
+              </span>
+            ) : null}
+            {tipShown ? (
+              <p className={styles.tip}>
+                Stuck? GET INTEL buys a hint. ZOOM changes the view. Both cost points, so
+                guess first if you can.
+              </p>
+            ) : null}
 
             {/* Keyed on the site, so a new one starts with a clear box and dial. */}
             <StationFeed
@@ -103,6 +122,12 @@ export function Station({
       ) : null}
     </div>
   );
+}
+
+/** A small count as the cards would shout it: FIVE, not 5. Digits past nine. */
+function countWord(n: number): string {
+  const words = ["NO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE"];
+  return words[n] ?? String(n);
 }
 
 /**
