@@ -24,6 +24,7 @@ import {
   FX,
   LANE,
   PERF,
+  SHIP,
   STATION,
   VECTOR,
   WAYPOINT,
@@ -500,7 +501,7 @@ export class Engine {
     // second. The debris pool is left alone here on purpose -- it is one
     // shared pool, and it is owed to the explosion that lands next frame.
     this.audio.laser();
-    this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+    this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP.noseZ);
     this.alien.target(this.scratchB);
     this.scratchB.x = truthX;
     this.beam.fire(this.scratch, this.scratchB, COLOR.cyan, VECTOR.beamSeconds, 1);
@@ -521,7 +522,6 @@ export class Engine {
   }
 
   private onPick(lane: number, correct: boolean): void {
-    this.audio.pick();
     const x = this.worldXForLane(lane);
     this.ship.holdLane(x);
     this.chase.lockLane(LANE.lockSeconds);
@@ -671,7 +671,7 @@ export class Engine {
       // beat since the lock lining up. Now it fires, and the hull wears it.
       this.alien.returnFire();
       this.audio.laser(ALIEN.gunPitch);
-      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP_NOSE_Z);
+      this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP.noseZ);
       this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
       this.chase.shake(FX.vector.returnFireShake);
       this.shield.flash(kind === "wreck" ? 1.4 : 1, COLOR.neg);
@@ -847,9 +847,6 @@ export class Engine {
     this.resize();
   }
 }
-
-/** Z of the ship's nose, where beams leave from. */
-const SHIP_NOSE_Z = -2.6;
 
 /**
  * MAXIMUM THRUST intensity from the seconds left on it: full through the

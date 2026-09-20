@@ -1,4 +1,9 @@
-import sampleRound from "@/content/rounds/2026-09-18.json";
+import round20260918 from "@/content/rounds/2026-09-18.json";
+import round20260920 from "@/content/rounds/2026-09-20.json";
+import round20260921 from "@/content/rounds/2026-09-21.json";
+import round20260922 from "@/content/rounds/2026-09-22.json";
+import round20260923 from "@/content/rounds/2026-09-23.json";
+import round20260924 from "@/content/rounds/2026-09-24.json";
 import { pickSites } from "@/lib/content/sites";
 import type { EarthQuestion, Round } from "@/lib/game/types";
 
@@ -7,13 +12,31 @@ import type { EarthQuestion, Round } from "@/lib/game/types";
  *
  * v1 keeps rounds as static JSON committed to the repo: zero infrastructure,
  * zero runtime cost, and the bundle is a few kilobytes. When the group
- * leaderboard lands this is the one module that changes, and its signature
- * already returns a promise so callers do not need to.
+ * leaderboard lands this is the one module that changes.
+ *
+ * The rounds form a pool. A date with a round of its own gets that round; any
+ * other date is served one from the pool, chosen by the day number, so a day
+ * nobody authored still gets a fresh round, everyone on that day gets the
+ * same one, and a shared link never lands on a blank screen. Adding a round
+ * is one JSON file and one line in `POOL`.
  */
 
-const ROUNDS: Record<string, Round> = {
-  [sampleRound.date]: validate(hydrateEarth(sampleRound as unknown as Round)),
-};
+const POOL: Round[] = [
+  round20260918,
+  round20260920,
+  round20260921,
+  round20260922,
+  round20260923,
+  round20260924,
+]
+  // Hydrate before validating: the earth slots carry no site of their own, so
+  // validation has nothing to check until the pool has filled them in.
+  .map((round) => validate(hydrateEarth(round as unknown as Round)))
+  .sort((a, b) => a.date.localeCompare(b.date));
+
+const ROUNDS: Record<string, Round> = Object.fromEntries(POOL.map((round) => [round.date, round]));
+
+const sampleRound = POOL[0]!;
 
 /**
  * WHERE ON EARTH slots carry only an id and a prompt; the site itself comes
@@ -157,18 +180,31 @@ export function todayKey(now: Date = new Date()): string {
 }
 
 /**
- * The round for a given date, falling back to the sample.
+ * The round for a given date.
  *
- * The fallback is deliberate: a missing day must never be a blank screen for
- * someone who followed a shared link.
+ * A round authored for that exact date wins. Any other date rotates through
+ * the pool by day number and is served stamped with the date asked for, so
+ * the run is stored against the day it was flown and the title reads today.
+ * Anything that is not a `YYYY-MM-DD` key is treated as today, which is what
+ * makes `?round=` safe to leave in a shared link.
  */
-export function getRound(date: string = todayKey()): Round {
-  // The fallback must be the hydrated round, not the raw JSON: the earth slots
-  // carry no site of their own, so an unhydrated round reaches the station with
-  // nothing to show.
-  return ROUNDS[date] ?? (ROUNDS[sampleRound.date] as Round);
+export function getRound(date: string | undefined = todayKey()): Round {
+  const key = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayKey();
+  const exact = ROUNDS[key];
+  if (exact) return exact;
+  const rotated = POOL[((dayNumber(key) % POOL.length) + POOL.length) % POOL.length]!;
+  // The quiz repeats, but the landing sites should not: re-seed them on the
+  // date actually being played, so two days rotating to the same round still
+  // get their own pair. Everyone on that day still sees the same two.
+  return hydrateEarth({ ...rotated, date: key });
+}
+
+/** Whole days since the epoch for a `YYYY-MM-DD` key. */
+function dayNumber(key: string): number {
+  const [year, month, day] = key.split("-").map(Number);
+  return Math.floor(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1) / 86_400_000);
 }
 
 export function getSampleRound(): Round {
-  return ROUNDS[sampleRound.date] as Round;
+  return sampleRound;
 }

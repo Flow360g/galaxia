@@ -184,10 +184,10 @@ function buildCards(round: Round): Card[] {
   if (clusters > 0) {
     encounters.push({
       label: `Cluster x${clusters}`,
-      text: `${CLUSTER.laneCount} lanes, ${fullCharge} of them right. Every correct pick banks plasma. BURN to cash it in at ${CLUSTER.chargeMultiplier
+      text: `${CLUSTER.laneCount} lanes, ${fullCharge} of them right. Every correct pick winds the boost gauge up a notch. Fire it to cash the charge in at ${CLUSTER.chargeMultiplier
         .slice(1)
         .map(multiple)
-        .join(" / ")}, or pick again for more. One wrong lane and the charge is gone.`,
+        .join(" / ")}, or pick again for more. Find all ${fullCharge} and the clock stops until you fire. One wrong lane and the charge is gone.`,
     });
   }
   if (mcqs > 0) {

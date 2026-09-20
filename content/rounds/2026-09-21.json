@@ -1,0 +1,123 @@
+{
+  "date": "2026-09-21",
+  "roundNumber": 3,
+  "seed": 20260921,
+  "theme": "Science",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these are noble gases?",
+      "options": [
+        "Neon",
+        "Nitrogen",
+        "Argon",
+        "Oxygen",
+        "Helium",
+        "Hydrogen"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Noble gases have full outer electron shells, which is why they barely react. Helium was found in the Sun's light before it was found on Earth."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these animals are mammals?",
+      "options": [
+        "Dolphin",
+        "Shark",
+        "Bat",
+        "Penguin",
+        "Platypus",
+        "Crocodile"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "The platypus lays eggs and still feeds its young on milk, which is the rule that makes it a mammal."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How fast does light travel, in kilometres per second?",
+      "answer": 299792,
+      "min": 10000,
+      "max": 3000000,
+      "unit": "km/s",
+      "log": true,
+      "tolerance": 40000,
+      "fact": "299,792 km every second. The sunlight on your face left the Sun about eight minutes ago."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How many bones are in an adult human body?",
+      "answer": 206,
+      "min": 50,
+      "max": 500,
+      "tolerance": 20,
+      "fact": "206. A baby is born with around 270, and many of them fuse together as the skeleton grows."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which planet has the most known moons?",
+      "options": [
+        "Jupiter",
+        "Saturn",
+        "Uranus",
+        "Neptune"
+      ],
+      "answer": 1,
+      "hint": "The ringed one pulled ahead in 2023.",
+      "fact": "Saturn overtook Jupiter in 2023 and now has well over a hundred confirmed moons, most of them tiny."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "What is the hardest naturally occurring substance?",
+      "options": [
+        "Quartz",
+        "Diamond",
+        "Titanium",
+        "Graphite"
+      ],
+      "answer": 1,
+      "hint": "It is pure carbon, and so is one of the wrong answers.",
+      "fact": "Diamond and graphite are both pure carbon. The only difference is how the atoms are bonded together."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7,
+      "phase": 4
+    }
+  ]
+}

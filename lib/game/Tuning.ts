@@ -144,6 +144,20 @@ export const CLUSTER = {
    * plain thread; the full charge is the biggest burst in the game.
    */
   chargeMultiplier: [0, 1, 1.7, 2.6],
+  /**
+   * The boost gauge: the reactor drawn as a speedometer at the bottom left of
+   * the panel. The needle climbs a notch per plasma and sweeps back to the
+   * peg as the boost is fired, so the charge reads as something held and then
+   * spent rather than a bar that blinks out.
+   */
+  gauge: {
+    /** Sweep of the dial in degrees, symmetric about straight up. */
+    sweepDegrees: 244,
+    /** Seconds the needle takes to settle on a newly collected notch. */
+    settleSeconds: 0.42,
+    /** Seconds the gauge takes to empty once the boost is fired. */
+    drainSeconds: 1.2,
+  },
 } as const;
 
 /**
@@ -169,6 +183,21 @@ export const LANE = {
   /** Radius of the boulder that punishes a wrong lane, and of a plasma pod. */
   rockRadius: 5.2,
   podRadius: 1.9,
+  /**
+   * Where the boulder is when the verdict lands. The strike ends with the
+   * rock's leading face this far INTO the nose, so its centre sits at
+   * `SHIP.noseZ - rockRadius + strikeOverlap`: a hit, not a kiss, and never
+   * a hull swallowed to the cockpit before the crack is heard. It used to run
+   * to a point behind the ship's origin and the hull flew half way into it.
+   */
+  strikeOverlap: 0.8,
+  /**
+   * The struck boulder collapses over this long, and drifts aft at this
+   * fraction of world speed while it does. The debris burst carries the
+   * motion; the remnant only has to be gone before it reaches the canopy.
+   */
+  shatterSeconds: 0.25,
+  shatterDrift: 0.35,
   /** Objects are born fanned out and converge on the true lane as they come in. */
   farSpread: 1.25,
   /**
@@ -568,11 +597,17 @@ export const FX = {
  * the feel. Gains are linear, frequencies hertz, times seconds.
  */
 export const AUDIO = {
-  /** Bus levels. Master is what the mute toggle rides. */
-  master: 0.8,
-  musicBus: 0.38,
+  /**
+   * Bus levels. Master is what the mute toggle rides.
+   *
+   * Music and engine are partners, not a foreground and a hum: the drone is
+   * wide-band noise and swamps a melody at anything like equal gain, so it
+   * sits well under the music bus and the cues sit over both.
+   */
+  master: 0.72,
+  musicBus: 0.68,
   sfxBus: 0.9,
-  engineBus: 0.5,
+  engineBus: 0.34,
   /** Seconds the master fades over on mute, pause and resume. */
   fadeSeconds: 0.25,
 
@@ -596,7 +631,7 @@ export const AUDIO = {
    * Sidechain. A big hit dips the music and the engine for a moment so it
    * lands in a hole of its own rather than fighting the bed.
    */
-  duck: { impact: 0.32, burn: 0.55, attack: 0.04, release: 0.6 },
+  duck: { impact: 0.26, burn: 0.38, attack: 0.012, release: 0.6 },
 
   engine: {
     /** Drone pitch at cruise and at the top of the visual band. */
@@ -608,9 +643,9 @@ export const AUDIO = {
     filterHz: [220, 1500],
     /** Rushing-air layer: bandpass over noise, also opening with speed. */
     airHz: [320, 2100],
-    airGain: [0.05, 0.22],
+    airGain: [0.05, 0.2],
     /** Drone gain at cruise and at max speed. */
-    gain: [0.1, 0.26],
+    gain: [0.09, 0.24],
     /** Seconds the drone takes to follow a change in speed. */
     glide: 0.28,
   },
@@ -636,8 +671,15 @@ export const AUDIO = {
     tickSeconds: 0.025,
     /** Steps per bar. Eighth notes, so a bar is four beats. */
     steps: 8,
+    /**
+     * Octave of each part above the bar root. A phone speaker reproduces
+     * almost nothing below about 400Hz, so the parts sit an octave or two
+     * higher than the theory wants: a bass at 55Hz is a bass nobody hears.
+     * Shared by every mood; a mood moves its roots, not its octaves.
+     */
+    octaves: { bass: 2, pad: 4, arp: 8, sparkle: 16 },
     /** How much of the music goes to the tail. */
-    send: 0.22,
+    send: 0.26,
 
     /** The bed the run is flown to: A minor, four bars, arcade. */
     cruise: {
@@ -647,10 +689,12 @@ export const AUDIO = {
       roots: [55, 43.65, 65.41, 49],
       /** Minor pentatonic, semitone offsets from the root. */
       scale: [0, 3, 5, 7, 10, 12, 15],
-      bassGain: 0.26,
-      padGain: 0.055,
-      arpGain: [0.03, 0.07],
-      hatGain: [0.01, 0.035],
+      bassGain: 0.24,
+      padGain: 0.07,
+      arpGain: [0.075, 0.13],
+      /** The octave above the arp, added as the run gets fast. */
+      sparkleGain: 0.045,
+      hatGain: [0.016, 0.045],
       /** Lowpass on the arp at cruise and at max speed. */
       arpFilterHz: [1600, 4600],
       /** Detune of the pad pair, in cents. */
@@ -663,17 +707,23 @@ export const AUDIO = {
       arpEvery: 1,
     },
 
-    /** Phase 2: the scout is out there. The same bed, lower and wrong. */
+    /**
+     * Phase 2: the scout is out there. The same bed, lower and wrong. Its
+     * gains sit in the same ratio to cruise as when it was written, before
+     * the music level fix; it has not been listened to since. Tune by ear.
+     */
     dread: {
       bpm: [62, 78],
       /** D1, C#1, D1, C1: a semitone crawl that never resolves. */
       roots: [36.71, 34.65, 36.71, 32.7],
       /** Phrygian flat second plus the tritone. */
       scale: [0, 1, 5, 6, 7, 10, 12],
-      bassGain: 0.3,
-      padGain: 0.075,
-      arpGain: [0.012, 0.03],
-      hatGain: [0, 0.006],
+      bassGain: 0.28,
+      padGain: 0.095,
+      arpGain: [0.03, 0.055],
+      /** No lift in dread. */
+      sparkleGain: 0,
+      hatGain: [0, 0.008],
       arpFilterHz: [500, 1400],
       padDetune: 26,
       padSecond: 1,
@@ -714,9 +764,9 @@ export const AUDIO = {
    */
   impact: {
     /** Contact. Bright, and over before you can think about it. */
-    crack: { seconds: 0.085, gain: 0.5, from: 3200, to: 800 },
+    crack: { seconds: 0.085, gain: 0.4, from: 3200, to: 800 },
     /** The mass: a noise slam collapsing into a sub thump, both driven. */
-    body: { seconds: 0.7, gain: 0.55, from: 1800, to: 70, subFrom: 155, subTo: 33, subGain: 0.6 },
+    body: { seconds: 0.7, gain: 0.48, from: 1800, to: 70, subFrom: 155, subTo: 33, subGain: 0.6 },
     /**
      * The hull. Inharmonic ratios, not a chord: harmonic partials read as a
      * note being played, these read as metal being struck.
@@ -856,6 +906,12 @@ export const SHIP = {
   bobRate: 1.6,
   /** Fixed Z the ship sits at. The world moves past it. */
   z: 0,
+  /**
+   * Z of the nose, ahead of `z`. Where beams leave from and where a boulder
+   * has to be to count as touching the hull. A hull is normalised to its
+   * catalogue length and centred, so this is about half the longest one.
+   */
+  noseZ: -2.6,
 } as const;
 
 /**
@@ -949,54 +1005,182 @@ export const SHIPS = [
  * no shadows, counts from here) but there is no treadmill and no ship state:
  * one hull, one slow rotation, one key light.
  */
+/**
+ * The ship bay: a launch bay inside the carrier the run deploys from.
+ *
+ * Its own little scene, not the flight one. Same material rules (Lambert, flat
+ * shading, no shadows, counts from here) but there is no treadmill and no ship
+ * state: a frame here is a rotation, a bob and whatever the player is dragging.
+ *
+ * The bay is allowed to be SHARPER than the flight. The flight budget exists
+ * to protect an asteroid field, a starfield and two exhaust plumes; the bay
+ * draws one hull and a room, so it renders at the device's real pixel ratio
+ * (capped) with antialiasing on, and only its detail COUNTS come off the
+ * quality tier.
+ */
 export const HANGAR = {
   /** Seconds for one full revolution of the hull. Slow enough to study. */
-  revolveSeconds: 18,
+  revolveSeconds: 22,
   /** Hull tilt toward the camera, radians, so the deck view is not side-on. */
-  tilt: 0.22,
+  tilt: 0.18,
   /**
-   * Framing. The bay measures the hull it loaded and pulls the camera back to
-   * fit its bounding sphere, so a wide hull and a long one both fill the frame
-   * and neither hangs off the side of a portrait phone.
+   * Framing. The camera is a fixture of the room, not of the hull: it stands
+   * back far enough to hold a sphere of `frameRadius` inside the clear part
+   * of the frame and aims at a fixed point over the pad, so paging through
+   * the catalogue changes the ship and nothing else. It used to fit each
+   * hull's own bounding sphere and aim at its centre, and every switch
+   * dollied in or out and pitched up or down; a bay that zooms on every page
+   * reads as broken. A hull larger than `frameRadius` still fits: the bay
+   * frames the larger of the two.
    *
    * `framePadding` is the breathing room around that sphere, `cameraLift` is
    * the camera height as a fraction of the distance it ends up at, and the
    * FOV is vertical, as three.js counts it.
    */
-  fov: 34,
-  framePadding: 1.26,
-  cameraLift: 0.18,
-  /** Aim offset above the hovering hull, so it sits centred in the frame. */
-  lookY: 0.1,
-  /** The hull hovers this far above the deck, and bobs by this much. */
-  hoverY: 0.75,
-  bobAmplitude: 0.07,
-  bobRate: 0.9,
-  /** Deck plate size and the grid drawn on it. */
-  deckSize: 34,
-  gridDivisions: 24,
-  /** Radius of the ring of pad lights let into the deck, and how many. */
-  padRadius: 4.3,
-  padCount: 10,
-  padSize: 0.3,
+  /** Bounding radius the camera frames for, in world units. The White
+      Seraph, spire and all, is the largest hull in the catalogue and measures
+      3.68 on the bay's own rig; the others sit at 3.1 and 3.47. Read
+      `galaxiaBay.debugState().hullRadius` under `?debug=1` when adding one. */
+  frameRadius: 3.7,
+  /** Height above the PAD TOP the camera aims at. */
+  aimY: 1.1,
   /**
-   * Gantry pylons: how far out to either side, how tall, how thick. Framing
-   * fits the hull, so these sit just inside the frame edges at the nearest
-   * hull and a little further in at the biggest one.
+   * A wider lens than a showroom strictly needs, because the bay is half the
+   * point: at 34 degrees the hull filled the frame and the room around it was
+   * a rumour off both edges.
    */
-  gantryX: 3.9,
-  gantryHeight: 5.2,
-  gantryDepth: 0.5,
-  /** The rear bulkhead: how far back it sits and how high it stands. Kept
-      low so the bay still opens onto space above it. */
-  bulkheadZ: -15,
-  bulkheadHeight: 7,
-  /** Lit rail along the top of the bulkhead. The bay's one horizon line. */
-  lintelHeight: 0.16,
-  /** Light levels: key from above front, fill from the deck, rim from behind. */
-  keyIntensity: 1.25,
-  fillIntensity: 0.5,
-  rimIntensity: 0.9,
+  fov: 46,
+  framePadding: 1.05,
+  cameraLift: 0.12,
+  /**
+   * How much of the overlay's height to lift the hull clear by. At 1 the hull
+   * sits fully above the type but the camera pitches down into the deck and
+   * the bay stops reading as a room; a bit under a half is the compromise.
+   */
+  frameBias: 0.45,
+  /**
+   * How fast the camera slides to a new framing. A hull switch no longer
+   * changes it, but the overlay growing for the checkout panel does, and
+   * easing turns that into a dolly rather than a cut.
+   */
+  frameEaseRate: 7,
+  /** A new hull fades and scales in over this, so a switch is not a pop. */
+  swapFadeSeconds: 0.28,
+  swapFromScale: 0.94,
+  /**
+   * The hull hovers this far above the PAD, measured from its own underside
+   * rather than from its bounding centre. A hull's centre means nothing: the
+   * Seraph's is dragged up by a spire and the Cinder's sits mid-fuselage, so
+   * centring both at one height leaves one buried and the other in orbit.
+   */
+  hoverGap: 0.28,
+  /** Fallback turntable height, used until a hull has been measured. */
+  hoverY: 0.5,
+  bobAmplitude: 0.06,
+  bobRate: 0.8,
+
+  /**
+   * Its own pixel ratio, not the flight tier's. A phone on the low tier
+   * renders the flight at DPR 1 to protect the frame; the bay has the budget
+   * to spare and a soft hull is the thing players notice first.
+   */
+  dprCap: 2,
+
+  /**
+   * Drag to orbit. Horizontal travel is yaw, vertical is pitch, both in
+   * radians per CSS pixel, so the hull tracks the thumb at any density.
+   */
+  dragYawPerPixel: 0.009,
+  dragPitchPerPixel: 0.006,
+  /** Pitch is clamped: past these the hull reads as a diagram, not a ship. */
+  pitchMin: -0.45,
+  pitchMax: 0.75,
+  /** Idle seconds after a drag before the turntable picks up again, and the
+      seconds it takes to reach full speed once it does. */
+  resumeSeconds: 2.4,
+  resumeEaseSeconds: 1.6,
+
+  /**
+   * The bay. Concrete deck, a landing dais, ribbed walls either side, a
+   * lit ceiling and an open door aft looking out at space.
+   */
+  /** The deck sits just under the hull: the hover is meant to read as a hand's
+      width of daylight, not as a ship stuck to the ceiling of the bay. */
+  deckY: -0.85,
+  deckSize: 34,
+  /** How many times the concrete tiles across the deck. Tiled rather than
+      stretched, or the slab seams smear at this camera distance. */
+  deckTiles: 5,
+  /** The markings decal laid over the concrete, and how wide a patch it covers. */
+  markingsSize: 17,
+  /** The dais the hull hovers over: radius, height, and its lit edge. */
+  padRadius: 2.4,
+  padHeight: 0.26,
+  padRingHeight: 0.06,
+  /** Fake contact shadow on the dais. Real shadows are banned; this is a
+      radial gradient on a plane, and it is most of what sells the hover. */
+  shadowRadius: 2.1,
+  shadowOpacity: 0.55,
+  /** Side walls: how far out, how tall, how far fore and aft they run. */
+  wallX: 7.6,
+  wallHeight: 9,
+  /** Walls and ceiling run back past the camera, or the frame shows a bar of
+      empty space over the near end of the bay. */
+  wallDepth: 48,
+  wallZ: 2,
+  /** Structural ribs up the walls, by quality tier. */
+  ribCounts: [9, 7, 5],
+  ribWidth: 0.5,
+  ribDepth: 0.55,
+  /** Ceiling height, and the floodlight panels let into it, by tier. */
+  ceilingY: 9.6,
+  ceilingDepth: 60,
+  floodCounts: [7, 5, 4],
+  floodSize: 2,
+  floodSpacing: 4.4,
+  floodIntensity: 0.35,
+  /** The ceiling is lit from nowhere, so it carries its own dim glow rather
+      than reading as a black bar across the top of the frame. */
+  ceilingEmissive: 0x1b2230,
+  /** The door aft: where the bulkhead stands and the size of the hole in it. */
+  doorZ: -16,
+  doorWidth: 11,
+  doorHeight: 6.2,
+  /** Rail of light around the door opening. */
+  doorRail: 0.16,
+  /** The space plane seen through the door, and how far behind it sits. */
+  voidZ: -23,
+  voidSize: 42,
+
+  /**
+   * The light rig, and the reason a white panel used to read pink.
+   *
+   * The key and the fill are both neutral white and do the work; the ambient
+   * hemisphere is a cool grey rather than the saturated blue it was, which is
+   * what tinted every pale surface. The cyan rim survives at a fraction of
+   * its old strength: enough to edge the silhouette off the bulkhead, not
+   * enough to colour a wing.
+   */
+  keyIntensity: 1.45,
+  keyPosition: [-4, 7, 6],
+  fillIntensity: 0.55,
+  fillPosition: [5, 1.5, 5],
+  ambientIntensity: 0.45,
+  ambientSky: 0xdfe7f2,
+  ambientGround: 0x2a3140,
+  rimIntensity: 0.25,
+  rimPosition: [-3, 4, -8],
+
+  /** Deck, wall and dais tones. Concrete, not cabinet paint. */
+  deckColor: 0x4a4e57,
+  wallColor: 0x3c414b,
+  ribColor: 0x4f555f,
+  padColor: 0x5a6068,
+  doorFrameColor: 0x2e333c,
+  floodColor: 0xdbe4f5,
+
+  /** Canvas texture resolution by quality tier. */
+  textureSizes: [1024, 512, 512],
 } as const;
 
 export const EXHAUST = {

@@ -144,6 +144,18 @@ export class Run {
   private shieldLost = false;
   private pulseId = 0;
   private cluster: ClusterProgress | null = null;
+  /**
+   * A full gauge holds the clock. Every right lane is found, there is nothing
+   * left to pick, and the run waits on the player firing the boost rather
+   * than spending it for them.
+   */
+  private clusterHold = false;
+  /**
+   * The gauge emptying into the engines: the charge that went in, and the
+   * sweep back to the peg, 1 to 0.
+   */
+  private burnCharge = 0;
+  private burnDrain = 0;
   private pendingPick: { lane: number; correct: boolean } | null = null;
   /** Vector aim in slider space, and the window a NOVA scan left open. */
   private vectorT = 0.5;
@@ -182,6 +194,8 @@ export class Run {
   get canNova(): boolean {
     const question = this.question;
     if (!this.answering || !question || question.type === "earth") return false;
+    // A held gauge has nothing left to scan: every lane is already picked.
+    if (this.clusterHold) return false;
     return this.novaLeft > 0 && !this.nova;
   }
 
@@ -201,6 +215,8 @@ export class Run {
       novaLeft: this.novaLeft,
       nova: this.nova,
       cluster: this.clusterState(),
+      burnCharge: this.burnCharge,
+      burnDrain: this.burnDrain,
       vector: this.vectorState(),
       waypoint: this.phase === "waypoint" ? this.waypoint : null,
       stationReady: this.stationReady,
@@ -231,6 +247,7 @@ export class Run {
       projected: this.burnImpulse(cluster.charge),
       projectedNext: this.burnImpulse(cluster.charge + 1),
       eliminated: cluster.eliminated,
+      full: this.clusterHold,
     };
   }
 
@@ -293,6 +310,12 @@ export class Run {
     const cluster = this.cluster;
     if (!this.answering || !question || question.type !== "cluster" || !cluster) return;
     if (cluster.charge <= 0) return;
+
+    // The gauge empties as the charge goes in, so the boost is seen being
+    // spent rather than simply gone.
+    this.clusterHold = false;
+    this.burnCharge = cluster.charge;
+    this.burnDrain = 1;
 
     this.lock({
       kind: "burn",
@@ -564,6 +587,13 @@ export class Run {
     this.elapsed += dt;
     this.flight.update(dt);
 
+    // The gauge sweeping back to the peg outlives the phase that fired it, so
+    // it keeps draining through the burn and its verdict.
+    if (this.burnDrain > 0) {
+      this.burnDrain = Math.max(this.burnDrain - dt / CLUSTER.gauge.drainSeconds, 0);
+      if (this.burnDrain === 0) this.burnCharge = 0;
+    }
+
     this.sampleTimer += dt;
     if (this.sampleTimer >= SAMPLE_INTERVAL) {
       this.sampleTimer = 0;
@@ -584,6 +614,9 @@ export class Run {
       }
 
       case "approach":
+        // A full gauge holds the clock: the boost is fired on a tap, not on a
+        // stopwatch.
+        if (this.clusterHold) break;
         if (this.grace > 0) {
           this.grace -= dt;
           break;
@@ -711,6 +744,9 @@ export class Run {
     this.struck = false;
     this.cluster =
       question.type === "cluster" ? { picked: [], charge: 0, eliminated: [] } : null;
+    this.clusterHold = false;
+    this.burnCharge = 0;
+    this.burnDrain = 0;
     this.vectorT = 0.5;
     this.vectorWindow = [0, 1];
     this.vectorStrength = 1;
@@ -762,11 +798,11 @@ export class Run {
       cluster.picked.push(lane);
       cluster.charge += 1;
       const full = cluster.charge >= question.answers.length;
-      // The last plasma gets no banner of its own: MAXIMUM THRUST is arriving
-      // a beat later and the two would land on top of each other.
-      if (!full) {
-        this.flash("plasma", "PLASMA COLLECTED", `+1 · ${cluster.charge} IN THE REACTOR`);
-      }
+      this.flash(
+        "plasma",
+        full ? "GAUGE FULL" : "PLASMA COLLECTED",
+        full ? "FIRE THE BOOST" : `+1 · ${cluster.charge} IN THE REACTOR`,
+      );
       this.hooks.onCollect(lane, cluster.charge);
       this.phase = "approach";
       // A fresh five seconds for the next decision, after a beat to see what
@@ -774,9 +810,9 @@ export class Run {
       this.thrust = 1;
       this.thrustSeconds = ENCOUNTER.thrustSeconds;
       if (full) {
-        // Nothing left to find: the whole reactor goes in, no decision needed.
-        // No breather either, since MAXIMUM THRUST is already on its way.
-        this.burn();
+        // Nothing left to find, so nothing left to be timed on: the clock
+        // stops and the gauge sits full until the player fires it.
+        this.clusterHold = true;
       } else {
         this.grace = CLUSTER.collectPauseSeconds;
       }

@@ -173,3 +173,121 @@ test("the bay flies the hull it was told to, and refuses one it was not", async 
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 });
+
+/**
+ * The bay's own behaviour, as opposed to what it says about a hull.
+ *
+ * These read the bay through `window.galaxiaBay`, which `?debug=1` parks there
+ * the same way `?debug=1` exposes the audio engine. Asserting on the turntable
+ * angle and the draw count directly beats trying to see a rotation in a
+ * screenshot, and it is the only way to check the frame budget at all.
+ */
+type BayState = {
+  yaw: number;
+  pitch: number;
+  dragged: boolean;
+  drawCalls: number;
+  triangles: number;
+  dpr: number;
+  hullRadius: number;
+  hullLift: number;
+  padTop: number;
+};
+
+declare global {
+  interface Window {
+    galaxiaBay?: { debugState(): BayState };
+  }
+}
+
+async function bayState(page: Page): Promise<BayState> {
+  await page.waitForFunction(() => window.galaxiaBay !== undefined, null, {
+    timeout: 20_000,
+  });
+  return page.evaluate(() => window.galaxiaBay!.debugState());
+}
+
+test("the bay does not move when the hull changes", async ({ page }) => {
+  await seedFlown(page, 9);
+  await page.goto("/hangar?debug=1");
+
+  const canvas = page.locator("canvas");
+  await expect(canvas).toBeVisible({ timeout: 20_000 });
+
+  // The whole defect this layout exists to fix: the canvas used to be a flex
+  // sibling of the text, so a hull with a longer name resized it and the
+  // camera re-framed mid-switch. It is pinned to the viewport now, so the box
+  // must be identical for every hull.
+  const first = await canvas.boundingBox();
+  expect(first).not.toBeNull();
+
+  // Every hull stands on the pad, and stands at the SAME height on every
+  // visit. It used to be measured on the turntable, in world space, so each
+  // switch inherited the previous hull's lift and the bob's phase, and a few
+  // pages in the hull was below the deck.
+  const lifts = new Map<string, number>();
+  const settled = async (name: string): Promise<BayState> => {
+    await expect(page.getByTestId("ship-name")).toHaveText(name);
+    // The hull arrives when its GLB does; wait for the lift to leave the
+    // fallback and hold still.
+    await expect
+      .poll(async () => (await bayState(page)).hullLift, { timeout: 20_000 })
+      .not.toBe(0.5);
+    return bayState(page);
+  };
+
+  const order = ["Cinder VII", "Neon Flamingo", "White Seraph"];
+  let state = await settled(order[0]!);
+  expect(state.hullLift).toBeGreaterThan(state.padTop);
+  lifts.set(order[0]!, state.hullLift);
+
+  for (let i = 1; i < 6; i += 1) {
+    await page.getByRole("button", { name: "Next ship" }).click();
+    const name = order[i % order.length]!;
+    state = await settled(name);
+    const box = await canvas.boundingBox();
+    expect(box).toEqual(first);
+    // Above the pad, by the whole hover gap, never buried.
+    expect(state.hullLift).toBeGreaterThan(state.padTop);
+    const seen = lifts.get(name);
+    if (seen !== undefined) expect(state.hullLift).toBeCloseTo(seen, 6);
+    lifts.set(name, state.hullLift);
+  }
+
+  // And the hull is rendered sharp, on its own budget rather than the
+  // flight's: a phone on the low tier renders the flight at DPR 1.
+  const budget = await bayState(page);
+  expect(budget.dpr).toBeGreaterThan(1);
+  // A room and one hull. The flight scene is allowed sixty.
+  expect(budget.drawCalls).toBeLessThanOrEqual(30);
+});
+
+test("dragging turns the hull, and the hint gives way", async ({ page }) => {
+  await seedFlown(page, 9);
+  await page.goto("/hangar?debug=1");
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("bay-hint")).toBeVisible();
+
+  const before = await bayState(page);
+  expect(before.dragged).toBe(false);
+
+  // Drag across the middle of the bay, clear of the arrows and the overlay.
+  const viewport = page.viewportSize();
+  const midX = Math.round((viewport?.width ?? 400) / 2);
+  const midY = Math.round((viewport?.height ?? 800) * 0.35);
+  await page.mouse.move(midX, midY);
+  await page.mouse.down();
+  for (let step = 1; step <= 6; step += 1) {
+    await page.mouse.move(midX + step * 30, midY);
+  }
+  await page.mouse.up();
+
+  const after = await bayState(page);
+  expect(after.dragged).toBe(true);
+  // 180px at the catalogue's radians-per-pixel is well over a radian, and the
+  // automatic revolution is far too slow to account for it.
+  expect(after.yaw - before.yaw).toBeGreaterThan(1);
+
+  // The nudge has done its job and gets out of the way.
+  await expect(page.getByTestId("bay-hint")).toHaveCount(0);
+});

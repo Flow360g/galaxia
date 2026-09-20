@@ -1,0 +1,123 @@
+{
+  "date": "2026-09-20",
+  "roundNumber": 2,
+  "seed": 20260920,
+  "theme": "Planet Earth",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these countries share a land border with Germany?",
+      "options": [
+        "Poland",
+        "Portugal",
+        "Denmark",
+        "Norway",
+        "Austria",
+        "Ireland"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Germany has nine land neighbours, from Denmark in the north round to Austria and Switzerland in the south."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these are capital cities today?",
+      "options": [
+        "Sydney",
+        "Ottawa",
+        "Canberra",
+        "Istanbul",
+        "Lima",
+        "Rio"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "Canberra was built from scratch as a compromise between Sydney and Melbourne. Rio lost the title to Brasilia in 1960, and Istanbul lost it to Ankara in 1923."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How tall is Mount Everest above sea level?",
+      "answer": 8849,
+      "min": 3000,
+      "max": 15000,
+      "unit": "m",
+      "tolerance": 500,
+      "fact": "8,849 m by the 2020 China and Nepal survey, and still rising by about 4 mm a year."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How long is the Nile?",
+      "answer": 6650,
+      "min": 1000,
+      "max": 12000,
+      "unit": "km",
+      "tolerance": 800,
+      "fact": "About 6,650 km. The Amazon runs it close, and some surveys put the Amazon ahead."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which is the largest desert outside the polar regions?",
+      "options": [
+        "Gobi",
+        "Sahara",
+        "Arabian",
+        "Kalahari"
+      ],
+      "answer": 1,
+      "hint": "It covers most of North Africa.",
+      "fact": "Antarctica is the largest desert of all. A desert is defined by how little rain falls, not by sand."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "Which country has the most islands?",
+      "options": [
+        "Indonesia",
+        "Philippines",
+        "Sweden",
+        "Canada"
+      ],
+      "answer": 2,
+      "hint": "Think Scandinavia, and count the tiny ones.",
+      "fact": "Sweden counts about 267,000 islands, and only around a thousand of them are inhabited."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7,
+      "phase": 4
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "date": "2026-09-23",
+  "roundNumber": 5,
+  "seed": 20260923,
+  "theme": "Sport and food",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these countries have won the men's football World Cup?",
+      "options": [
+        "Uruguay",
+        "Belgium",
+        "France",
+        "Portugal",
+        "Spain",
+        "Mexico"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Uruguay won the first World Cup in 1930, at home, and did it again in 1950 in Brazil's own stadium."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these are citrus fruits?",
+      "options": [
+        "Lime",
+        "Mango",
+        "Lemon",
+        "Kiwi",
+        "Yuzu",
+        "Papaya"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Yuzu is a Japanese citrus that shrugs off frost, which almost nothing else in the family can do."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How long is a marathon, in kilometres?",
+      "answer": 42.195,
+      "min": 10,
+      "max": 100,
+      "unit": "km",
+      "tolerance": 3,
+      "fact": "42.195 km, fixed in 1921 to match the 1908 London course from Windsor Castle to the stadium."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How many players does a rugby union side have on the field?",
+      "answer": 15,
+      "min": 5,
+      "max": 30,
+      "unit": "players",
+      "tolerance": 1,
+      "fact": "Fifteen a side, eight forwards and seven backs. Rugby league plays thirteen."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which country is the croissant originally from?",
+      "options": [
+        "France",
+        "Austria",
+        "Italy",
+        "Belgium"
+      ],
+      "answer": 1,
+      "hint": "Think of the kipferl.",
+      "fact": "The kipferl came from Vienna. Paris bakers turned it into the buttery croissant in the 1830s."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "Which spice is the most expensive by weight?",
+      "options": [
+        "Vanilla",
+        "Saffron",
+        "Cardamom",
+        "Cloves"
+      ],
+      "answer": 1,
+      "hint": "It is picked by hand from crocus flowers.",
+      "fact": "It takes around 150,000 crocus flowers, each picked by hand, to make one kilogram of saffron."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 5,
+      "landmark": "planet"
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7,
+      "phase": 4
+    }
+  ]
+}

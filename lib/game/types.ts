@@ -215,6 +215,11 @@ export interface ClusterState {
   projectedNext: number;
   /** Lanes a NOVA scan ruled out. */
   eliminated: number[];
+  /**
+   * Every right lane is found and the gauge is full. The clock is held here:
+   * there is nothing left to pick, so the run waits on the boost being fired.
+   */
+  full: boolean;
 }
 
 export interface NovaResult {
@@ -345,6 +350,13 @@ export interface GameState {
   nova: NovaResult | null;
   /** Cluster encounter in progress, or null. */
   cluster: ClusterState | null;
+  /**
+   * The boost gauge emptying into the engines. `burnCharge` is the PLASMA
+   * that went in, `burnDrain` sweeps 1 to 0 as it is spent. Both are 0 once
+   * the needle is back on the peg.
+   */
+  burnCharge: number;
+  burnDrain: number;
   /** Vector encounter in progress, or null. */
   vector: VectorState | null;
   /** Waypoint card in progress, or null. */

@@ -89,8 +89,8 @@ export class AudioEngine {
   private engineBus: GainNode | null = null;
   /** Send into the reverb. Voices tap this rather than owning a convolver. */
   private reverbSend: GainNode | null = null;
-  /** Shared soft-clip curve, for anything that should sound driven. */
-  private shaper: WaveShaperNode | null = null;
+  /** Shared soft-clip curve. Voices that want drive wear their own node. */
+  private driveCurve: Float32Array | null = null;
 
   /** The drone: two detuned saws through a lowpass, plus filtered noise. */
   private drone: OscillatorNode[] = [];
@@ -145,14 +145,16 @@ export class AudioEngine {
     }
     this.ctx = ctx;
 
-    // Master into a limiter: the cues are layered and overlapping, and a hit
-    // landing on a full-burn tail would otherwise clip the output.
+    // Master into a limiter: the cues are layered and overlapping, and a
+    // crash landing on the music would otherwise clip the output. The attack
+    // has to be fast enough to catch the crack, which is the sharpest
+    // transient in the game and the one that was getting through.
     const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -6;
-    limiter.knee.value = 6;
-    limiter.ratio.value = 12;
-    limiter.attack.value = 0.003;
-    limiter.release.value = 0.22;
+    limiter.threshold.value = -9;
+    limiter.knee.value = 4;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.2;
     limiter.connect(ctx.destination);
 
     this.master = ctx.createGain();
@@ -175,10 +177,7 @@ export class AudioEngine {
     this.reverbSend.gain.value = 1;
     this.reverbSend.connect(convolver);
 
-    this.shaper = ctx.createWaveShaper();
-    this.shaper.curve = buildDriveCurve();
-    this.shaper.oversample = "2x";
-    this.shaper.connect(this.sfxBus);
+    this.driveCurve = buildDriveCurve();
 
     this.noise = buildNoise(ctx);
     this.buildDrone();
@@ -302,7 +301,7 @@ export class AudioEngine {
     this.master = null;
     this.musicBus = this.sfxBus = this.engineBus = null;
     this.reverbSend = null;
-    this.shaper = null;
+    this.driveCurve = null;
     void ctx?.close().catch(() => {});
   }
 
@@ -509,12 +508,12 @@ export class AudioEngine {
     // Bass on the downbeat and the half bar: the pulse the run is flown to.
     // Driven, so it has some weight on a phone speaker.
     if (beat === 0 || beat === 4) {
-      this.tone(root, when, {
+      this.tone(root * cfg.octaves.bass, when, {
         duration: stepSeconds * 1.6,
         gain: mood.bassGain,
         type: "triangle",
         attack: 0.012,
-        filterHz: 340,
+        filterHz: 520,
         drive: true,
         bus: this.musicBus,
       });
@@ -540,7 +539,7 @@ export class AudioEngine {
     if (beat === 0) {
       const barSeconds = stepSeconds * cfg.steps;
       for (const detune of [-mood.padDetune, mood.padDetune]) {
-        this.tone(root * 2, when, {
+        this.tone(root * cfg.octaves.pad, when, {
           duration: barSeconds * 0.95,
           gain: mood.padGain,
           type: "sine",
@@ -551,7 +550,7 @@ export class AudioEngine {
         });
       }
       if (mood.padSecond > 0) {
-        this.tone(root * 2 * Math.pow(2, mood.padSecond / 12), when, {
+        this.tone(root * cfg.octaves.pad * Math.pow(2, mood.padSecond / 12), when, {
           duration: barSeconds * 0.8,
           gain: mood.padGain * 0.7,
           type: "sine",
@@ -571,7 +570,8 @@ export class AudioEngine {
       const degree = (ARP[beat % ARP.length] ?? 0) + (t > 0.55 && beat % 2 === 1 ? 5 : 0);
       const semitones =
         (mood.scale[degree % mood.scale.length] ?? 0) + 12 * Math.floor(degree / mood.scale.length);
-      this.tone(root * 4 * Math.pow(2, semitones / 12), when, {
+      const note = root * cfg.octaves.arp * Math.pow(2, semitones / 12);
+      this.tone(note, when, {
         duration: stepSeconds * 0.9,
         gain: lerp(mood.arpGain[0], mood.arpGain[1], t),
         type: "triangle",
@@ -581,6 +581,20 @@ export class AudioEngine {
         send: cfg.send,
         bus: this.musicBus,
       });
+
+      // Sparkle: the same note an octave up, fading in with speed. It is what
+      // makes the loop lift as the run gets fast rather than just quicken.
+      // A mood can have none: dread should not lift.
+      if (t > 0.25 && mood.sparkleGain > 0) {
+        this.tone((note * cfg.octaves.sparkle) / cfg.octaves.arp, when, {
+          duration: stepSeconds * 0.55,
+          gain: mood.sparkleGain * clamp01((t - 0.25) / 0.5),
+          type: "triangle",
+          attack: 0.004,
+          send: cfg.send,
+          bus: this.musicBus,
+        });
+      }
     }
 
     // Hat: an offbeat tick. It is what makes the tempo readable at low
@@ -714,13 +728,6 @@ export class AudioEngine {
       send: cfg.send,
       pan: [0.6, -0.15],
     });
-  }
-
-  /** A lane is picked: the ship commits before the verdict lands. */
-  pick(): void {
-    // A switch being thrown, not a beep: a click with a short body under it.
-    this.noiseVoice(0, { duration: 0.03, gain: 0.22, type: "bandpass", from: 2600, to: 1400, q: 2 });
-    this.tone(320, 0, { duration: 0.1, gain: 0.12, type: "triangle", sweepTo: 200, send: 0.2 });
   }
 
   /** PLASMA collected. The pitch climbs with the charge in the reactor. */
@@ -1420,8 +1427,17 @@ export class AudioEngine {
       tail = panner;
     }
 
-    if (options.drive && this.shaper) tail.connect(this.shaper);
-    else tail.connect(bus);
+    if (options.drive && this.driveCurve) {
+      // One shaper per voice. A shared node would have to live on a single
+      // bus, and that is how the music's bass ended up on the sfx bus,
+      // outside its own level and outside the duck.
+      const shaper = ctx.createWaveShaper();
+      shaper.curve = this.driveCurve;
+      shaper.oversample = "2x";
+      tail.connect(shaper);
+      tail = shaper;
+    }
+    tail.connect(bus);
 
     const send = options.send ?? 0;
     if (send > 0 && this.reverbSend) {
