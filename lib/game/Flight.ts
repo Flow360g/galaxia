@@ -95,8 +95,9 @@ export class Flight {
         this.velocity = Math.max(this.velocity * retain(FLIGHT.wreckRetain, severity), FLIGHT.minVelocity);
         break;
       case "dock":
-        // Neutral: the ship is alongside, nothing has struck it and nothing
-        // has been earned. Velocity and streak are left where they were.
+      case "graze":
+        // Neutral: nothing has struck the ship and nothing has been earned.
+        // Velocity and streak are left where they were.
         break;
     }
     this.peakVelocity = Math.max(this.peakVelocity, this.velocity);

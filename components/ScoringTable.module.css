@@ -1,0 +1,119 @@
+/* The scoring table: the same rows on the briefing, the launch card and the
+   waypoint card. Tight on purpose: on the cards inside the run it sits under
+   copy that already fills the band, so the rows are the arcade minimum. */
+
+.table {
+  margin: 0;
+  padding: 6px 10px;
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  border: 1px solid var(--rule-dark);
+  background: rgba(0, 0, 0, 0.35);
+  text-align: left;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+/* The label never wraps; a long worth wraps under itself on the right. */
+.row dt {
+  color: var(--panel-label);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.row dd {
+  margin: 0;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.row_good dd {
+  color: var(--arcade-cyan);
+}
+
+.row_neutral dd {
+  color: #ffffff;
+}
+
+.row_bad dd {
+  color: #ff6b5c;
+}
+
+/* Collapsed by default. The button is a 44px target like everything else. */
+.disclosure {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.toggle {
+  min-height: 36px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--arcade-yellow);
+  background: transparent;
+  border: 1px solid var(--rule-dark);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle[aria-expanded="true"] {
+  border-color: rgba(255, 224, 61, 0.45);
+}
+
+.toggle:active {
+  background: rgba(255, 224, 61, 0.12);
+}
+
+.chevron {
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 160ms ease-out;
+}
+
+.chevronOpen {
+  transform: translateY(1px) rotate(225deg);
+}
+
+@media (max-height: 620px) {
+  .table {
+    padding: 4px 8px;
+    gap: 3px;
+  }
+
+  .row {
+    font-size: 9px;
+  }
+
+  .toggle {
+    min-height: 32px;
+    padding: 6px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

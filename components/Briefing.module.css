@@ -76,19 +76,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.line {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.lineLabel {
-  font-size: 9px;
-  color: #ffffff;
-  letter-spacing: var(--track-label);
+  gap: 10px;
 }
 
 .lineText {
@@ -96,6 +84,58 @@
   font-size: 14px;
   line-height: 1.5;
   color: #d5dbe6;
+}
+
+/* The welcome table: the phases in order, and what a perfect run scores on
+   each. The four figures on the right add up to the total in the title. */
+.phases {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule-dark);
+}
+
+.phase {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule-dark);
+}
+
+.phaseNumber {
+  flex: 0 0 22px;
+  font-size: 13px;
+  color: var(--arcade-cyan);
+}
+
+.phaseBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.phaseName {
+  font-size: 9px;
+  color: #ffffff;
+  letter-spacing: var(--track-label);
+}
+
+.phaseLine {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--panel-label);
+}
+
+.phaseMax {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--arcade-yellow);
+  font-variant-numeric: tabular-nums;
 }
 
 .dots {
@@ -158,11 +198,19 @@
   }
 
   .lines {
-    gap: 9px;
+    gap: 8px;
   }
 
   .panel {
     gap: 11px;
+  }
+
+  .phase {
+    padding: 6px 0;
+  }
+
+  .phaseLine {
+    font-size: 11px;
   }
 }
 
@@ -173,10 +221,20 @@
 
   .lineText {
     font-size: 12px;
+    line-height: 1.4;
   }
 
   .lines {
-    gap: 7px;
+    gap: 6px;
+  }
+
+  .card {
+    gap: 8px;
+  }
+
+  .phase {
+    padding: 5px 0;
+    gap: 8px;
   }
 
   .primary,

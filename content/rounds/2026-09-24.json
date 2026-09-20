@@ -50,7 +50,6 @@
       "min": 1,
       "max": 60,
       "unit": "min",
-      "tolerance": 1.5,
       "fact": "About 8 minutes 20 seconds. From the next nearest star it takes more than four years."
     },
     {
@@ -61,7 +60,6 @@
       "min": 30,
       "max": 250,
       "unit": "km/h",
-      "tolerance": 15,
       "fact": "Around 110 km/h in a short burst, and 0 to 100 in about three seconds, quicker than most sports cars."
     },
     {
@@ -111,13 +109,16 @@
     },
     {
       "name": "Alien Contact",
-      "after": 5,
+      "after": 3,
       "landmark": "planet"
     },
     {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
       "name": "Where on Earth",
-      "after": 7,
-      "phase": 4
+      "after": 7
     }
   ]
 }

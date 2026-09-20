@@ -351,24 +351,28 @@ export class Run {
 
     const guess = fromSlider(question, this.vectorT);
     const truthT = toSlider(question, question.answer);
-    // In slider space when log-scaled, so a tolerance authored in answer
-    // units still means "this far either side of the truth on the slider".
-    const error = question.log
-      ? Math.abs(this.vectorT - truthT) /
-        Math.max(toSlider(question, question.answer + question.tolerance) - truthT, 1e-6)
-      : Math.abs(guess - question.answer) / Math.max(question.tolerance, 1e-6);
+    // How far off, as a fraction of the truth. The same bands for every
+    // question, log-scaled or not: "within 10%" means one thing in the game.
+    const error = Math.abs(guess - question.answer) / Math.max(Math.abs(question.answer), 1e-9);
+    const { direct, close, graze } = VECTOR.bands;
 
     let kind: Outcome["kind"];
     let strength = 1;
     let severity = 1;
     let salvage: Outcome["salvage"];
-    if (error <= VECTOR.perfectBand) {
+    if (error <= direct) {
       kind = "slingshot";
       salvage = this.shields < SHIELDS.perRun ? "shield" : "nova";
-    } else if (error <= 1) {
+    } else if (error <= close) {
       kind = "thread";
-      const across = (error - VECTOR.perfectBand) / (1 - VECTOR.perfectBand);
+      const across = (error - direct) / Math.max(close - direct, 1e-6);
       strength = 1 - across * (1 - VECTOR.glanceFloor);
+    } else if (error <= graze) {
+      // Clipped the scout. Nothing is earned and nothing is taken: the shot
+      // was good enough not to be punished, and not good enough to pay.
+      kind = "graze";
+      strength = 0;
+      severity = 0;
     } else {
       kind = outcomeKind(false, false, false, this.shields > 0);
       // How wrong, not just wrong: a shot that grazed the tolerance costs a
@@ -386,7 +390,7 @@ export class Run {
     this.vectorStrength = strength;
     const outcome: Outcome = {
       kind,
-      correct: error <= 1,
+      correct: error <= close,
       boosted: false,
       timedOut: false,
       thrustLeft: this.thrust,
@@ -404,8 +408,8 @@ export class Run {
     };
     // A shot that is taken resolves almost instantly: the bolt crosses and
     // the scout goes up in one event. A shot that is not taken leaves a beat
-    // of silence before the scout fires back.
-    this.lock(outcome, error <= 1 ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
+    // of silence before the scout fires back. A graze is a shot taken.
+    this.lock(outcome, error <= graze ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
     this.hooks.onVectorLock(outcome, truthT);
   }
 
@@ -974,7 +978,7 @@ export class Run {
     // The scout's shot landing on the hull. The ship took nothing at lock --
     // it simply did not fire -- so this is the moment the damage happens,
     // and the moment the screen says so.
-    if (this.question?.type === "vector" && !outcome.correct) {
+    if (this.question?.type === "vector" && !outcome.correct && outcome.kind !== "graze") {
       const detail = outcome.timedOut
         ? "NO SHOT TAKEN"
         : outcome.kind === "wreck"
@@ -1060,7 +1064,8 @@ export class Run {
       total: this.round.questions.length,
       boosts,
       boostHits: this.outcomes.filter((o) => o.boosted && o.correct).length,
-      collisions: this.outcomes.filter((o) => !o.correct).length,
+      // A graze is neither: nothing struck the ship.
+      collisions: this.outcomes.filter((o) => !o.correct && o.kind !== "graze").length,
       novasUsed: this.novasUsed,
       fullBurns: this.outcomes.filter((o) => o.kind === "burn" && (o.charge ?? 0) >= fullCharge)
         .length,
@@ -1088,15 +1093,16 @@ function normaliseGuess(text: string): string {
 }
 
 /**
- * How hard a vector miss lands, 0..1, from its normalised error.
+ * How hard a vector miss lands, 0..1, from its relative error.
  *
- * Error 1 is the edge of the tolerance: a shot that only just missed costs
- * `severityFloor` of a full impact. It ramps to a full impact at
+ * The edge of the graze band is where a miss begins: a shot that only just
+ * missed costs `severityFloor` of a full impact. It ramps to a full impact at
  * `severityFullAt` and stays there, so a wild guess is the worst it gets.
  */
 export function missSeverity(error: number): number {
-  const span = Math.max(VECTOR.severityFullAt - 1, 1e-6);
-  const across = clamp01((error - 1) / span);
+  const from = VECTOR.bands.graze;
+  const span = Math.max(VECTOR.severityFullAt - from, 1e-6);
+  const across = clamp01((error - from) / span);
   return VECTOR.severityFloor + (1 - VECTOR.severityFloor) * across;
 }
 

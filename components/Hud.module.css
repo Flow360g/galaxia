@@ -789,6 +789,15 @@
   box-shadow: 0 0 30px rgba(255, 138, 31, 0.3);
 }
 
+/* A graze is neither signal: the hairline grey of a thing that did not land. */
+.toast_graze {
+  border-left-color: var(--panel-label);
+}
+
+.toast_graze .toastKind {
+  color: var(--panel-label);
+}
+
 .toast_burn .toastKind {
   color: #ff8a1f;
 }
@@ -1174,54 +1183,25 @@
   animation: stampIn 360ms cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
+/* The game the next phase plays, under the stage name: VECTOR, GENERAL KNOWLEDGE. */
+.wpGame {
+  font-size: 9px;
+  color: var(--arcade-cyan);
+  letter-spacing: 0.12em;
+}
+
 .wpHint {
   font-size: 13px;
+  line-height: 1.4;
   color: var(--panel-label);
 }
 
 /*
- * The phase 2 briefing: what the encounter ahead is worth, three rows of it.
- * The card already waits for a tap, so there is time to read; what it cannot
- * do is grow past the band, which is why the rows are this tight.
+ * The scoring sits behind HOW SCORING WORKS, collapsed, in `ScoringTable`. The
+ * card already waits for a tap, so there is time to read; what it cannot do
+ * is grow past the band, which is why the table's rows are as tight as they
+ * are, and why it is shut by default.
  */
-.wpScore {
-  margin: 2px 0 0;
-  padding: 6px 10px;
-  display: grid;
-  gap: 5px;
-  width: 100%;
-  max-width: 250px;
-  border: 1px solid var(--rule-dark);
-  background: rgba(0, 0, 0, 0.35);
-}
-
-.wpScoreRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 10px;
-  line-height: 1.2;
-}
-
-.wpScoreRow dt {
-  color: var(--panel-label);
-  letter-spacing: 0.08em;
-}
-
-.wpScoreRow dd {
-  margin: 0;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-
-.wpScoreRow:first-child dd {
-  color: var(--arcade-cyan);
-}
-
-.wpScoreRow:last-child dd {
-  color: #ff6b5c;
-}
 
 .wpStreak {
   font-size: 9px;
@@ -1732,15 +1712,6 @@
 
   .wpHint {
     font-size: 12px;
-  }
-
-  .wpScore {
-    padding: 4px 8px;
-    gap: 3px;
-  }
-
-  .wpScoreRow {
-    font-size: 9px;
   }
 
   .gauge {

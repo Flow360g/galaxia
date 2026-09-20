@@ -18,9 +18,11 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER, COUNTDOWN, ENCOUNTER, SCORE, WAYPOINT } from "@/lib/game/Tuning";
+import { CLUSTER, COUNTDOWN, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
+import { phaseGuide } from "@/lib/game/phases";
+import { ScoringDisclosure } from "./ScoringTable";
 import {
   formatDelta,
   formatDistance,
@@ -63,6 +65,7 @@ const OUTCOME_LABEL: Record<OutcomeKind, string> = {
   timeout: "TOO SLOW",
   burn: "BURN",
   dock: "DOCKED",
+  graze: "GRAZED",
 };
 
 const NOVA_LABEL = {
@@ -80,20 +83,6 @@ const RATING_TEXT: Record<Rating, string> = {
   B: "STEADY",
   C: "ROUGH",
 };
-
-/**
- * What a Vector is worth, read from the scoring table rather than typed out,
- * so retuning the score can never leave the briefing lying about it. The
- * bands are named, not given as percentages: `VECTOR.perfectBand` is a
- * fraction of the question's authored tolerance, not of the answer, so "within
- * 15%" would be wrong however true it looks.
- */
-const VECTOR_BANDS: Array<[string, string]> = [
-  ["DEAD ON", `${Math.round(SCORE.perEncounter * SCORE.vectorDirect)} PTS`],
-  ["CLOSE", `${Math.round(SCORE.perEncounter * SCORE.vectorGlance)} PTS`],
-  ["WIDE", `-${SCORE.penalty.collision} AND A SHIELD`],
-];
-const TOP_MULTIPLIER = Math.max(...SCORE.streakMultipliers);
 
 /**
  * DOM overlay HUD.
@@ -245,7 +234,7 @@ export function Hud({
             <span className="label">Velocity</span>
             <span
               className={`${styles.velocity} arcade ${
-                outcome && !outcome.correct ? styles.velocityHit : ""
+                outcome && !outcome.correct && outcome.kind !== "graze" ? styles.velocityHit : ""
               }`}
               data-testid="velocity"
             >
@@ -707,6 +696,9 @@ function WaypointCard({
 }) {
   const rated = waypoint.t >= WAYPOINT.ratingAt;
   const entering = waypoint.t >= WAYPOINT.enteringAt;
+  // The same words the briefing used for this phase, so the card is a
+  // reminder rather than a second explanation.
+  const guide = phaseGuide(waypoint.nextType);
   return (
     <section
       className={`${styles.panel} ${styles.waypoint} ${entering ? styles.waypointEntering : ""} ${
@@ -742,38 +734,14 @@ function WaypointCard({
             ENTERING PHASE {waypoint.nextPhase}
           </span>
           <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
+          <span className={`${styles.wpGame} arcade`}>{guide.title}</span>
+          <span className={styles.wpHint}>{guide.how.join(" ")}</span>
           {waypoint.nextType === "earth" ? (
-            <>
-              <span className={styles.wpHint}>
-                The scout is down, but its fleet has already landed on Earth. Dock at
-                Wikiplanet Station ahead and read its satellite feed: find where they came
-                down, then call the fleet in. No clock on the approach.
-              </span>
-              <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
-                SATELLITE FEED · STANDING BY
-              </span>
-            </>
-          ) : waypoint.nextType === "vector" ? (
-            <>
-              <span className={styles.wpHint}>
-                An alien scout is shadowing you. Every question now wants a number. Slide
-                the scout onto your answer and fire. Closest wins.
-              </span>
-              <dl className={styles.wpScore} data-testid="waypoint-scoring">
-                {VECTOR_BANDS.map(([band, worth]) => (
-                  <div key={band} className={styles.wpScoreRow}>
-                    <dt className="arcade">{band}</dt>
-                    <dd className="arcade">{worth}</dd>
-                  </div>
-                ))}
-              </dl>
-              <span className={`${styles.wpStreak} arcade`}>
-                STREAK MULTIPLIES UP TO x{TOP_MULTIPLIER}
-              </span>
-            </>
-          ) : (
-            <span className={styles.wpHint}>Same rules, faster sky. Keep the streak alive.</span>
-          )}
+            <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
+              SATELLITE FEED · STANDING BY
+            </span>
+          ) : null}
+          <ScoringDisclosure rows={guide.scoring} />
         </>
       )}
       <TapPrompt shown={awaitingTap} />
@@ -938,11 +906,12 @@ function PulseOverlay({ pulse }: { pulse: Pulse }) {
 }
 
 /**
- * How wide a vector miss was, in tolerances. The number the damage is scaled
- * by, so the player can see why a near miss cost less than a wild one.
+ * How wide a vector shot was, as a percentage of the truth. The number the
+ * bands are read against, so the player can see which one they landed in.
  */
 function formatError(error: number): string {
-  return error >= 10 ? String(Math.round(error)) : (Math.round(error * 10) / 10).toFixed(1);
+  const percent = error * 100;
+  return percent >= 10 ? `${Math.round(percent)}%` : `${(Math.round(percent * 10) / 10).toFixed(1)}%`;
 }
 
 function OutcomeToast({
@@ -966,10 +935,12 @@ function OutcomeToast({
       ? outcome.kind === "slingshot"
         ? "DIRECT HIT!"
         : outcome.kind === "thread"
-          ? "GLANCING HIT"
-          : outcome.timedOut
-            ? "NO SOLUTION"
-            : "MISS"
+          ? "CLOSE HIT"
+          : outcome.kind === "graze"
+            ? "GRAZED · NO DAMAGE"
+            : outcome.timedOut
+              ? "NO SOLUTION"
+              : "MISS"
       : OUTCOME_LABEL[outcome.kind];
   return (
     <section
@@ -1001,10 +972,10 @@ function OutcomeToast({
         <span className={styles.toastAnswer}>
           Truth: <strong>{outcome.answerText}</strong>
           {!outcome.timedOut ? <> &middot; You aimed {outcome.guessText}</> : null}
-          {!outcome.correct && !outcome.timedOut && outcome.error !== undefined ? (
+          {!outcome.timedOut && outcome.error !== undefined ? (
             <>
               {" "}
-              &middot; <strong data-testid="wide-by">wide by {formatError(outcome.error)}x</strong>
+              &middot; <strong data-testid="wide-by">{formatError(outcome.error)} off</strong>
             </>
           ) : null}
           {outcome.salvage ? (
@@ -1042,7 +1013,7 @@ function OutcomeToast({
       <span className={`${styles.toastMeta} arcade`}>
         {outcome.streakAfter >= 2 ? (
           <span className={styles.toastStreak}>STREAK x{outcome.streakAfter}</span>
-        ) : outcome.streakBefore >= 2 && !outcome.correct ? (
+        ) : outcome.streakBefore >= 2 && !outcome.correct && outcome.kind !== "graze" ? (
           <span className={`${styles.toastStreak} ${styles.toastStreakLost}`}>
             STREAK x{outcome.streakBefore} LOST
           </span>

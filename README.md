@@ -75,17 +75,20 @@ asteroid called -> thrust drains while you think -> answer locks -> the rock str
 - **Vector.** Encounters three and four. A numeric question with a slider.
   Drag to aim: the ship slides across the corridor to match and a faint aim
   line points ahead. LOCK & FIRE sends the beam and the alien decloaks at the
-  truth. Error is measured against the question's authored tolerance (in
-  slider space when the slider is log-scaled). Within 15% of tolerance is a
-  DIRECT HIT: slingshot burst, the alien shatters and a salvage capsule flies
-  back, restoring a shield or, with all three up, adding a NOVA. Within
-  tolerance is a GLANCING hit with a graded burst. Outside it the alien
-  returns fire: a shield down and a collision, or a wreck with none left.
-  NOVA narrows the slider to a window around the truth. Boost is off.
+  truth. Error is a fraction of the true answer, the same bands for every
+  question (`VECTOR.bands`). Within 5% is a DIRECT HIT: 100 points, slingshot
+  burst, the alien shatters and a salvage capsule flies back, restoring a
+  shield or, with all three up, adding a NOVA. Within 10% is a CLOSE hit: 50
+  points and a graded burst. Within 15% is a GRAZE: nothing earned, nothing
+  taken, streak untouched. Beyond it the alien returns fire: minus 25, a
+  shield down and a collision, or a wreck with none left. NOVA narrows the
+  slider to a window around the truth. Boost is off.
 - **Shields.** Three per run, shown as pips in the top readout. Every wrong
   lane costs one; at zero, every miss is a wreck. A direct hit on a Vector
   salvages one back.
-- **Boost.** Arm it before locking. Confidence, as a button.
+- **Boost.** Press it BEFORE answering a general knowledge question. A right
+  answer is then worth the full 100 instead of 75; a wrong one is a wreck and
+  costs 50 instead of 25. Confidence, as a button.
 - **NOVA.** Two per run, one tap, costs thrust. Rules out one wrong option,
   reveals an authored clue, or lights the two most plausible options. On a
   cluster it dims one wrong lane. The pick is seeded per question so everyone
@@ -201,9 +204,11 @@ loader validates the shape at import so a bad round fails the build, not the
 run. MCQ entries carry `options`, `answer` (index), an optional `hint` (what
 a NOVA clue reveals) and a `fact`. Vectors carry a numeric `answer`, `min`,
 `max`, an optional `unit`, an optional `log` flag for wide ranges (needs
-`min > 0`), a `tolerance` in answer units and a `fact`. The round's `stages`
-array names each stage, the index of its last encounter, and the landmark
-that rises at the waypoint closing it (`moon` or `planet`). The rating is
+`min > 0`) and a `fact`; the answer must not be zero, since the scoring bands
+are fractions of it. The round's `stages` array names each stage (four of
+them: Cluster Belt, Alien Contact, Open Sky, Where on Earth), the index of
+its last encounter, and the landmark that rises at the waypoint closing it
+(`moon` or `planet`). The rating is
 built for the Cluster stage (plasma and shields); a second waypoint before
 Where on Earth reuses it for now and needs its own rating rule.
 

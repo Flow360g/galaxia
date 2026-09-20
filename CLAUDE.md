@@ -32,7 +32,15 @@ things that make those games sticky:
   so "1,880 of 2,400" means the same to everyone comparing. Distance is a
   speedometer reading and makes a poor anchor: nobody knows whether 12,000 km
   is a good day. See `SCORE` in `Tuning.ts` and `lib/game/Score.ts`; the end
-  of the run tallies it line by line before the share card.
+  of the run tallies it line by line before the share card. The rules are
+  explained in one place, `lib/game/phases.ts`, and the briefing, the launch
+  card and the waypoint card all read from it, so a retune can never leave
+  the game lying about itself. Two rules worth knowing when tuning: a
+  general knowledge answer is worth the full base only with Boost pressed
+  first (the perfect run assumes it was), and a Vector is scored on bands
+  that are fractions of the true answer (`VECTOR.bands`), never on anything
+  authored per question. Inside the widest band a shot is a `graze`: no
+  points, no damage, streak untouched.
 - **The player says when to move on.** Nothing advances on a timer once a
   verdict is up. The outcome toast and the waypoint card carry the right
   answer and a fact, and they sit there until the screen is tapped. Only the
@@ -277,11 +285,23 @@ path from a shared link to flying.
 
 - **The briefing** is the rules and the scoring system, shown once, before
   the first round, when the flight log is empty and it has never been read.
-  The shell holds the engine back until it closes, so a new player is never
-  reading a rule against a draining clock. Every figure in its copy is read
-  from `Tuning.ts` and every count from the round, so retuning cannot leave
-  it lying: add a number to it the same way. `?replay=1` skips it along with
-  today's stored run, and the title screen can call it up again.
+  A welcome page with the phases and what each is worth, one page per phase
+  with its scoring table, and the kit. Plain words, a 12 year old's reading
+  level, no flight-model figures. The shell holds the engine back until it
+  closes, so a new player is never reading a rule against a draining clock.
+  Every figure in its copy comes through `lib/game/phases.ts` from
+  `Tuning.ts` and every count from the round, so retuning cannot leave it
+  lying: add a number to it the same way. `?replay=1` skips it along with
+  today's stored run, and the title screen can call it up again. When it
+  closes on a first flight, the **mission transmission** (a Mayday from Earth
+  Command, `components/Transmission.tsx`) plays before the launch card; a run
+  that names every landing site gets a debrief from the same voice after the
+  tally, before the share card.
+- **Every phase card carries its scoring, shut.** The launch card and the
+  waypoint card both read `phaseGuide()` and render `ScoringDisclosure`: a
+  HOW SCORING WORKS button, collapsed by default, that opens the same table
+  the briefing showed. The button swallows its tap so opening it never
+  advances the run.
 - **The ship bay** (`/hangar`) is a launch bay inside the carrier the run
   deploys from: a concrete pad, plated walls, floodlit ceiling, and the bay
   door open onto the game's own sky. One hull stands on the pad, turning.
@@ -371,10 +391,11 @@ be read from the console or a test.
 
 ## Authoring a round
 
-`content/rounds/YYYY-MM-DD.json`, seven questions in order: two `cluster`,
-two `vector`, two `mcq`, one `earth`. The loader validates cluster, vector
-and earth shape at import. Stages carry an optional `phase` number for the
-card to announce, so a round can skip a phase that is not built yet.
+`content/rounds/YYYY-MM-DD.json`, eight questions in order: two `cluster`,
+two `vector`, two `mcq`, two `earth`, in four stages (Cluster Belt, Alien
+Contact, Open Sky, Where on Earth). The loader validates cluster, vector and
+earth shape at import. Stages carry an optional `phase` number for the card
+to announce, so a round can skip a number if it has to.
 
 - Cluster: exactly six `options`, exactly three distinct `answers`
   (indices), a `fact`. All three right lanes must be unarguably right and
@@ -382,6 +403,9 @@ card to announce, so a round can skip a phase that is not built yet.
   encounter.
 - MCQ: four `options`, one `answer` index, optional `hint` (what a NOVA
   clue reveals), a `fact`.
+- Vector: a numeric `answer` (never zero), `min` and `max` for the slider,
+  optional `unit` and `log`, a `fact`. Nothing about closeness is authored:
+  the bands are fractions of the answer and live in `VECTOR.bands`.
 - Earth: the landing site as `name`, `country`, `lat`, `lon` and a
   slippy-map `zoom` that frames the giveaway; exactly four `options` with
   `answer` indexing the one equal to `name`; a `fact`. The feed that reads
