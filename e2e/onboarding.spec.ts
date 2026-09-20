@@ -41,7 +41,7 @@ test("a first flight is briefed on the rules before the round starts", async ({
   await expect(phases).toContainText("Cluster Belt");
   await expect(phases).toContainText("Open Sky");
   await expect(phases).toContainText("Where on Earth");
-  await expect(briefing).toContainText("2,400");
+  await expect(briefing).toContainText("1,800");
   // The run is held back: no question is open behind the briefing.
   await expect(page.getByTestId("question")).toHaveCount(0);
   await shot(page, "b01-briefing");

@@ -10,7 +10,7 @@ import {
   type ScoringRow,
 } from "@/lib/game/phases";
 import { maxScoreFor } from "@/lib/game/Score";
-import { NOVA, SHIELDS } from "@/lib/game/Tuning";
+import { CLUSTER, NOVA, SHIELDS } from "@/lib/game/Tuning";
 import type { Round } from "@/lib/game/types";
 import { formatScore } from "@/lib/game/format";
 import { ScoringTable } from "./ScoringTable";
@@ -181,7 +181,7 @@ function buildCards(round: Round): Card[] {
     tag: "Welcome aboard",
     title: `One run a day. ${formatScore(total)} points on the table.`,
     lines: [
-      `${encounters} questions in ${stages.length} phases, the same round for everyone today. Every right answer scores. Every wrong one costs ${SHIELDS.perRun > 0 ? "a shield and " : ""}points.`,
+      `${encounters} questions in ${stages.length} phases, the same round for everyone today. Every right answer scores. Most wrong answers score nothing: only a boosted lane or a wild shot at the scout costs points.`,
       streakLine(),
     ],
     phases: stages.map((stage) => ({
@@ -206,9 +206,9 @@ function buildCards(round: Round): Card[] {
     tag: "Your kit",
     title: "Shields, NOVA, and the clock",
     lines: [
-      `${SHIELDS.perRun} shields for the whole run. Every wrong answer costs one. With none left, a wrong answer is a wreck and costs double.`,
-      `${NOVA.perRun} NOVA scans. One tap rules out a wrong answer or hands you a clue. Everyone gets the same help on the same question.`,
-      "The clock is short and it refills for every answer. Nothing else in the run moves until you tap.",
+      `${SHIELDS.perRun} shields for the whole run, and every cluster brings ${CLUSTER.shields} of its own. A wrong answer costs a shield. With none left, a hit lands twice as hard.`,
+      `${NOVA.perRun} NOVA scans. One tap rules out a wrong answer or hands you a clue, and puts ${NOVA.bonusSeconds} second back on the clock. Everyone gets the same help on the same question.`,
+      "The clock is short and it refills for every answer. A cluster shows you its question first: tap READY when you have read it. Nothing else in the run moves until you tap.",
     ],
     scoring: [...streakRows(), ...kitRows()],
   };
