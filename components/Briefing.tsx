@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  CLUSTER,
-  ENCOUNTER,
-  FLIGHT,
-  NOVA,
-  SHIELDS,
-  VECTOR,
-} from "@/lib/game/Tuning";
-import type { Question, Round } from "@/lib/game/types";
+  kitRows,
+  phaseGuide,
+  stageMaxima,
+  streakLine,
+  streakRows,
+  type ScoringRow,
+} from "@/lib/game/phases";
+import { maxScoreFor } from "@/lib/game/Score";
+import { NOVA, SHIELDS } from "@/lib/game/Tuning";
+import type { Round } from "@/lib/game/types";
+import { formatScore } from "@/lib/game/format";
+import { ScoringTable } from "./ScoringTable";
 import styles from "./Briefing.module.css";
 
 interface Props {
@@ -20,20 +24,20 @@ interface Props {
   firstFlight: boolean;
 }
 
-interface Line {
-  label: string;
-  text: string;
-}
-
 interface Card {
   tag: string;
   title: string;
-  lines: Line[];
+  /** Plain sentences, one paragraph each. */
+  lines: string[];
+  /** The scoring table under the lines, if the page has one. */
+  scoring?: ScoringRow[];
+  /** The welcome page's table: the phases and what each is worth. */
+  phases?: Array<{ phase: number; name: string; oneLiner: string; max: number }>;
 }
 
 /**
- * Pre-flight briefing. The rules and the scoring system, before the first
- * round.
+ * Pre-flight briefing. What the run is, one page per phase with its scoring
+ * at the bottom, and the kit.
  *
  * Shown once, on a first flight, and reachable again from the title screen
  * afterwards. It is a full-screen card rather than something in the HUD band
@@ -41,8 +45,10 @@ interface Card {
  * until this closes, so the first thing a new player sees is not a five
  * second clock draining on a rule they have not read.
  *
- * Every figure in the copy is read from `Tuning.ts` and every count from the
- * round itself, so retuning the game cannot leave the briefing lying.
+ * Every figure in the copy is read from `Tuning.ts` through `phases.ts` and
+ * every count from the round itself, so retuning the game cannot leave the
+ * briefing lying. The voice is plain on purpose: a scoring system a player
+ * cannot repeat to a friend is one nobody argues about.
  */
 export function Briefing({ round, onDone, firstFlight }: Props) {
   const cards = useMemo(() => buildCards(round), [round]);
@@ -105,14 +111,28 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
         <div className={styles.card} key={card.tag}>
           <span className={`${styles.tag} arcade`}>{card.tag}</span>
           <h2 className={`${styles.title} arcade`}>{card.title}</h2>
-          <dl className={styles.lines}>
+          <div className={styles.lines}>
             {card.lines.map((line) => (
-              <div className={styles.line} key={line.label}>
-                <dt className={`${styles.lineLabel} arcade`}>{line.label}</dt>
-                <dd className={styles.lineText}>{line.text}</dd>
-              </div>
+              <p className={styles.lineText} key={line}>
+                {line}
+              </p>
             ))}
-          </dl>
+          </div>
+          {card.phases ? (
+            <ol className={styles.phases} data-testid="briefing-phases">
+              {card.phases.map((entry) => (
+                <li key={entry.name} className={styles.phase}>
+                  <span className={`${styles.phaseNumber} arcade`}>{entry.phase}</span>
+                  <span className={styles.phaseBody}>
+                    <span className={`${styles.phaseName} arcade`}>{entry.name}</span>
+                    <span className={styles.phaseLine}>{entry.oneLiner}</span>
+                  </span>
+                  <span className={`${styles.phaseMax} arcade`}>{formatScore(entry.max)}</span>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          {card.scoring ? <ScoringTable rows={card.scoring} testId="briefing-scoring" /> : null}
         </div>
 
         <div className={styles.dots} aria-hidden="true">
@@ -148,188 +168,50 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
   );
 }
 
-/** "1,800" from 1800. The share card and the HUD set figures the same way. */
-function figure(value: number): string {
-  return Math.round(value).toLocaleString("en-US");
-}
-
-function percent(fraction: number): string {
-  return `${Math.round(fraction * 100)}%`;
-}
-
-function multiple(value: number): string {
-  return `${Number(value.toFixed(2))}x`;
-}
-
-function count(questions: Question[], type: Question["type"]): number {
-  return questions.filter((question) => question.type === type).length;
-}
-
 /**
- * The briefing, built against the round in front of the player.
- *
- * The encounter card lists only the kinds today actually holds: a round is
- * authored, the mix moves, and a briefing that promises four MCQs when there
- * are two is worse than no briefing.
+ * The briefing, built against the round in front of the player: a welcome
+ * page, one page per phase the round actually holds, and the kit.
  */
 function buildCards(round: Round): Card[] {
-  const questions = round.questions;
-  const clusters = count(questions, "cluster");
-  const vectors = count(questions, "vector");
-  const mcqs = count(questions, "mcq");
-  const earths = count(questions, "earth");
-  const fullCharge = CLUSTER.chargeMultiplier.length - 1;
+  const stages = stageMaxima(round);
+  const total = maxScoreFor(round);
+  const encounters = round.questions.length;
 
-  const encounters: Line[] = [];
-  if (clusters > 0) {
-    encounters.push({
-      label: `Cluster x${clusters}`,
-      text: `${CLUSTER.laneCount} lanes, ${fullCharge} of them right. Every correct pick winds the boost gauge up a notch. Fire it to cash the charge in at ${CLUSTER.chargeMultiplier
-        .slice(1)
-        .map(multiple)
-        .join(" / ")}, or pick again for more. Find all ${fullCharge} and the clock stops until you fire. One wrong lane and the charge is gone.`,
-    });
-  }
-  if (mcqs > 0) {
-    encounters.push({
-      label: `Question x${mcqs}`,
-      text: "Four lanes, one right. Straight trivia, and the fastest points in the run.",
-    });
-  }
-  if (vectors > 0) {
-    encounters.push({
-      label: `Vector x${vectors}`,
-      text: `A number, aimed on a slider. Lock to fire, but only a good aim gets the shot off: land it inside ${percent(
-        VECTOR.perfectBand,
-      )} of tolerance for a direct hit and you salvage a shield or a NOVA back. Miss, and the scout fires first.`,
-    });
-  }
-  if (earths > 0) {
-    encounters.push({
-      label: "Where on Earth",
-      text: "The last encounter. Dock at the station and open its satellite feed: the invasion has landed somewhere on Earth, and the fleet is waiting on your call.",
-    });
-  }
+  const welcome: Card = {
+    tag: "Welcome aboard",
+    title: `One run a day. ${formatScore(total)} points on the table.`,
+    lines: [
+      `${encounters} questions in ${stages.length} phases, the same round for everyone today. Every right answer scores. Every wrong one costs ${SHIELDS.perRun > 0 ? "a shield and " : ""}points.`,
+      streakLine(),
+    ],
+    phases: stages.map((stage) => ({
+      phase: stage.phase,
+      name: stage.name,
+      oneLiner: phaseGuide(stage.type).oneLiner,
+      max: stage.max,
+    })),
+  };
 
-  return [
-    {
-      tag: "The flight",
-      title: "Every answer is a lane",
-      lines: [
-        {
-          label: "The run",
-          text: `${questions.length} encounters, one run a day, the same round for everyone. Your score is the distance you fly.`,
-        },
-        {
-          label: "Right lane",
-          text: "A plasma pod comes down it. Fly through it and accelerate.",
-        },
-        {
-          label: "Wrong lane",
-          text: "A boulder comes down it instead. It strikes the hull and kills your momentum.",
-        },
-        {
-          label: "Nothing ahead",
-          text: "The sky is empty while a question is open. It will never tell you the answer.",
-        },
-      ],
-    },
-    {
-      tag: "The clock",
-      title: "Thrust is the timer",
-      lines: [
-        {
-          label: `${ENCOUNTER.thrustSeconds} seconds`,
-          text: "One pick, one clock. It refills for every decision, so a cluster is six short ones rather than one long one.",
-        },
-        {
-          label: "Answer fast",
-          text: `A correct answer is worth ${figure(
-            FLIGHT.impulseBase,
-          )} km/h with the clock nearly out, and up to ${figure(
-            FLIGHT.impulseBase + FLIGHT.impulseThrust,
-          )} km/h with it nearly full. Hesitation is the cost.`,
-        },
-        {
-          label: "Too slow",
-          text: "Let it drain and the lane picks itself. It counts as a miss.",
-        },
-      ],
-    },
-    {
-      tag: "Scoring",
-      title: "Distance is the score",
-      lines: [
-        {
-          label: "Cruise",
-          text: `You idle at ${figure(
-            FLIGHT.cruise,
-          )} km/h. Distance piles up the whole time, so speed held is score banked.`,
-        },
-        {
-          label: "Streaks",
-          text: `Each correct answer in a row lifts that floor by ${percent(
-            FLIGHT.streakCruiseGain,
-          )}, up to ${FLIGHT.streakCap} in a row: a full streak idles at ${figure(
-            FLIGHT.cruise * (1 + FLIGHT.streakCruiseGain * FLIGHT.streakCap),
-          )} km/h.`,
-        },
-        {
-          label: "Misses",
-          text: `A collision keeps ${percent(
-            FLIGHT.collisionRetain,
-          )} of your velocity and takes the streak with it. A wreck keeps ${percent(
-            FLIGHT.wreckRetain,
-          )}. Falling from screaming to crawling is the whole punishment.`,
-        },
-      ],
-    },
-    {
-      tag: "Your tools",
-      title: "Three ways to press it",
-      lines: [
-        {
-          label: "Boost",
-          text: `Arm it before you lock. Right lane, and the impulse is ${multiple(
-            FLIGHT.boostImpulse,
-          )}, a slingshot. Wrong lane, and it is a wreck. Confidence as a button.`,
-        },
-        {
-          label: `Shields x${SHIELDS.perRun}`,
-          text: "One per wrong lane. At zero, every miss is a wreck.",
-        },
-        {
-          label: `NOVA x${NOVA.perRun}`,
-          text: `A scan rules out a lane, hands you a clue, or narrows it to ${
-            NOVA.narrowKeep
-          }. It costs ${percent(
-            NOVA.thrustCost,
-          )} of the clock, and it is seeded per question, so your friends got the same help.`,
-        },
-      ],
-    },
-    {
-      tag: "Encounters",
-      title: `Today: ${round.theme}`,
-      lines: encounters,
-    },
-    {
-      tag: "The end",
-      title: "Fly it, then post it",
-      lines: [
-        {
-          label: "Waypoints",
-          text: "Clear a stage and it gets rated S to C on the plasma you banked and the shields you still hold.",
-        },
-        {
-          label: "Every answer",
-          text: "Wrong or right, you get the right answer and a fact. It is an arcade, not an exam.",
-        },
-        {
-          label: "The card",
-          text: "The run ends on a share card and a strip of glyphs: distance, peak, best streak. One run a day, so that strip is the whole argument.",
-        },
-      ],
-    },
-  ];
+  const phases: Card[] = stages.map((stage) => {
+    const guide = phaseGuide(stage.type);
+    return {
+      tag: `Phase ${stage.phase} · ${stage.name}`,
+      title: guide.title,
+      lines: guide.how,
+      scoring: guide.scoring,
+    };
+  });
+
+  const kit: Card = {
+    tag: "Your kit",
+    title: "Shields, NOVA, and the clock",
+    lines: [
+      `${SHIELDS.perRun} shields for the whole run. Every wrong answer costs one. With none left, a wrong answer is a wreck and costs double.`,
+      `${NOVA.perRun} NOVA scans. One tap rules out a wrong answer or hands you a clue. Everyone gets the same help on the same question.`,
+      "The clock is short and it refills for every answer. Nothing else in the run moves until you tap.",
+    ],
+    scoring: [...streakRows(), ...kitRows()],
+  };
+
+  return [welcome, ...phases, kit];
 }

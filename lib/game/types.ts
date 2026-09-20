@@ -85,13 +85,15 @@ export interface ClusterQuestion {
 
 /**
  * A Vector: a numeric answer aimed on a slider. The ship steers to match and
- * a beam fires on lock; the alien decloaks at the truth. Error against the
- * authored `tolerance` decides a direct hit, a glancing hit or a miss.
+ * a beam fires on lock; the alien decloaks at the truth. The error, as a
+ * fraction of the answer, is read against `VECTOR.bands`: direct, close,
+ * graze or miss. The same bands for every question, so nothing is authored.
  */
 export interface VectorQuestion {
   id: string;
   type: "vector";
   prompt: string;
+  /** Never zero: the bands are relative to it. */
   answer: number;
   min: number;
   max: number;
@@ -99,8 +101,6 @@ export interface VectorQuestion {
   unit?: string;
   /** Log-scaled slider for wide ranges. Requires min > 0. */
   log?: boolean;
-  /** Error in answer units that still counts as a hit. */
-  tolerance: number;
   fact?: string;
 }
 
@@ -115,8 +115,7 @@ export interface Stage {
   landmark?: "moon" | "planet";
   /**
    * The phase number the card announces when this stage begins. Defaults to
-   * the stage's position, so a round can skip a number (phase 3 is not built
-   * yet, and phase 4 is still phase 4).
+   * the stage's position; a round may set it to skip a number.
    */
   phase?: number;
 }
@@ -245,6 +244,11 @@ export type OutcomeKind =
   /** Thrust ran out before an answer locked. Treated as a collision. */
   | "timeout"
   /**
+   * Vector: inside the graze band. The shot clipped the scout: no points,
+   * no damage, no shield lost, and the streak is left where it was.
+   */
+  | "graze"
+  /**
    * WHERE ON EARTH: docked and ended the transmission. Neutral until the
    * satellite feed lands: no points, no penalty, no streak, no shield.
    */
@@ -271,7 +275,7 @@ export interface Outcome {
   charge?: number;
   /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
   picks?: number[];
-  /** Vector only: |guess - truth| / tolerance. */
+  /** Vector only: |guess - truth| / |truth|, so 0.1 is 10% off. */
   error?: number;
   /** Vector only: the aimed value. */
   guessValue?: number;
@@ -282,8 +286,8 @@ export interface Outcome {
   earthOptics?: number;
   /**
    * How hard a wrong answer lands, 0..1. A vector miss scales it by HOW wrong
-   * the shot was, so grazing the tolerance costs a fraction of what a wild
-   * guess costs. Everything else is a flat 1.
+   * the shot was, so just outside the graze band costs a fraction of what a
+   * wild guess costs. Everything else is a flat 1.
    */
   severity?: number;
   /** Points earned before the streak multiplier. 0 on a wrong answer. */

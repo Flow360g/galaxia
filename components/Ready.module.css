@@ -69,6 +69,11 @@
   font-weight: 600;
 }
 
+/* The scoring disclosure spans the card like the lines above it. */
+.scoring {
+  max-width: none;
+}
+
 /* One target, thumb-sized, and the only thing on the card that takes a tap. */
 .ready {
   min-height: 52px;

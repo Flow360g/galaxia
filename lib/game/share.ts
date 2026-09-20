@@ -80,6 +80,7 @@ const RED = "#ff6b5c";
 const RED_DEEP = "#b3261e";
 const VIOLET = "#b28cff";
 const ORANGE = "#ff8a1f";
+const PANEL_LABEL = "#9aa3b2";
 
 const ARCADE_FALLBACK = '"Press Start 2P", monospace';
 
@@ -174,6 +175,7 @@ const TEXT_GLYPH: Record<OutcomeKind, string> = {
   timeout: "○",
   burn: "»",
   dock: "◎",
+  graze: "◇",
 };
 
 /**
@@ -248,6 +250,8 @@ function kindColor(kind: OutcomeKind): string {
       return ORANGE;
     case "dock":
       return VIOLET;
+    case "graze":
+      return PANEL_LABEL;
     default:
       return RED;
   }
@@ -676,6 +680,18 @@ function drawMarker(ctx: Ctx, event: RunEvent, x: number, y: number): void {
     case "dock":
       drawDockRing(ctx, x, y, MARKER_SMALL + 2, VIOLET);
       break;
+    case "graze":
+      // Hollow: the shape of a hit with nothing in it.
+      ctx.strokeStyle = PANEL_LABEL;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y - MARKER_SMALL);
+      ctx.lineTo(x + MARKER_SMALL, y);
+      ctx.lineTo(x, y + MARKER_SMALL);
+      ctx.lineTo(x - MARKER_SMALL, y);
+      ctx.closePath();
+      ctx.stroke();
+      break;
   }
   ctx.restore();
 }
@@ -918,6 +934,17 @@ function drawRailCell(ctx: Ctx, x: number, y: number, kind: OutcomeKind | null):
       break;
     case "dock":
       drawDockRing(ctx, cx, cy, r, glyphColor);
+      break;
+    case "graze":
+      ctx.strokeStyle = glyphColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r);
+      ctx.lineTo(cx + r, cy);
+      ctx.lineTo(cx, cy + r);
+      ctx.lineTo(cx - r, cy);
+      ctx.closePath();
+      ctx.stroke();
       break;
   }
   ctx.restore();

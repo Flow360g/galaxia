@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { CLUSTER, ENCOUNTER, SHIELDS } from "@/lib/game/Tuning";
-import type { ClusterQuestion, Round } from "@/lib/game/types";
+import { phaseGuide } from "@/lib/game/phases";
+import type { Round } from "@/lib/game/types";
+import { ScoringDisclosure } from "./ScoringTable";
 import styles from "./Ready.module.css";
 
 interface Props {
@@ -21,10 +22,10 @@ interface Props {
  * so, which is the same rule the rest of the game is built on -- nothing
  * else advances on a timer either.
  *
- * Kept to three lines. This is not the briefing: it says what the next
- * ninety seconds are, and gets out of the way. Every figure is read from
- * `Tuning.ts` and every count from the round, so retuning cannot leave it
- * lying.
+ * Kept to a few lines. This is not the briefing: it says what the next
+ * ninety seconds are, and gets out of the way. The scoring sits behind a
+ * button, collapsed, like it does on every phase card in the run. The copy
+ * is the same `phaseGuide` the briefing and the waypoint card read.
  */
 export function Ready({ round, onReady }: Props) {
   // Desktop convenience only; the button is the real target.
@@ -38,12 +39,10 @@ export function Ready({ round, onReady }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onReady]);
 
-  const cluster = round.questions.find(
-    (question): question is ClusterQuestion => question.type === "cluster",
-  );
-  const lanes = cluster?.options.length ?? CLUSTER.laneCount;
-  const right = cluster?.answers.length ?? 0;
-  const stage = round.stages?.[0]?.name ?? "Cluster Belt";
+  const first = round.questions[0];
+  const guide = phaseGuide(first?.type ?? "cluster");
+  const stage = round.stages?.[0];
+  const phase = stage?.phase ?? 1;
 
   return (
     <div
@@ -54,24 +53,20 @@ export function Ready({ round, onReady }: Props) {
       aria-label="Launch"
     >
       <div className={styles.panel}>
-        <span className={`${styles.tag} arcade`}>Phase 1 &middot; {stage}</span>
-        <h2 className={`${styles.title} arcade`}>CLUSTER</h2>
+        <span className={`${styles.tag} arcade`}>
+          Phase {phase} &middot; {stage?.name ?? guide.title}
+        </span>
+        <h2 className={`${styles.title} arcade`}>{guide.title}</h2>
 
         <ul className={styles.lines}>
-          <li className={styles.line}>
-            <strong>{lanes} lanes, {right} of them right.</strong> Tap one and the ship
-            flies it.
-          </li>
-          <li className={styles.line}>
-            A right lane sends a <strong>plasma pod</strong> you fly through. A wrong one
-            sends a <strong>boulder</strong>, and it costs a shield.
-          </li>
-          <li className={styles.line}>
-            Bank what you have with <strong>BURN</strong>, or push your luck for more.{" "}
-            {ENCOUNTER.thrustSeconds} seconds a pick, {SHIELDS.perRun} shields for the
-            whole run.
-          </li>
+          {guide.how.map((line) => (
+            <li key={line} className={styles.line}>
+              {line}
+            </li>
+          ))}
         </ul>
+
+        <ScoringDisclosure rows={guide.scoring} className={styles.scoring} />
 
         <button
           type="button"

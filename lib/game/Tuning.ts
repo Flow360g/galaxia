@@ -231,9 +231,20 @@ export const SCORE = {
   perEncounter: 100,
   /** Cluster: share of the base for 1, 2 and 3 plasma banked. */
   clusterShare: [0.3, 0.6, 1],
-  /** Vector: share of the base for a direct hit and for a glancing hit. */
+  /**
+   * Vector: share of the base for a direct hit (inside `VECTOR.bands.direct`)
+   * and for a close one (inside `VECTOR.bands.close`). Inside `bands.graze`
+   * is a graze: nothing earned, nothing docked, streak untouched.
+   */
   vectorDirect: 1,
   vectorGlance: 0.5,
+  /**
+   * General knowledge: share of the base for a right answer WITHOUT boost.
+   * Boost, pressed before the answer, lifts it to the full base; a wrong
+   * boosted answer is a wreck and costs `penalty.wreck`. The perfect run in
+   * `maxScoreFor` assumes every lane was boosted, so the total stays fixed.
+   */
+  laneShare: 0.75,
   /**
    * Multiplier by the streak carried INTO the encounter; the last value holds
    * for anything longer. Whole numbers on purpose: x2 is a thing a player can
@@ -277,9 +288,16 @@ export const VECTOR = {
   holdFar: [-58, -44],
   /** How far above the corridor the scout holds station. */
   holdY: 3.2,
-  /** Normalised error at or under which a lock is a DIRECT HIT. */
-  perfectBand: 0.15,
-  /** Strength of a glancing hit at the edge of tolerance (1.0 at the perfect band). */
+  /**
+   * How close counts, as a fraction of the TRUE ANSWER, the same for every
+   * question. Inside `direct` is a DIRECT HIT (full points, salvage). Inside
+   * `close` is a CLOSE hit (half points). Inside `graze` the shot clips the
+   * scout: no points, no damage, streak untouched. Beyond it the scout fires
+   * first. A relative band is what a player can hold in their head: "within
+   * 10%" reads the same on Everest as on a piano.
+   */
+  bands: { direct: 0.05, close: 0.1, graze: 0.15 },
+  /** Strength of a close hit at the edge of its band (1.0 at the direct band). */
   glanceFloor: 0.4,
   /**
    * Seconds the beam takes to reach the alien after lock. A shot is a shot:
@@ -301,12 +319,13 @@ export const VECTOR = {
    */
   returnDelaySeconds: 0.85,
   /**
-   * How hard a miss lands. Error 1 is the edge of tolerance and costs
-   * `severityFloor` of a full impact; error `severityFullAt` and beyond costs
-   * all of it. Being a little wrong should not read the same as being wild.
+   * How hard a miss lands. At the edge of the graze band it costs
+   * `severityFloor` of a full impact; a relative error of `severityFullAt`
+   * (50% off) and beyond costs all of it. Being a little wrong should not
+   * read the same as being wild.
    */
   severityFloor: 0.3,
-  severityFullAt: 4,
+  severityFullAt: 0.5,
   /** Fraction of the slider a NOVA scan leaves open around the truth. */
   novaWindow: 0.34,
   /** Slow drift of the scout, so its rest position is never the answer. */
@@ -516,8 +535,9 @@ export const FX = {
     wreck: 2.2,
     timeout: 1.1,
     burn: 0.8,
-    /** Docking never strikes the ship. */
+    /** Docking never strikes the ship, and a graze never reaches it. */
     dock: 0,
+    graze: 0.15,
   },
   /** Camera pull-back (extra +Z offset) on a burst, and its decay per second. */
   pullback: { thread: 2.2, slingshot: 5.5, burn: 4.5 },

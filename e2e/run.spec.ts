@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
-import { launch } from "./helpers";
+import { acknowledge, launch } from "./helpers";
 
 const SHOTS = process.env.SHOT_DIR;
 
@@ -24,7 +24,7 @@ async function advance(page: Page, via: "banner" | "anywhere" = "anywhere") {
   else await page.getByTestId("continue").click();
 }
 
-test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, share", async ({
+test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, debrief, share", async ({
   page,
 }) => {
   await page.goto("/play?replay=1&round=2026-09-18");
@@ -101,7 +101,17 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("rating")).toHaveText("B", { timeout: 5_000 });
   await shot(page, "05-waypoint-rating");
   await expect(waypoint).toContainText("ALIEN CONTACT", { timeout: 6_000 });
+  await expect(waypoint).toContainText("PHASE 2");
   await shot(page, "06-waypoint-entering");
+  // The scoring is behind a button, shut. Opening it must not count as the
+  // tap that moves the run on.
+  const scoringToggle = page.getByTestId("scoring-toggle");
+  await expect(scoringToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByTestId("tap-prompt")).toBeVisible({ timeout: 15_000 });
+  await scoringToggle.click();
+  await expect(page.getByTestId("scoring")).toContainText("WITHIN 5%");
+  await expect(waypoint).toBeVisible();
+  await shot(page, "06b-waypoint-scoring");
   // The stage card waits to be tapped on too, banner included.
   await advance(page, "banner");
 
@@ -132,7 +142,17 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "09-miss");
   await advance(page);
 
-  // Encounter 5: NOVA then correct with boost. SLINGSHOT.
+  // Waypoint: Alien Contact rated, then OPEN SKY as phase 3.
+  await expect(waypoint).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("rating")).toBeVisible({ timeout: 5_000 });
+  await expect(waypoint).toContainText("PHASE 3", { timeout: 6_000 });
+  await expect(waypoint).toContainText("OPEN SKY");
+  await expect(waypoint).toContainText("GENERAL KNOWLEDGE");
+  await shot(page, "09b-waypoint-open-sky");
+  await advance(page);
+
+  // Encounter 5: NOVA then correct with boost. SLINGSHOT, and full marks:
+  // 100 at x1, since the miss before it reset the streak.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("nova").click();
   await expect(page.getByTestId("nova-result")).toBeVisible();
@@ -143,6 +163,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     timeout: 5_000,
   });
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+100/);
   await shot(page, "10-slingshot");
   await advance(page);
 
@@ -152,8 +173,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "11-timeout");
   await advance(page);
 
-  // Waypoint: Alien Contact rated, then the card briefs WHERE ON EARTH as
-  // phase 4 (phase 3 is not built, and the round says so).
+  // Waypoint: Open Sky rated, then the card briefs WHERE ON EARTH as phase 4.
   await expect(waypoint).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("rating")).toBeVisible({ timeout: 5_000 });
   await expect(waypoint).toContainText("PHASE 4", { timeout: 6_000 });
@@ -229,6 +249,13 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   expect(scored).toBeGreaterThan(beforeDock);
   await page.getByTestId("tally-continue").click();
 
+  // Both sites named: Earth Command calls back before the share card.
+  await expect(page.getByTestId("transmission")).toContainText(/saved earth/i, {
+    timeout: 15_000,
+  });
+  await shot(page, "15b-debrief");
+  await acknowledge(page);
+
   // Share card.
   const card = page.getByTestId("share-card");
   await expect(card).toBeVisible({ timeout: 15_000 });
@@ -285,6 +312,38 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
   await expect(page.getByTestId("streak")).toHaveText("STREAK x1");
 });
 
+test("a vector graze: no points, no damage, and the streak holds", async ({ page }) => {
+  await page.goto("/play?replay=1&round=2026-09-18");
+  const toast = page.getByTestId("toast");
+
+  await launch(page);
+  // Two clusters, one plasma banked on each, so the streak into the vector is 2.
+  for (const index of [0, 1]) {
+    await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+    await page.getByTestId(`option-${answersOf(index)[0]}`).click();
+    await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
+    await page.getByTestId("burn").click();
+    await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
+    await advance(page);
+  }
+  await expect(page.getByTestId("waypoint")).toBeVisible({ timeout: 15_000 });
+  await advance(page);
+
+  // Aim 12% high: inside the graze band, outside the close one.
+  await expect(page.getByTestId("question")).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("aim").fill(String(sliderOf(2, 1.12)));
+  await page.getByTestId("lock").click();
+  await expect(toast).toHaveAttribute("data-outcome", "graze", { timeout: 10_000 });
+  await expect(toast).toContainText("GRAZED");
+  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0$/);
+  await expect(page.getByTestId("wide-by")).toContainText(/1[12](\.\d)?% off/);
+  await shot(page, "17-graze");
+  // Nothing taken: every shield still up, no damage banner, streak as it was.
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
+  await expect(page.getByTestId("damage")).toHaveCount(0);
+  await expect(page.getByTestId("streak")).toHaveText("STREAK x2");
+});
+
 async function readVelocity(page: Page): Promise<number> {
   const text = await page.getByTestId("velocity").innerText();
   return Number(text.replace(/[^0-9]/g, ""));
@@ -296,11 +355,15 @@ function answerOf(index: number): number {
   return question.answer as number;
 }
 
-/** Slider position (0..1000) that lands exactly on a vector's answer. */
-function sliderOf(index: number): number {
+/**
+ * Slider position (0..1000) that lands on a vector's answer, or on `scale`
+ * times it: 1.12 aims 12% high.
+ */
+function sliderOf(index: number, scale = 1): number {
   const question = round.questions[index];
   if (!question || question.type !== "vector") throw new Error(`no vector at ${index}`);
-  const { min, max, answer } = question as { min: number; max: number; answer: number };
+  const { min, max } = question as { min: number; max: number; answer: number };
+  const answer = (question as { answer: number }).answer * scale;
   const t = (question as { log?: boolean }).log
     ? (Math.log(answer) - Math.log(min)) / (Math.log(max) - Math.log(min))
     : (answer - min) / (max - min);

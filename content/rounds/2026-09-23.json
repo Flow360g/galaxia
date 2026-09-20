@@ -50,7 +50,6 @@
       "min": 10,
       "max": 100,
       "unit": "km",
-      "tolerance": 3,
       "fact": "42.195 km, fixed in 1921 to match the 1908 London course from Windsor Castle to the stadium."
     },
     {
@@ -61,7 +60,6 @@
       "min": 5,
       "max": 30,
       "unit": "players",
-      "tolerance": 1,
       "fact": "Fifteen a side, eight forwards and seven backs. Rugby league plays thirteen."
     },
     {
@@ -111,13 +109,16 @@
     },
     {
       "name": "Alien Contact",
-      "after": 5,
+      "after": 3,
       "landmark": "planet"
     },
     {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
       "name": "Where on Earth",
-      "after": 7,
-      "phase": 4
+      "after": 7
     }
   ]
 }
