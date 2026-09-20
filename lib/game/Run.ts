@@ -583,6 +583,35 @@ export class Run {
 
   // ---------------------------------------------------------------- update
 
+  /**
+   * Aboard: the only clock still running.
+   *
+   * The engine parks itself while the station screen is up, so `update` is not
+   * being called, and that is deliberate twice over: the world is asleep, and
+   * the flight is too. A run whose distance kept climbing through a minute of
+   * questions would be lying about how far it flew. But the answer clock is
+   * the run's, so it has to be stepped from somewhere, and this is the whole
+   * of what the docked screen advances. Without it the countdown sat at its
+   * full 40 and a site could be stared at forever.
+   */
+  tickDocked(dt: number): void {
+    if (this.phase !== "docked") return;
+    this.elapsed += dt;
+
+    // The clock starts when the imagery does, never before, and stops the
+    // moment a verdict is up.
+    if (!this.awaitingTap && this.feedReady) {
+      this.timer -= dt;
+      if (this.timer <= 0) {
+        this.timer = 0;
+        this.submitSite("", true);
+      }
+    }
+
+    // No `sample()`: those are flight telemetry for the share card's speed
+    // trace, and a docked ship has no velocity or distance worth recording.
+  }
+
   update(dt: number): void {
     this.elapsed += dt;
     this.flight.update(dt);
@@ -641,14 +670,8 @@ export class Run {
         break;
 
       case "docked":
-        // The clock starts when the imagery does, never before, and stops the
-        // moment a verdict is up.
-        if (this.awaitingTap || !this.feedReady) break;
-        this.timer -= dt;
-        if (this.timer <= 0) {
-          this.timer = 0;
-          this.submitSite("", true);
-        }
+        // Nothing: the engine is parked while the station screen is up and is
+        // not calling this at all. The answer clock runs in `tickDocked`.
         break;
 
       case "resolving":

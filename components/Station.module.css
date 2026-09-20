@@ -26,19 +26,35 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The station is not the flight, and this band is not the HUD. There is no
+   ship to keep clear of here, only a backdrop, so the feed is allowed the whole
+   screen: the optic, the intel stack and a text input do not fit in 62vh, and
+   capping it there put the input below the fold of a fixed, unscrollable shell.
+   The feed owns its own scrolling inside the panel; the page still never
+   scrolls. `bottom` is set from JS while the software keyboard is up, which is
+   what keeps the input and Send visible above it. */
 .band {
   position: absolute;
-  inset: 0 0 auto 0;
+  inset: 0;
   display: flex;
   flex-direction: column;
   padding: 16px;
   padding-top: max(16px, env(safe-area-inset-top));
-  max-height: 62vh;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
   pointer-events: none;
 }
 
 .panel {
   pointer-events: auto;
+  /* Fills the band, rather than being sized by what is in it.
+     `min-height: 0` plus the hidden overflow is what hands the constraint down
+     to the feed's scroll region instead of letting the panel grow past the
+     viewport, and taking the whole band is what stops the input and the intel
+     button creeping down the screen as each bought rung makes the stack taller.
+     A control that has moved since the last tap is a control the thumb misses. */
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   background: rgba(5, 13, 26, 0.86);
   border: 1px solid var(--rule-dark);
   border-left: 4px solid #b28cff;
@@ -77,67 +93,6 @@
   font-size: 16px;
   line-height: 1.2;
   color: #ffffff;
-}
-
-/* The feed, standing by: a dark screen with scanlines and one line on it. */
-.feed {
-  position: relative;
-  height: 96px;
-  border: 1px solid rgba(178, 140, 255, 0.4);
-  background: rgba(13, 27, 46, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.scanlines {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.045) 0 1px,
-    transparent 1px 3px
-  );
-  pointer-events: none;
-}
-
-.standby {
-  font-size: 10px;
-  color: #b28cff;
-  letter-spacing: var(--track-label);
-  text-shadow: 0 0 14px rgba(178, 140, 255, 0.6);
-}
-
-.cursor {
-  animation: blink 1s steps(1) infinite;
-}
-
-.copy {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--panel-label);
-}
-
-/* One target, thumb-sized, the same square yellow button as READY. */
-.end {
-  min-height: 52px;
-  padding: 16px;
-  font-size: 12px;
-  border: 1px solid var(--arcade-yellow);
-  background: var(--arcade-yellow);
-  color: var(--ink);
-}
-
-.end:active {
-  background: #ffffff;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
 }
 
 @keyframes fadeIn {
@@ -180,26 +135,11 @@
     padding: 10px 12px 12px;
     gap: 8px;
   }
-
-  .feed {
-    height: 80px;
-  }
-}
-
-@media (max-height: 620px) {
-  .feed {
-    height: 56px;
-  }
-
-  .copy {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .station,
-  .panel,
-  .cursor {
+  .panel {
     animation: none;
   }
 }

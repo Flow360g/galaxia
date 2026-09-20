@@ -117,15 +117,26 @@ Concrete constraints when building or changing a component:
 - The page never scrolls. `body` has `overflow: hidden` and
   `overscroll-behavior: none`, and the viewport disables user zoom because
   pinch and pull-to-refresh fight the game surface. Do not add content that
-  needs scrolling inside the HUD; shorten it instead.
+  needs scrolling inside the HUD; shorten it instead. The station's satellite
+  feed is the one place anything scrolls, and it scrolls INSIDE its own panel
+  (`StationFeed`'s `.scroll`, with `overscroll-behavior: contain`), never the
+  page. It earns that because an optic, a growing intel stack and a text input
+  cannot all fit a phone: capped instead, the input went under the fold of a
+  `position: fixed` shell and the screen read as frozen with the clock still
+  running. Any panel that can grow needs the same treatment, which means the
+  control the player must reach sits OUTSIDE the scrolling part.
 - The HUD wrapper is `pointer-events: none`; only the panel and toast opt
   back in. Keep it that way so touches fall through to the scene elsewhere.
 - Type is legible on a 5.5 inch screen: prose 14 to 16px, arcade pixel
   type never below 9px, tabular figures for any number that changes so the
   counters do not jitter.
-- Inputs use `font-size: 16px` so iOS does not zoom on focus. There are no
-  text inputs in the game today; if you add one, reserve space for the
-  software keyboard and keep the submit button visible above it.
+- Inputs use `font-size: 16px` so iOS does not zoom on focus. The one text
+  input in the game is the station's answer field. A `position: fixed` screen
+  cannot be scrolled clear of the software keyboard, so `Station.tsx` measures
+  `window.visualViewport` and lifts the band by whatever the keyboard has
+  taken; that is what keeps the field and Send visible. Any new input on a
+  fixed screen needs the same, and never a layout that assumes the keyboard
+  is closed.
 - Check the `@media (max-width: 720px)` and `(max-height: 620px)` blocks in
   `components/Hud.module.css` when adding HUD elements. Short phones are the
   binding constraint, not narrow ones: every new row in the band pushes the
@@ -263,10 +274,14 @@ Rules that fall out of this:
   hands the display to `components/Station.tsx`, which has its own tiny
   shell (`Orbit.ts`) like the hangar does. The flight engine parks under it
   and never draws again that run; it keeps the sound bed going and nothing
-  else. The encounter resolves through `Run.endTransmission`, which records
-  a neutral `dock` outcome and finishes the run. Arrival on the approach is
-  a timer (`STATION.approachSeconds`), never an asset: the door arms on the
-  same beat whether or not the model has loaded.
+  else. Docking records a neutral `dock` outcome and hands over to the feed:
+  two sites, drawn from `lib/content/sites.ts` and played through
+  `Run.feedArrived`, `buyIntel`, `setOptics`, `submitSite` and `nextSite`.
+  Arrival on the approach is a timer (`STATION.approachSeconds`), never an
+  asset: the door arms on the same beat whether or not the model has loaded,
+  and by the same rule the answer clock does not start until the imagery has
+  settled or `STATION.feedGraceMs` has passed. Never gate the clock on a
+  ground photograph, only on the tiles.
 - **Storage is best effort.** localStorage can be missing or full; every
   read and write is wrapped and a failure must never break play.
 
@@ -382,10 +397,19 @@ card to announce, so a round can skip a phase that is not built yet.
   encounter.
 - MCQ: four `options`, one `answer` index, optional `hint` (what a NOVA
   clue reveals), a `fact`.
-- Earth: the landing site as `name`, `country`, `lat`, `lon` and a
-  slippy-map `zoom` that frames the giveaway; exactly four `options` with
-  `answer` indexing the one equal to `name`; a `fact`. The feed that reads
-  these is the next build.
+- Earth: the slot in the round file carries only `id`, `type` and `prompt`.
+  The site itself comes from `lib/content/sites.ts`, seeded on the round's own
+  date, so two sites a day are drawn without anyone authoring them and every
+  player on that date gets the same pair. Adding a site is one entry there:
+  `lat`, `lon`, a slippy-map `zoom` that frames the giveaway, an `opener`, a
+  `clue`, a landmark, two Commons photographs, decoys, `accept` and a `fact`.
+  **Every rung must carry something the one before it did not.** The rungs are
+  bought with points, and an intel line that restates the free opener is a line
+  the player paid for and learned nothing from; it shipped that way once and
+  read as a bug. `sites.ts` now throws at import if a clue repeats a
+  distinctive word of its opener, which matters most when this prose is
+  generated rather than written. A Commons filename is never rendered: it
+  usually names the answer.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.
