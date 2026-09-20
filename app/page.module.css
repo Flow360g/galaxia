@@ -1,4 +1,4 @@
-/* Title screen. Painted sky, pixel type, one blinking prompt. */
+/* Title screen. Painted sky, the Astro Run mark, one yellow prompt. */
 
 .main {
   position: relative;
@@ -52,29 +52,19 @@
   gap: 32px;
 }
 
+/* The mark is a painted logo, glow baked in, so the h1 is just its frame. It
+   is sized by width and keeps its own aspect, so it never reflows the lede. */
 .title {
-  position: relative;
   margin: 0;
-  font-size: 64px;
-  line-height: 1;
-  color: #ffffff;
-  letter-spacing: 0.06em;
-  text-shadow:
-    0 0 2px #ffffff,
-    0 0 18px rgba(79, 241, 255, 0.9),
-    0 0 42px rgba(79, 241, 255, 0.55),
-    4px 4px 0 rgba(31, 69, 229, 0.9);
+  width: min(560px, 100%);
+  line-height: 0;
 }
 
-/* A second copy behind the mark that breathes, so the glow feels lit rather
-   than printed. */
-.titleGlow {
-  position: absolute;
-  inset: 0;
-  color: transparent;
-  text-shadow: 0 0 60px rgba(79, 241, 255, 0.7);
-  animation: breathe 3.2s ease-in-out infinite;
-  pointer-events: none;
+.logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 24px rgba(7, 17, 34, 0.7));
 }
 
 .lede {
@@ -131,22 +121,6 @@
   color: var(--arcade-yellow);
 }
 
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .titleGlow {
-    animation: none;
-  }
-}
-
 @media (max-width: 720px) {
   .main {
     padding-left: 20px;
@@ -155,7 +129,7 @@
   }
 
   .title {
-    font-size: 36px;
+    width: 92vw;
   }
 
   .lede {

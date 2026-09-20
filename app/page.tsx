@@ -1,8 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { BestRun } from "@/components/BestRun";
 import { TitleMenu } from "@/components/TitleMenu";
 import { getRound } from "@/lib/content/round";
 import { formatRoundNumber } from "@/lib/game/format";
+import logo from "../public/astro-run-logo.png";
 import styles from "./page.module.css";
 
 /**
@@ -35,11 +37,14 @@ export default async function Home({
       </header>
 
       <div className={styles.body}>
-        <h1 className={`${styles.title} arcade`}>
-          <span className={styles.titleGlow} aria-hidden="true">
-            GALAXIA
-          </span>
-          GALAXIA
+        <h1 className={styles.title}>
+          <Image
+            src={logo}
+            alt="Astro Run"
+            className={styles.logo}
+            priority
+            sizes="(max-width: 720px) 92vw, 560px"
+          />
         </h1>
 
         <p className={styles.lede}>

@@ -204,7 +204,7 @@ export function deckMarkingsTexture(size: number): THREE.CanvasTexture | null {
   context.save();
   context.translate(size * 0.075, centre);
   context.rotate(-Math.PI / 2);
-  context.fillText("GALAXIA FLEET", 0, 0);
+  context.fillText("ASTRO RUN FLEET", 0, 0);
   context.restore();
   context.save();
   context.translate(size * 0.925, centre);

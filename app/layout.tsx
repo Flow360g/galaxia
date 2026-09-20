@@ -11,7 +11,7 @@ const arcade = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Galaxia",
+  title: "Astro Run",
   description:
     "A daily quiz flight. Answer the asteroids, fly as far as you can.",
 };
