@@ -254,6 +254,8 @@ export class Engine {
         onEncounterStart: (index, question) => this.onEncounterStart(index, question),
         onPick: (lane, correct) => this.onPick(lane, correct),
         onCollect: (lane, charge) => this.onCollect(lane, charge),
+        onShieldStrike: () => this.onShieldStrike(),
+        onShieldHit: () => this.onShieldHit(),
         onAim: (t) => this.onAim(t),
         onVectorLock: (outcome, truthT) => this.onVectorLock(outcome, truthT),
         onWaypoint: (info) => this.onWaypoint(info),
@@ -338,6 +340,11 @@ export class Engine {
   /** Cluster: pick a lane. */
   pick(lane: number): void {
     this.run.pick(lane);
+  }
+
+  /** Cluster: the question is read, open the lanes. */
+  ready(): void {
+    this.run.ready();
   }
 
   /**
@@ -526,6 +533,29 @@ export class Engine {
     this.ship.holdLane(x);
     this.chase.lockLane(LANE.lockSeconds);
     this.incoming.launch(correct ? "pod" : "rock", x, LANE.runSeconds);
+  }
+
+  /** The cluster's shield is up: the boulder makes its final run anyway. */
+  private onShieldStrike(): void {
+    this.audio.strike();
+    this.incoming.strike(ENCOUNTER.strikeSeconds);
+  }
+
+  /**
+   * The boulder breaks on the shield. Everything a collision shows, at
+   * collision weight, and then the ship comes back to the centreline for the
+   * next pick: the flight model never heard about it.
+   */
+  private onShieldHit(): void {
+    this.audio.contact("collision");
+    this.chase.shake(FX.shake.collision);
+    this.incoming.position(this.scratch);
+    this.incoming.shatter();
+    this.debris.burst(this.scratch, 1, COLOR.panelLabel);
+    this.shield.flash(1);
+    this.ship.impact("collision", this.side);
+    this.chase.releaseLane();
+    this.ship.recentre();
   }
 
   private onCollect(lane: number, charge: number): void {

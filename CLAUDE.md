@@ -2,9 +2,9 @@
 
 # Galaxia
 
-A daily quiz flight. Seven encounters, one run a day, scored out of a fixed
-2,400. Distance is still flown and still tracked; the score is what the run
-is played for. Every answer is a lane: tap a square, the ship veers into
+A daily quiz flight. Eight encounters, one run a day, scored out of a fixed
+total (1,800 as tuned). Distance is still flown and still tracked; the score
+is what the run is played for. Every answer is a lane: tap a square, the ship veers into
 that lane, and the verdict rides in on it. A right lane sends a plasma pod
 the ship flies through and accelerates; a wrong lane sends a boulder that
 strikes the hull and kills its momentum. Built with Next.js 16 (App Router,
@@ -27,9 +27,12 @@ things that make those games sticky:
   interaction is a single tap. Nothing requires precision, reading a manual,
   or two hands.
 - **A score you can hold in your head.** Every encounter is worth the same
-  base, the streak multiplies it in whole steps, and a wrong answer docks a
-  flat amount. A run is quoted out of what a perfect run would have scored,
-  so "1,880 of 2,400" means the same to everyone comparing. Distance is a
+  base, the streak multiplies it in whole steps, and most wrong answers score
+  nothing: points come off only where the player chose the stake, a boosted
+  lane or a wild shot at the scout. A run is quoted out of what a perfect run
+  would have scored, so "1,240 of 1,800" means the same to everyone
+  comparing. The first test player finished on zero under flat docks for
+  every miss; do not bring them back. Distance is a
   speedometer reading and makes a poor anchor: nobody knows whether 12,000 km
   is a good day. See `SCORE` in `Tuning.ts` and `lib/game/Score.ts`; the end
   of the run tallies it line by line before the share card. The rules are
@@ -37,7 +40,8 @@ things that make those games sticky:
   card and the waypoint card all read from it, so a retune can never leave
   the game lying about itself. Two rules worth knowing when tuning: a
   general knowledge answer is worth the full base only with Boost pressed
-  first (the perfect run assumes it was), and a Vector is scored on bands
+  first (the perfect run assumes it was; unboosted it is half, and a wrong
+  boosted answer is the one lane that docks points), and a Vector is scored on bands
   that are fractions of the true answer (`VECTOR.bands`), never on anything
   authored per question. Inside the widest band a shot is a `graze`: no
   points, no damage, streak untouched.
@@ -47,8 +51,13 @@ things that make those games sticky:
   answer itself is timed.
 - **Tension, then release.** The clock is five seconds per pick, drawn as
   thrust draining and a countdown, and it refills for every decision. A
-  cluster's first pick gets two seconds more, because six options and a
-  prompt have to be read before the first tap.
+  cluster opens on its question alone (`reading` phase): no lanes, a ten
+  second read clock and a READY! button, so nobody is timed on reading. Its
+  first pick then gets two seconds more for the six options. Each cluster
+  carries one shield of its own: the first wrong lane costs the shield and
+  keeps the plasma, the second loses the cluster for zero, and the run's
+  shields are never touched by a cluster. NOVA puts a second back on the
+  clock rather than spending thrust; a lifeline that costs time is not one.
   Streaks lift the cruise floor so a miss is a visible fall from screaming
   to crawling. The Cluster is push-your-luck: every right lane winds the
   boost gauge in the bottom left corner up a notch, and the player either
@@ -434,6 +443,13 @@ to announce, so a round can skip a number if it has to.
   distinctive word of its opener, which matters most when this prose is
   generated rather than written. A Commons filename is never rendered: it
   usually names the answer.
+- **Every day is mixed general knowledge, never a themed round.** The six
+  quiz questions come from six different corners (geography, space, animals,
+  history, food, sport, science, the arts) and never more than two from any
+  one, placed apart in the run. A day of all-geography or all-space reads as
+  a specialist's quiz and drives off everyone else. `theme` stays "General
+  knowledge" for every round; it is the sector label on the title screen and
+  the share card, not a subject.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.

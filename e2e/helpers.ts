@@ -62,3 +62,14 @@ export async function stubImagery(page: Page) {
     await route.fulfill({ status: 200, contentType: "image/jpeg", body: await render() });
   });
 }
+
+/**
+ * A cluster opens on its question alone. Tap READY! to bring the lanes up;
+ * the pick clock does not start until then.
+ */
+export async function readUp(page: Page) {
+  const ready = page.getByTestId("cluster-ready");
+  await expect(ready).toBeVisible({ timeout: 15_000 });
+  await ready.click();
+  await expect(page.getByTestId("option-0")).toBeVisible({ timeout: 5_000 });
+}

@@ -64,6 +64,14 @@ export interface RunHooks {
   /** A lane was picked. Veer into it and launch the pod or the boulder. */
   onPick(lane: number, correct: boolean): void;
   /**
+   * Cluster: a boulder is in the lane but the cluster's own shield is up.
+   * The boulder makes its final run; `onShieldHit` lands `ENCOUNTER.strikeSeconds`
+   * later. Nothing in the flight model changes: the shield takes the whole hit.
+   */
+  onShieldStrike(lane: number): void;
+  /** Contact on a shielded lane. Break the boulder, flash the shield, carry on. */
+  onShieldHit(lane: number): void;
+  /**
    * The lane was clean: the pod is collected. `charge` is the reactor total
    * after it, or 0 on a question with no reactor.
    */
@@ -92,6 +100,10 @@ interface ClusterProgress {
   picked: number[];
   charge: number;
   eliminated: number[];
+  /** The cluster's own shields, see `CLUSTER.shields`. */
+  shields: number;
+  /** Wrong lanes a shield took. */
+  struck: number[];
 }
 
 export class Run {
@@ -158,6 +170,11 @@ export class Run {
   private burnCharge = 0;
   private burnDrain = 0;
   private pendingPick: { lane: number; correct: boolean } | null = null;
+  /**
+   * A boulder the cluster's shield is about to take: the lane it is in while
+   * its final run plays out, or null. Sits in `collecting` like a pick does.
+   */
+  private absorbing: number | null = null;
   /** Vector aim in slider space, and the window a NOVA scan left open. */
   private vectorT = 0.5;
   private vectorWindow: [number, number] = [0, 1];
@@ -222,6 +239,7 @@ export class Run {
       waypoint: this.phase === "waypoint" ? this.waypoint : null,
       stationReady: this.stationReady,
       clockSeconds: this.thrustSeconds,
+      readSeconds: this.phase === "reading" ? Math.max(0, this.timer) : 0,
       countdown: this.countdown,
       shields: this.shields,
       feedReady: this.feedReady,
@@ -241,7 +259,12 @@ export class Run {
 
   private clusterState(): ClusterState | null {
     const cluster = this.cluster;
-    if (!cluster || (this.phase !== "approach" && this.phase !== "collecting")) return null;
+    if (
+      !cluster ||
+      (this.phase !== "reading" && this.phase !== "approach" && this.phase !== "collecting")
+    ) {
+      return null;
+    }
     return {
       picked: cluster.picked,
       charge: cluster.charge,
@@ -249,6 +272,8 @@ export class Run {
       projectedNext: this.burnImpulse(cluster.charge + 1),
       eliminated: cluster.eliminated,
       full: this.clusterHold,
+      shields: cluster.shields,
+      struck: cluster.struck,
     };
   }
 
@@ -287,8 +312,19 @@ export class Run {
     if (!this.answering || !question || question.type !== "cluster" || !cluster) return;
     if (lane < 0 || lane >= question.options.length) return;
     if (cluster.picked.includes(lane) || cluster.eliminated.includes(lane)) return;
+    if (cluster.struck.includes(lane)) return;
 
     this.beginPick(lane, question.answers.includes(lane));
+  }
+
+  /**
+   * Cluster: the question has been read, open the lanes. The read clock
+   * calls this too when it runs out; either way the pick clock starts here
+   * and not a moment before.
+   */
+  ready(): void {
+    if (this.phase !== "reading") return;
+    this.openLanes();
   }
 
   /**
@@ -444,7 +480,12 @@ export class Run {
 
     this.novaLeft -= 1;
     this.novasUsed += 1;
-    this.thrust = Math.max(this.thrust - NOVA.thrustCost, 0.02);
+    // A lifeline, not a trade: the scan puts seconds back on the clock. The
+    // tank is stretched to hold them, so the bar climbs without overfilling
+    // and `clockSeconds` keeps quoting the right total.
+    const remaining = this.thrust * this.thrustSeconds + NOVA.bonusSeconds;
+    this.thrustSeconds += NOVA.bonusSeconds;
+    this.thrust = Math.min(remaining / this.thrustSeconds, 1);
 
     if (question.type === "cluster") {
       const cluster = this.cluster;
@@ -654,6 +695,13 @@ export class Run {
         break;
       }
 
+      case "reading":
+        // The question alone. READY opens the lanes; so does this clock, so
+        // a player who never finds the button is still not stuck.
+        this.timer -= dt;
+        if (this.timer <= 0) this.openLanes();
+        break;
+
       case "approach":
         // A full gauge holds the clock: the boost is fired on a tap, not on a
         // stopwatch.
@@ -671,9 +719,13 @@ export class Run {
 
       case "collecting":
         // Thrust is frozen while the pick is in flight; the verdict lands on
-        // the timer, not on the tank.
+        // the timer, not on the tank. A boulder the shield is taking makes
+        // its final run on the same timer.
         this.timer -= dt;
-        if (this.timer <= 0) this.resolvePick();
+        if (this.timer <= 0) {
+          if (this.absorbing !== null) this.absorbHit();
+          else this.resolvePick();
+        }
         break;
 
       case "station":
@@ -763,8 +815,12 @@ export class Run {
 
     this.index = index;
     // WHERE ON EARTH is untimed: the ship flies in, nothing is tappable
-    // until it arrives, and the clock never starts.
-    this.phase = question.type === "earth" ? "station" : "approach";
+    // until it arrives, and the clock never starts. A cluster opens on its
+    // question alone and waits for READY (or the read clock) before the
+    // lanes and the pick clock come up.
+    this.phase =
+      question.type === "earth" ? "station" : question.type === "cluster" ? "reading" : "approach";
+    if (question.type === "cluster") this.timer = CLUSTER.readSeconds;
     this.stationReady = false;
     // Throttle back to dock. Velocity relaxes to the crawl on the flight
     // model's own curve, so the readout, the FOV and the drone fall together.
@@ -776,9 +832,12 @@ export class Run {
     this.pulse = null;
     this.pending = null;
     this.pendingPick = null;
+    this.absorbing = null;
     this.struck = false;
     this.cluster =
-      question.type === "cluster" ? { picked: [], charge: 0, eliminated: [] } : null;
+      question.type === "cluster"
+        ? { picked: [], charge: 0, eliminated: [], shields: CLUSTER.shields, struck: [] }
+        : null;
     this.clusterHold = false;
     this.burnCharge = 0;
     this.burnDrain = 0;
@@ -881,27 +940,39 @@ export class Run {
     );
   }
 
-  /** A boulder in the lane. It costs a shield, and everything in the reactor. */
+  /**
+   * A boulder in the lane.
+   *
+   * On a cluster the cluster's own shield takes the first one: the plasma
+   * stays banked, the lane is struck out, and the clock comes back for the
+   * next pick. With no cluster shield left the reactor empties and the
+   * cluster is over, for zero points and none of the run's shields.
+   *
+   * Everywhere else it costs one of the run's shields.
+   */
   private resolveMiss(question: Question, lane: number): void {
     const cluster = this.cluster;
-    const shielded = this.shields > 0;
-    if (shielded) {
-      this.shields -= 1;
-      this.shieldLost = true;
-      this.flash(
-        "shield",
-        "SHIELD DOWN",
-        this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
-      );
-    } else {
-      this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
-    }
 
     if (question.type === "cluster" && cluster) {
+      if (cluster.shields > 0) {
+        cluster.shields -= 1;
+        cluster.struck.push(lane);
+        // The boulder's final run, then `absorbHit` on contact. The pulse
+        // waits for the hit so the words land with the crack.
+        this.absorbing = lane;
+        this.phase = "collecting";
+        this.timer = ENCOUNTER.strikeSeconds;
+        this.hooks.onShieldStrike(lane);
+        return;
+      }
+
+      const lost = cluster.charge;
       cluster.picked.push(lane);
+      cluster.charge = 0;
+      this.flash("shield", "CLUSTER LOST", lost > 0 ? `${lost} PLASMA GONE` : "NO SHIELD LEFT");
       this.phase = "approach";
       this.lock({
-        kind: outcomeKind(false, false, false, shielded),
+        kind: "collision",
         correct: false,
         boosted: false,
         timedOut: false,
@@ -915,8 +986,22 @@ export class Run {
         answerText: clusterAnswerText(question),
         charge: 0,
         picks: [...cluster.picked],
+        lost,
       });
       return;
+    }
+
+    const shielded = this.shields > 0;
+    if (shielded) {
+      this.shields -= 1;
+      this.shieldLost = true;
+      this.flash(
+        "shield",
+        "SHIELD DOWN",
+        this.shields > 0 ? `${this.shields} SHIELD${this.shields === 1 ? "" : "S"} LEFT` : "NO SHIELDS LEFT",
+      );
+    } else {
+      this.flash("shield", "HULL BREACH", "NO SHIELDS LEFT");
     }
 
     if (question.type !== "mcq") {
@@ -939,6 +1024,45 @@ export class Run {
       guessText: question.options[lane] ?? "",
       answerText: question.options[question.answer] ?? "",
     });
+  }
+
+  /**
+   * Cluster: the lanes come up and the first pick's clock starts. The prompt
+   * has been read by now, so the bonus on this clock is for the six options.
+   */
+  private openLanes(): void {
+    this.phase = "approach";
+    this.thrust = 1;
+    this.thrustSeconds = ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds;
+    this.grace = 0;
+  }
+
+  /**
+   * Contact on a shielded lane. The boulder breaks on the shield, the plasma
+   * is untouched, and the clock comes back fresh for the next pick after the
+   * same beat a collect gets. Velocity and streak are left exactly as they
+   * were: the shield took all of it.
+   */
+  private absorbHit(): void {
+    const lane = this.absorbing;
+    const cluster = this.cluster;
+    this.absorbing = null;
+    if (lane === null || !cluster) {
+      this.phase = "approach";
+      return;
+    }
+    this.flash(
+      "shield",
+      "SHIELD DOWN",
+      cluster.shields > 0
+        ? `PLASMA KEPT · ${cluster.shields} SHIELD${cluster.shields === 1 ? "" : "S"} LEFT`
+        : "PLASMA KEPT · NO SHIELD LEFT",
+    );
+    this.hooks.onShieldHit(lane);
+    this.phase = "approach";
+    this.thrust = 1;
+    this.thrustSeconds = ENCOUNTER.thrustSeconds;
+    this.grace = CLUSTER.collectPauseSeconds;
   }
 
   /** Raise a one-shot banner over the scene. */

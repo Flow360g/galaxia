@@ -55,9 +55,9 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
     title: "CLUSTER",
     oneLiner: `${LANES} answers, ${FULL_CHARGE} are right. Find them.`,
     how: [
-      `${LANES} answers are up and ${FULL_CHARGE} of them are right. Tap one and the ship flies that lane.`,
-      "Every right pick banks one plasma. Press BURN to cash in what you have, or pick again for more.",
-      `One wrong lane and the plasma is gone. You also lose a shield and ${SCORE.penalty.collision} points.`,
+      `Read the question, then tap READY. ${LANES} answers come up and ${FULL_CHARGE} of them are right. Tap one and the ship flies that lane.`,
+      "Every right pick banks one plasma. Press BANK to cash in what you have, or pick again for more.",
+      `You have ${CLUSTER.shields} shield${CLUSTER.shields === 1 ? "" : "s"} per cluster. A wrong lane costs it and you keep your plasma. With no shield left, a wrong lane loses the cluster for zero points. You never lose points here.`,
     ],
     scoring: [
       ...SCORE.clusterShare.map((share, index) => ({
@@ -65,7 +65,8 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
         worth: pts(share),
         tone: "good" as const,
       })),
-      { label: "WRONG LANE", worth: `-${SCORE.penalty.collision} AND A SHIELD`, tone: "bad" },
+      { label: "WRONG LANE", worth: "-1 SHIELD · PLASMA KEPT", tone: "neutral" },
+      { label: "NO SHIELD LEFT", worth: `${SCORE.penalty.cluster} · PLASMA LOST`, tone: "bad" },
     ],
   },
   vector: {
@@ -92,14 +93,14 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
     title: "GENERAL KNOWLEDGE",
     oneLiner: "Four answers, one right. Boost if you are sure.",
     how: [
-      "Four answers, one right. Tap it.",
-      "Sure of it? Press BOOST before you answer. A right answer is then worth full points, and a wrong one costs double.",
+      "Four answers, one right. Tap it. A wrong answer scores nothing and costs a shield.",
+      `Sure of it? Press BOOST before you answer. A right answer is then worth double, and a wrong one costs ${SCORE.penalty.laneBoosted} points.`,
     ],
     scoring: [
       { label: "RIGHT WITH BOOST", worth: pts(1), tone: "good" },
       { label: "RIGHT", worth: pts(SCORE.laneShare), tone: "good" },
-      { label: "WRONG", worth: `-${SCORE.penalty.collision} AND A SHIELD`, tone: "bad" },
-      { label: "WRONG WITH BOOST", worth: `-${SCORE.penalty.wreck} AND A SHIELD`, tone: "bad" },
+      { label: "WRONG", worth: `${SCORE.penalty.lane} AND A SHIELD`, tone: "neutral" },
+      { label: "WRONG WITH BOOST", worth: `-${SCORE.penalty.laneBoosted} AND A SHIELD`, tone: "bad" },
     ],
   },
   earth: {
@@ -166,9 +167,10 @@ export function streakRows(): ScoringRow[] {
 export function kitRows(): ScoringRow[] {
   return [
     { label: "SHIELDS", worth: `x${SHIELDS.perRun}`, tone: "good" },
-    { label: "NOVA", worth: `x${NOVA.perRun}`, tone: "good" },
+    { label: "PER CLUSTER", worth: `+${CLUSTER.shields} SHIELD`, tone: "good" },
+    { label: "NOVA", worth: `x${NOVA.perRun} · +${NOVA.bonusSeconds}S EACH`, tone: "good" },
     { label: "THE CLOCK", worth: `${ENCOUNTER.thrustSeconds} SECONDS`, tone: "neutral" },
-    { label: "NO SHIELDS LEFT", worth: `A MISS COSTS ${SCORE.penalty.wreck}`, tone: "bad" },
+    { label: "NO SHIELDS LEFT", worth: "A HIT LANDS DOUBLE", tone: "bad" },
   ];
 }
 

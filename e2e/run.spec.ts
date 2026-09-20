@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
-import { acknowledge, launch, stubImagery } from "./helpers";
+import { acknowledge, launch, readUp, stubImagery } from "./helpers";
 
 const SHOTS = process.env.SHOT_DIR;
 
@@ -46,10 +46,23 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("countdown")).toBeVisible({ timeout: 10_000 });
   await shot(page, "00-countdown");
 
-  // Encounter 1: cluster. Two correct picks, then BURN at 2 plasma.
+  // Encounter 1: cluster. The question comes up on its own first, with the
+  // cluster's shield count and READY!, and no lane, tool or clock to lose it
+  // on. Then two correct picks and BURN at 2 plasma.
   await expect(question).toBeVisible({ timeout: 20_000 });
   // GO has cleared by the time the first prompt lands.
   await expect(page.getByTestId("countdown")).toHaveCount(0);
+  await expect(page.getByTestId("cluster-read")).toBeVisible();
+  await expect(page.getByTestId("cluster-shields")).toHaveText("YOU HAVE 1 SHIELD");
+  await expect(page.getByTestId("option-0")).toHaveCount(0);
+  await expect(page.getByTestId("nova")).toHaveCount(0);
+  await expect(page.getByTestId("burn")).toHaveCount(0);
+  // The read clock is its own: ten seconds, not five.
+  expect(Number((await page.getByTestId("clock").innerText()).replace(/\D/g, ""))).toBeGreaterThan(
+    5,
+  );
+  await shot(page, "01a-cluster-read");
+  await readUp(page);
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "0");
   await expect(page.getByTestId("burn")).toBeDisabled();
   await shot(page, "01-cluster");
@@ -76,27 +89,38 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // The words are a target, not just a label.
   await advance(page, "banner");
 
-  // Encounter 2: cluster. One correct, then a wrong lane. A boulder in the
-  // lane: COLLISION, and one of the three shields is gone.
+  // Encounter 2: cluster. One correct, then a wrong lane. The cluster's own
+  // shield takes the boulder: the plasma stays banked, the lane is struck out
+  // and the question is still open. A second wrong lane loses the cluster,
+  // for zero points and none of the run's three shields.
   await expect(question).toBeVisible({ timeout: 15_000 });
+  await readUp(page);
   const [right] = answersOf(1);
   await page.getByTestId(`option-${right}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
-  await page.getByTestId(`option-${wrongLaneOf(1)}`).click();
+  const [wrongA, wrongB] = wrongLanesOf(1);
+  await page.getByTestId(`option-${wrongA}`).click();
+  // The boulder's run-in and its final strike play out first.
   await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "shield", {
-    timeout: 5_000,
+    timeout: 10_000,
   });
+  await expect(page.getByTestId("pulse")).toContainText("PLASMA KEPT");
+  await expect(page.getByTestId(`option-${wrongA}`)).toHaveAttribute("data-struck", "true");
+  await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1");
+  await expect(toast).toHaveCount(0);
+  await shot(page, "04a-cluster-shield");
+  await page.getByTestId(`option-${wrongB}`).click();
   await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
   await expect(toast).toContainText("1 plasma lost");
   await shot(page, "04-cluster-miss");
   await expect(page.getByTestId("streak")).toHaveText(/^\s*$/);
-  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   expect(await readVelocity(page)).toBeLessThan(velocityAfterBurn);
-  // A miss docks points as well as velocity.
-  await expect(page.getByTestId("toast-points")).toHaveText(/-\d/);
+  // A lost cluster costs velocity and the streak, never points.
+  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0$/);
   await advance(page);
 
-  // Waypoint: Stage 1 rated (3 plasma, a shield down: B), then ALIEN CONTACT.
+  // Waypoint: Stage 1 rated (3 plasma of 6: B), then ALIEN CONTACT.
   const waypoint = page.getByTestId("waypoint");
   await expect(waypoint).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("rating")).toHaveText("B", { timeout: 5_000 });
@@ -116,7 +140,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // The stage card waits to be tapped on too, banner included.
   await advance(page, "banner");
 
-  // Encounter 3: vector. Aim dead on. DIRECT HIT, salvage restores a shield.
+  // Encounter 3: vector. Aim dead on. DIRECT HIT. Every shield is still up,
+  // so the salvage is a NOVA rather than a shield.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("VECTOR")).toBeVisible();
   await page.getByTestId("aim").fill(String(sliderOf(2)));
@@ -124,7 +149,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "07-vector-aim");
   await page.getByTestId("lock").click();
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
-  await expect(page.getByTestId("salvage")).toContainText("SHIELD RESTORED");
+  await expect(page.getByTestId("salvage")).toContainText("+1 NOVA");
   await shot(page, "08-direct-hit");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   await advance(page);
@@ -155,8 +180,16 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // Encounter 5: NOVA then correct with boost. SLINGSHOT, and full marks:
   // 100 at x1, since the miss before it reset the streak.
   await expect(question).toBeVisible({ timeout: 15_000 });
+  const clockBefore = Number((await page.getByTestId("clock").innerText()).replace(/\D/g, ""));
   await page.getByTestId("nova").click();
   await expect(page.getByTestId("nova-result")).toBeVisible();
+  // A lifeline, not a trade: the hint arrives with a second put back on the
+  // clock rather than thrust taken off it.
+  await expect(page.getByTestId("nova-result")).toContainText("HINT FROM NOVA");
+  await expect(page.getByTestId("nova-result")).toContainText("+1S");
+  expect(Number((await page.getByTestId("clock").innerText()).replace(/\D/g, ""))).toBeGreaterThanOrEqual(
+    clockBefore,
+  );
   await page.getByTestId("boost").click();
   await expect(page.getByTestId("boost")).toHaveAttribute("aria-pressed", "true");
   await page.getByTestId(`option-${answerOf(4)}`).click();
@@ -325,7 +358,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // the DOM the whole time, so the reveal is asserted on the class that
   // actually makes a line visible rather than on its content.
   await expect(page.getByTestId("tally-line-7")).toHaveClass(/lineIn/, { timeout: 10_000 });
-  await expect(page.getByTestId("tally-total")).toContainText("/ 2,400");
+  // 8 encounters at 100 each under the streak ladder: 1,800 for a perfect run.
+  await expect(page.getByTestId("tally-total")).toContainText("/ 1,800");
   await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE");
   // The total stamps in a beat after the last line.
   await expect(page.getByTestId("tally-total")).toBeVisible();
@@ -335,9 +369,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     (await page.getByTestId("tally-total").innerText()).split("/")[0]!.replace(/[^0-9]/g, ""),
   );
   expect(scored).toBeGreaterThan(0);
-  expect(scored).toBeLessThan(2400);
+  expect(scored).toBeLessThan(1800);
   // The station is an encounter now, not a cutscene: two sites named correctly
-  // add the finale's double base on top of whatever the flight had banked.
+  // add their base on top of whatever the flight had banked.
   const beforeDock = Number(scoreBefore.split("/")[0]!.replace(/[^0-9]/g, ""));
   expect(scored).toBeGreaterThan(beforeDock);
   await page.getByTestId("tally-continue").click();
@@ -376,6 +410,12 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
 
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+  // Enter is READY on the read screen, like it is everywhere else a tap is.
+  await expect(page.getByTestId("cluster-ready")).toBeVisible();
+  await page.keyboard.press("Enter");
+  // The HUD samples the run at about 12Hz, so give the lanes a beat to land
+  // before the number keys start: a key on a stale phase is ignored.
+  await expect(page.getByTestId("option-0")).toBeVisible({ timeout: 5_000 });
   const lanes = answersOf(0);
   for (const lane of lanes.slice(0, -1)) {
     await page.keyboard.press(String(lane + 1));
@@ -413,6 +453,7 @@ test("a vector graze: no points, no damage, and the streak holds", async ({ page
   // Two clusters, one plasma banked on each, so the streak into the vector is 2.
   for (const index of [0, 1]) {
     await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+    await readUp(page);
     await page.getByTestId(`option-${answersOf(index)[0]}`).click();
     await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
     await page.getByTestId("burn").click();
@@ -469,11 +510,12 @@ function answersOf(index: number): number[] {
   return question.answers as number[];
 }
 
-function wrongLaneOf(index: number): number {
+/** The wrong lanes of a cluster, in lane order. There are always three. */
+function wrongLanesOf(index: number): number[] {
   const question = round.questions[index];
   if (!question || question.type !== "cluster") throw new Error(`no cluster at ${index}`);
   const answers = question.answers as number[];
-  const lane = question.options.findIndex((_, i) => !answers.includes(i));
-  if (lane < 0) throw new Error(`no wrong lane at ${index}`);
-  return lane;
+  const lanes = question.options.map((_, i) => i).filter((i) => !answers.includes(i));
+  if (lanes.length < 2) throw new Error(`not enough wrong lanes at ${index}`);
+  return lanes;
 }

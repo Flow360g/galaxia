@@ -134,6 +134,11 @@ export interface Round {
 export type Phase =
   /** Engines lighting, first question not yet called. */
   | "intro"
+  /**
+   * Cluster: the question is up on its own. No lanes, no pick clock, a READY
+   * button and a read clock that opens the lanes if the button is not tapped.
+   */
+  | "reading"
   /** Question open, thrust draining, lanes tappable. */
   | "approach"
   /** A lane was picked: the ship is veering and the pod or boulder is inbound. */
@@ -219,6 +224,10 @@ export interface ClusterState {
    * there is nothing left to pick, so the run waits on the boost being fired.
    */
   full: boolean;
+  /** The cluster's own shields still up. See `CLUSTER.shields`. */
+  shields: number;
+  /** Wrong lanes a shield has already taken. Struck out, not lit. */
+  struck: number[];
 }
 
 export interface NovaResult {
@@ -275,6 +284,8 @@ export interface Outcome {
   charge?: number;
   /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
   picks?: number[];
+  /** Cluster only: plasma that was in the reactor when the cluster was lost. */
+  lost?: number;
   /** Vector only: |guess - truth| / |truth|, so 0.1 is 10% off. */
   error?: number;
   /** Vector only: the aimed value. */
@@ -372,6 +383,8 @@ export interface GameState {
   stationReady: boolean;
   /** Seconds on a full clock for the current encounter. */
   clockSeconds: number;
+  /** Cluster read screen: seconds before the lanes open on their own. 0 otherwise. */
+  readSeconds: number;
   /** Shields left. Each wrong lane costs one; at zero, a miss is a wreck. */
   shields: number;
   maxShields: number;

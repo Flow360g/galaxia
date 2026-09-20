@@ -18,7 +18,7 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER, COUNTDOWN, ENCOUNTER, WAYPOINT } from "@/lib/game/Tuning";
+import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatValue } from "@/lib/game/Run";
 import { phaseGuide } from "@/lib/game/phases";
@@ -37,6 +37,8 @@ interface Props {
   round: Round;
   onAnswer: (option: number) => void;
   onPick: (lane: number) => void;
+  /** Cluster: READY on the read screen. Opens the lanes and starts the pick clock. */
+  onReady: () => void;
   onBurn: () => void;
   onAim: (t: number) => void;
   onLockVector: () => void;
@@ -68,10 +70,12 @@ const OUTCOME_LABEL: Record<OutcomeKind, string> = {
   graze: "GRAZED",
 };
 
-const NOVA_LABEL = {
-  eliminate: "NOVA: ONE OPTION RULED OUT",
-  clue: "NOVA: CLUE",
-  narrow: "NOVA: TWO MOST PLAUSIBLE",
+/** What the scan did, after the (HINT FROM NOVA) tag. A clue prints itself. */
+const NOVA_DETAIL = {
+  eliminate: "One wrong lane ruled out.",
+  clue: "",
+  narrow: "The two likeliest lanes are lit.",
+  vector: "The scout is inside the window.",
 } as const;
 
 /** Slider step for a nudge button or an arrow key. */
@@ -107,6 +111,7 @@ export function Hud({
   round,
   onAnswer,
   onPick,
+  onReady,
   onBurn,
   onAim,
   onLockVector,
@@ -122,10 +127,15 @@ export function Hud({
     state && state.encounter >= 0 ? round.questions[state.encounter] : undefined;
   const answering = state?.phase === "approach";
   const collecting = state?.phase === "collecting";
+  // Cluster: the question on its own, no lanes yet. READY (or the read clock)
+  // opens them.
+  const reading = state?.phase === "reading";
   // WHERE ON EARTH: the question is up while the ship flies in, but nothing
   // is tappable until it arrives and no clock runs.
   const station = state?.phase === "station";
-  const open = answering || collecting || station;
+  const open = answering || collecting || station || reading;
+  /** Lanes are up: the cockpit corners belong on screen. */
+  const flying = answering || collecting;
   const total = round.questions.length;
   const outcome = state?.outcome ?? null;
   const isCluster = question?.type === "cluster";
@@ -146,14 +156,21 @@ export function Hud({
     onNova,
     onEnterStation,
     onConfirm,
+    onReady,
   });
   // The overlay's CSS animations end invisible, so they can simply live as
   // long as the MAXIMUM THRUST outcome is current; no timer needed.
   const maxThrust = isMaxThrust(outcome);
 
-  const thrust = state?.thrust ?? 1;
-  const seconds = Math.max(Math.ceil(thrust * (state?.clockSeconds ?? ENCOUNTER.thrustSeconds)), 0);
+  // On the read screen the bar and the figure are the read clock; everywhere
+  // else they are thrust, which is the pick clock.
+  const readSeconds = state?.readSeconds ?? 0;
+  const thrust = reading ? readSeconds / CLUSTER.readSeconds : (state?.thrust ?? 1);
+  const seconds = reading
+    ? Math.max(Math.ceil(readSeconds), 0)
+    : Math.max(Math.ceil(thrust * (state?.clockSeconds ?? ENCOUNTER.thrustSeconds)), 0);
   const thrustLow = thrust < 0.35;
+  const clockShown = answering || reading;
   const shields = state?.shields ?? 0;
   const maxShields = state?.maxShields ?? 0;
 
@@ -279,7 +296,7 @@ export function Hud({
               ) : (
                 <span className={`${styles.clusterTag} arcade`}>PICK A LANE</span>
               )}
-              {answering ? (
+              {clockShown ? (
                 <span
                   className={`${styles.clock} ${thrustLow ? styles.clockLow : ""} arcade`}
                   data-testid="clock"
@@ -291,11 +308,12 @@ export function Hud({
 
             <p className={styles.prompt}>{question.prompt}</p>
 
-            {/* The clock, drawn as thrust draining rather than as a dial. */}
-            {answering ? (
+            {/* The clock, drawn as thrust draining rather than as a dial. On
+                the read screen it is the read clock draining instead. */}
+            {clockShown ? (
               <div
                 className={styles.thrustTrack}
-                aria-label={`Thrust ${Math.round(thrust * 100)}%`}
+                aria-label={reading ? `${seconds} seconds to read` : `Thrust ${Math.round(thrust * 100)}%`}
               >
                 <div
                   className={`${styles.thrustFill} ${thrustLow ? styles.thrustLow : ""}`}
@@ -307,14 +325,22 @@ export function Hud({
 
             {state?.nova && !isEarth ? (
               <p className={styles.novaLine} data-testid="nova-result">
-                <span className={`${styles.novaLabel} arcade`}>
-                  {isVector ? "NOVA: WINDOW NARROWED" : NOVA_LABEL[state.nova.kind]}
+                <span className={`${styles.novaLabel} arcade`}>(HINT FROM NOVA)</span>
+                <span>
+                  {" "}
+                  {state.nova.clue ?? NOVA_DETAIL[isVector ? "vector" : state.nova.kind]}
+                  {" "}
+                  <span className={`${styles.novaBonus} arcade`}>+{NOVA.bonusSeconds}S</span>
                 </span>
-                {state.nova.clue ? <span> {state.nova.clue}</span> : null}
               </p>
             ) : null}
 
-            {question.type === "earth" ? (
+            {reading ? (
+              <ClusterRead
+                shields={state?.cluster?.shields ?? CLUSTER.shields}
+                onReady={onReady}
+              />
+            ) : question.type === "earth" ? (
               <StationApproach
                 ready={state?.stationReady ?? false}
                 onEnter={onEnterStation}
@@ -331,6 +357,7 @@ export function Hud({
               <LaneRow
                 options={question.options}
                 picked={state?.cluster?.picked ?? []}
+                struck={state?.cluster?.struck ?? []}
                 eliminated={state?.nova?.eliminated ?? []}
                 highlighted={state?.nova?.highlighted ?? []}
                 disabled={!answering || collecting}
@@ -341,7 +368,7 @@ export function Hud({
 
             {/* No tools on the approach to the station: there is nothing to
                 scan and nothing to boost through. */}
-            {!isEarth ? (
+            {!isEarth && !reading ? (
             <div className={styles.tools}>
               <button
                 type="button"
@@ -407,15 +434,15 @@ export function Hud({
         either side of the ship. They are the only things the run draws below
         the band; both hug the safe area, and the gauge takes no taps at all.
       */}
-      {isCluster && (open || (state?.burnDrain ?? 0) > 0) ? (
+      {isCluster && (flying || (state?.burnDrain ?? 0) > 0) ? (
         <BoostGauge
-          charge={open ? (state?.cluster?.charge ?? 0) : (state?.burnCharge ?? 0)}
-          drain={open ? 1 : (state?.burnDrain ?? 0)}
+          charge={flying ? (state?.cluster?.charge ?? 0) : (state?.burnCharge ?? 0)}
+          drain={flying ? 1 : (state?.burnDrain ?? 0)}
           full={state?.cluster?.full ?? false}
         />
       ) : null}
 
-      {isCluster && open ? (
+      {isCluster && flying ? (
         <button
           type="button"
           className={`${styles.burnDial} ${
@@ -510,9 +537,12 @@ function MaxThrust() {
  * arrive underneath the square the player tapped rather than at a lane the
  * engine guessed, at any aspect ratio and any label length.
  */
+const NO_LANES: number[] = [];
+
 function LaneRow({
   options,
   picked,
+  struck = NO_LANES,
   eliminated,
   highlighted,
   disabled,
@@ -521,6 +551,8 @@ function LaneRow({
 }: {
   options: string[];
   picked: number[];
+  /** Cluster: wrong lanes the cluster's shield already took. */
+  struck?: number[];
   eliminated: number[];
   highlighted: number[];
   disabled: boolean;
@@ -564,6 +596,7 @@ function LaneRow({
     <div className={styles.lanes} ref={rowRef}>
       {options.map((option, index) => {
         const got = picked.includes(index);
+        const hit = struck.includes(index);
         const out = eliminated.includes(index);
         const lit = highlighted.includes(index);
         return (
@@ -571,12 +604,13 @@ function LaneRow({
             key={index}
             type="button"
             className={`${styles.lane} ${got ? styles.laneGot : ""} ${
-              out ? styles.laneOut : ""
-            } ${lit ? styles.laneLit : ""}`}
-            disabled={disabled || got || out}
+              hit ? styles.laneStruck : ""
+            } ${out ? styles.laneOut : ""} ${lit ? styles.laneLit : ""}`}
+            disabled={disabled || got || hit || out}
             onClick={() => onPick(index)}
             data-testid={`option-${index}`}
             data-got={got}
+            data-struck={hit}
           >
             <span className={`${styles.laneKey} arcade`}>{index + 1}</span>
             <span className={styles.laneText}>{option}</span>
@@ -997,8 +1031,8 @@ function OutcomeToast({
         <span className={styles.toastAnswer}>
           The three: <strong>{outcome.answerText}</strong>
           {!outcome.correct && outcome.chosen !== null ? <> &middot; You hit: {outcome.guessText}</> : null}
-          {!outcome.correct && outcome.picks.length > 1 ? (
-            <> &middot; {outcome.picks.length - 1} plasma lost</>
+          {!outcome.correct && (outcome.lost ?? 0) > 0 ? (
+            <> &middot; {outcome.lost} plasma lost</>
           ) : null}
         </span>
       ) : (
@@ -1023,6 +1057,33 @@ function OutcomeToast({
       {fact ? <span className={styles.toastFact}>{fact}</span> : null}
       <TapPrompt shown={awaitingTap} />
     </section>
+  );
+}
+
+/**
+ * A cluster's read screen: the question is up, the lanes are not. What the
+ * cluster's own shield does, in one line, and READY. The read clock in the
+ * panel head opens the lanes on its own if the button is never tapped.
+ */
+function ClusterRead({ shields, onReady }: { shields: number; onReady: () => void }) {
+  return (
+    <div className={styles.read} data-testid="cluster-read">
+      <span className={`${styles.readShield} arcade`} data-testid="cluster-shields">
+        YOU HAVE {shields} SHIELD{shields === 1 ? "" : "S"}
+      </span>
+      <span className={styles.readNote}>
+        A wrong lane costs it and you keep your plasma. Another wrong lane and the cluster
+        is lost, for zero points.
+      </span>
+      <button
+        type="button"
+        className={`${styles.readyButton} arcade`}
+        onClick={onReady}
+        data-testid="cluster-ready"
+      >
+        READY!
+      </button>
+    </div>
   );
 }
 
@@ -1067,6 +1128,7 @@ function useKeyboard({
   onNova,
   onEnterStation,
   onConfirm,
+  onReady,
 }: Pick<
   Props,
   | "state"
@@ -1079,6 +1141,7 @@ function useKeyboard({
   | "onNova"
   | "onEnterStation"
   | "onConfirm"
+  | "onReady"
 > & {
   question: Round["questions"][number] | undefined;
 }) {
@@ -1094,6 +1157,7 @@ function useKeyboard({
     onNova,
     onEnterStation,
     onConfirm,
+    onReady,
   });
   useEffect(() => {
     latest.current = {
@@ -1108,6 +1172,7 @@ function useKeyboard({
       onNova,
       onEnterStation,
       onConfirm,
+      onReady,
     };
   });
 
@@ -1132,6 +1197,14 @@ function useKeyboard({
         if (current.state.stationReady && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           current.onEnterStation();
+        }
+        return;
+      }
+      // A cluster's read screen: Enter or Space is READY.
+      if (current.state?.phase === "reading") {
+        if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+          event.preventDefault();
+          current.onReady();
         }
         return;
       }
