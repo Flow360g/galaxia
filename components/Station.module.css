@@ -95,6 +95,23 @@
   color: #ffffff;
 }
 
+/* The hint count, directly under the task. Cyan is the intel colour. */
+.hints {
+  font-size: 9px;
+  letter-spacing: var(--track-label);
+  color: var(--arcade-cyan);
+  margin-top: -4px;
+}
+
+/* One line of plain words for a first visit. Gone once a hint is bought or a
+   verdict is up, because a short phone needs the height back. */
+.tip {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9fb0c6;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

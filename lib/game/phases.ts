@@ -139,10 +139,10 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
   earth: {
     type: "earth",
     title: PHASE_TITLE.earth,
-    oneLiner: "Look at the satellite view. Name the city.",
+    oneLiner: "Look at the satellite view. Name the place.",
     how: [
-      "A satellite view of somewhere on Earth. Type the name of the city.",
-      "Stuck? Zoom out or ask for a hint. Each one costs a few points, so a correct answer with no help scores the most.",
+      "A satellite view of somewhere on Earth. Type the name of the place.",
+      "Stuck? Tap GET A HINT for a clue, or ZOOM the view in and out. Each one costs a few points, so a correct answer with no help scores the most.",
     ],
     scoring: [
       { label: "CORRECT", worth: pts(1, SCORE.earthBase), tone: "good" },

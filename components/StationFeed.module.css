@@ -283,6 +283,9 @@
   width: 768px;
   height: 768px;
 }
+/* The pin lands with a drop, then breathes. Subtle on purpose: it has to
+   read over imagery, not shout over it, but it must be the first thing the
+   eye finds when the feed scrolls back up to the map. */
 .pin {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -292,10 +295,13 @@
   align-items: center;
   gap: 4px;
   z-index: 2;
+  animation:
+    pinDrop 480ms ease-out,
+    pinBreathe 1.4s ease-in-out 480ms infinite;
 }
 .pinRing {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border: 2px solid #4ff1ff;
   border-radius: 50%;
   box-shadow:
@@ -453,15 +459,46 @@
   gap: 6px;
   min-height: 42px;
 }
+/* The hint button. It glows while it can be pressed, because the first
+   tester never found it when it sat flat. Yellow is spend, as everywhere. */
 .intelButton {
   width: 100%;
-  min-height: 44px;
-  font-size: 10px;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
   letter-spacing: var(--track-label);
   color: #071122;
   background: var(--arcade-yellow);
   border: none;
   cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 224, 61, 0.35);
+}
+.intelButton:not(:disabled) {
+  animation: intelGlow 1.8s ease-in-out infinite;
+}
+.intelButton:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: default;
+}
+.intelMain {
+  font-size: 10px;
+}
+.intelSub {
+  font-size: 8px;
+  opacity: 0.8;
+}
+.spent {
+  margin: 0;
+  min-height: 20px;
+  font-size: 8px;
+  letter-spacing: var(--track-label);
+  color: #6f7a8c;
+  text-align: center;
 }
 .typedRow {
   display: flex;
@@ -536,6 +573,30 @@
       0 0 0 16px rgba(79, 241, 255, 0);
   }
 }
+@keyframes intelGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(255, 224, 61, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 224, 61, 0.75);
+  }
+}
+@keyframes pinDrop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.6);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@keyframes pinBreathe {
+  50% {
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
 @keyframes breathe {
   50% {
     transform: scale(1.14);
@@ -563,7 +624,9 @@
   }
 
   .reticle,
-  .pinRing {
+  .pin,
+  .pinRing,
+  .intelButton:not(:disabled) {
     animation: none;
   }
 }

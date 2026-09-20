@@ -69,19 +69,26 @@ export function StationFeed({
    * phone is off the bottom of the scroll region. Bring it into view: the
    * player just spent points on it, so leaving it unseen is the same bug as
    * not being able to reach the input.
+   *
+   * The landmark is the one rung that lands on the map instead, so that
+   * purchase scrolls back UP to the optic: scrolled down to its text line, the
+   * pin dropped out of sight and a tester never saw it.
    */
   const scroll = useRef<HTMLDivElement>(null);
+  const bought = ladder[state.earthIntel - 1];
   useEffect(() => {
     const node = scroll.current;
     if (!node) return;
-    node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
-  }, [state.earthIntel, revealed]);
+    const top = !revealed && bought === "landmark" ? 0 : node.scrollHeight;
+    node.scrollTo({ top, behavior: "smooth" });
+  }, [state.earthIntel, revealed, bought]);
 
   // Per-site state is reset by keying this component on the question id in the
   // parent, which is cheaper and clearer than clearing it in an effect.
 
   const zoom = opticZoom(question.zoom, optics);
   const remaining = state.feedSeconds;
+  const left = Math.max(0, ladder.length - state.earthIntel);
 
   const pickOptics = useCallback(
     (next: number) => {
@@ -136,6 +143,7 @@ export function StationFeed({
                     className={`${styles.opticsStep} ${optics === value ? styles.opticsOn : ""} arcade`}
                     disabled={!state.feedReady}
                     onClick={() => pickOptics(value)}
+                    data-testid="zoom-step"
                   >
                     {value === -1 ? "Out" : value === 0 ? "Normal" : "In"}
                     {free ? null : (
@@ -226,7 +234,7 @@ export function StationFeed({
           </button>
         ) : (
           <>
-            {state.earthIntel < ladder.length ? (
+            {left > 0 ? (
               <button
                 type="button"
                 className={`${styles.intelButton} arcade`}
@@ -234,10 +242,15 @@ export function StationFeed({
                 onClick={onBuyIntel}
                 data-testid="request-intel"
               >
-                Get a hint &middot; -
-                {Math.round(SCORE.earthBase * SCORE.earthIntelCost)} points
+                <span className={styles.intelMain}>Get a hint</span>
+                <span className={styles.intelSub}>
+                  {left} {left === 1 ? "hint" : "hints"} left &middot;{" "}
+                  {Math.round(SCORE.earthBase * SCORE.earthIntelCost)} points each
+                </span>
               </button>
-            ) : null}
+            ) : (
+              <p className={`${styles.spent} arcade`}>All hints used</p>
+            )}
 
             <form
               className={styles.typedRow}
@@ -252,7 +265,7 @@ export function StationFeed({
                 className={styles.input}
                 value={typed}
                 onChange={(event) => setTyped(event.target.value)}
-                placeholder="Name the city"
+                placeholder="Name the place"
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}
@@ -453,6 +466,7 @@ function Optic({
           <div
             className={styles.pin}
             style={{ left: marker.left, top: marker.top }}
+            data-testid="landmark-pin"
           >
             <span className={styles.pinRing} aria-hidden="true" />
             <span className={`${styles.pinLabel} arcade`}>{marker.name}</span>

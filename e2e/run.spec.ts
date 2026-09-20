@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
-import { acknowledge, launch, readUp } from "./helpers";
+import { acknowledge, launch, readUp, stubImagery } from "./helpers";
 
 const SHOTS = process.env.SHOT_DIR;
 
@@ -27,6 +27,7 @@ async function advance(page: Page, via: "banner" | "anywhere" = "anywhere") {
 test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, debrief, share", async ({
   page,
 }) => {
+  await stubImagery(page);
   await page.goto("/play?replay=1&round=2026-09-18");
 
   const question = page.getByTestId("question");
@@ -244,6 +245,10 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const station = page.getByTestId("station");
   await expect(station).toBeVisible();
   await expect(station).toContainText(/satellite view/i);
+  // The task and the hint count are the first things on the panel: a tester
+  // once played the whole phase without knowing hints existed.
+  await expect(station).toContainText(/name the place/i);
+  await expect(page.getByTestId("station-hints")).toContainText(/hints to use/i);
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
 
@@ -270,15 +275,29 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
       const intel = page.getByTestId("request-intel");
       // Kept tight on purpose: this runs against the live 40 second answer
       // clock, so every extra wait in here is time taken off the question.
-      for (let rung = 0; rung < 8 && (await intel.count()) > 0; rung += 1) {
+      // Dubai sells five rungs: clue, street, landmark, structure, territory.
+      const rungs = 5;
+      for (let rung = 0; rung < rungs; rung += 1) {
         await expect(intel).toBeEnabled();
+        // The button counts down what is left, so the player always knows.
+        await expect(intel).toContainText(new RegExp(`${rungs - rung} hints? left`, "i"));
         // `force` because the last of these clicks removes its own target:
         // Playwright's stability check retries, re-queries a button that has
         // just unmounted, and then waits out the entire test. Actionability is
         // asserted on the line above instead of relying on the implicit check.
         await intel.click({ force: true });
+        if (rung === 2) {
+          // The landmark rung lands on the map, so the feed scrolls back up to
+          // the optic and the pin is in view. It scrolled DOWN once, to the
+          // text line, and the pin was never seen.
+          await expect(page.getByTestId("landmark-pin")).toBeVisible();
+          await expect
+            .poll(() => page.getByTestId("feed-scroll").evaluate((node) => node.scrollTop))
+            .toBeLessThan(4);
+        }
       }
       await expect(intel).toHaveCount(0);
+      await expect(station).toContainText(/all hints used/i);
 
       // Both photographs were fetched at launch, six questions ago, so a bought
       // hint shows its picture at once: the figure mounts on the blob that was
