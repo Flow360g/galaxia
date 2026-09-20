@@ -248,6 +248,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
           round={round}
           onAnswer={(option) => engineRef.current?.answer(option)}
           onPick={(lane) => engineRef.current?.pick(lane)}
+          onReady={() => engineRef.current?.ready()}
           onBurn={() => engineRef.current?.burn()}
           onAim={(t) => engineRef.current?.aim(t)}
           onLockVector={() => engineRef.current?.lockVector()}
@@ -344,5 +345,8 @@ function stateBeat(state: GameState): string {
     cluster ? cluster.picked.length : -1,
     cluster ? cluster.charge : -1,
     cluster ? cluster.eliminated.length : -1,
+    // A struck lane and the shield it cost land with the crack, not a sample later.
+    cluster ? cluster.struck.length : -1,
+    cluster ? cluster.shields : -1,
   ].join(":");
 }
