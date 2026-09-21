@@ -244,12 +244,18 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // answered rather than back at the approach.
   const station = page.getByTestId("station");
   await expect(station).toBeVisible();
-  // One line at the top, saying the task and nothing else: the tag, the phase
-  // number, a second title and a hint count all stacked up here and pushed the
-  // picture down the screen.
-  await expect(page.getByTestId("station-title")).toContainText(
-    /name the place shown in the satellite image/i,
-  );
+  // The panel opens on Sergeant Soap and nothing else. The order is the one
+  // thing at the top now: the tag, the phase number, a second title and a hint
+  // count all stacked up here once and pushed the picture down the screen.
+  const order = page.getByTestId("station-order");
+  await expect(order).toBeVisible();
+  // He is talking and the feed is held behind him, which means the answer
+  // clock is too: nobody is timed on reading.
+  await expect(page.getByTestId("site-answer")).toBeDisabled();
+  await shot(page, "13b-station-hail");
+  await expect(order).toContainText(/so we can send reinforcements/i, { timeout: 20_000 });
+  // Then the feed comes up on its own, a beat after the last word.
+  await expect(page.getByTestId("hail-catcher")).toHaveCount(0, { timeout: 20_000 });
   // The hint count is said once now, on the button that sells them: a tester
   // once played the whole phase without knowing hints existed.
   await expect(page.getByTestId("request-intel")).toContainText(/hints left/i);
@@ -261,6 +267,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     // until the feed is up. The grace timeout guarantees it opens regardless.
     const box = page.getByTestId("site-answer");
     await expect(box).toBeEnabled({ timeout: 20_000 });
+    // The order is said once, on arrival: the second site of the dock picks up
+    // where the first was answered and is not hailed again.
+    await expect(page.getByTestId("hail-catcher")).toHaveCount(0);
 
     // The mosaic was fetched at launch too, so the optic mounts on blobs and a
     // zoom step never waits on the tile server. Nine tiles, all warm.

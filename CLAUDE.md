@@ -381,7 +381,19 @@ Rules that fall out of this:
   asset: the door arms on the same beat whether or not the model has loaded,
   and by the same rule the answer clock does not start until the imagery has
   settled or `STATION.feedGraceMs` has passed. Never gate the clock on a
-  ground photograph, only on the tiles.
+  ground photograph, only on the tiles. It waits on Sergeant Soap as well: the
+  panel opens on his standing order and nothing else, typed in the way his
+  transmissions are, and the feed comes up `STATION.hailHoldSeconds` after the
+  last word or on a tap. `Station.tsx` holds `feedArrived` back until then,
+  which is the whole of that mechanism; the feed is mounted and merely hidden
+  underneath, so the tiles settle while he talks. Nobody is timed on reading,
+  here or on a cluster's read screen.
+- **The verdict aboard is a radio call.** A site is named on a screen with no
+  lane and no hull, so nothing reaches `onLock` or `onContact` and the flight's
+  contact cues would be describing something that never happened. `submitSite`
+  announces itself through `onSiteCalled` and the engine answers it with
+  `audio.site()`: keyed up both times, then confirmed or refused. It shipped
+  silent once, and a verdict with no sound on it read as a dropped tap.
 - **The feed's imagery is fetched at launch, not on the tap.** A hint is
   bought and a zoom step taken against a running clock, and a photograph
   asked for on the tap took three seconds to arrive (Commons'

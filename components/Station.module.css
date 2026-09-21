@@ -46,6 +46,9 @@
 
 .panel {
   pointer-events: auto;
+  /* The positioned ancestor the hail's tap catcher fills; see
+     StationHail.module.css. */
+  position: relative;
   /* Fills the band, rather than being sized by what is in it.
      `min-height: 0` plus the hidden overflow is what hands the constraint down
      to the feed's scroll region instead of letting the panel grow past the
@@ -68,15 +71,23 @@
   animation: rise 360ms ease-out;
 }
 
-/* The whole top of the panel: one line saying what to do, then the picture.
-   Sized so it wraps to two lines on a 360px phone and no more, because every
-   pixel spent up here is a pixel taken off the optic. */
-.title {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  letter-spacing: var(--track-label);
-  color: #ffffff;
+/* Everything under the hail: the feed, and the clock that comes with it.
+   Hidden until Soap has said his piece, and hidden with `visibility` rather
+   than `display` so it still lays out and the optic can measure itself while
+   the tiles arrive behind him. */
+.rest {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.restOpen {
+  visibility: visible;
+  opacity: 1;
+  animation: rise 300ms ease-out;
 }
 
 @keyframes fadeIn {
@@ -119,15 +130,12 @@
     padding: 10px 12px 12px;
     gap: 8px;
   }
-
-  .title {
-    font-size: 11px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .station,
-  .panel {
+  .panel,
+  .restOpen {
     animation: none;
   }
 }

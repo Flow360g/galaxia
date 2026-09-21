@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect } from "react";
 import type { Transmission as Script } from "@/lib/game/phases";
+import { useTyped } from "./useTyped";
 import styles from "./Transmission.module.css";
 
 interface Props {
@@ -12,22 +13,11 @@ interface Props {
   onDone: () => void;
 }
 
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-/** Milliseconds per character as the message comes in. */
-const TYPE_MS = 24;
-/** Pause between lines, so each one lands as its own sentence. */
-const LINE_PAUSE_MS = 360;
-
 /**
  * A message from Earth Command, the way a ship would get one: an eyebrow, a
  * signal strip, the face on the other end, and the words arriving one
- * character at a time.
+ * character at a time (see `useTyped`, shared with Sergeant Soap's hail on
+ * the satellite feed).
  *
  * A small modal rather than a page. It sets the tone and gets out of the way:
  * a tap while the text is still arriving lands all of it, and a tap once it
@@ -36,28 +26,12 @@ const LINE_PAUSE_MS = 360;
  */
 export function Transmission({ script, kind, onDone }: Props) {
   const speaker = script.speaker;
-  const total = useMemo(() => script.lines.reduce((sum, line) => sum + line.length, 0), [script]);
-  // Under reduced motion the whole message is there from the first frame.
-  const [shown, setShown] = useState(() => (prefersReducedMotion() ? total : 0));
-  const landed = shown >= total;
-
-  useEffect(() => {
-    if (landed) return;
-    // A pause at the end of each line, then on with the next.
-    let boundary = 0;
-    for (const line of script.lines) {
-      boundary += line.length;
-      if (shown === boundary) break;
-    }
-    const wait = shown > 0 && shown === boundary ? LINE_PAUSE_MS : TYPE_MS;
-    const id = window.setTimeout(() => setShown((current) => Math.min(current + 1, total)), wait);
-    return () => window.clearTimeout(id);
-  }, [shown, landed, total, script]);
+  const { shown: lines, active, landed, skip } = useTyped(script.lines);
 
   const tap = useCallback(() => {
     if (landed) onDone();
-    else setShown(total);
-  }, [landed, onDone, total]);
+    else skip();
+  }, [landed, onDone, skip]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -69,18 +43,6 @@ export function Transmission({ script, kind, onDone }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [tap, onDone]);
-
-  // Split the shown count back into lines, so each sentence is its own block.
-  // The cursor sits on the line still arriving.
-  const lines: string[] = [];
-  let remaining = shown;
-  let active = -1;
-  for (const [index, line] of script.lines.entries()) {
-    const visible = line.slice(0, Math.max(0, Math.min(line.length, remaining)));
-    if (active < 0 && visible.length < line.length) active = index;
-    remaining -= line.length;
-    lines.push(visible);
-  }
 
   return (
     <div
