@@ -58,20 +58,17 @@ export async function stubImagery(page: Page) {
     jpeg = Buffer.from(dataUrl.split(",")[1]!, "base64");
     return jpeg;
   };
-  // `upload.wikimedia.org` is the one that matters: `thumbUrl` builds a
-  // photograph's own address there and `preloadFeed` fetches it into a blob,
-  // falling back to the slow `Special:FilePath` road on commons only when
-  // that fails. Stubbing commons alone left the fast path on the open
-  // internet, so the blob assertions could only pass on a connected machine.
-  // The prefetch reads the body, so the stub has to allow the origin too, or
-  // the CORS fetch fails and the fallback fires anyway.
+  // `upload.wikimedia.org` is the road the prefetch actually takes (see
+  // `thumbUrl`); `commons.wikimedia.org` is only the fallback. Stubbing the
+  // fallback alone left the open internet deciding whether the photographs
+  // arrived as blobs, which is exactly what the blob assertion is there to
+  // check, so both hosts are stood in for here.
   await page.route(
     /https:\/\/(tiles\.maps\.eox\.at|upload\.wikimedia\.org|commons\.wikimedia\.org)\//,
     async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "image/jpeg",
-        headers: { "access-control-allow-origin": "*" },
         body: await render(),
       });
     },

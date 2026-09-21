@@ -244,11 +244,15 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // answered rather than back at the approach.
   const station = page.getByTestId("station");
   await expect(station).toBeVisible();
-  await expect(station).toContainText(/satellite view/i);
-  // The task and the hint count are the first things on the panel: a tester
+  // One line at the top, saying the task and nothing else: the tag, the phase
+  // number, a second title and a hint count all stacked up here and pushed the
+  // picture down the screen.
+  await expect(page.getByTestId("station-title")).toContainText(
+    /name the place shown in the satellite image/i,
+  );
+  // The hint count is said once now, on the button that sells them: a tester
   // once played the whole phase without knowing hints existed.
-  await expect(station).toContainText(/name the place/i);
-  await expect(page.getByTestId("station-hints")).toContainText(/hints to use/i);
+  await expect(page.getByTestId("request-intel")).toContainText(/hints left/i);
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
 

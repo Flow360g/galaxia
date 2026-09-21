@@ -130,6 +130,12 @@ export function StationFeed({
           <p className={`${styles.acquiring} arcade`}>Loading the view</p>
         ) : null}
 
+        {/* The description of the place, directly under the picture it
+            describes. It sat below the zoom dial and under the bought hints,
+            in small grey type against a hairline, and testers read straight
+            past it: it is the only free clue the site gives. */}
+        <p className={styles.opener}>{question.opener}</p>
+
         {!revealed ? (
           <div className={styles.optics}>
             <span className={`${styles.opticsLabel} arcade`}>Zoom</span>
@@ -159,38 +165,39 @@ export function StationFeed({
           </div>
         ) : null}
 
-        <div className={styles.intel}>
-          <p className={styles.opener}>{question.opener}</p>
-          {shown.has("clue") ? (
-            <p className={styles.line}>{question.clue}</p>
-          ) : null}
-          {shown.has("street") && question.street ? (
-            <Ground
-              shot={question.street}
-              label="Street view"
-              caption={STREET_CAPTION}
-            />
-          ) : null}
-          {shown.has("landmark") && question.landmark ? (
-            <p className={`${styles.line} ${styles.cyan}`}>
-              <span className="arcade">Landmark:</span> {question.landmark.name}
-              . It is marked on the view.
-            </p>
-          ) : null}
-          {shown.has("structure") && question.structure && question.landmark ? (
-            <Ground
-              shot={question.structure}
-              label="Building"
-              caption={question.landmark.name}
-            />
-          ) : null}
-          {shown.has("territory") ? (
-            <p className={styles.line}>
-              Country: {question.country}. The name starts with{" "}
-              {question.name.charAt(0)}.
-            </p>
-          ) : null}
-        </div>
+        {state.earthIntel > 0 ? (
+          <div className={styles.intel}>
+            {shown.has("clue") ? (
+              <p className={`${styles.line} ${styles.arrive}`}>{question.clue}</p>
+            ) : null}
+            {shown.has("street") && question.street ? (
+              <Ground
+                shot={question.street}
+                label="Street view"
+                caption={STREET_CAPTION}
+              />
+            ) : null}
+            {shown.has("landmark") && question.landmark ? (
+              <p className={`${styles.line} ${styles.cyan} ${styles.arrive}`}>
+                <span className="arcade">Landmark:</span>{" "}
+                {question.landmark.name}. It is marked on the view.
+              </p>
+            ) : null}
+            {shown.has("structure") && question.structure && question.landmark ? (
+              <Ground
+                shot={question.structure}
+                label="Building"
+                caption={question.landmark.name}
+              />
+            ) : null}
+            {shown.has("territory") ? (
+              <p className={`${styles.line} ${styles.arrive}`}>
+                Country: {question.country}. The name starts with{" "}
+                {question.name.charAt(0)}.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         {revealed ? (
           <div className={styles.reveal}>
@@ -265,7 +272,7 @@ export function StationFeed({
                 className={styles.input}
                 value={typed}
                 onChange={(event) => setTyped(event.target.value)}
-                placeholder="Name the place"
+                placeholder="Type the name of the place here"
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}
