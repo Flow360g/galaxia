@@ -82,7 +82,7 @@ test("a first flight is briefed on the rules before the round starts", async ({
   const mayday = page.getByTestId("transmission");
   await expect(mayday).toContainText(/mayday/i, { timeout: 15_000 });
   // The mayday has a face on it, not a voice alone.
-  await expect(mayday).toContainText(/sargent soap/i);
+  await expect(mayday).toContainText(/sergeant soap/i);
   await expect(mayday.getByTestId("transmission-portrait").locator("img")).toBeVisible();
   await shot(page, "b02b-transmission");
   await acknowledge(page);

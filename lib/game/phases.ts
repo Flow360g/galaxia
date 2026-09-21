@@ -252,8 +252,8 @@ export interface Transmission {
  * both times.
  */
 const SOAP: Speaker = {
-  name: "SARGENT SOAP",
-  portrait: "/sargent-soap.png",
+  name: "SERGEANT SOAP",
+  portrait: "/sergeant-soap.png",
   width: 320,
   height: 320,
 };
