@@ -66,34 +66,6 @@
   text-shadow: none;
 }
 
-/* The last encounter's points, on the score they just landed in. Pops once
-   per verdict and sits there until the toast is tapped away. */
-.scoreDelta {
-  display: block;
-  font-size: 11px;
-  white-space: nowrap;
-  color: var(--arcade-yellow);
-  text-shadow: 0 0 10px rgba(255, 224, 61, 0.6);
-  animation: scorePop 360ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
-  transform-origin: left center;
-}
-
-.scoreDeltaDown {
-  color: #ff6b5c;
-  text-shadow: 0 0 10px rgba(255, 107, 92, 0.6);
-}
-
-@keyframes scorePop {
-  from {
-    opacity: 0;
-    transform: scale(1.5);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* The whole screen, invisible, and only while the run is parked on a verdict.
    It sits behind the band so the sound toggle keeps its own taps. */
 .tapCatcher {
@@ -143,6 +115,9 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .toastPoints {
@@ -805,17 +780,24 @@
   box-shadow: 0 0 44px rgba(255, 138, 31, 0.55);
 }
 
+/* The verdict and what it was worth, side by side while they fit and stacked
+   when they do not. Both used to be nowrap in a row that could not shrink, so
+   a long label pushed the points figure clean off the panel. */
 .toastHead {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
 }
 
 .toastKind {
   font-size: 15px;
-  white-space: nowrap;
   color: #ffffff;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .toast_slingshot .toastKind {
@@ -1638,10 +1620,6 @@
     animation: none;
   }
 
-  .scoreDelta {
-    animation: none;
-  }
-
   .hazard {
     animation: none;
   }
@@ -1689,16 +1667,19 @@
     font-size: 26px;
   }
 
-  .scoreDelta {
-    font-size: 10px;
-  }
-
   .velocity {
     font-size: 11px;
   }
 
+  /* The verdict head is the widest line in the band: a long label like
+     CORRECT · BOOSTED next to a four figure points total. Both shrink here
+     so the pair fits a 360px phone before the wrap below has to save it. */
+  .toastKind {
+    font-size: 13px;
+  }
+
   .toastPoints {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .panel,

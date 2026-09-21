@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-30",
+  "roundNumber": 12,
+  "seed": 20260930,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these are gases at room temperature?",
+      "options": ["Helium", "Iron", "Oxygen", "Mercury", "Neon", "Bromine"],
+      "answers": [0, 2, 4],
+      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these rivers flow through Europe?",
+      "options": ["Danube", "Nile", "Rhine", "Ganges", "Seine", "Amazon"],
+      "answers": [0, 2, 4],
+      "fact": "The Danube passes through ten countries, more than any other river in the world."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How many moons does Jupiter have?",
+      "answer": 95,
+      "min": 1,
+      "max": 400,
+      "unit": "moons",
+      "fact": "Around 95 confirmed, and the count keeps climbing as smaller ones are spotted."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How many teeth does an adult human usually have?",
+      "answer": 32,
+      "min": 5,
+      "max": 100,
+      "unit": "teeth",
+      "fact": "32, counting the four wisdom teeth that many people never grow at all."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which country invented pizza?",
+      "options": ["Greece", "Italy", "Spain", "France"],
+      "answer": 1,
+      "hint": "It began in Naples, as cheap food for workers.",
+      "fact": "The Margherita is named after a queen, and its colours match the Italian flag."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "What is the hardest natural substance on Earth?",
+      "options": ["Granite", "Steel", "Diamond", "Quartz"],
+      "answer": 2,
+      "hint": "It is made of pure carbon.",
+      "fact": "Steel is not natural anyway, and the only thing that reliably scratches a diamond is another diamond."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

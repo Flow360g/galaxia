@@ -35,26 +35,6 @@
   animation: rise 360ms ease-out;
 }
 
-.header {
-  width: 100%;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--rule-dark);
-  padding-bottom: 12px;
-}
-
-.theme {
-  font-size: 9px;
-  color: var(--panel-label);
-  text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .heading {
   margin: 0;
   font-size: 18px;
@@ -66,7 +46,8 @@
     3px 3px 0 rgba(31, 69, 229, 0.9);
 }
 
-/* The score leads; distance is the supporting flight stat under it. */
+/* The score, and what a perfect run would have taken. Everything else the
+   run has to say is on the card itself. */
 .score {
   display: flex;
   align-items: baseline;
@@ -87,32 +68,17 @@
   color: var(--panel-label);
 }
 
-.distance {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
 
-.distanceValue {
-  font-size: 15px;
-  line-height: 1;
-  color: #ffffff;
-  opacity: 0.8;
-}
 
-.unit {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: var(--track-label);
-  color: var(--panel-label);
-}
 
 /* The card keeps its 4:5 print aspect at every width. On a short phone the
    height cap wins and the width follows. */
 .frame {
   width: 100%;
   max-width: 420px;
-  max-height: 60vh;
+  /* The card is the screen now that the figures above it have gone, so it
+     gets the height they were taking. */
+  max-height: 68vh;
   aspect-ratio: 4 / 5;
   margin: 0 auto;
   border: 1px solid var(--rule-dark);

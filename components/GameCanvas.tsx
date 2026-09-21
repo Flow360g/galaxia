@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { newShuffleSeed } from "@/lib/content/round";
 import { Engine } from "@/lib/game/Engine";
 import { isMaxThrust } from "@/lib/game/Flight";
 import { preloadFeed } from "@/lib/game/prefetch";
@@ -40,6 +42,14 @@ interface Props {
    * a new player.
    */
   replay?: boolean;
+  /**
+   * A practice run off `/play?shuffle=`: a round drawn from the whole pool,
+   * flown for the feel of it. Nothing about it is written down. The daily run
+   * is the product and it is worth exactly one score a day, so a round that
+   * can be rerolled must not be able to overwrite today's run, lift the best,
+   * or count towards the flight log that unlocks hulls.
+   */
+  practice?: boolean;
 }
 
 /**
@@ -50,9 +60,10 @@ interface Props {
  * State flows one way, engine to React, throttled, and only for the HUD.
  * Input flows the other way as plain method calls on the engine.
  */
-export function GameCanvas({ round, debug, replay = false }: Props) {
+export function GameCanvas({ round, debug, replay = false, practice = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
+  const router = useRouter();
 
   const [state, setState] = useState<GameState | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -136,12 +147,24 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     setState(next);
   }, []);
 
-  const handleRunEnd = useCallback((result: RunSummary) => {
-    saveRun(result);
-    storedCache.set(result.date, result);
-    setTallied(false);
-    setSummary(result);
-  }, []);
+  // The hull is stamped on the summary here rather than inside the run,
+  // which is pure and has no business knowing what the player picked. It is
+  // cosmetic: the results card draws it and nothing else reads it.
+  const handleRunEnd = useCallback(
+    (result: RunSummary) => {
+      const flown: RunSummary = { ...result, shipId: ship.id };
+      // A practice run is shown and then forgotten. It carries today's date,
+      // so writing it would overwrite the real run, and counting it would farm
+      // the flight log that unlocks hulls.
+      if (!practice) {
+        saveRun(flown);
+        storedCache.set(flown.date, flown);
+      }
+      setTallied(false);
+      setSummary(flown);
+    },
+    [ship, practice],
+  );
 
   /** The briefing holds the run back until it is closed. */
   const briefing = unbriefed === true && !briefed;
@@ -229,6 +252,14 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   }, [round, debug, stored, unbriefed, ship, attempt, launched, handleState, handleRunEnd]);
 
   const replayRun = useCallback(() => {
+    // FLY AGAIN off a practice run means a NEW set of questions, not the same
+    // shuffle over again, so it goes back through the hatch for a fresh seed.
+    // It must not touch storage on the way: the practice round wears today's
+    // date and `clearRun` would wipe the real run of the day.
+    if (practice) {
+      router.push(`/play?shuffle=${newShuffleSeed()}&debug=1`);
+      return;
+    }
     clearRun(round.date);
     storedCache.set(round.date, null);
     setSummary(null);
@@ -237,7 +268,7 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     setState(null);
     setLaunched(false);
     setAttempt((n) => n + 1);
-  }, [round.date]);
+  }, [round.date, practice, router]);
 
   const shown = summary ?? stored ?? null;
   // MAXIMUM THRUST shakes the whole surface, canvas and HUD together, so the

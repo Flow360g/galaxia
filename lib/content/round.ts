@@ -4,8 +4,14 @@ import round20260921 from "@/content/rounds/2026-09-21.json";
 import round20260922 from "@/content/rounds/2026-09-22.json";
 import round20260923 from "@/content/rounds/2026-09-23.json";
 import round20260924 from "@/content/rounds/2026-09-24.json";
+import round20260925 from "@/content/rounds/2026-09-25.json";
+import round20260926 from "@/content/rounds/2026-09-26.json";
+import round20260927 from "@/content/rounds/2026-09-27.json";
+import round20260928 from "@/content/rounds/2026-09-28.json";
+import round20260929 from "@/content/rounds/2026-09-29.json";
+import round20260930 from "@/content/rounds/2026-09-30.json";
 import { pickSites } from "@/lib/content/sites";
-import type { EarthQuestion, Round } from "@/lib/game/types";
+import type { EarthQuestion, Question, Round } from "@/lib/game/types";
 
 /**
  * Round loading.
@@ -28,6 +34,12 @@ const POOL: Round[] = [
   round20260922,
   round20260923,
   round20260924,
+  round20260925,
+  round20260926,
+  round20260927,
+  round20260928,
+  round20260929,
+  round20260930,
 ]
   // Hydrate before validating: the earth slots carry no site of their own, so
   // validation has nothing to check until the pool has filled them in.
@@ -47,8 +59,8 @@ const sampleRound = POOL[0]!;
  * Seeded on `round.date` rather than on today, so a round is the same round
  * whenever it is loaded: replays, tests and the fallback all agree.
  */
-function hydrateEarth(round: Round): Round {
-  const sites = pickSites(round.date);
+function hydrateEarth(round: Round, seed: string = round.date): Round {
+  const sites = pickSites(seed);
   let next = 0;
   const questions = round.questions.map((question) => {
     if (question.type !== "earth") return question;
@@ -80,18 +92,24 @@ function hydrateEarth(round: Round): Round {
   return { ...round, questions };
 }
 
-/** Stable shuffle: the same seed always gives the same order. */
-function seededShuffle(items: string[], seed: string): string[] {
+/** A string folded into an integer. The seed for everything stable below. */
+function hashSeed(seed: string): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   }
+  return hash;
+}
+
+/** Stable shuffle: the same seed always gives the same order. */
+function seededShuffle<T>(items: readonly T[], seed: string): T[] {
+  let hash = hashSeed(seed);
   const out = [...items];
   for (let i = out.length - 1; i > 0; i -= 1) {
     hash = (hash * 1103515245 + 12345) & 0x7fffffff;
     const j = hash % (i + 1);
-    const a = out[i] as string;
-    out[i] = out[j] as string;
+    const a = out[i] as T;
+    out[i] = out[j] as T;
     out[j] = a;
   }
   return out;
@@ -208,4 +226,62 @@ function dayNumber(key: string): number {
 
 export function getSampleRound(): Round {
   return sampleRound;
+}
+
+// -------------------------------------------------------------- the shuffle
+
+/** How many of each kind of question a round is built from. */
+const MIX: ReadonlyArray<{ type: Question["type"]; count: number }> = [
+  { type: "cluster", count: 2 },
+  { type: "vector", count: 2 },
+  { type: "mcq", count: 2 },
+];
+
+/**
+ * A round built from the whole pool rather than authored as a day.
+ *
+ * **A dev and QA hatch, like `?replay=1` and `?round=`, and not a mode.** The
+ * daily round is the product: one a day, the same eight questions for
+ * everybody, and a score that means the same thing in a group chat. A round
+ * you can reroll is none of those, which is why it is reachable only from
+ * `/play?shuffle=` and why the run it produces is never recorded. It exists so
+ * that testing the game does not mean answering the same eight questions
+ * until they are memorised.
+ *
+ * Seeded on the string it is given, so a seed always rebuilds the same round:
+ * a shuffle that could not be handed to somebody else is no use for reporting
+ * a bug against.
+ */
+/**
+ * A fresh seed for a practice run. Called from a click handler, never during
+ * a render: the seed goes in the URL so the round it builds can be opened
+ * again, which a seed made up on the server could not be.
+ */
+export function newShuffleSeed(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+export function getShuffledRound(seed: string): Round {
+  const questions: Question[] = [];
+
+  for (const { type, count } of MIX) {
+    const pool = POOL.flatMap((round) => round.questions).filter((q) => q.type === type);
+    questions.push(...seededShuffle(pool, `${seed}:${type}`).slice(0, count));
+  }
+  // The earth slots carry only an id and a prompt wherever they come from, so
+  // any round's will do; the sites come from `pickSites`, seeded here rather
+  // than on a date so two shuffles are two different pairs.
+  questions.push(...sampleRound.questions.filter((q) => q.type === "earth"));
+
+  const round: Round = {
+    date: todayKey(),
+    roundNumber: 0,
+    seed: Math.abs(hashSeed(seed)),
+    theme: "General knowledge",
+    stages: sampleRound.stages,
+    // Ids have to be unique inside a round, and two rounds in the pool both
+    // call their first cluster `q1`.
+    questions: questions.map((question, i) => ({ ...question, id: `q${i + 1}` })),
+  };
+  return validate(hydrateEarth(round, seed));
 }

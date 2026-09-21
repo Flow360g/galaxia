@@ -1,14 +1,23 @@
-import { SHARE } from "./Tuning";
-import { formatDistance, formatRoundNumber, formatScore, formatVelocity } from "./format";
-import type { FlightSample, OutcomeKind, RunEvent, RunSummary } from "./types";
+import { SHARE, SHIPS } from "./Tuning";
+import { formatDistance, formatRoundNumber, formatScore } from "./format";
+import { PHASE_TITLE } from "./phaseTitles";
+import type { Question, RunSummary, ScoreLine } from "./types";
 
 /**
- * The share card: one 1080x1350 PNG that tells the day's run as a story.
+ * The share card: one 1080x1350 PNG, and the block of squares that goes with
+ * it into a group chat.
+ *
+ * It used to lead with a velocity chart: seven marker shapes, a streak bar and
+ * five stat cells. It read as a telemetry printout, and a friend scrolling past
+ * had to study it to learn whether you had a good day. Wordle settled that
+ * argument years ago. The card now says the score, then four rows of filled
+ * squares, one per stage of the run, and the text share says exactly the same
+ * thing in emoji so the picture and the paste can never disagree.
  *
  * Pure 2D canvas, no React, so it can render into an offscreen element from
  * anywhere in the browser. Every layout figure lives in the constants below;
- * the drawing code only ever reads them. Nothing here throws on odd data: an
- * empty run draws a flat line and an empty strip rather than a blank card.
+ * the drawing code only ever reads them. Nothing here throws on odd data: a
+ * run with no lines draws an empty table rather than a blank card.
  */
 
 // ------------------------------------------------------------------ layout
@@ -17,56 +26,54 @@ const W = SHARE.width;
 const H = SHARE.height;
 const PAD = 64;
 
-const HEADER_Y = 92;
-const HEADER_RULE_Y = 124;
-const THEME_Y = 162;
+/** The logo, centred at the top, scaled from its own 1400x473. */
+const LOGO_TOP = 54;
+const LOGO_WIDTH = 460;
+const LOGO_ASPECT = 473 / 1400;
 
-const HERO_LABEL_Y = 226;
-const HERO_Y = 338;
+const EYEBROW_Y = 262;
+const EYEBROW_RULE_Y = 284;
+
+const HERO_LABEL_Y = 336;
+const HERO_Y = 442;
 const HERO_FONT = 104;
 const HERO_UNIT_FONT = 26;
 const HERO_UNIT_GAP = 22;
-/** The "/ 2,400" anchor, set under the hero figure rather than beside it: at
+/** The "/ 1,800" anchor, set under the hero figure rather than beside it: at
  *  four digits the score already runs half the card wide. */
-const HERO_MAX_Y = 380;
+const HERO_MAX_Y = 484;
 const HERO_MAX_FONT = 26;
 /** Distance, demoted to the right of the hero band but still a real figure. */
 const DISTANCE_FIGURE_FONT = 34;
 const DISTANCE_UNIT_FONT = 16;
 const DISTANCE_UNIT_GAP = 12;
 
-const CHART_TOP = 420;
-const CHART_BOTTOM = 950;
-const CHART_LEFT = PAD;
-const CHART_RIGHT = W - PAD;
-const CHART_INSET_Y = 34;
-const CHART_GRID_LINES = 3;
-const CHART_LABEL_FONT = 12;
-const MARKER_NUMBER_Y = 982;
-const MARKER_NUMBER_FONT = 14;
-const STREAK_BAR_Y = 1002;
-const STREAK_BAR_H = 4;
+/** The stage table: four rows, each a hairline, a name, a meter and a figure. */
+const TABLE_TOP = 528;
+const ROW_H = 118;
+const ROW_NAME_Y = 46;
+const ROW_POINTS_Y = 52;
+const ROW_POINTS_FONT = 34;
+const ROW_MAX_Y = 84;
+const METER_TOP = 60;
+const METER_CELL = 40;
+const METER_GAP = 12;
 
-const STATS_LABEL_Y = 1052;
-const STATS_VALUE_Y = 1088;
-const STATS_LABEL_FONT = 11;
-const STATS_VALUE_FONT = 24;
+const SUMMARY_RULE_Y = TABLE_TOP + ROW_H * 4;
+const SUMMARY_TEXT_Y = SUMMARY_RULE_Y + 42;
 
-const EARTH_RULE_Y = 1132;
-const EARTH_TEXT_Y = 1172;
-const EARTH_FONT = 15;
+const RIDE_RULE_Y = SUMMARY_TEXT_Y + 34;
+const RIDE_LABEL_Y = RIDE_RULE_Y + 34;
+const RIDE_IMAGE_TOP = RIDE_LABEL_Y + 8;
+const RIDE_IMAGE_H = 166;
+const RIDE_IMAGE_W = 300;
+const RIDE_TEXT_GAP = 24;
+const RIDE_NAME_Y = RIDE_IMAGE_TOP + 86;
+const RIDE_CLASS_Y = RIDE_IMAGE_TOP + 120;
 
-const RAIL_RULE_Y = 1236;
-const RAIL_CELL = 48;
-const RAIL_CELL_GAP = 10;
-const RAIL_Y = 1262;
+const FOOTER_RULE_Y = 1302;
+const FOOTER_Y = 1332;
 const FOOTER_FONT = 14;
-
-const LINE_WIDTH = 4;
-const GLOW_WIDTH = 14;
-const MARKER_SMALL = 11;
-const MARKER_LARGE = 18;
-const SHATTER_LINES = 5;
 
 // ----------------------------------------------------------------- palette
 
@@ -76,35 +83,122 @@ const LABEL = "#9aa3b2";
 const RULE = "rgba(228, 231, 236, 0.14)";
 const CYAN = "#4ff1ff";
 const YELLOW = "#ffe03d";
-const RED = "#ff6b5c";
-const RED_DEEP = "#b3261e";
-const VIOLET = "#b28cff";
-const ORANGE = "#ff8a1f";
-const PANEL_LABEL = "#9aa3b2";
 
 const ARCADE_FALLBACK = '"Press Start 2P", monospace';
+
+// ------------------------------------------------------------------ stages
+
+/**
+ * The run's four stages, in flight order.
+ *
+ * A round is always two cluster, two vector, two mcq, two earth, in four named
+ * stages, so a question's type is also its stage. That is what lets the card
+ * group the tally without being handed the round: `RunSummary` is everything
+ * the card gets, and it does not carry one.
+ *
+ * The emoji are for the copied text only. The card draws its own squares.
+ */
+const STAGES: ReadonlyArray<{ type: Question["type"]; name: string; emoji: string }> = [
+  { type: "cluster", name: "CLUSTER BELT", emoji: "🪨" },
+  { type: "vector", name: "ALIEN CONTACT", emoji: "👽" },
+  { type: "mcq", name: "OPEN SKY", emoji: "❔" },
+  { type: "earth", name: "WHERE ON EARTH", emoji: "🌏" },
+];
+
+interface StageRow {
+  name: string;
+  emoji: string;
+  type: Question["type"];
+  points: number;
+  max: number;
+  /** Cells of `SHARE.meterCells` this stage filled. */
+  filled: number;
+  /** Encounters in this stage that were actually flown. */
+  flown: number;
+  /** Encounters in this stage that scored. */
+  scored: number;
+}
+
+/**
+ * A line's stage. `type` has been on `ScoreLine` since the card was rebuilt;
+ * a run read back from localStorage may predate it, and its label is the only
+ * thing left to go on.
+ */
+function typeOf(line: ScoreLine): Question["type"] | null {
+  if (line.type) return line.type;
+  for (const [type, title] of Object.entries(PHASE_TITLE)) {
+    if (title === line.label) return type as Question["type"];
+  }
+  return null;
+}
+
+function stageRows(summary: RunSummary): StageRow[] {
+  const lines = summary.lines ?? [];
+  return STAGES.map((stage) => {
+    const mine = lines.filter((line) => typeOf(line) === stage.type);
+    const points = mine.reduce((sum, line) => sum + safe(line.points), 0);
+    const max = mine.reduce((sum, line) => sum + safe(line.max), 0);
+    return {
+      name: stage.name,
+      emoji: stage.emoji,
+      type: stage.type,
+      points,
+      max,
+      filled: fillFor(points, max),
+      flown: mine.length,
+      scored: mine.filter((line) => safe(line.points) > 0).length,
+    };
+  });
+}
+
+/** How many of a stage's cells its points fill. Never negative, never over. */
+function fillFor(points: number, max: number): number {
+  if (!(max > 0)) return 0;
+  const share = Math.max(0, Math.min(1, points / max));
+  return Math.round(share * SHARE.meterCells);
+}
+
+// ------------------------------------------------------------------- earth
+
+/**
+ * WHERE ON EARTH in plain words.
+ *
+ * It used to read NOT REACHED whenever no outcome of kind `dock` was recorded,
+ * which told a player who had flown the station and named a site that they
+ * never got there. The station is always reached; what varies is how many of
+ * the two landing sites were named, so that is what it says.
+ */
+export function earthLineFor(summary: RunSummary): string | null {
+  const earth = (summary.lines ?? []).filter((line) => typeOf(line) === "earth");
+  if (earth.length === 0) return null;
+  const found = earth.filter((line) => safe(line.points) > 0).length;
+  if (found === 0) return "NO LOCATIONS IDENTIFIED";
+  if (found >= earth.length) {
+    return earth.length === 2 ? "BOTH LOCATIONS IDENTIFIED" : "ALL LOCATIONS IDENTIFIED";
+  }
+  return `${found} OF ${earth.length} LOCATIONS IDENTIFIED`;
+}
 
 // ------------------------------------------------------------------ public
 
 /** Draws the full card into `canvas`, resizing it to SHARE dimensions. */
-export function renderShareCard(
-  canvas: HTMLCanvasElement,
-  summary: RunSummary,
-): void {
+export function renderShareCard(canvas: HTMLCanvasElement, summary: RunSummary): void {
   try {
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const arcade = arcadeFamily();
+    const rows = stageRows(summary);
 
     drawBackground(ctx);
-    drawHeader(ctx, summary, arcade);
+    drawLogo(ctx, summary, arcade);
+    drawEyebrow(ctx, summary, arcade);
     drawHero(ctx, summary, arcade);
-    drawChart(ctx, summary, arcade);
-    drawStats(ctx, summary, arcade);
-    drawEarthLine(ctx, summary, arcade);
-    drawRail(ctx, summary, arcade);
+    drawTable(ctx, rows, arcade);
+    drawSummaryLine(ctx, summary, arcade);
+    drawRide(ctx, summary, arcade);
+    drawFooter(ctx, arcade);
   } catch {
     // A share card must never take the run screen down with it.
   }
@@ -112,7 +206,7 @@ export function renderShareCard(
 
 /** Renders offscreen and resolves the PNG. */
 export async function shareCardBlob(summary: RunSummary): Promise<Blob> {
-  await waitForFonts();
+  await Promise.all([waitForFonts(), preloadShareArt(summary.shipId)]);
   const canvas = document.createElement("canvas");
   renderShareCard(canvas, summary);
   return new Promise<Blob>((resolve, reject) => {
@@ -124,59 +218,111 @@ export async function shareCardBlob(summary: RunSummary): Promise<Blob> {
 }
 
 /**
- * Three lines for the clipboard: the score out of a perfect run, the glyph
- * strip, then the supporting stats. Short enough to paste into a group chat
- * without it becoming a wall, and the first line alone is the whole brag.
+ * The block for the clipboard: the round, the score, one row of squares per
+ * stage, and where to go and play it.
+ *
+ * Same four groups and the same fill as the card draws, from the same
+ * `stageRows`, so a screenshot and a paste of the same run always agree.
  */
 export function shareText(summary: RunSummary): string {
-  const total = stripLength(summary);
-  const glyphs: string[] = [];
-  for (let i = 0; i < total; i += 1) {
-    const kind = kindAt(summary, i);
-    glyphs.push(kind ? TEXT_GLYPH[kind] : "·");
-  }
-
-  // A stored run from before the score has nothing to quote, so that one
-  // leads with distance the way the old strip did, and does not repeat it.
+  const heading = `ASTRORUN #${formatRoundNumber(summary.roundNumber)}`;
   const max = stored(summary.maxScore);
   const score = stored(summary.score);
-  const scored = max !== null && max > 0 && score !== null;
 
-  const stats = [
-    `Peak ${formatVelocity(summary.peakVelocity)} km/h`,
-    `Streak ${Math.max(0, Math.floor(summary.bestStreak))}`,
-  ];
-  if (scored) stats.unshift(`${formatDistance(summary.distance)} km`);
-  if (summary.fullBurns > 0) {
-    stats.push(`All 3 found x${summary.fullBurns}`);
-  }
-  if (summary.ratings?.length) {
-    stats.push(`Stage ${summary.ratings.join(" · ")}`);
+  // A run stored before the score existed has no total to quote, and printing
+  // "NaN/0" is worse than falling back to the distance it does have.
+  if (max === null || max <= 0 || score === null) {
+    return [heading, "", `${formatDistance(summary.distance)} km flown`, "", SHARE.site].join(
+      "\n",
+    );
   }
 
-  const headline = scored
-    ? `${formatScore(score)} / ${formatScore(max)}`
-    : `${formatDistance(summary.distance)} km`;
+  const rows = stageRows(summary).map(
+    (row) =>
+      `${"🟦".repeat(row.filled)}${"⬜️".repeat(Math.max(0, SHARE.meterCells - row.filled))} ${formatScore(row.points)} ${row.emoji}`,
+  );
 
   return [
-    `ASTRO RUN #${formatRoundNumber(summary.roundNumber)} · ${headline}`,
-    glyphs.join(""),
-    stats.join(" · "),
+    heading,
+    "",
+    `Total Score: ${formatScore(score)}/${formatScore(max)}`,
+    "",
+    ...rows,
+    "",
+    SHARE.site,
   ].join("\n");
 }
 
-// ------------------------------------------------------------------- fonts
+// -------------------------------------------------------------------- art
 
-const TEXT_GLYPH: Record<OutcomeKind, string> = {
-  thread: "▶",
-  slingshot: "⚡",
-  collision: "✕",
-  wreck: "✖",
-  timeout: "○",
-  burn: "»",
-  dock: "◎",
-  graze: "◇",
-};
+/**
+ * The logo and the ship stills, loaded once and kept.
+ *
+ * `renderShareCard` is synchronous, because the results screen draws it inside
+ * an effect. So the images are warmed here first and the draw takes whatever
+ * has arrived: a still that failed to load costs its picture and never the
+ * card.
+ */
+const ART = new Map<string, HTMLImageElement | null>();
+const ART_PENDING = new Map<string, Promise<HTMLImageElement | null>>();
+
+const LOGO_SRC = "/astro-run-logo.png";
+
+/**
+ * The hull the run was flown in, straight off the catalogue.
+ *
+ * Read from `SHIPS` rather than through `ships.ts`, which is the hangar's
+ * read side and pulls localStorage in with it. The card only wants a name and
+ * a filename, and it has to stay a pure drawing module. An id that is not in
+ * the catalogue, from a stored run or a hull that was removed, falls back to
+ * standard issue rather than drawing nothing.
+ */
+function shipFor(shipId: string | undefined): (typeof SHIPS)[number] {
+  return SHIPS.find((ship) => ship.id === shipId) ?? SHIPS[0];
+}
+
+function shipSrc(shipId: string | undefined): string {
+  return `/ships/${shipFor(shipId).id}.png`;
+}
+
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  const pending = ART_PENDING.get(src);
+  if (pending) return pending;
+
+  const promise = new Promise<HTMLImageElement | null>((resolve) => {
+    try {
+      const image = new Image();
+      image.decoding = "async";
+      image.onload = () => {
+        ART.set(src, image);
+        resolve(image);
+      };
+      image.onerror = () => {
+        ART.set(src, null);
+        resolve(null);
+      };
+      image.src = src;
+    } catch {
+      ART.set(src, null);
+      resolve(null);
+    }
+  });
+
+  ART_PENDING.set(src, promise);
+  return promise;
+}
+
+/** Warms the logo and this run's hull. Resolves whether or not they arrive. */
+export async function preloadShareArt(shipId?: string): Promise<void> {
+  if (typeof window === "undefined") return;
+  await Promise.all([loadImage(LOGO_SRC), loadImage(shipSrc(shipId))]);
+}
+
+function art(src: string): HTMLImageElement | null {
+  return ART.get(src) ?? null;
+}
+
+// ------------------------------------------------------------------- fonts
 
 /**
  * next/font renames the face, so the real family name is only known from the
@@ -213,22 +359,8 @@ function arcadeFont(px: number, family: string): string {
 
 type Ctx = CanvasRenderingContext2D;
 
-function stripLength(summary: RunSummary): number {
-  const total = Math.floor(summary.total);
-  if (Number.isFinite(total) && total > 0) return Math.min(total, 12);
-  return Math.max(summary.outcomes.length, 7);
-}
-
-function kindAt(summary: RunSummary, index: number): OutcomeKind | null {
-  const outcome = summary.outcomes[index];
-  if (outcome) return outcome.kind;
-  const event = summary.events.find((e) => e.index === index);
-  return event ? event.kind : null;
-}
-
-
-function safe(n: number, fallback = 0): number {
-  return Number.isFinite(n) ? n : fallback;
+function safe(n: number | undefined, fallback = 0): number {
+  return typeof n === "number" && Number.isFinite(n) ? n : fallback;
 }
 
 /**
@@ -238,23 +370,6 @@ function safe(n: number, fallback = 0): number {
  */
 function stored(value: number | undefined): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function kindColor(kind: OutcomeKind): string {
-  switch (kind) {
-    case "thread":
-      return CYAN;
-    case "slingshot":
-      return YELLOW;
-    case "burn":
-      return ORANGE;
-    case "dock":
-      return VIOLET;
-    case "graze":
-      return PANEL_LABEL;
-    default:
-      return RED;
-  }
 }
 
 function hairline(ctx: Ctx, y: number): void {
@@ -288,9 +403,9 @@ function drawBackground(ctx: Ctx): void {
   ctx.fillStyle = INK;
   ctx.fillRect(0, 0, W, H);
 
-  // A faint cyan wash behind the chart, so the middle of the card reads as
-  // a viewport rather than a spreadsheet.
-  const wash = ctx.createRadialGradient(W / 2, CHART_TOP + 200, 40, W / 2, CHART_TOP + 200, 700);
+  // A faint cyan wash behind the table, so the middle of the card reads as a
+  // viewport rather than a spreadsheet.
+  const wash = ctx.createRadialGradient(W / 2, TABLE_TOP + 120, 40, W / 2, TABLE_TOP + 120, 700);
   wash.addColorStop(0, "rgba(79, 241, 255, 0.07)");
   wash.addColorStop(1, "rgba(79, 241, 255, 0)");
   ctx.fillStyle = wash;
@@ -311,34 +426,43 @@ function drawBackground(ctx: Ctx): void {
   }
 }
 
-function drawHeader(ctx: Ctx, summary: RunSummary, arcade: string): void {
+/** The logo owns the top of the card. Falls back to the wordmark in type. */
+function drawLogo(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  const logo = art(LOGO_SRC);
+  if (logo) {
+    const h = LOGO_WIDTH * LOGO_ASPECT;
+    ctx.drawImage(logo, (W - LOGO_WIDTH) / 2, LOGO_TOP, LOGO_WIDTH, h);
+    return;
+  }
+  text(ctx, "ASTRO RUN", W / 2, LOGO_TOP + 96, arcadeFont(52, arcade), WHITE, "center");
+  void summary;
+}
+
+function drawEyebrow(ctx: Ctx, summary: RunSummary, arcade: string): void {
   text(
     ctx,
-    `ASTRO RUN / ROUND ${formatRoundNumber(summary.roundNumber)}`,
+    `#${formatRoundNumber(summary.roundNumber)} · ${summary.date}`,
     PAD,
-    HEADER_Y,
-    arcadeFont(16, arcade),
+    EYEBROW_Y,
+    arcadeFont(13, arcade),
     CYAN,
   );
-  text(ctx, summary.date, W - PAD, HEADER_Y, arcadeFont(16, arcade), LABEL, "right");
-  hairline(ctx, HEADER_RULE_Y);
-
   const theme = summary.theme.trim();
   if (theme) {
-    text(ctx, "TOPIC", PAD, THEME_Y, arcadeFont(11, arcade), LABEL);
-    text(ctx, theme.toUpperCase(), PAD + 120, THEME_Y, arcadeFont(11, arcade), WHITE);
+    text(ctx, theme.toUpperCase(), W - PAD, EYEBROW_Y, arcadeFont(13, arcade), LABEL, "right");
   }
+  hairline(ctx, EYEBROW_RULE_Y);
 }
 
 /**
  * The hero band: SCORE out of a perfect run, with distance beside it.
  *
  * The score leads because it is the figure the run is played for and the only
- * one that means anything on its own: "1,880 / 2,400" is legible to somebody
+ * one that means anything on its own: "1,375 / 1,800" is legible to somebody
  * who has never flown. The maximum is never dropped, because the score without
  * its anchor is just another number nobody can place. Distance keeps a real
- * figure on the right, since the chart below it is a distance and velocity
- * story, but it is a supporting stat now.
+ * figure on the right: it is still flown and still tracked, just no longer the
+ * headline.
  *
  * A summary stored before the score existed has no anchor to show, so it falls
  * back to the old card and leads with distance rather than drawing "NaN".
@@ -353,20 +477,12 @@ function drawHero(ctx: Ctx, summary: RunSummary, arcade: string): void {
 
   text(ctx, "SCORE", PAD, HERO_LABEL_Y, arcadeFont(12, arcade), LABEL);
 
-  const figure = formatScore(score);
   ctx.save();
   ctx.shadowColor = "rgba(255, 224, 61, 0.55)";
   ctx.shadowBlur = 28;
-  text(ctx, figure, PAD, HERO_Y, arcadeFont(HERO_FONT, arcade), YELLOW);
+  text(ctx, formatScore(score), PAD, HERO_Y, arcadeFont(HERO_FONT, arcade), YELLOW);
   ctx.restore();
-  text(
-    ctx,
-    `/ ${formatScore(max)}`,
-    PAD,
-    HERO_MAX_Y,
-    arcadeFont(HERO_MAX_FONT, arcade),
-    LABEL,
-  );
+  text(ctx, `/ ${formatScore(max)}`, PAD, HERO_MAX_Y, arcadeFont(HERO_MAX_FONT, arcade), LABEL);
 
   drawDistanceAside(ctx, summary, arcade);
 }
@@ -402,541 +518,106 @@ function drawLegacyDistance(ctx: Ctx, summary: RunSummary, arcade: string): void
 
   ctx.font = arcadeFont(HERO_FONT, arcade);
   const width = ctx.measureText(figure).width;
-  text(
-    ctx,
-    "KM",
-    PAD + width + HERO_UNIT_GAP,
-    HERO_Y,
-    arcadeFont(HERO_UNIT_FONT, arcade),
-    LABEL,
-  );
+  text(ctx, "KM", PAD + width + HERO_UNIT_GAP, HERO_Y, arcadeFont(HERO_UNIT_FONT, arcade), LABEL);
 }
 
-// ------------------------------------------------------------------- chart
+// ------------------------------------------------------------------- table
 
-interface Scale {
-  x(t: number): number;
-  y(v: number): number;
-}
+/**
+ * Four rows, one per stage: the name, the squares, and what the stage was
+ * worth. The squares are the point of the card, so they are the only thing on
+ * it drawn in the plasma cyan the run is built around.
+ */
+function drawTable(ctx: Ctx, rows: StageRow[], arcade: string): void {
+  rows.forEach((row, i) => {
+    const top = TABLE_TOP + ROW_H * i;
+    hairline(ctx, top);
 
-function buildScale(samples: FlightSample[], events: RunEvent[], duration: number): Scale {
-  let tMin = Infinity;
-  let tMax = -Infinity;
-  let vMin = Infinity;
-  let vMax = -Infinity;
-  const feed = (t: number, v: number) => {
-    if (Number.isFinite(t)) {
-      tMin = Math.min(tMin, t);
-      tMax = Math.max(tMax, t);
-    }
-    if (Number.isFinite(v)) {
-      vMin = Math.min(vMin, v);
-      vMax = Math.max(vMax, v);
-    }
-  };
-  for (const s of samples) feed(s.t, s.v);
-  for (const e of events) feed(e.t, e.v);
+    text(ctx, row.name, PAD, top + ROW_NAME_Y, arcadeFont(17, arcade), WHITE);
+    drawMeter(ctx, PAD, top + METER_TOP, row.filled);
 
-  if (!Number.isFinite(tMin)) {
-    tMin = 0;
-    tMax = Math.max(1, safe(duration, 1));
-  }
-  if (tMax - tMin < 1e-6) tMax = tMin + 1;
-  if (!Number.isFinite(vMin)) {
-    vMin = 0;
-    vMax = 1;
-  }
-  if (vMax - vMin < 1e-6) {
-    // Flat run. Centre the line rather than pin it to an edge.
-    vMin -= Math.max(1, Math.abs(vMin) * 0.25);
-    vMax += Math.max(1, Math.abs(vMax) * 0.25);
-  }
-
-  const top = CHART_TOP + CHART_INSET_Y;
-  const bottom = CHART_BOTTOM - CHART_INSET_Y;
-  const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
-  return {
-    x: (t) =>
-      clamp(
-        CHART_LEFT + ((safe(t, tMin) - tMin) / (tMax - tMin)) * (CHART_RIGHT - CHART_LEFT),
-        CHART_LEFT,
-        CHART_RIGHT,
-      ),
-    y: (v) =>
-      clamp(
-        bottom - ((safe(v, vMin) - vMin) / (vMax - vMin)) * (bottom - top),
-        top,
-        bottom,
-      ),
-  };
-}
-
-function drawChart(ctx: Ctx, summary: RunSummary, arcade: string): void {
-  const samples = summary.samples.filter(
-    (s) => Number.isFinite(s.t) && Number.isFinite(s.v),
-  );
-  const events = summary.events
-    .filter((e) => Number.isFinite(e.t))
-    .slice()
-    .sort((a, b) => a.t - b.t);
-  const scale = buildScale(samples, events, summary.durationSeconds);
-
-  // Grid: a few velocity hairlines with tiny labels on the right.
-  const vLabels = velocityTicks(samples, events);
-  for (let i = 0; i <= CHART_GRID_LINES; i += 1) {
-    const y = CHART_TOP + ((CHART_BOTTOM - CHART_TOP) * i) / CHART_GRID_LINES;
-    hairline(ctx, y);
-  }
-  for (const tick of vLabels) {
     text(
       ctx,
-      `${formatVelocity(tick)}`,
-      CHART_RIGHT,
-      scale.y(tick) - 6,
-      arcadeFont(CHART_LABEL_FONT, arcade),
-      "rgba(154, 163, 178, 0.7)",
+      formatScore(row.points),
+      W - PAD,
+      top + ROW_POINTS_Y,
+      arcadeFont(ROW_POINTS_FONT, arcade),
+      row.points > 0 ? YELLOW : LABEL,
+      "right",
+    );
+    if (row.max > 0) {
+      text(
+        ctx,
+        `/ ${formatScore(row.max)}`,
+        W - PAD,
+        top + ROW_MAX_Y,
+        arcadeFont(13, arcade),
+        LABEL,
+        "right",
+      );
+    }
+  });
+  hairline(ctx, SUMMARY_RULE_Y);
+}
+
+function drawMeter(ctx: Ctx, x: number, y: number, filled: number): void {
+  for (let i = 0; i < SHARE.meterCells; i += 1) {
+    const cx = x + i * (METER_CELL + METER_GAP);
+    if (i < filled) {
+      ctx.fillStyle = CYAN;
+      ctx.fillRect(cx, y, METER_CELL, METER_CELL);
+    } else {
+      ctx.strokeStyle = RULE;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx + 0.5, y + 0.5, METER_CELL - 1, METER_CELL - 1);
+    }
+  }
+}
+
+/** The landing sites on the left, the best streak on the right. One line. */
+function drawSummaryLine(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  const earth = earthLineFor(summary);
+  if (earth) {
+    text(ctx, earth, PAD, SUMMARY_TEXT_Y, arcadeFont(14, arcade), CYAN);
+  }
+  const streak = Math.max(0, Math.floor(safe(summary.bestStreak)));
+  if (streak > 0) {
+    text(
+      ctx,
+      `BEST STREAK x${streak}`,
+      W - PAD,
+      SUMMARY_TEXT_Y,
+      arcadeFont(14, arcade),
+      WHITE,
       "right",
     );
   }
-  text(ctx, "VELOCITY KM/H", CHART_LEFT, CHART_TOP - 12, arcadeFont(CHART_LABEL_FONT, arcade), LABEL);
-
-  // The path itself. One sample draws a flat line at its velocity; none at
-  // all draws one through the middle of the chart.
-  const only = samples[0];
-  const flatY = only ? scale.y(only.v) : (CHART_TOP + CHART_BOTTOM) / 2;
-  const points: Array<[number, number]> =
-    samples.length >= 2
-      ? samples.map((s) => [scale.x(s.t), scale.y(s.v)])
-      : [
-          [CHART_LEFT, flatY],
-          [CHART_RIGHT, flatY],
-        ];
-
-  const first = points[0];
-  const last = points[points.length - 1];
-  if (!first || !last) return;
-
-  const fill = ctx.createLinearGradient(0, CHART_TOP, 0, CHART_BOTTOM);
-  fill.addColorStop(0, "rgba(79, 241, 255, 0.32)");
-  fill.addColorStop(1, "rgba(79, 241, 255, 0)");
-  ctx.beginPath();
-  ctx.moveTo(first[0], CHART_BOTTOM);
-  for (const [x, y] of points) ctx.lineTo(x, y);
-  ctx.lineTo(last[0], CHART_BOTTOM);
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-
-  const stroke = () => {
-    ctx.beginPath();
-    ctx.moveTo(first[0], first[1]);
-    for (let i = 1; i < points.length; i += 1) {
-      const p = points[i];
-      if (p) ctx.lineTo(p[0], p[1]);
-    }
-    ctx.stroke();
-  };
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  ctx.strokeStyle = "rgba(79, 241, 255, 0.22)";
-  ctx.lineWidth = GLOW_WIDTH;
-  stroke();
-  ctx.save();
-  ctx.shadowColor = CYAN;
-  ctx.shadowBlur = 16;
-  ctx.strokeStyle = CYAN;
-  ctx.lineWidth = LINE_WIDTH;
-  stroke();
-  ctx.restore();
-
-  // Axis.
-  ctx.strokeStyle = "rgba(228, 231, 236, 0.4)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(CHART_LEFT, CHART_BOTTOM + 0.5);
-  ctx.lineTo(CHART_RIGHT, CHART_BOTTOM + 0.5);
-  ctx.stroke();
-
-  // Streak underlines first, so markers and numbers sit on top.
-  drawStreakBars(ctx, events, scale);
-  drawRatings(ctx, summary, scale, arcade);
-
-  for (const event of events) {
-    const x = scale.x(event.t);
-    const y = scale.y(event.v);
-    drawMarker(ctx, event, x, y);
-    if (Number.isInteger(event.index) && event.index >= 0) {
-      text(
-        ctx,
-        `${event.index + 1}`,
-        x,
-        MARKER_NUMBER_Y,
-        arcadeFont(MARKER_NUMBER_FONT, arcade),
-        LABEL,
-        "center",
-      );
-    }
-  }
 }
 
-/** Stage-rating stamps on the timeline, beside the encounter that closed each stage. */
-function drawRatings(ctx: Ctx, summary: RunSummary, scale: Scale, arcade: string): void {
-  for (const event of summary.events) {
-    const rating = event.rating;
-    if (!rating) continue;
-    const x = scale.x(event.t) + 30;
-    const y = CHART_TOP + 22;
-    const color = rating === "S" ? YELLOW : rating === "A" ? CYAN : rating === "B" ? WHITE : RED;
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 15, y - 15, 30, 30);
-    text(ctx, rating, x, y + 6, arcadeFont(16, arcade), color, "center");
-    ctx.restore();
-  }
-}
+/** The hull that flew it. Cosmetic, and the one warm thing on the card. */
+function drawRide(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  hairline(ctx, RIDE_RULE_Y);
+  text(ctx, "TODAY'S RIDE", PAD, RIDE_LABEL_Y, arcadeFont(12, arcade), LABEL);
 
-function velocityTicks(samples: FlightSample[], events: RunEvent[]): number[] {
-  let lo = Infinity;
-  let hi = -Infinity;
-  for (const s of samples) {
-    lo = Math.min(lo, s.v);
-    hi = Math.max(hi, s.v);
-  }
-  for (const e of events) {
-    if (Number.isFinite(e.v)) {
-      lo = Math.min(lo, e.v);
-      hi = Math.max(hi, e.v);
-    }
-  }
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi - lo < 1) return [];
-  return [hi, lo];
-}
-
-function drawStreakBars(ctx: Ctx, events: RunEvent[], scale: Scale): void {
-  let runStart: RunEvent | null = null;
-  let runEnd: RunEvent | null = null;
-  let runLength = 0;
-  const flush = () => {
-    if (runStart && runEnd && runLength >= 2) {
-      const x0 = scale.x(runStart.t);
-      const x1 = scale.x(runEnd.t);
-      ctx.fillStyle = "rgba(79, 241, 255, 0.55)";
-      ctx.fillRect(x0 - MARKER_SMALL, STREAK_BAR_Y, x1 - x0 + MARKER_SMALL * 2, STREAK_BAR_H);
-    }
-    runStart = null;
-    runEnd = null;
-    runLength = 0;
-  };
-  for (const event of events) {
-    if (event.correct) {
-      if (!runStart) runStart = event;
-      runEnd = event;
-      runLength += 1;
-    } else {
-      flush();
-    }
-  }
-  flush();
-}
-
-// ----------------------------------------------------------------- markers
-
-function drawMarker(ctx: Ctx, event: RunEvent, x: number, y: number): void {
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  switch (event.kind) {
-    case "thread":
-      drawDiamond(ctx, x, y, MARKER_SMALL, CYAN);
-      break;
-    case "slingshot":
-      drawStreakTrail(ctx, x, y);
-      drawStar(ctx, x, y, MARKER_LARGE, YELLOW);
-      break;
-    case "burn": {
-      // Sized by the charge banked: a full burn is the biggest mark on the card.
-      const charge = Math.max(1, Math.min(3, Math.floor(safe(event.charge ?? 1, 1))));
-      if (charge >= 2) drawStreakTrail(ctx, x, y);
-      drawChevrons(ctx, x, y, MARKER_SMALL + charge * 3, charge, ORANGE);
-      break;
-    }
-    case "collision":
-      drawShatter(ctx, x, y, MARKER_SMALL + 4, 1);
-      drawCross(ctx, x, y, MARKER_SMALL, RED, 4);
-      break;
-    case "wreck":
-      drawShatter(ctx, x, y, MARKER_LARGE + 8, 2);
-      drawStar(ctx, x, y, MARKER_LARGE, RED_DEEP);
-      drawCross(ctx, x, y, MARKER_SMALL, RED, 4);
-      break;
-    case "timeout":
-      ctx.strokeStyle = RED;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y, MARKER_SMALL, 0, Math.PI * 2);
-      ctx.stroke();
-      break;
-    case "dock":
-      drawDockRing(ctx, x, y, MARKER_SMALL + 2, VIOLET);
-      break;
-    case "graze":
-      // Hollow: the shape of a hit with nothing in it.
-      ctx.strokeStyle = PANEL_LABEL;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x, y - MARKER_SMALL);
-      ctx.lineTo(x + MARKER_SMALL, y);
-      ctx.lineTo(x, y + MARKER_SMALL);
-      ctx.lineTo(x - MARKER_SMALL, y);
-      ctx.closePath();
-      ctx.stroke();
-      break;
-  }
-  ctx.restore();
-}
-
-/** The station: a ring with a point at its centre, the docking axis seen end on. */
-function drawDockRing(ctx: Ctx, x: number, y: number, r: number, color: string): void {
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 12;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(x, y, Math.max(r * 0.28, 2), 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawDiamond(ctx: Ctx, x: number, y: number, r: number, color: string): void {
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(x, y - r);
-  ctx.lineTo(x + r, y);
-  ctx.lineTo(x, y + r);
-  ctx.lineTo(x - r, y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = INK;
-  ctx.beginPath();
-  ctx.moveTo(x, y - r * 0.4);
-  ctx.lineTo(x + r * 0.4, y);
-  ctx.lineTo(x, y + r * 0.4);
-  ctx.lineTo(x - r * 0.4, y);
-  ctx.closePath();
-  ctx.fill();
-}
-
-function drawStar(ctx: Ctx, x: number, y: number, r: number, color: string): void {
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  for (let i = 0; i < 8; i += 1) {
-    const angle = (Math.PI / 4) * i - Math.PI / 2;
-    const radius = i % 2 === 0 ? r : r * 0.42;
-    const px = x + Math.cos(angle) * radius;
-    const py = y + Math.sin(angle) * radius;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  ctx.fill();
-  ctx.shadowBlur = 0;
-}
-
-/** Stacked chevrons pointing right: one per plasma banked. */
-function drawChevrons(ctx: Ctx, x: number, y: number, r: number, count: number, color: string): void {
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 12;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 4;
-  const step = r * 0.55;
-  const left = x - ((count - 1) * step) / 2;
-  ctx.beginPath();
-  for (let i = 0; i < count; i += 1) {
-    const cx = left + i * step;
-    ctx.moveTo(cx - r * 0.45, y - r);
-    ctx.lineTo(cx + r * 0.35, y);
-    ctx.lineTo(cx - r * 0.45, y + r);
-  }
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-}
-
-function drawStreakTrail(ctx: Ctx, x: number, y: number): void {
-  const trail = ctx.createLinearGradient(x - 70, y, x, y);
-  trail.addColorStop(0, "rgba(255, 224, 61, 0)");
-  trail.addColorStop(1, "rgba(255, 224, 61, 0.7)");
-  ctx.strokeStyle = trail;
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(x - 70, y + 6);
-  ctx.lineTo(x, y);
-  ctx.stroke();
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(x - 50, y - 10);
-  ctx.lineTo(x - 6, y - 4);
-  ctx.stroke();
-}
-
-function drawCross(ctx: Ctx, x: number, y: number, r: number, color: string, width: number): void {
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.moveTo(x - r, y - r);
-  ctx.lineTo(x + r, y + r);
-  ctx.moveTo(x + r, y - r);
-  ctx.lineTo(x - r, y + r);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-}
-
-/** Short lines flying out from an impact. `spread` scales their length. */
-function drawShatter(ctx: Ctx, x: number, y: number, r: number, spread: number): void {
-  ctx.strokeStyle = "rgba(255, 107, 92, 0.75)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (let i = 0; i < SHATTER_LINES; i += 1) {
-    const angle = ((Math.PI * 2) / SHATTER_LINES) * i + 0.35;
-    const inner = r * 0.9;
-    const outer = r + 9 * spread + (i % 2) * 5;
-    ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
-    ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer);
-  }
-  ctx.stroke();
-}
-
-// ------------------------------------------------------------------- stats
-
-function drawStats(ctx: Ctx, summary: RunSummary, arcade: string): void {
-  const cells: Array<[string, string]> = [
-    ["PEAK KM/H", formatVelocity(summary.peakVelocity)],
-    ["BEST STREAK", `${Math.max(0, Math.floor(safe(summary.bestStreak)))}`],
-    ["CORRECT", `${Math.max(0, Math.floor(safe(summary.correct)))}/${Math.max(0, Math.floor(safe(summary.total)))}`],
-    ["BOOSTS", `${Math.max(0, Math.floor(safe(summary.boostHits)))}/${Math.max(0, Math.floor(safe(summary.boosts)))}`],
-    ["WRONG", `${Math.max(0, Math.floor(safe(summary.collisions)))}`],
-  ];
-  const span = (W - PAD * 2) / cells.length;
-  cells.forEach(([label, value], i) => {
-    const x = PAD + span * i;
-    text(ctx, label, x, STATS_LABEL_Y, arcadeFont(STATS_LABEL_FONT, arcade), LABEL);
-    text(ctx, value, x, STATS_VALUE_Y, arcadeFont(STATS_VALUE_FONT, arcade), WHITE);
-  });
-}
-
-/**
- * WHERE ON EARTH gets its own line between the stats and the rail. Once the
- * satellite feed scores, this is where the invasion landed; until then it
- * says whether the station was reached at all.
- */
-function drawEarthLine(ctx: Ctx, summary: RunSummary, arcade: string): void {
-  hairline(ctx, EARTH_RULE_Y);
-  const docked = summary.outcomes.some((outcome) => outcome.kind === "dock");
-  if (!docked) {
-    text(ctx, "WHERE ON EARTH: NOT REACHED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), LABEL);
-    return;
-  }
-  text(ctx, "WHERE ON EARTH: ARRIVED", PAD, EARTH_TEXT_Y, arcadeFont(EARTH_FONT, arcade), VIOLET);
-}
-
-// -------------------------------------------------------------------- rail
-
-function drawRail(ctx: Ctx, summary: RunSummary, arcade: string): void {
-  hairline(ctx, RAIL_RULE_Y);
-  const total = stripLength(summary);
-  for (let i = 0; i < total; i += 1) {
-    const x = PAD + i * (RAIL_CELL + RAIL_CELL_GAP);
-    drawRailCell(ctx, x, RAIL_Y, kindAt(summary, i));
+  const ship = shipFor(summary.shipId);
+  const still = art(shipSrc(summary.shipId));
+  let textX = PAD;
+  if (still && still.naturalWidth > 0 && still.naturalHeight > 0) {
+    // Fit inside the box rather than filling it, so a hull with a different
+    // aspect is never stretched.
+    const scale = Math.min(RIDE_IMAGE_W / still.naturalWidth, RIDE_IMAGE_H / still.naturalHeight);
+    const w = still.naturalWidth * scale;
+    const h = still.naturalHeight * scale;
+    ctx.drawImage(still, PAD + (RIDE_IMAGE_W - w) / 2, RIDE_IMAGE_TOP + (RIDE_IMAGE_H - h) / 2, w, h);
+    textX = PAD + RIDE_IMAGE_W + RIDE_TEXT_GAP;
   }
 
-  const footerY = RAIL_Y + RAIL_CELL - 14;
-  text(ctx, "ASTRO RUN", W - PAD, footerY, arcadeFont(FOOTER_FONT + 4, arcade), WHITE, "right");
-  text(ctx, summary.date, W - PAD, footerY + 22, arcadeFont(FOOTER_FONT - 3, arcade), LABEL, "right");
+  text(ctx, ship.name.toUpperCase(), textX, RIDE_NAME_Y, arcadeFont(22, arcade), WHITE);
+  text(ctx, ship.className.toUpperCase(), textX, RIDE_CLASS_Y, arcadeFont(12, arcade), LABEL);
 }
 
-function drawRailCell(ctx: Ctx, x: number, y: number, kind: OutcomeKind | null): void {
-  const cx = x + RAIL_CELL / 2;
-  const cy = y + RAIL_CELL / 2;
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  if (!kind) {
-    ctx.strokeStyle = RULE;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x + 0.5, y + 0.5, RAIL_CELL - 1, RAIL_CELL - 1);
-    ctx.restore();
-    return;
-  }
-
-  const color = kindColor(kind);
-  const filled = kind === "slingshot" || kind === "wreck" || kind === "burn";
-  ctx.fillStyle = filled
-    ? kind === "wreck"
-      ? RED_DEEP
-      : kind === "burn"
-        ? ORANGE
-        : YELLOW
-    : "rgba(7, 17, 34, 0.9)";
-  ctx.fillRect(x, y, RAIL_CELL, RAIL_CELL);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + 1, RAIL_CELL - 2, RAIL_CELL - 2);
-
-  const glyphColor = filled ? INK : color;
-  const r = 9;
-  switch (kind) {
-    case "thread":
-      ctx.fillStyle = glyphColor;
-      ctx.beginPath();
-      ctx.moveTo(cx - r * 0.8, cy - r);
-      ctx.lineTo(cx + r, cy);
-      ctx.lineTo(cx - r * 0.8, cy + r);
-      ctx.closePath();
-      ctx.fill();
-      break;
-    case "slingshot":
-      drawStar(ctx, cx, cy, r + 3, glyphColor);
-      break;
-    case "burn":
-      drawChevrons(ctx, cx, cy, r, 2, glyphColor);
-      break;
-    case "collision":
-      drawCross(ctx, cx, cy, r, glyphColor, 3);
-      break;
-    case "wreck":
-      drawCross(ctx, cx, cy, r + 2, glyphColor, 4);
-      break;
-    case "timeout":
-      ctx.strokeStyle = glyphColor;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.stroke();
-      break;
-    case "dock":
-      drawDockRing(ctx, cx, cy, r, glyphColor);
-      break;
-    case "graze":
-      ctx.strokeStyle = glyphColor;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - r);
-      ctx.lineTo(cx + r, cy);
-      ctx.lineTo(cx, cy + r);
-      ctx.lineTo(cx - r, cy);
-      ctx.closePath();
-      ctx.stroke();
-      break;
-  }
-  ctx.restore();
+function drawFooter(ctx: Ctx, arcade: string): void {
+  hairline(ctx, FOOTER_RULE_Y);
+  text(ctx, "ASTRO RUN", PAD, FOOTER_Y, arcadeFont(FOOTER_FONT, arcade), WHITE);
+  text(ctx, SHARE.site, W - PAD, FOOTER_Y, arcadeFont(FOOTER_FONT, arcade), CYAN, "right");
 }

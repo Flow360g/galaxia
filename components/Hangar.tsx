@@ -41,7 +41,20 @@ import styles from "./Hangar.module.css";
  * server and until hydration, which reads out as a quiet bay for one frame
  * rather than as the wrong state confidently rendered.
  */
-export function Hangar({ debug = false }: { debug?: boolean }) {
+export function Hangar({
+  debug = false,
+  shot = null,
+}: {
+  debug?: boolean;
+  /**
+   * `?shot=<shipId>`: render that hull alone for `scripts/ship-stills.mjs`.
+   * The room, the overlay and the chrome all go, the turntable parks, and the
+   * catalogue's unlock rules are ignored, because a still of a hull nobody has
+   * bought yet is exactly what the results card needs when they do. A QA
+   * hatch, never reached in play.
+   */
+  shot?: string | null;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLElement>(null);
   const bayRef = useRef<ShipBay | null>(null);
@@ -62,7 +75,7 @@ export function Hangar({ debug = false }: { debug?: boolean }) {
   /** The turn-me hint, up until the first touch of the bay. */
   const [hinted, setHinted] = useState(false);
 
-  const showing = picked ?? selectedId ?? ships[0]?.id ?? null;
+  const showing = shot ?? picked ?? selectedId ?? ships[0]?.id ?? null;
   const index = Math.max(
     ships.findIndex((entry) => entry.id === showing),
     0,
@@ -73,7 +86,7 @@ export function Hangar({ debug = false }: { debug?: boolean }) {
     const container = containerRef.current;
     if (!container) return;
 
-    const bay = new ShipBay(container, { debug });
+    const bay = new ShipBay(container, { debug, shot: shot !== null });
     bayRef.current = bay;
     bay.start();
 
@@ -81,12 +94,29 @@ export function Hangar({ debug = false }: { debug?: boolean }) {
       bay.dispose();
       bayRef.current = null;
     };
-  }, [debug]);
+  }, [debug, shot]);
 
   // The hull on the turntable follows the carousel.
   useEffect(() => {
     if (ship) void bayRef.current?.setShip(ship);
   }, [ship]);
+
+  /**
+   * The still needs a transparent page under the transparent canvas, and the
+   * game's own background colour is set on html and body both, out of reach
+   * of a CSS module. Only ever runs on the `?shot=` hatch.
+   */
+  useEffect(() => {
+    if (shot === null) return;
+    const roots = [document.documentElement, document.body];
+    const previous = roots.map((root) => root.style.background);
+    for (const root of roots) root.style.background = "transparent";
+    return () => {
+      roots.forEach((root, i) => {
+        root.style.background = previous[i] ?? "";
+      });
+    };
+  }, [shot]);
 
   /**
    * Tell the bay how much of itself the overlay is sitting on, so it can
@@ -146,6 +176,16 @@ export function Hangar({ debug = false }: { debug?: boolean }) {
   }, [ship]);
 
   if (!ship) return null;
+
+  // The still: the hull on a transparent clear and nothing else on the page,
+  // so `scripts/ship-stills.mjs` can screenshot the canvas straight out.
+  if (shot !== null) {
+    return (
+      <main className={`${styles.main} ${styles.shot}`}>
+        <div ref={containerRef} className={styles.bay} data-testid="bay-shot" />
+      </main>
+    );
+  }
 
   const availability = status ? shipAvailability(ship, status) : null;
   const flying = selectedId === ship.id;

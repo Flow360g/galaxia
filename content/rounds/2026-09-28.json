@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-28",
+  "roundNumber": 10,
+  "seed": 20260928,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these are made from milk?",
+      "options": ["Butter", "Honey", "Yoghurt", "Olive oil", "Cheese", "Vinegar"],
+      "answers": [0, 2, 4],
+      "fact": "Honey comes from bees, olive oil is pressed from olives, and vinegar is made by souring alcohol."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these were real Roman emperors?",
+      "options": ["Nero", "Hannibal", "Hadrian", "Spartacus", "Augustus", "Cicero"],
+      "answers": [0, 2, 4],
+      "fact": "Hannibal fought Rome for Carthage, Spartacus led a slave revolt, and Cicero was a senator."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How many countries are there in Africa?",
+      "answer": 54,
+      "min": 10,
+      "max": 120,
+      "unit": "countries",
+      "fact": "54, more than any other continent. Nigeria alone has more people than Germany, France and Spain put together."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How fast can a cheetah run, in kilometres per hour?",
+      "answer": 110,
+      "min": 20,
+      "max": 300,
+      "unit": "km/h",
+      "fact": "About 110 km/h, but only for around twenty seconds before it has to stop and cool down."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which gas do plants take in to make their food?",
+      "options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+      "answer": 2,
+      "hint": "It is the gas you breathe out.",
+      "fact": "Plants take in carbon dioxide and give out oxygen, which is the opposite of what you do."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "Which ocean is the largest?",
+      "options": ["Atlantic", "Indian", "Pacific", "Arctic"],
+      "answer": 2,
+      "hint": "Its name means peaceful.",
+      "fact": "The Pacific covers about a third of the planet, more than every piece of land put together."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

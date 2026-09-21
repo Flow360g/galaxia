@@ -17,6 +17,12 @@
   overflow: hidden;
 }
 
+/* `?shot=<id>`: the hull alone on a transparent page, so the screenshot the
+   still script takes carries no background to cut out. */
+.shot {
+  background: transparent;
+}
+
 /* The bay creates its canvas in here. Full bleed, behind everything. */
 .bay {
   position: absolute;

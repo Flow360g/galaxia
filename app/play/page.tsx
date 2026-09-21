@@ -1,5 +1,5 @@
 import { GameCanvas } from "@/components/GameCanvas";
-import { getRound } from "@/lib/content/round";
+import { getRound, getShuffledRound } from "@/lib/content/round";
 
 /**
  * The flight surface.
@@ -12,18 +12,39 @@ import { getRound } from "@/lib/content/round";
 export default async function PlayPage({
   searchParams,
 }: {
-  searchParams: Promise<{ debug?: string; replay?: string; round?: string }>;
+  searchParams: Promise<{
+    debug?: string;
+    replay?: string;
+    round?: string;
+    shuffle?: string;
+  }>;
 }) {
   const params = await searchParams;
+
+  /**
+   * `?shuffle=<seed>` is the practice hatch, reached from `/profile?debug=1`:
+   * a round drawn from the whole pool instead of today's. The seed comes in
+   * on the URL rather than being made up here, so the page stays pure and,
+   * more usefully, a shuffled round can be opened a second time and reported
+   * against. The button supplies a new one on every press.
+   *
+   * A practice run is never recorded, so it cannot overwrite today's run,
+   * cannot lift the best, and cannot farm a hull unlock. See `GameCanvas`.
+   */
+  const practice = params.shuffle !== undefined;
+
   // `?round=YYYY-MM-DD` is a dev and QA hatch like `?replay=1`: fly any round
   // in the pool rather than today's. Anything else falls through to today.
-  const round = getRound(params.round);
+  const round = practice ? getShuffledRound(params.shuffle ?? "") : getRound(params.round);
 
   return (
     <GameCanvas
       round={round}
       debug={params.debug === "1"}
-      replay={params.replay === "1"}
+      // Practice implies replay: there is no stored run for a round that was
+      // made up a moment ago, and a tester is not a first-time player.
+      replay={practice || params.replay === "1"}
+      practice={practice}
     />
   );
 }

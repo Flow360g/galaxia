@@ -421,10 +421,23 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("share-image")).toHaveAttribute("src", /blob:|data:/, {
     timeout: 15_000,
   });
-  const distance = await page.getByTestId("final-distance").innerText();
-  expect(Number(distance.replace(/[^0-9]/g, ""))).toBeGreaterThan(1000);
-  await expect(page.getByTestId("final-score")).toBeVisible();
+  // The score is the only figure the screen itself prints; the round, the
+  // stages, the distance and the hull are all on the card image.
+  const finalScore = await page.getByTestId("final-score").innerText();
+  expect(Number(finalScore.replace(/[^0-9]/g, ""))).toBeGreaterThan(0);
   await shot(page, "16-share");
+
+  // What actually travels: the round, the total, and one row of squares per
+  // stage. Headless Chromium has no share sheet, so SHARE falls through to
+  // the clipboard, which is the same text either way.
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByTestId("share-button").click();
+  await expect(page.getByTestId("share-button")).toHaveText("COPIED");
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toMatch(/^ASTRORUN #\d{3}/);
+  expect(copied).toMatch(/Total Score: [\d,]+\/[\d,]+/);
+  expect(copied.split("\n").filter((line) => /[🟦⬜]/u.test(line))).toHaveLength(4);
+  expect(copied).toContain("www.astrorun.io");
 
   // The run is persisted: a reload shows the card, not a fresh run.
   await page.goto("/play?round=2026-09-18");

@@ -28,7 +28,13 @@ things that make those games sticky:
 - **One run a day, everyone gets the same round.** Scarcity is the hook.
   Today's run is stored and replayed as the share card on revisit; the
   player cannot grind. Do not add unlimited replays to the main path
-  (`?replay=1` is a dev and QA escape hatch, not a feature).
+  (`?replay=1` is a dev and QA escape hatch, not a feature). The **practice
+  run** is the same kind of hatch and is held to the same line: a round drawn
+  from the whole pool (`getShuffledRound`), reachable only from
+  `/profile?debug=1`, and never written down, so it cannot overwrite today's
+  run, lift the best or count towards the flight log that unlocks hulls. It
+  exists so that building the game does not mean answering the same eight
+  questions until they are memorised. Do not put it on a player's path.
 - **Two to three minutes, one thumb.** A run has to fit a bus stop. Every
   interaction is a single tap. Nothing requires precision, reading a manual,
   or two hands.
@@ -77,8 +83,15 @@ things that make those games sticky:
   wreck. Keep every new mechanic inside this frame: a decision with a
   visible stake, a fast verdict, a consequence you can feel.
 - **The share is the product.** The end of every run is a 1080x1350 share
-  card and a Wordle-style text strip (glyphs per encounter, distance, peak,
-  streak). A shared link should land a new player on the title screen one
+  card and a Wordle-style text block, and they say the same thing: the logo,
+  the score out of a perfect run, then one row per stage of the run with that
+  stage's points drawn as filled squares. Four rows, four emoji, one figure
+  each, and the hull that flew it. Both are built from the same `stageRows`
+  in `share.ts`, so a screenshot and a paste of the same run can never
+  disagree. It used to lead with a velocity chart, marker shapes and five
+  stat cells, and a friend had to study it to learn whether you had a good
+  day; if a new element on the card cannot be read in one second, it does not
+  belong on it. A shared link should land a new player on the title screen one
   tap from flying. Anything that makes the result more comparable, more
   braggable or more legible in a group chat is on-mission.
 - **Same help for everyone.** NOVA picks are seeded per question so friends
@@ -206,10 +219,14 @@ one to check before any other when writing or changing copy.
   hint, optics is zoom, a graze is a near miss, a wild shot is way off, an
   encounter is a question, a sector is a topic.
 - **Every score figure says POINTS.** The run also counts speed and
-  distance, so a bare +100 could be either. The toast, the running score
-  pop, the tally and every scoring table row spell it out; the one
-  abbreviation allowed is PTS on a chip too small for the word (the zoom
-  cost, the FIRE dial).
+  distance, so a bare +100 could be either. The toast, the tally and every
+  scoring table row spell it out; the one abbreviation allowed is PTS on a
+  chip too small for the word (the zoom cost, the FIRE dial).
+- **A figure appears once.** What the last answer was worth is in the
+  verdict toast and nowhere else. It used to be under the score in the top
+  band as well, and the same number in two places on one screen reads as two
+  different numbers. Before adding a readout, check nothing else already
+  says it.
 - **Kilometres are for the results.** During a run the only speed figure is
   the velocity readout in the top band. The verdict toast, the waypoint card
   and the FIRE dial quote points, never km or km/h. Distance comes back on
@@ -319,10 +336,13 @@ lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, 
                       storage (localStorage), gltf (GLB loader + merge), format, types,
                       feed (tile maths + photo addresses), prefetch (feed imagery), md5
 lib/content/round.ts  round loader with build-time validation
-content/rounds/       one JSON per daily round: 2 cluster + 2 vector + 2 mcq + 1 earth
+content/rounds/       one JSON per daily round: 2 cluster + 2 vector + 2 mcq + 2 earth
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
 e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
 e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks included
+e2e/practice.spec.ts  Playwright: the ?shuffle= hatch, and that it records nothing
+scripts/ship-stills.mjs  renders public/ships/*.png off the /hangar?shot= hatch
+public/ships/         one still per hull, drawn on the results card
 ```
 
 Rules that fall out of this:
@@ -412,7 +432,16 @@ path from a shared link to flying.
   door open onto the game's own sky. One hull stands on the pad, turning.
   `SHIPS` in `Tuning.ts` is the whole catalogue: name, blurb, model, scale,
   yaw, nozzles and how it unlocks (`default`, `runs`, or `purchase`).
-  Adding a hull is one entry there plus a GLB in `public/models`.
+  Adding a hull is one entry there, a GLB in `public/models`, and a still in
+  `public/ships`.
+- **The hull's still is rendered, not drawn.** The results card shows the ship
+  that flew the run, and a 2D canvas on a phone cannot stand up a second WebGL
+  context to photograph one. `/hangar?shot=<shipId>` is the hatch: the bay
+  with the room, the overlay and the turntable's motion taken away, the hull
+  parked at `HANGAR.shotYaw` on a transparent clear, lit by the bay's own rig
+  so the still and the bay agree. `npm run ship-stills` drives it over the
+  whole catalogue and writes `public/ships/<id>.png`, cropped to the hull.
+  Run it after adding a hull and commit the PNG; never run it in a build.
 - **The bay is full bleed and the text floats over it.** The canvas is pinned
   to the viewport and the name, price and buttons sit on a scrim over the
   bottom. That is not only a look: as a flex sibling of the text the canvas
@@ -471,16 +500,21 @@ npm run typecheck      # tsc --noEmit
 npm run lint           # eslint (flat config, next core-web-vitals + typescript)
 npm run build          # production build; a malformed round fails here
 npm run test:e2e       # playwright, builds and serves on :3100, SwiftShader WebGL
+npm run ship-stills    # re-render public/ships/*.png; needs a built app on :3100
 ```
 
 Run typecheck and lint before committing. Run the e2e test after any change
 to `Run.ts`, `Flight.ts`, the HUD, or a round file; it asserts flow and
 state (every outcome kind, shields, pulses, the share card, persistence),
 never performance. `/play?replay=1` skips today's stored run and
-`?round=YYYY-MM-DD` flies any round in the pool. `?debug=1`
+`?round=YYYY-MM-DD` flies any round in the pool. `/play?shuffle=<seed>` flies
+a practice round built from the whole pool, reachable from `/profile?debug=1`
+and recorded nowhere; the seed is on the URL rather than made up server side
+so the same round can be opened twice and reported against. `?debug=1`
 overlays FPS, draw calls, triangles, tier and DPR on the flight, and on
 `/hangar` puts the bay on `window.galaxiaBay` so its angle and draw count can
-be read from the console or a test.
+be read from the console or a test. `/hangar?shot=<shipId>` is the stills
+hatch, above.
 
 ## Performance budget (mobile)
 
@@ -539,6 +573,13 @@ to announce, so a round can skip a number if it has to.
   date rotates through the pool by day number, so every day is a round and a
   shared link never lands on a blank screen. `?round=YYYY-MM-DD` on `/` or
   `/play` flies a specific one; it is a QA hatch like `?replay=1`.
+- **A practice round is drawn from the pool, not authored.**
+  `getShuffledRound(seed)` takes two clusters, two numbers and two lanes from
+  every round there is, plus a pair of sites seeded on the same string, and
+  runs the result through the same `validate`. It relaxes one authoring rule
+  and only one: a random draw can land three questions from the same corner
+  in a round, which an authored day may never do. That is the price of a
+  hatch nobody but a tester sees; do not "fix" it by tagging topics.
 
 ## Deliberately not done
 

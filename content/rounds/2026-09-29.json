@@ -1,0 +1,79 @@
+{
+  "date": "2026-09-29",
+  "roundNumber": 11,
+  "seed": 20260929,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these are capital cities?",
+      "options": ["Nairobi", "Sydney", "Lima", "Casablanca", "Hanoi", "Zurich"],
+      "answers": [0, 2, 4],
+      "fact": "Australia's capital is Canberra, Morocco's is Rabat, and Switzerland's is Bern."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these live in the ocean their whole lives?",
+      "options": ["Blue whale", "Frog", "Octopus", "Camel", "Coral", "Crocodile"],
+      "answers": [0, 2, 4],
+      "fact": "Coral looks like a rock but is an animal, and it spends its whole life fixed to one spot."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How many players are on the field for one football team?",
+      "answer": 11,
+      "min": 2,
+      "max": 30,
+      "unit": "players",
+      "fact": "Eleven, including the goalkeeper. It has been eleven since the rules were written down in 1863."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How hot is the surface of the Sun, in degrees Celsius?",
+      "answer": 5500,
+      "min": 100,
+      "max": 50000,
+      "unit": "C",
+      "log": true,
+      "fact": "About 5,500 degrees at the surface, and around 15 million at the core."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which of these is a prime number?",
+      "options": ["21", "27", "29", "33"],
+      "answer": 2,
+      "hint": "Three of them divide neatly by 3.",
+      "fact": "A prime divides by nothing but itself and one. 29 is the only one here that manages it."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "Which artist cut off part of his own ear?",
+      "options": ["Van Gogh", "Picasso", "Monet", "Dali"],
+      "answer": 0,
+      "hint": "He painted a night sky full of swirling stars.",
+      "fact": "He painted himself afterwards with the bandage on, and sold almost nothing in his lifetime."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

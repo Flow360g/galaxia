@@ -131,6 +131,7 @@ export function scoreLines(round: Round, outcomes: Outcome[]): ScoreLine[] {
     const question = round.questions[index];
     return {
       index,
+      type: question?.type,
       label: labelFor(question, index),
       detail: detailFor(outcome),
       base: outcome.base ?? 0,

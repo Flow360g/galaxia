@@ -110,6 +110,37 @@
   background: #ffffff;
 }
 
+/* The practice run, under the real one and quieter than it, in the shape the
+   title screen's menu items use. Only ever rendered on `?debug=1`: the daily
+   run is the product and this is the hatch for building against it. */
+.practice {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  text-align: center;
+  text-decoration: none;
+  color: #ffffff;
+  background: rgba(7, 17, 34, 0.72);
+  border: 1px solid var(--rule-dark);
+  font-size: 10px;
+  padding: 16px 12px;
+}
+
+.practice:active {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+  border-color: var(--arcade-yellow);
+}
+
+.practiceNote {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--panel-label, #9aa3b2);
+}
+
 @media (max-width: 720px) {
   .main {
     padding-left: 20px;

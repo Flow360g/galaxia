@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-26",
+  "roundNumber": 8,
+  "seed": 20260926,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
+      "options": ["Egypt", "Portugal", "Greece", "Austria", "Turkey", "Romania"],
+      "answers": [0, 2, 4],
+      "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "prompt": "Which of these animals can fly?",
+      "options": ["Bat", "Ostrich", "Hummingbird", "Penguin", "Dragonfly", "Kiwi"],
+      "answers": [0, 2, 4],
+      "fact": "Ostriches, penguins and kiwis are all birds, and not one of them can get off the ground."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "prompt": "How many keys does a standard piano have?",
+      "answer": 88,
+      "min": 20,
+      "max": 200,
+      "unit": "keys",
+      "fact": "88 keys: 52 white and 36 black, covering just over seven octaves."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "prompt": "How many years ago did the last dinosaurs die out, in millions?",
+      "answer": 66,
+      "min": 1,
+      "max": 300,
+      "unit": "million years",
+      "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "prompt": "Which metal is liquid at room temperature?",
+      "options": ["Lead", "Mercury", "Tin", "Zinc"],
+      "answer": 1,
+      "hint": "It shares its name with a planet.",
+      "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "prompt": "Who wrote the play Romeo and Juliet?",
+      "options": ["Dickens", "Chaucer", "Shakespeare", "Austen"],
+      "answer": 2,
+      "hint": "He was writing in England around 1595.",
+      "fact": "Shakespeare did not invent the story. He took it from an English poem published thirty years earlier."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

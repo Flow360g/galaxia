@@ -941,6 +941,10 @@ export const AUDIO = {
 export const SHARE = {
   width: 1080,
   height: 1350,
+  /** Signed off the card and the copied text, so a share can be followed back. */
+  site: "www.astrorun.io",
+  /** Cells in a stage's meter, on the card and in the copied text alike. */
+  meterCells: 4,
 } as const;
 
 export const SHIP = {
@@ -1150,6 +1154,26 @@ export const HANGAR = {
    * to spare and a soft hull is the thing players notice first.
    */
   dprCap: 2,
+
+  /**
+   * `/hangar?shot=<id>`: the bay with the room taken away, for the script
+   * that renders the ship stills the results card draws. The hull stands
+   * alone on a transparent clear at a fixed angle, so the same hull always
+   * produces the same picture.
+   *
+   * A hull is yawed by its catalogue entry so its nose faces -Z, the
+   * direction of travel, and the bay's camera stands at +Z. So a turntable
+   * yaw of zero shows the engines and PI shows the nose; the extra is the
+   * three-quarter turn that makes it read as a ship rather than a diagram.
+   */
+  shotYaw: Math.PI + 0.62,
+  shotPitch: 0.22,
+  /** Tighter than the bay, which has a room to hold steady; a still has not. */
+  shotPadding: 1.08,
+  /** Camera height as a fraction of its distance. A shade above the nose. */
+  shotLift: 0.16,
+  /** Rendered large and drawn down, so the still is crisp on the card. */
+  shotSize: { width: 800, height: 600 },
 
   /**
    * Drag to orbit. Horizontal travel is yaw, vertical is pitch, both in

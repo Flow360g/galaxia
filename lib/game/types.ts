@@ -314,6 +314,13 @@ export interface Outcome {
 /** One encounter's line in the end-of-run tally. */
 export interface ScoreLine {
   index: number;
+  /**
+   * The kind of question this line scored. It is what lets the share card
+   * group eight lines into the run's four stages, and count the NAME THE
+   * PLACE sites, without being handed the round. Optional because a run read
+   * back from localStorage may have been stored before the field existed.
+   */
+  type?: Question["type"];
   /** CLUSTER, VECTOR, LANE, WHERE ON EARTH. */
   label: string;
   /** One short line: "3 PLASMA BANKED", "DIRECT HIT", "MISSED". */
@@ -461,6 +468,12 @@ export interface RunSummary {
   shieldsLeft: number;
   /** One rating per waypoint, in order. */
   ratings: Rating[];
+  /**
+   * The hull that flew it, for the results card. Cosmetic and optional: a run
+   * stored before this existed, or one naming a hull that is gone, falls back
+   * to standard issue rather than failing to draw.
+   */
+  shipId?: string;
   outcomes: Outcome[];
   samples: FlightSample[];
   events: RunEvent[];
