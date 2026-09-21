@@ -22,7 +22,7 @@
       "id": "q2",
       "type": "cluster",
       "prompt": "Which of these live in the ocean their whole lives?",
-      "options": ["Blue whale", "Frog", "Octopus", "Otter", "Coral", "Crocodile"],
+      "options": ["Blue whale", "Frog", "Octopus", "Camel", "Coral", "Crocodile"],
       "answers": [0, 2, 4],
       "fact": "Coral looks like a rock but is an animal, and it spends its whole life fixed to one spot."
     },
