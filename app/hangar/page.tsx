@@ -17,12 +17,17 @@ export const metadata: Metadata = {
  * `?debug=1` parks the bay on `window.galaxiaBay`, the same hatch the audio
  * engine uses, so a cue can be poked from the console and the e2e checks can
  * read the turntable angle and the draw count without screenshotting.
+ *
+ * `?shot=<shipId>` is the other hatch: the named hull alone, parked at a
+ * fixed angle on a transparent clear with the room and the overlay gone. It
+ * is how `scripts/ship-stills.mjs` renders the stills the results card draws,
+ * and it is never reached in play.
  */
 export default async function HangarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ debug?: string }>;
+  searchParams: Promise<{ debug?: string; shot?: string }>;
 }) {
   const params = await searchParams;
-  return <Hangar debug={params.debug === "1"} />;
+  return <Hangar debug={params.debug === "1"} shot={params.shot ?? null} />;
 }

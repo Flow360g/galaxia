@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatDistance, formatRoundNumber, formatScore } from "@/lib/game/format";
-import { renderShareCard, shareCardBlob, shareText } from "@/lib/game/share";
+import { preloadShareArt, renderShareCard, shareCardBlob, shareText } from "@/lib/game/share";
 import type { RunSummary } from "@/lib/game/types";
 import styles from "./ShareCard.module.css";
 
@@ -35,8 +35,14 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
     let cancelled = false;
     let url: string | null = null;
 
+    // The card draws synchronously, so the logo and the ship still have to be
+    // in hand before it runs. Neither is load-bearing: `preloadShareArt`
+    // resolves whether or not they arrived, and the draw omits what is missing.
     const fonts = typeof document !== "undefined" ? document.fonts : undefined;
-    const ready = fonts ? fonts.ready.catch(() => undefined) : Promise.resolve();
+    const ready = Promise.all([
+      fonts ? fonts.ready.catch(() => undefined) : Promise.resolve(),
+      preloadShareArt(summary.shipId),
+    ]);
 
     ready.then(() => {
       if (cancelled) return;
@@ -134,21 +140,15 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
       aria-labelledby="share-card-heading"
     >
       <div className={styles.panel}>
-        <header className={styles.header}>
-          <span className="eyebrow">
-            {formatRoundNumber(round.roundNumber)} / {round.date}
-          </span>
-          <span className={`${styles.theme} arcade`}>{round.theme}</span>
-        </header>
-
         <h2 id="share-card-heading" className={`${styles.heading} arcade`}>
           Run complete
         </h2>
 
-        {/* The score leads, out of what was on offer, because that is the
-            figure a player compares. Distance trails it as the flight stat it
-            now is. A run stored before the score existed has no anchor to
-            quote, so it shows its distance alone. */}
+        {/* The score, big, while the card below it renders. Everything else
+            the run has to say, the round, the topic, the stages, the distance
+            and the hull, is ON the card: this screen used to print the score,
+            the maximum and the distance above a card that said all three
+            again, and the same figure twice reads as two figures. */}
         {typeof summary.score === "number" && (summary.maxScore ?? 0) > 0 ? (
           <div className={styles.score}>
             <span className={`${styles.scoreValue} arcade`} data-testid="final-score">
@@ -158,13 +158,6 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
           </div>
         ) : null}
 
-        <div className={styles.distance}>
-          <span className={`${styles.distanceValue} arcade`} data-testid="final-distance">
-            {formatDistance(summary.distance)}
-          </span>
-          <span className={styles.unit}>KM</span>
-        </div>
-
         <div className={styles.frame}>
           {imageUrl ? (
             // A blob URL of our own render. next/image has nothing to optimise.
@@ -172,7 +165,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
             <img
               className={styles.image}
               src={imageUrl}
-              alt={`Astro Run round ${formatRoundNumber(round.roundNumber)}: ${formatDistance(summary.distance)} km`}
+              alt={`Astro Run round ${formatRoundNumber(round.roundNumber)}: ${formatScore(summary.score)} of ${formatScore(summary.maxScore)} points, ${formatDistance(summary.distance)} km flown`}
               data-testid="share-image"
             />
           ) : (
@@ -186,6 +179,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
             className={`${styles.button} ${styles.primary} arcade`}
             onClick={() => void handleShare()}
             disabled={shareState === "busy"}
+            data-testid="share-button"
           >
             {shareLabel}
           </button>

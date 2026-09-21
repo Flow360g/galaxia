@@ -136,12 +136,19 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
     setState(next);
   }, []);
 
-  const handleRunEnd = useCallback((result: RunSummary) => {
-    saveRun(result);
-    storedCache.set(result.date, result);
-    setTallied(false);
-    setSummary(result);
-  }, []);
+  // The hull is stamped on the summary here rather than inside the run,
+  // which is pure and has no business knowing what the player picked. It is
+  // cosmetic: the results card draws it and nothing else reads it.
+  const handleRunEnd = useCallback(
+    (result: RunSummary) => {
+      const flown: RunSummary = { ...result, shipId: ship.id };
+      saveRun(flown);
+      storedCache.set(flown.date, flown);
+      setTallied(false);
+      setSummary(flown);
+    },
+    [ship],
+  );
 
   /** The briefing holds the run back until it is closed. */
   const briefing = unbriefed === true && !briefed;

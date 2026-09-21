@@ -222,6 +222,7 @@ type BayState = {
   hullRadius: number;
   hullLift: number;
   padTop: number;
+  hullId: string | null;
 };
 
 declare global {
@@ -256,25 +257,29 @@ test("the bay does not move when the hull changes", async ({ page }) => {
   // switch inherited the previous hull's lift and the bob's phase, and a few
   // pages in the hull was below the deck.
   const lifts = new Map<string, number>();
-  const settled = async (name: string): Promise<BayState> => {
+  const settled = async (name: string, id: string): Promise<BayState> => {
     await expect(page.getByTestId("ship-name")).toHaveText(name);
-    // The hull arrives when its GLB does; wait for the lift to leave the
-    // fallback and hold still.
+    // The name changes on the tap; the GLB lands afterwards. Waiting on the
+    // lift alone was not enough, because after the first hull it is never the
+    // fallback again, so a slow load was read as the PREVIOUS hull's numbers
+    // and the check passed or failed on how fast the machine was. Wait for
+    // the hull that is actually on the turntable.
     await expect
-      .poll(async () => (await bayState(page)).hullLift, { timeout: 20_000 })
-      .not.toBe(0.5);
+      .poll(async () => (await bayState(page)).hullId, { timeout: 20_000 })
+      .toBe(id);
     return bayState(page);
   };
 
   const order = ["Cinder VII", "Neon Flamingo", "White Seraph"];
-  let state = await settled(order[0]!);
+  const ids = ["cinder", "flamingo", "seraph"];
+  let state = await settled(order[0]!, ids[0]!);
   expect(state.hullLift).toBeGreaterThan(state.padTop);
   lifts.set(order[0]!, state.hullLift);
 
   for (let i = 1; i < 6; i += 1) {
     await page.getByRole("button", { name: "Next ship" }).click();
     const name = order[i % order.length]!;
-    state = await settled(name);
+    state = await settled(name, ids[i % ids.length]!);
     const box = await canvas.boundingBox();
     expect(box).toEqual(first);
     // Above the pad, by the whole hover gap, never buried.

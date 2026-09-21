@@ -225,27 +225,11 @@ export function Hud({
             <span className={`${styles.score} arcade`} data-testid="score">
               {formatScore(state?.score ?? 0)}
               <span className={styles.outOf}>/ {formatScore(state?.maxScore ?? 0)}</span>
-              {/* What the last encounter did to it, on the number it did it
-                  to. Keyed per encounter so the pop replays on every verdict;
-                  it lives while the toast does and goes with it. */}
             </span>
-            {/* What the last answer did to the score, on its own row under
-                it, in the slot the distance readout used to take. Distance is
-                still flown and still tracked, and it comes back on the results
-                and the share card; during the run a kilometre count next to a
-                points score is one number too many. Keyed per question so the
-                pop replays on every verdict; it lives while the toast does. */}
-            {outcome && outcome.points !== undefined && state ? (
-              <span
-                key={state.encounter}
-                className={`${styles.scoreDelta} ${
-                  outcome.points < 0 ? styles.scoreDeltaDown : ""
-                } arcade`}
-                data-testid="score-delta"
-              >
-                {formatPoints(outcome.points)} POINTS
-              </span>
-            ) : null}
+            {/* What the last answer was worth is quoted once, in the verdict
+                toast, where the answer it belongs to is. It used to be here
+                too, under the score, and the same figure in two places read
+                as two different figures. */}
           </div>
 
           {/* The one control outside the question panel, and small enough to

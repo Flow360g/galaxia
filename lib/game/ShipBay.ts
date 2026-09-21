@@ -59,6 +59,13 @@ export interface ShipBayOptions {
   /** `?debug=1`: park the bay on `window.galaxiaBay` for the console and the
       e2e checks, the same hatch `Audio` uses. */
   debug?: boolean;
+  /**
+   * `?shot=<id>`: the hull alone, on a transparent clear, parked at
+   * `HANGAR.shotYaw`. A QA hatch like `?replay=1`, used by
+   * `scripts/ship-stills.mjs` to render the stills the results card draws;
+   * never reached in play.
+   */
+  shot?: boolean;
 }
 
 export class ShipBay {
@@ -98,10 +105,26 @@ export class ShipBay {
    * by `HANGAR.hoverGap`. Measured per hull; the camera does not follow it.
    */
   private hullLift: number = HANGAR.hoverY;
+  /**
+   * World height of the hull's own centre. The room's camera ignores it and
+   * aims at a fixed point over the pad, on purpose; a still has no room to
+   * frame, so it aims here instead and the hull sits in the middle of it.
+   */
+  private hullCenterY: number = HANGAR.hoverY;
 
   private readonly disposables: Array<{ dispose(): void }> = [];
   private readonly reducedMotion = prefersReducedMotion();
   private readonly tier = detectTier();
+  /** `?shot=<id>`: hull only, transparent, parked. See `ShipBayOptions`. */
+  private readonly shot: boolean;
+  /**
+   * The hull actually standing on the turntable, or null while the pad is
+   * empty. It is not the same thing as the hull the page is showing the name
+   * of: the name changes on the tap and the GLB arrives afterwards, so
+   * anything reading the bay's measurements has to wait for this to catch up
+   * or it reads the hull before last.
+   */
+  private hullId: string | null = null;
 
   /** Camera distance: where it wants to be, and where it currently is. */
   private targetDistance = 0;
@@ -138,6 +161,7 @@ export class ShipBay {
     private readonly container: HTMLElement,
     options: ShipBayOptions = {},
   ) {
+    this.shot = options.shot === true;
     this.canvas = document.createElement("canvas");
     this.canvas.dataset.galaxiaBay = "true";
     container.appendChild(this.canvas);
@@ -147,16 +171,21 @@ export class ShipBay {
       // Both of these are the fix for "the ship looks blurry". The bay has the
       // budget the flight does not.
       antialias: true,
-      alpha: false,
+      alpha: this.shot,
       stencil: false,
       depth: true,
+      // Only for the still: the script reads the drawing buffer back to crop
+      // the shot to the hull, and without this it reads back blank. It costs
+      // a copy every frame, which no player ever pays.
+      preserveDrawingBuffer: this.shot,
     });
-    this.renderer.setClearColor(COLOR.space, 1);
+    if (this.shot) this.renderer.setClearColor(0x000000, 0);
+    else this.renderer.setClearColor(COLOR.space, 1);
     this.renderer.setPixelRatio(
       Math.min(window.devicePixelRatio || 1, HANGAR.dprCap),
     );
 
-    this.scene.background = new THREE.Color(COLOR.space);
+    this.scene.background = this.shot ? null : new THREE.Color(COLOR.space);
 
     this.camera = new THREE.PerspectiveCamera(HANGAR.fov, 1, 0.1, 200);
 
@@ -165,7 +194,9 @@ export class ShipBay {
     this.turntable.add(this.hullHolder);
     this.scene.add(this.turntable);
 
-    this.buildBay();
+    // A still wants the hull and nothing else: the deck, walls and door are
+    // the reason the bay is a room, and the reason it cannot be cut out.
+    if (!this.shot) this.buildBay();
     this.buildLights();
 
     this.canvas.addEventListener("pointerdown", this.onPointerDown);
@@ -591,6 +622,7 @@ export class ShipBay {
     // Stand it on the pad by its underside, and frame the room around it.
     const padTop = HANGAR.deckY + HANGAR.padHeight;
     this.hullLift = padTop + HANGAR.hoverGap - scratchBox.min.y;
+    this.hullCenterY = this.hullLift + (scratchBox.min.y + scratchBox.max.y) / 2;
     this.turntable.position.y = this.hullLift;
     this.frame();
 
@@ -598,6 +630,7 @@ export class ShipBay {
     this.dragYaw = 0;
     this.dragPitch = 0;
     this.autoYaw = 0;
+    this.hullId = spec.id;
 
     // Fade and scale in, so a switch is a hull arriving rather than a pop.
     //
@@ -617,6 +650,7 @@ export class ShipBay {
   private clearHull(): void {
     if (this.hull) this.hullHolder.remove(this.hull);
     this.hull = null;
+    this.hullId = null;
     this.hullMaterials = [];
     this.hullDisposables.forEach((item) => item.dispose());
     this.hullDisposables = [];
@@ -728,8 +762,14 @@ export class ShipBay {
       Math.tan(verticalHalf) * Math.max(this.camera.aspect, 0.01),
     );
     const tightest = Math.min(usableVerticalHalf, horizontalHalf);
-    const radius = Math.max(this.hullRadius, HANGAR.frameRadius);
-    this.targetDistance = (radius / Math.sin(tightest)) * HANGAR.framePadding;
+    // A still frames the hull itself, tight, because there is no room around
+    // it to keep steady and every pixel of an 800x600 shot is wanted. The bay
+    // frames the constant instead, so paging the catalogue never dollies.
+    const radius = this.shot
+      ? this.hullRadius
+      : Math.max(this.hullRadius, HANGAR.frameRadius);
+    const padding = this.shot ? HANGAR.shotPadding : HANGAR.framePadding;
+    this.targetDistance = (radius / Math.sin(tightest)) * padding;
     if (this.distance === 0) this.distance = this.targetDistance;
   }
 
@@ -740,6 +780,15 @@ export class ShipBay {
    */
   private placeCamera(): void {
     const distance = this.distance;
+
+    // A still has no deck to stand on and no overlay to clear: put the hull
+    // in the middle of the frame and look straight at it.
+    if (this.shot) {
+      this.camera.position.set(0, this.hullCenterY + distance * HANGAR.shotLift, distance);
+      this.camera.lookAt(0, this.hullCenterY, 0);
+      return;
+    }
+
     const verticalHalf = ((this.camera.fov * Math.PI) / 180) / 2;
     // World-space half-height of the frame at the pad. Shifting the aim down
     // by the covered share of it lifts the hull into the clear band.
@@ -790,12 +839,21 @@ export class ShipBay {
     this.autoYaw +=
       ((dt * this.spin * rate) / HANGAR.revolveSeconds) * Math.PI * 2;
 
-    this.turntable.rotation.y = this.autoYaw + this.dragYaw;
-    this.turntable.rotation.x = HANGAR.tilt + this.dragPitch;
-    this.turntable.position.y = this.reducedMotion
-      ? this.hullLift
-      : this.hullLift +
-        Math.sin(this.elapsed * HANGAR.bobRate) * HANGAR.bobAmplitude;
+    if (this.shot) {
+      // Parked: a still has to be the same picture every time it is taken, so
+      // neither the revolution nor the bob is allowed near it. The room's
+      // tilt goes too; `shotPitch` is the whole angle.
+      this.turntable.rotation.y = HANGAR.shotYaw;
+      this.turntable.rotation.x = HANGAR.shotPitch;
+      this.turntable.position.y = this.hullLift;
+    } else {
+      this.turntable.rotation.y = this.autoYaw + this.dragYaw;
+      this.turntable.rotation.x = HANGAR.tilt + this.dragPitch;
+      this.turntable.position.y = this.reducedMotion
+        ? this.hullLift
+        : this.hullLift +
+          Math.sin(this.elapsed * HANGAR.bobRate) * HANGAR.bobAmplitude;
+    }
 
     if (this.swapT < 1) {
       this.swapT = Math.min(this.swapT + dt / HANGAR.swapFadeSeconds, 1);
@@ -845,11 +903,16 @@ export class ShipBay {
     hullRadius: number;
     hullLift: number;
     padTop: number;
+    /** The hull now ON the turntable, not the one the page names. Null until
+        the first GLB lands. What the stills script and the bay's own
+        geometry checks wait on. */
+    hullId: string | null;
   } {
     return {
       yaw: this.turntable.rotation.y,
       pitch: this.turntable.rotation.x,
       dragged: this.dragged,
+      hullId: this.hullId,
       hullRadius: this.hullRadius,
       hullLift: this.hullLift,
       padTop: HANGAR.deckY + HANGAR.padHeight,
