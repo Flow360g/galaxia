@@ -79,7 +79,11 @@ test("a first flight is briefed on the rules before the round starts", async ({
   // Briefing gone. The Mayday from Earth Command comes in, then the launch
   // card behind it, with its scoring shut until it is asked for.
   await expect(briefing).toHaveCount(0);
-  await expect(page.getByTestId("transmission")).toContainText(/mayday/i, { timeout: 15_000 });
+  const mayday = page.getByTestId("transmission");
+  await expect(mayday).toContainText(/mayday/i, { timeout: 15_000 });
+  // The mayday has a face on it, not a voice alone.
+  await expect(mayday).toContainText(/sargent soap/i);
+  await expect(mayday.getByTestId("transmission-portrait").locator("img")).toBeVisible();
   await shot(page, "b02b-transmission");
   await acknowledge(page);
   const toggle = page.getByTestId("scoring-toggle");

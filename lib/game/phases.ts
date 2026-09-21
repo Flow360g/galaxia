@@ -230,14 +230,38 @@ export function stageMaxima(round: Round): StageMax[] {
 
 // ------------------------------------------------------------ transmissions
 
+/** Who is talking, and the portrait that comes up on the panel with them. */
+export interface Speaker {
+  name: string;
+  /** A sprite in `public`, square, drawn over the panel's dark ground. */
+  portrait: string;
+  width: number;
+  height: number;
+}
+
 export interface Transmission {
   from: string;
+  /** The face on the other end. Without one the panel is a voice alone. */
+  speaker?: Speaker;
   lines: string[];
 }
+
+/**
+ * Earth Command's voice has a face: the officer who calls the mayday in and
+ * signs the debrief off is the same man both times, so the panel shows him
+ * both times.
+ */
+const SOAP: Speaker = {
+  name: "SARGENT SOAP",
+  portrait: "/sargent-soap.png",
+  width: 320,
+  height: 320,
+};
 
 /** The mission, before the first flight: why the ship is out here at all. */
 export const MISSION_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",
+  speaker: SOAP,
   lines: [
     "MAYDAY. MAYDAY. This is Earth Command.",
     "Earth is under invasion. We need your help.",
@@ -249,6 +273,7 @@ export const MISSION_TRANSMISSION: Transmission = {
 /** The debrief, after a run that named every landing site. */
 export const EARTH_SAVED_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",
+  speaker: SOAP,
   lines: [
     "Earth Command to pilot. Landing sites confirmed.",
     "Reinforcements are inbound.",
