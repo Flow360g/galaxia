@@ -1,6 +1,14 @@
 import { earthLadder } from "./feed";
 import { Flight, clamp01, outcomeKind } from "./Flight";
-import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
+import {
+  fromSlider,
+  resolveClusterNova,
+  resolveNova,
+  resolveVectorNova,
+  snapT,
+  stepFor,
+  toSlider,
+} from "./nova";
 import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
 import {
   CLUSTER,
@@ -28,6 +36,7 @@ import type {
   Round,
   RunEvent,
   RunSummary,
+  VectorQuestion,
   VectorState,
   WaypointState,
 } from "./types";
@@ -377,8 +386,11 @@ export class Run {
   aim(t: number): void {
     const question = this.question;
     if (!this.answering || !question || question.type !== "vector") return;
-    const [lo, hi] = this.vectorWindow;
-    this.vectorT = Math.min(hi, Math.max(lo, Number.isFinite(t) ? t : this.vectorT));
+    const wanted = Number.isFinite(t) ? t : this.vectorT;
+    // A counting question lands on a whole unit, inside whatever window a
+    // NOVA scan left open. The ship veers to the snapped aim too, so the
+    // number on screen, the number scored and where the hull sits all agree.
+    this.vectorT = snapT(question, wanted, this.vectorWindow);
     this.hooks.onAim(this.vectorT);
   }
 
@@ -389,23 +401,26 @@ export class Run {
 
     const guess = fromSlider(question, this.vectorT);
     const truthT = toSlider(question, question.answer);
-    // How far off, as a fraction of the truth. The same bands for every
-    // question, log-scaled or not: "within 10%" means one thing in the game.
-    const error = Math.abs(guess - question.answer) / Math.max(Math.abs(question.answer), 1e-9);
-    const { direct, close, graze } = VECTOR.bands;
+    // How far off, in answer units and as a fraction of the truth. The bands
+    // are the same for every question, log-scaled or not, so "within 10%"
+    // means one thing in the game; `toleranceOf` widens them to whole units
+    // where a fraction of a small count would be nonsense.
+    const off = Math.abs(guess - question.answer);
+    const error = off / Math.max(Math.abs(question.answer), 1e-9);
+    const { direct, close, graze } = toleranceOf(question);
 
     let kind: Outcome["kind"];
     let strength = 1;
     let severity = 1;
     let salvage: Outcome["salvage"];
-    if (error <= direct) {
+    if (off <= direct) {
       kind = "slingshot";
       salvage = this.shields < SHIELDS.perRun ? "shield" : "nova";
-    } else if (error <= close) {
+    } else if (off <= close) {
       kind = "thread";
-      const across = (error - direct) / Math.max(close - direct, 1e-6);
+      const across = (off - direct) / Math.max(close - direct, 1e-6);
       strength = 1 - across * (1 - VECTOR.glanceFloor);
-    } else if (error <= graze) {
+    } else if (off <= graze) {
       // Clipped the scout. Nothing is earned and nothing is taken: the shot
       // was good enough not to be punished, and not good enough to pay.
       kind = "graze";
@@ -414,8 +429,8 @@ export class Run {
     } else {
       kind = outcomeKind(false, false, false, this.shields > 0);
       // How wrong, not just wrong: a shot that grazed the tolerance costs a
-      // fraction of what a wild one does.
-      severity = missSeverity(error);
+      // fraction of what a wild one does, in damage and in points alike.
+      severity = missSeverity(off / Math.max(graze, 1e-9));
       if (this.shields > 0) {
         this.shields -= 1;
         this.shieldLost = true;
@@ -428,7 +443,7 @@ export class Run {
     this.vectorStrength = strength;
     const outcome: Outcome = {
       kind,
-      correct: error <= close,
+      correct: off <= close,
       boosted: false,
       timedOut: false,
       thrustLeft: this.thrust,
@@ -440,6 +455,7 @@ export class Run {
       guessText: formatValue(guess, question.unit),
       answerText: formatValue(question.answer, question.unit),
       error,
+      errorText: missText(question, off, error),
       guessValue: guess,
       severity,
       ...(salvage ? { salvage } : {}),
@@ -447,7 +463,7 @@ export class Run {
     // A shot that is taken resolves almost instantly: the bolt crosses and
     // the scout goes up in one event. A shot that is not taken leaves a beat
     // of silence before the scout fires back. A graze is a shot taken.
-    this.lock(outcome, error <= graze ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
+    this.lock(outcome, off <= graze ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
     this.hooks.onVectorLock(outcome, truthT);
   }
 
@@ -1246,16 +1262,58 @@ function normaliseGuess(text: string): string {
 }
 
 /**
- * How hard a vector miss lands, 0..1, from its relative error.
+ * The three bands in ANSWER UNITS, for one question.
  *
- * The edge of the graze band is where a miss begins: a shot that only just
- * missed costs `severityFloor` of a full impact. It ramps to a full impact at
- * `severityFullAt` and stays there, so a wild guess is the worst it gets.
+ * A band is a fraction of the truth, which is the rule a player can hold in
+ * their head, and the rule falls apart on a small count: 5% of 6 strings is
+ * a third of a string, so every whole number but the answer was a wild shot
+ * and 7 was docked 25 points, a shield and the streak for being one out.
+ * `VECTOR.minBands` is the floor in whole units, and it only ever widens a
+ * band. It bites below about 20 and is invisible above it: at 116 years the
+ * close band is already 11.6 years wide, far past the floor of 1.
  */
-export function missSeverity(error: number): number {
-  const from = VECTOR.bands.graze;
-  const span = Math.max(VECTOR.severityFullAt - from, 1e-6);
-  const across = clamp01((error - from) / span);
+export function toleranceOf(question: VectorQuestion): {
+  direct: number;
+  close: number;
+  graze: number;
+} {
+  const scale = Math.max(Math.abs(question.answer), 1e-9);
+  const { bands, minBands } = VECTOR;
+  return {
+    direct: Math.max(bands.direct * scale, minBands.direct),
+    close: Math.max(bands.close * scale, minBands.close),
+    graze: Math.max(bands.graze * scale, minBands.graze),
+  };
+}
+
+/**
+ * How wide the shot was, in the terms the question was asked in. A count
+ * that aims in whole units says "1 off", because "17% off" is an arithmetic
+ * problem standing between the player and the fact that they were one out.
+ * Everything else stays a percentage, where a share of the truth is the only
+ * thing that means anything across a trench and a piano.
+ */
+function missText(question: VectorQuestion, off: number, error: number): string {
+  if (stepFor(question) > 0) return `${Math.round(off).toLocaleString("en-AU")} off`;
+  const percent = error * 100;
+  const shown = percent >= 10 ? Math.round(percent) : Math.round(percent * 10) / 10;
+  return `${percent >= 10 ? shown : shown.toFixed(1)}% off`;
+}
+
+/**
+ * How hard a vector miss lands, 0..1, measured in graze bands out.
+ *
+ * The edge of the graze band is where a miss begins, and `overshoot` is 1
+ * there: a shot that only just missed costs `severityFloor` of a full
+ * impact. It ramps to a full impact `severityFullAt / bands.graze` bands out
+ * (50% off on a question the floor does not touch) and stays there, so a
+ * wild guess is the worst it gets. Measuring in bands rather than in raw
+ * percent is what keeps it honest on a small count, where the bands are
+ * floored to whole units and 33% off can be a perfectly reasonable 2 out.
+ */
+export function missSeverity(overshoot: number): number {
+  const full = Math.max(VECTOR.severityFullAt / VECTOR.bands.graze, 1 + 1e-6);
+  const across = clamp01((overshoot - 1) / (full - 1));
   return VECTOR.severityFloor + (1 - VECTOR.severityFloor) * across;
 }
 

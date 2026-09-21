@@ -100,7 +100,8 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
     oneLiner: "Guess a number. The closer, the better.",
     how: [
       "The answer is a number. Slide to your best guess, then tap FIRE.",
-      `The closer you are, the more points you score. A guess that is way off costs you ${SCORE.penalty.collision} points and a shield.`,
+      `The closer you are, the more points you score. A guess that is way off costs you up to ${SCORE.penalty.collision} points and a shield; the nearer you were, the less you lose.`,
+      `On a small number, closeness is counted in whole numbers instead: being ${VECTOR.minBands.close} out is close, and ${VECTOR.minBands.graze} out is a near miss that costs you nothing.`,
     ],
     scoring: [
       {
@@ -114,7 +115,11 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
         worth: "0 POINTS · NO HARM",
         tone: "neutral",
       },
-      { label: "WAY OFF", worth: `-${SCORE.penalty.collision} POINTS · SHIELD USED`, tone: "bad" },
+      {
+        label: "WAY OFF",
+        worth: `UP TO -${SCORE.penalty.collision} POINTS · SHIELD USED`,
+        tone: "bad",
+      },
     ],
   },
   mcq: {

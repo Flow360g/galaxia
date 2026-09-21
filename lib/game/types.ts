@@ -85,9 +85,10 @@ export interface ClusterQuestion {
 
 /**
  * A Vector: a numeric answer aimed on a slider. The ship steers to match and
- * a beam fires on lock; the alien decloaks at the truth. The error, as a
- * fraction of the answer, is read against `VECTOR.bands`: direct, close,
- * graze or miss. The same bands for every question, so nothing is authored.
+ * a beam fires on lock; the alien decloaks at the truth. The error is read
+ * against `VECTOR.bands`, fractions of the answer, widened to the whole
+ * units of `VECTOR.minBands` where a fraction of a small count would be
+ * nonsense. The same bands for every question, so nothing is authored.
  */
 export interface VectorQuestion {
   id: string;
@@ -288,6 +289,13 @@ export interface Outcome {
   lost?: number;
   /** Vector only: |guess - truth| / |truth|, so 0.1 is 10% off. */
   error?: number;
+  /**
+   * Vector only: how wide the shot was, ready to read. A percentage, or
+   * whole units ("1 off") on a question that aims in whole units, where a
+   * percentage of a small count is arithmetic the player should not have to
+   * do to learn they were one out.
+   */
+  errorText?: string;
   /** Vector only: the aimed value. */
   guessValue?: number;
   /** Vector only: what a direct hit salvaged. */

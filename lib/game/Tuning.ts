@@ -298,7 +298,9 @@ export const SCORE = {
    * Points docked for getting it wrong, by where it went wrong. A cluster
    * never docks: its second wrong lane is worth zero and no less. A general
    * knowledge lane docks only with Boost pressed first. The scout and the
-   * station keep the flat dock; a wreck (no shields left) costs double.
+   * station keep the flat dock; a wreck (no shields left) costs double. On
+   * the scout the dock is what a WILD shot costs: a miss is scaled by its
+   * severity, so a shot that only just missed pays a fraction of it.
    */
   penalty: { cluster: 0, lane: 0, laneBoosted: 25, collision: 25, wreck: 50, timeout: 25 },
 } as const;
@@ -328,6 +330,26 @@ export const VECTOR = {
    * 10%" reads the same on Everest as on a piano.
    */
   bands: { direct: 0.05, close: 0.1, graze: 0.15 },
+  /**
+   * The same bands in WHOLE UNITS of the answer, and the bands never shrink
+   * below them. A fraction of the truth is the right rule for a big answer
+   * and a nonsense one for a small count: 5% of 6 strings is a third of a
+   * string, so on "how many strings does a guitar have" every neighbouring
+   * whole number was a wild shot. Seven was docked 25 points, a shield and
+   * the streak for being one out, which is not what being one out is worth.
+   * The floor bites only where the answer is small: at 15 players the
+   * relative band is already wider, and above about 20 these never apply.
+   * A direct hit has no floor, so full marks still means naming the number.
+   */
+  minBands: { direct: 0, close: 1, graze: 2 },
+  /**
+   * A vector whose ends are both whole numbers and no further apart than
+   * this aims in whole units: the slider lands on 7, never 7.04. The number
+   * on screen is then the number scored, which is what makes `minBands`
+   * legible ("one off", not "16.7% off"). A wide range keeps the smooth
+   * slider, because whole metres of Everest is false precision.
+   */
+  snapMaxSpan: 200,
   /** Strength of a close hit at the edge of its band (1.0 at the direct band). */
   glanceFloor: 0.4,
   /**
@@ -352,8 +374,11 @@ export const VECTOR = {
   /**
    * How hard a miss lands. At the edge of the graze band it costs
    * `severityFloor` of a full impact; a relative error of `severityFullAt`
-   * (50% off) and beyond costs all of it. Being a little wrong should not
-   * read the same as being wild.
+   * (50% off, which is `severityFullAt / bands.graze` graze bands out) and
+   * beyond costs all of it. Being a little wrong should not read the same as
+   * being wild. Severity scales the POINTS docked as well as the impact, so
+   * the flat 25 in `SCORE.penalty` is what a wild shot costs and a shot that
+   * only just missed costs a fraction of it.
    */
   severityFloor: 0.3,
   severityFullAt: 0.5,
