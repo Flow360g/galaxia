@@ -90,6 +90,103 @@
   animation: rise 300ms ease-out;
 }
 
+/* The verdict, over everything, for as long as `STATION.verdictSeconds` says.
+   Centred on whatever is actually visible: `bottom` is set from JS to clear the
+   software keyboard, exactly as the band is, because a site answered with the
+   keyboard still up would otherwise put the figure behind it. It never takes a
+   tap: NEXT PLACE is under it and the thumb must reach it. */
+.verdict {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+  animation-name: verdictPop;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.verdictCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 22px;
+  background: rgba(5, 13, 26, 0.92);
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.won {
+  border-color: rgba(79, 241, 255, 0.55);
+  box-shadow: 0 0 40px rgba(79, 241, 255, 0.18);
+}
+
+.lost {
+  border-color: rgba(255, 107, 92, 0.55);
+  box-shadow: 0 0 40px rgba(255, 107, 92, 0.18);
+}
+
+/* The word, then what it was worth. Two lines rather than one: a verdict and
+   a figure chained together with a colon reads as an equation. */
+.verdictWord {
+  font-size: clamp(20px, 7.6vw, 32px);
+  line-height: 1.1;
+  letter-spacing: var(--track-label);
+}
+
+.won .verdictWord {
+  color: #4ff1ff;
+}
+
+.lost .verdictWord {
+  color: #ff6b5c;
+}
+
+.verdictPoints {
+  font-size: clamp(14px, 5vw, 21px);
+  line-height: 1.2;
+  letter-spacing: var(--track-label);
+  color: #ffe03d;
+}
+
+/* In hard, hold, out. The overshoot is the whole point of it. */
+@keyframes verdictPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.62);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  20% {
+    transform: scale(1);
+  }
+  74% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes verdictFade {
+  0%,
+  74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -137,5 +234,10 @@
   .panel,
   .restOpen {
     animation: none;
+  }
+
+  /* Still timed, still gone at the end of it: only the punch goes away. */
+  .verdict {
+    animation-name: verdictFade;
   }
 }

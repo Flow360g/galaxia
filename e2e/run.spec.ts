@@ -382,7 +382,19 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     if (index === 0) {
       await expect(page.getByTestId("next-site")).toBeVisible({ timeout: 60_000 });
     } else {
+      // What the site was worth, in the middle of the screen. The panel says
+      // the word at the foot of a scroll region under a photograph and five
+      // bought hints, which is where a tester read the answer and never saw
+      // what it scored, so the figure is said here and only here. Asserted on
+      // site 1, the one played straight: site 0 is allowed to time out.
+      const verdict = page.getByTestId("site-verdict");
+      await expect(verdict).toContainText("CORRECT");
+      await expect(verdict).toContainText(/\+\d+ POINTS/);
+      await shot(page, "15b-station-verdict");
       await expect(station).toContainText(/correct/i);
+      // And it clears itself. NEXT PLACE is under it and the thumb has to
+      // reach it, which is why it never takes a tap to get rid of.
+      await expect(verdict).toHaveCount(0, { timeout: 15_000 });
     }
     if (index === 0) await shot(page, "15-station-site");
     await page.getByTestId("next-site").click();

@@ -394,6 +394,14 @@ Rules that fall out of this:
   announces itself through `onSiteCalled` and the engine answers it with
   `audio.site()`: keyed up both times, then confirmed or refused. It shipped
   silent once, and a verdict with no sound on it read as a dropped tap.
+- **What a site scored is said in the middle of the screen.** CORRECT and the
+  figure, big, over everything, for `STATION.verdictSeconds` and then gone on
+  its own (`SiteVerdict` in `Station.tsx`). The panel says the verdict too, but
+  it says it at the foot of a scroll region under a photograph and five bought
+  hints, and a tester read the answer there without ever seeing what it was
+  worth. The pop is the one place the figure appears: the panel's line under
+  the answer carries what was SPENT (hints, zooms) and no points at all. It
+  takes no tap and blocks none, because NEXT PLACE is underneath it.
 - **The feed's imagery is fetched at launch, not on the tap.** A hint is
   bought and a zoom step taken against a running clock, and a photograph
   asked for on the tap took three seconds to arrive (Commons'

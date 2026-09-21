@@ -429,6 +429,12 @@ export const STATION = {
    */
   hailHoldSeconds: 1.5,
   /**
+   * Seconds the verdict holds in the middle of the screen before it clears.
+   * Long enough to read a word and a figure, short enough to be gone by the
+   * time the player looks for the answer and the fact underneath it.
+   */
+  verdictSeconds: 2.4,
+  /**
    * Width of a ground photograph, in pixels. Wikimedia only renders a fixed
    * list of thumbnail widths now (640 is refused, 960 and 500 are served), and
    * 960 is what a 320px figure on a 3x phone wants. See `thumbUrl` in feed.ts.

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Orbit } from "@/lib/game/Orbit";
+import { STATION } from "@/lib/game/Tuning";
 import { StationFeed } from "./StationFeed";
 import { StationHail } from "./StationHail";
-import type { EarthQuestion, GameState } from "@/lib/game/types";
+import type { EarthQuestion, GameState, Outcome } from "@/lib/game/types";
 import styles from "./Station.module.css";
 
 interface Props {
@@ -139,6 +140,56 @@ export function Station({
           </section>
         </div>
       ) : null}
+
+      {/* The verdict, over the lot. The panel says it too, at the foot of a
+          scroll region with a photograph and five bought hints above it, where
+          a tester read the answer and never saw what it scored. Keyed on the
+          site so the second one punches in again, and lifted with the band
+          when the keyboard is still up. */}
+      {showPanel && question && state?.awaitingTap && state.outcome ? (
+        <SiteVerdict key={question.id} outcome={state.outcome} lift={keyboard} />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * What the site was worth, in the middle of the screen.
+ *
+ * The one figure that matters at the end of a site, said once and said loudly:
+ * the panel's own line under it carries what was spent getting there and no
+ * points at all, because the same number in two places reads as two.
+ *
+ * It clears itself rather than waiting for a tap. Nothing in the run advances
+ * on a timer once a verdict is up and nothing here does either: the verdict,
+ * the answer, the fact and NEXT PLACE all sit in the panel until the player is
+ * done with them. This is the noise the moment makes, not the moment.
+ */
+function SiteVerdict({ outcome, lift }: { outcome: Outcome; lift: number }) {
+  const [gone, setGone] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setGone(true), STATION.verdictSeconds * 1000);
+    return () => window.clearTimeout(id);
+  }, []);
+  if (gone) return null;
+
+  const points = outcome.points ?? 0;
+  const headline = outcome.correct ? "CORRECT" : outcome.timedOut ? "TOO SLOW" : "WRONG";
+
+  return (
+    <div
+      className={styles.verdict}
+      style={{ bottom: lift, animationDuration: `${STATION.verdictSeconds}s` }}
+      data-testid="site-verdict"
+      role="status"
+    >
+      <div className={`${styles.verdictCard} ${outcome.correct ? styles.won : styles.lost}`}>
+        <span className={`${styles.verdictWord} arcade`}>{headline}</span>
+        <span className={`${styles.verdictPoints} arcade`}>
+          {points >= 0 ? "+" : ""}
+          {points} POINTS
+        </span>
+      </div>
     </div>
   );
 }
