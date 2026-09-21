@@ -58,9 +58,21 @@ export async function stubImagery(page: Page) {
     jpeg = Buffer.from(dataUrl.split(",")[1]!, "base64");
     return jpeg;
   };
-  await page.route(/https:\/\/(tiles\.maps\.eox\.at|commons\.wikimedia\.org)\//, async (route) => {
-    await route.fulfill({ status: 200, contentType: "image/jpeg", body: await render() });
-  });
+  // `upload.wikimedia.org` is the road the prefetch actually takes (see
+  // `thumbUrl`); `commons.wikimedia.org` is only the fallback. Stubbing the
+  // fallback alone left the open internet deciding whether the photographs
+  // arrived as blobs, which is exactly what the blob assertion is there to
+  // check, so both hosts are stood in for here.
+  await page.route(
+    /https:\/\/(tiles\.maps\.eox\.at|upload\.wikimedia\.org|commons\.wikimedia\.org)\//,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "image/jpeg",
+        body: await render(),
+      });
+    },
+  );
 }
 
 /**

@@ -192,9 +192,6 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
   /** Whether a second site follows this one, for the continue button's wording. */
   const moreSites =
     state !== null && round.questions[state.encounter + 1]?.type === "earth";
-  const stages = round.stages ?? [];
-  const stationPhase = stages[stages.length - 1]?.phase ?? stages.length;
-
   const toggleSound = useCallback(() => {
     setMuted((current) => {
       const next = !current;
@@ -276,7 +273,6 @@ export function GameCanvas({ round, debug, replay = false }: Props) {
 
       {docked ? (
         <Station
-          phase={stationPhase}
           showPanel={summary === null}
           question={earthQuestion}
           state={state}
