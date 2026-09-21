@@ -14,17 +14,24 @@ import styles from "./page.module.css";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ round?: string }>;
+  searchParams: Promise<{ round?: string; debug?: string }>;
 }) {
   // Read per request rather than prerendered, so the title screen turns
-  // over at midnight with the round. `?round=` is the same QA hatch as on
-  // /play, and Press Start carries it through.
+  // over at midnight with the round. `?round=` and `?debug=1` are the same QA
+  // hatches as on /play, and Press Start and the menu carry them through, so
+  // `/?debug=1` is one bookmark to the profile's practice run.
   const params = await searchParams;
   const round = getRound(params.round);
   const questions = round.questions.length;
   const phases = (round.stages ?? []).length;
-  const query = params.round ? `?round=${encodeURIComponent(params.round)}` : "";
-  const playHref = `/play${query}`;
+  const query = [
+    params.round ? `round=${encodeURIComponent(params.round)}` : "",
+    params.debug === "1" ? "debug=1" : "",
+  ]
+    .filter(Boolean)
+    .join("&");
+  const suffix = query ? `?${query}` : "";
+  const playHref = `/play${suffix}`;
 
   return (
     <main className={styles.main}>
@@ -60,7 +67,7 @@ export default async function Home({
           Press Start
         </Link>
 
-        <TitleMenu round={round} query={query} />
+        <TitleMenu round={round} query={suffix} />
       </div>
 
     </main>
