@@ -81,6 +81,73 @@
   animation: flicker 0.9s steps(2, start) infinite;
 }
 
+/* The face on the other end. A framed sprite on the panel's own ground, the
+   name beside it, and the callsign under that: the eyebrow drops the callsign
+   when a speaker is up so it is not said twice. */
+.speaker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.portrait {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 80px;
+  height: 80px;
+  border: 1px solid rgba(178, 140, 255, 0.45);
+  border-radius: 4px;
+  background: rgba(178, 140, 255, 0.08);
+  overflow: hidden;
+}
+
+.portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Pixel art: keep the blocks hard rather than letting the browser smear
+     them when the sprite lands on a fractional device pixel. */
+  image-rendering: pixelated;
+}
+
+/* A trace of cabinet scanline over the sprite, so it reads as a picture
+   coming down a link rather than a photograph pasted on the panel. */
+.scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(7, 17, 34, 0.22) 0,
+    rgba(7, 17, 34, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 11px;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.from {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: #b28cff;
+}
+
 .body {
   display: flex;
   flex-direction: column;
@@ -164,6 +231,11 @@
 
   .body {
     min-height: 72px;
+  }
+
+  .portrait {
+    width: 60px;
+    height: 60px;
   }
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Transmission as Script } from "@/lib/game/phases";
 import styles from "./Transmission.module.css";
@@ -25,7 +26,8 @@ const LINE_PAUSE_MS = 360;
 
 /**
  * A message from Earth Command, the way a ship would get one: an eyebrow, a
- * signal strip, and the words arriving one character at a time.
+ * signal strip, the face on the other end, and the words arriving one
+ * character at a time.
  *
  * A small modal rather than a page. It sets the tone and gets out of the way:
  * a tap while the text is still arriving lands all of it, and a tap once it
@@ -33,6 +35,7 @@ const LINE_PAUSE_MS = 360;
  * and after the tally on a run that saved Earth, and never against a clock.
  */
 export function Transmission({ script, kind, onDone }: Props) {
+  const speaker = script.speaker;
   const total = useMemo(() => script.lines.reduce((sum, line) => sum + line.length, 0), [script]);
   // Under reduced motion the whole message is there from the first frame.
   const [shown, setShown] = useState(() => (prefersReducedMotion() ? total : 0));
@@ -92,7 +95,8 @@ export function Transmission({ script, kind, onDone }: Props) {
       <div className={styles.panel}>
         <header className={styles.header}>
           <span className={`${styles.eyebrow} arcade`}>
-            {kind === "incoming" ? "INCOMING TRANSMISSION" : "DEBRIEF"} &middot; {script.from}
+            {kind === "incoming" ? "INCOMING TRANSMISSION" : "DEBRIEF"}
+            {speaker ? null : <> &middot; {script.from}</>}
           </span>
           <span className={styles.signal} aria-hidden="true">
             <i />
@@ -101,6 +105,27 @@ export function Transmission({ script, kind, onDone }: Props) {
             <i />
           </span>
         </header>
+        {speaker ? (
+          <div className={styles.speaker}>
+            <span className={styles.portrait} data-testid="transmission-portrait">
+              <Image
+                src={speaker.portrait}
+                width={speaker.width}
+                height={speaker.height}
+                alt=""
+                aria-hidden="true"
+                sizes="80px"
+                priority
+              />
+              <i className={styles.scan} aria-hidden="true" />
+            </span>
+            <span className={styles.who}>
+              <span className={`${styles.name} arcade`}>{speaker.name}</span>
+              <span className={styles.from}>{script.from}</span>
+            </span>
+          </div>
+        ) : null}
+
         <div className={styles.body} aria-live="polite">
           {lines.map((line, index) =>
             line ? (
