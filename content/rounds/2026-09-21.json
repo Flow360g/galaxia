@@ -8,18 +8,19 @@
       "id": "q1",
       "type": "cluster",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "Which of these countries share a land border with Germany?",
       "options": [
-        "Portugal",
-        "Poland",
         "Denmark",
-        "Norway",
-        "Ireland",
-        "Austria"
+        "Hungary",
+        "Portugal",
+        "Finland",
+        "Austria",
+        "Poland"
       ],
       "answers": [
-        1,
-        2,
+        0,
+        4,
         5
       ],
       "fact": "Germany has nine land neighbours, from Denmark in the north round to Austria and Switzerland in the south."
@@ -28,19 +29,20 @@
       "id": "q2",
       "type": "cluster",
       "topic": "nature",
+      "difficulty": 1,
       "prompt": "Which of these animals are mammals?",
       "options": [
         "Shark",
-        "Dolphin",
         "Penguin",
         "Bat",
         "Platypus",
-        "Crocodile"
+        "Crocodile",
+        "Dolphin"
       ],
       "answers": [
-        1,
+        2,
         3,
-        4
+        5
       ],
       "fact": "The platypus lays eggs and still feeds its young on milk, which is the rule that makes it a mammal."
     },
@@ -48,10 +50,11 @@
       "id": "q3",
       "type": "vector",
       "topic": "history",
+      "difficulty": 2,
       "prompt": "How many years did the Hundred Years' War actually last?",
       "answer": 116,
-      "min": 50,
-      "max": 200,
+      "min": 40,
+      "max": 160,
       "unit": "years",
       "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
     },
@@ -59,10 +62,11 @@
       "id": "q4",
       "type": "vector",
       "topic": "misc",
+      "difficulty": 2,
       "prompt": "How long does sunlight take to reach Earth, in minutes?",
       "answer": 8.3,
       "min": 1,
-      "max": 60,
+      "max": 13,
       "unit": "min",
       "fact": "About 8 minutes 20 seconds. From the next nearest star it takes more than four years."
     },
@@ -70,14 +74,15 @@
       "id": "q5",
       "type": "mcq",
       "topic": "arts",
+      "difficulty": 2,
       "prompt": "Who painted the ceiling of the Sistine Chapel?",
       "options": [
-        "Michelangelo",
-        "Raphael",
         "Leonardo",
-        "Donatello"
+        "Raphael",
+        "Donatello",
+        "Michelangelo"
       ],
-      "answer": 0,
+      "answer": 3,
       "hint": "He considered himself a sculptor, not a painter.",
       "fact": "Michelangelo painted it standing on scaffolding, craning upward, over four years from 1508."
     },
@@ -85,12 +90,13 @@
       "id": "q6",
       "type": "mcq",
       "topic": "geography",
+      "difficulty": 3,
       "prompt": "Which country has the most islands?",
       "options": [
-        "Indonesia",
-        "Sweden",
         "Philippines",
-        "Canada"
+        "Sweden",
+        "Canada",
+        "Indonesia"
       ],
       "answer": 1,
       "hint": "Think Scandinavia, and count the tiny ones.",
@@ -108,9 +114,23 @@
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ]
 }

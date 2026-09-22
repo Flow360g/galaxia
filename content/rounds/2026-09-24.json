@@ -7,61 +7,65 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "misc",
-      "prompt": "Which of these are dwarf planets?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these are capital cities today?",
       "options": [
-        "Titan",
-        "Pluto",
-        "Europa",
-        "Io",
-        "Ceres",
-        "Eris"
+        "Istanbul",
+        "Lima",
+        "Sydney",
+        "Canberra",
+        "Ottawa",
+        "Rio"
       ],
       "answers": [
         1,
-        4,
-        5
+        3,
+        4
       ],
-      "fact": "Ceres sits in the asteroid belt and is the only dwarf planet inside Neptune's orbit. The others are moons."
+      "fact": "Canberra was built from scratch as a compromise between Sydney and Melbourne. Rio lost the title to Brasilia in 1960, and Istanbul lost it to Ankara in 1923."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
-      "prompt": "Which of these are capital cities today?",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Which of these are dwarf planets?",
       "options": [
-        "Sydney",
-        "Istanbul",
-        "Ottawa",
-        "Canberra",
-        "Rio",
-        "Lima"
+        "Pluto",
+        "Io",
+        "Ceres",
+        "Titan",
+        "Eris",
+        "Europa"
       ],
       "answers": [
+        0,
         2,
-        3,
-        5
+        4
       ],
-      "fact": "Canberra was built from scratch as a compromise between Sydney and Melbourne. Rio lost the title to Brasilia in 1960, and Istanbul lost it to Ankara in 1923."
+      "fact": "Ceres sits in the asteroid belt and is the only dwarf planet inside Neptune's orbit. The others are moons."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "science",
+      "difficulty": 2,
       "prompt": "How many bones are in an adult human body?",
       "answer": 206,
-      "min": 50,
-      "max": 500,
+      "min": 40,
+      "max": 300,
       "fact": "206. A baby is born with around 270, and many of them fuse together as the skeleton grows."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "sport",
+      "difficulty": 1,
       "prompt": "How long is a marathon, in kilometres?",
       "answer": 42.195,
       "min": 10,
-      "max": 100,
+      "max": 65,
       "unit": "km",
       "fact": "42.195 km, fixed in 1921 to match the 1908 London course from Windsor Castle to the stadium."
     },
@@ -69,14 +73,15 @@
       "id": "q5",
       "type": "mcq",
       "topic": "geography",
+      "difficulty": 1,
       "prompt": "Which is the largest desert outside the polar regions?",
       "options": [
-        "Gobi",
-        "Arabian",
+        "Kalahari",
         "Sahara",
-        "Kalahari"
+        "Arabian",
+        "Gobi"
       ],
-      "answer": 2,
+      "answer": 1,
       "hint": "It covers most of North Africa.",
       "fact": "Antarctica is the largest desert of all. A desert is defined by how little rain falls, not by sand."
     },
@@ -84,14 +89,15 @@
       "id": "q6",
       "type": "mcq",
       "topic": "food",
+      "difficulty": 3,
       "prompt": "Which country is the croissant originally from?",
       "options": [
         "France",
-        "Belgium",
+        "Austria",
         "Italy",
-        "Austria"
+        "Belgium"
       ],
-      "answer": 3,
+      "answer": 1,
       "hint": "Think of the kipferl.",
       "fact": "The kipferl came from Vienna. Paris bakers turned it into the buttery croissant in the 1830s."
     },
@@ -107,9 +113,23 @@
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ]
 }

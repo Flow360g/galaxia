@@ -4,48 +4,89 @@
   "seed": 20260926,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
-      "options": ["Egypt", "Greece", "Portugal", "Austria", "Turkey", "Romania"],
-      "answers": [0, 1, 4],
+      "options": [
+        "Romania",
+        "Portugal",
+        "Greece",
+        "Turkey",
+        "Egypt",
+        "Austria"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
       "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "nature",
-      "prompt": "Which of these animals can fly?",
-      "options": ["Bat", "Ostrich", "Hummingbird", "Dragonfly", "Penguin", "Kiwi"],
-      "answers": [0, 2, 3],
-      "fact": "Ostriches, penguins and kiwis are all birds, and not one of them can get off the ground."
+      "difficulty": 2,
+      "prompt": "Which of these birds cannot fly?",
+      "options": [
+        "Kiwi",
+        "Albatross",
+        "Ostrich",
+        "Penguin",
+        "Swan",
+        "Pelican"
+      ],
+      "answers": [
+        0,
+        2,
+        3
+      ],
+      "fact": "An ostrich cannot get off the ground but can outrun a racehorse. A penguin flies, just underwater."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "history",
-      "prompt": "In which year did the Titanic sink?",
-      "answer": 1912,
-      "min": 1850,
-      "max": 1980,
-      "fact": "She struck the iceberg late on 14 April 1912 and was gone in under three hours."
+      "difficulty": 3,
+      "prompt": "How tall is the Great Pyramid of Giza, in metres?",
+      "answer": 147,
+      "min": 50,
+      "max": 200,
+      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years.",
+      "unit": "m"
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "nature",
+      "difficulty": 2,
       "prompt": "How many years ago did the last dinosaurs die out, in millions?",
       "answer": 66,
-      "min": 1,
-      "max": 300,
+      "min": 10,
+      "max": 90,
       "unit": "million years",
       "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
     },
@@ -53,21 +94,33 @@
       "id": "q5",
       "type": "mcq",
       "topic": "science",
+      "difficulty": 1,
       "prompt": "Which metal is liquid at room temperature?",
-      "options": ["Lead", "Tin", "Mercury", "Zinc"],
-      "answer": 2,
-      "hint": "It shares its name with a planet.",
+      "options": [
+        "Zinc",
+        "Tin",
+        "Lead",
+        "Mercury"
+      ],
+      "answer": 3,
+      "hint": "It is the one that was used in old thermometers.",
       "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "arts",
-      "prompt": "Who wrote the play Romeo and Juliet?",
-      "options": ["Dickens", "Chaucer", "Austen", "Shakespeare"],
+      "difficulty": 2,
+      "prompt": "Who wrote the novel Pride and Prejudice?",
+      "options": [
+        "Elizabeth Gaskell",
+        "George Eliot",
+        "Charlotte Bronte",
+        "Jane Austen"
+      ],
       "answer": 3,
-      "hint": "He was writing in England around 1595.",
-      "fact": "Shakespeare did not invent the story. He took it from an English poem published thirty years earlier."
+      "hint": "She wrote six novels and published every one of them anonymously.",
+      "fact": "Jane Austen published it in 1813. The title page said only 'By the author of Sense and Sensibility'."
     },
     {
       "id": "q7",

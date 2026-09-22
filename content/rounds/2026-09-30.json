@@ -4,48 +4,89 @@
   "seed": 20260930,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
-      "prompt": "Which of these are gases at room temperature?",
-      "options": ["Iron", "Helium", "Oxygen", "Mercury", "Neon", "Bromine"],
-      "answers": [1, 2, 4],
-      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "Which of these rivers flow through Europe?",
+      "options": [
+        "Danube",
+        "Ganges",
+        "Rhine",
+        "Amazon",
+        "Nile",
+        "Seine"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "The Danube passes through ten countries, more than any other river in the world."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
-      "prompt": "Which of these rivers flow through Europe?",
-      "options": ["Danube", "Nile", "Ganges", "Rhine", "Amazon", "Seine"],
-      "answers": [0, 3, 5],
-      "fact": "The Danube passes through ten countries, more than any other river in the world."
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "Which of these are gases at room temperature?",
+      "options": [
+        "Oxygen",
+        "Iron",
+        "Helium",
+        "Bromine",
+        "Mercury",
+        "Neon"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "screen",
-      "prompt": "In which year was the first Star Wars film released?",
-      "answer": 1977,
-      "min": 1940,
-      "max": 2010,
-      "fact": "It opened in only 32 cinemas. The studio expected it to fail and let its director keep the sequel rights."
+      "difficulty": 2,
+      "prompt": "How long is the first Star Wars film, in minutes?",
+      "answer": 121,
+      "min": 30,
+      "max": 165,
+      "fact": "About 121 minutes. It was cut down from a much longer first assembly that the director's friends thought was unwatchable.",
+      "unit": "min"
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "nature",
+      "difficulty": 1,
       "prompt": "How many teeth does an adult human usually have?",
       "answer": 32,
-      "min": 5,
-      "max": 100,
+      "min": 10,
+      "max": 45,
       "unit": "teeth",
       "fact": "32, counting the four wisdom teeth that many people never grow at all."
     },
@@ -53,20 +94,32 @@
       "id": "q5",
       "type": "mcq",
       "topic": "food",
-      "prompt": "Which country invented pizza?",
-      "options": ["Greece", "Spain", "Italy", "France"],
-      "answer": 2,
-      "hint": "It began in Naples, as cheap food for workers.",
-      "fact": "The Margherita is named after a queen, and its colours match the Italian flag."
+      "difficulty": 2,
+      "prompt": "Which part of the plant is cinnamon?",
+      "options": [
+        "Leaf",
+        "Seed",
+        "Root",
+        "Bark"
+      ],
+      "answer": 3,
+      "hint": "It is peeled off in strips and curls up as it dries.",
+      "fact": "Cinnamon is the inner bark of a tree. The strips curl into quills as they dry out."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "screen",
+      "difficulty": 2,
       "prompt": "Which band recorded the album Abbey Road?",
-      "options": ["Pink Floyd", "Queen", "ABBA", "The Beatles"],
-      "answer": 3,
-      "hint": "Four of them, photographed on a zebra crossing.",
+      "options": [
+        "Pink Floyd",
+        "The Beatles",
+        "Queen",
+        "ABBA"
+      ],
+      "answer": 1,
+      "hint": "They named it after the London street where their studio was.",
       "fact": "The cover was shot in ten minutes on the street outside the studio. The crossing is now a listed landmark."
     },
     {

@@ -4,28 +4,43 @@
   "seed": 20261004,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
       "topic": "arts",
+      "difficulty": 1,
       "prompt": "Which of these are kinds of poem?",
       "options": [
         "Fresco",
-        "Sonnet",
         "Sonata",
+        "Limerick",
+        "Sonnet",
         "Mural",
-        "Haiku",
-        "Limerick"
+        "Haiku"
       ],
       "answers": [
-        1,
-        4,
+        2,
+        3,
         5
       ],
       "fact": "A haiku is seventeen sounds long. A fresco is painted into wet plaster and a sonata is played, not written down as verse."
@@ -34,66 +49,72 @@
       "id": "q2",
       "type": "cluster",
       "topic": "misc",
+      "difficulty": 2,
       "prompt": "Which of these are gods in Norse myth?",
       "options": [
-        "Apollo",
-        "Hermes",
-        "Thor",
         "Odin",
-        "Ares",
-        "Loki"
+        "Anubis",
+        "Marduk",
+        "Loki",
+        "Perun",
+        "Thor"
       ],
       "answers": [
-        2,
+        0,
         3,
         5
       ],
-      "fact": "Thursday is Thor's day and Wednesday is Odin's, under his other name, Woden."
+      "fact": "Anubis is Egyptian, Marduk Babylonian and Perun Slavic. Every mythology has a thunder god; only one of them has Thor."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "history",
+      "difficulty": 2,
       "prompt": "How old was Tutankhamun when he died?",
       "answer": 19,
-      "min": 1,
-      "max": 90,
+      "min": 4,
+      "max": 28,
       "fact": "About nineteen. He was a minor pharaoh and was only famous because his tomb was the one nobody had robbed."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "screen",
-      "prompt": "In which year did the first Harry Potter film come out?",
-      "answer": 2001,
-      "min": 1970,
-      "max": 2025,
-      "fact": "The books had sold so well by then that the studio was told the cast had to be British, and it was."
+      "difficulty": 3,
+      "prompt": "How many episodes of Friends were made?",
+      "answer": 236,
+      "min": 50,
+      "max": 350,
+      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States.",
+      "unit": "episodes"
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "sport",
-      "prompt": "Which country hosted the 2000 Summer Olympics?",
+      "difficulty": 2,
+      "prompt": "In which sport would you use a foil?",
       "options": [
-        "China",
-        "Greece",
-        "Australia",
-        "Spain"
+        "Boxing",
+        "Archery",
+        "Fencing",
+        "Rowing"
       ],
       "answer": 2,
-      "hint": "The harbour and the opera house were on every broadcast.",
-      "fact": "Sydney built its main stadium to hold 110,000 people, the biggest in Olympic history, then shrank it afterwards."
+      "hint": "There are three blades in the sport, and this is the lightest.",
+      "fact": "Fencing has three weapons: foil, epee and sabre. The foil is the lightest and only counts hits to the torso."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "food",
+      "difficulty": 2,
       "prompt": "Which nut is marzipan made from?",
       "options": [
-        "Hazelnut",
-        "Walnut",
         "Peanut",
+        "Walnut",
+        "Hazelnut",
         "Almond"
       ],
       "answer": 3,

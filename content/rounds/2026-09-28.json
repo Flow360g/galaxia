@@ -4,38 +4,77 @@
   "seed": 20260928,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
       "topic": "food",
+      "difficulty": 2,
       "prompt": "Which of these are made from milk?",
-      "options": ["Butter", "Honey", "Yoghurt", "Olive oil", "Cheese", "Vinegar"],
-      "answers": [0, 2, 4],
-      "fact": "Honey comes from bees, olive oil is pressed from olives, and vinegar is made by souring alcohol."
+      "options": [
+        "Tofu",
+        "Cheese",
+        "Coconut cream",
+        "Yoghurt",
+        "Margarine",
+        "Butter"
+      ],
+      "answers": [
+        1,
+        3,
+        5
+      ],
+      "fact": "Margarine is made from vegetable oil, tofu from soybeans and coconut cream from coconut flesh. None of them has ever been near a cow."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "arts",
+      "difficulty": 1,
       "prompt": "Which of these were written by Shakespeare?",
-      "options": ["Oliver Twist", "Macbeth", "Hamlet", "The Tempest", "Frankenstein", "Don Quixote"],
-      "answers": [1, 2, 3],
+      "options": [
+        "Macbeth",
+        "Frankenstein",
+        "The Tempest",
+        "Don Quixote",
+        "Hamlet",
+        "Oliver Twist"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
       "fact": "Shakespeare invented or first wrote down around 1,700 English words, including lonely, bedroom and eyeball."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "How many countries are there in Africa?",
       "answer": 54,
       "min": 10,
-      "max": 120,
+      "max": 80,
       "unit": "countries",
       "fact": "54, more than any other continent. Nigeria alone has more people than Germany, France and Spain put together."
     },
@@ -43,31 +82,44 @@
       "id": "q4",
       "type": "vector",
       "topic": "sport",
+      "difficulty": 1,
       "prompt": "How many holes are played in a full round of golf?",
       "answer": 18,
-      "min": 1,
-      "max": 60,
+      "min": 4,
+      "max": 26,
       "fact": "Eighteen became the standard at St Andrews in 1764, when four short holes were merged into two."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "science",
-      "prompt": "Which gas do plants take in to make their food?",
-      "options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+      "difficulty": 2,
+      "prompt": "Which gas makes up most of the air we breathe?",
+      "options": [
+        "Oxygen",
+        "Argon",
+        "Nitrogen",
+        "Carbon dioxide"
+      ],
       "answer": 2,
-      "hint": "It is the gas you breathe out.",
-      "fact": "Plants take in carbon dioxide and give out oxygen, which is the opposite of what you do."
+      "hint": "It is not the one your body actually uses.",
+      "fact": "About 78% of the atmosphere is nitrogen. Oxygen is only about 21%."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "geography",
-      "prompt": "Which ocean is the largest?",
-      "options": ["Atlantic", "Indian", "Arctic", "Pacific"],
-      "answer": 3,
-      "hint": "Its name means peaceful.",
-      "fact": "The Pacific covers about a third of the planet, more than every piece of land put together."
+      "difficulty": 3,
+      "prompt": "Which sea has no coastline at all?",
+      "options": [
+        "Caspian Sea",
+        "Baltic Sea",
+        "Sargasso Sea",
+        "Coral Sea"
+      ],
+      "answer": 2,
+      "hint": "Its edges are four ocean currents rather than land.",
+      "fact": "The Sargasso Sea sits inside the North Atlantic, bounded by currents instead of shores."
     },
     {
       "id": "q7",

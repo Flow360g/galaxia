@@ -4,29 +4,44 @@
   "seed": 20261005,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
       "topic": "screen",
+      "difficulty": 1,
       "prompt": "Which of these actors have played James Bond?",
       "options": [
+        "Grant",
+        "Hanks",
         "Connery",
-        "Craig",
         "Ford",
         "Moore",
-        "Hanks",
-        "Grant"
+        "Craig"
       ],
       "answers": [
-        0,
-        1,
-        3
+        2,
+        4,
+        5
       ],
       "fact": "Seven actors have played him on film. Sean Connery was the first and almost turned it down."
     },
@@ -34,19 +49,20 @@
       "id": "q2",
       "type": "cluster",
       "topic": "history",
+      "difficulty": 3,
       "prompt": "Which of these were wonders of the ancient world?",
       "options": [
-        "Colosseum",
-        "Parthenon",
         "Great Pyramid",
-        "Great Wall",
         "Hanging Gardens",
-        "Colossus"
+        "Parthenon",
+        "Great Wall",
+        "Colossus",
+        "Colosseum"
       ],
       "answers": [
-        2,
-        4,
-        5
+        0,
+        1,
+        4
       ],
       "fact": "Only the Great Pyramid still stands. The other six were listed by Greek writers and are all long gone."
     },
@@ -54,51 +70,55 @@
       "id": "q3",
       "type": "vector",
       "topic": "arts",
+      "difficulty": 1,
       "prompt": "How many lines are there in a sonnet?",
       "answer": 14,
       "min": 2,
-      "max": 60,
+      "max": 22,
       "fact": "Fourteen, always. The last two usually turn the argument of the first twelve on its head."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "nature",
+      "difficulty": 2,
       "prompt": "How long can a giant tortoise live, in years?",
       "answer": 150,
-      "min": 5,
-      "max": 500,
+      "min": 25,
+      "max": 225,
       "fact": "Well past 150. One taken from the Galapagos by Charles Darwin's crew was still alive in a zoo in 2006."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "food",
-      "prompt": "Which vegetable is sauerkraut made from?",
+      "difficulty": 2,
+      "prompt": "Which spice gives a curry its yellow colour?",
       "options": [
-        "Cabbage",
-        "Carrot",
-        "Potato",
-        "Turnip"
+        "Cumin",
+        "Turmeric",
+        "Paprika",
+        "Coriander"
       ],
-      "answer": 0,
-      "hint": "Shredded, salted and left to sour in a jar.",
-      "fact": "Salt draws the water out and the vegetable pickles itself. Sailors ate it to keep scurvy off on long voyages."
+      "answer": 1,
+      "hint": "It is a root, sold ground to a bright powder, and it stains everything.",
+      "fact": "Turmeric. The colour comes from curcumin, and it will stain a chopping board for good."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "misc",
-      "prompt": "What is the money of the United Kingdom called?",
+      "difficulty": 3,
+      "prompt": "Which country has a flag that is not a rectangle?",
       "options": [
-        "Euro",
-        "Pound",
-        "Krona",
-        "Franc"
+        "Switzerland",
+        "Sri Lanka",
+        "Nepal",
+        "Bhutan"
       ],
-      "answer": 1,
-      "hint": "Its symbol is a crossed L.",
-      "fact": "The pound is the oldest currency still in use. It began as a literal pound of silver, split into 240 pennies."
+      "answer": 2,
+      "hint": "Its flag is two stacked triangles, one carrying a moon and one a sun.",
+      "fact": "Nepal's flag is two stacked pennants. Every other national flag in the world is four-sided."
     },
     {
       "id": "q7",

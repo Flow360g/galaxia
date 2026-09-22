@@ -342,6 +342,7 @@ lib/game/*            Ship, EncounterAsteroid, Debris, Shield, Exhaust, Camera, 
                       storage (localStorage), gltf (GLB loader + merge), format, types,
                       feed (tile maths + photo addresses), prefetch (feed imagery), md5
 lib/content/round.ts  round loader with build-time validation
+lib/content/difficulty.ts  how hard a question may be; read by the loader and the audit
 content/rounds/       one JSON per daily round: 2 cluster + 2 vector + 2 mcq + 2 earth
 e2e/run.spec.ts       Playwright: flies a whole run on a Pixel 7 profile
 e2e/audio.spec.ts     Playwright: taps the master output and asserts on the signal
@@ -526,6 +527,7 @@ npm run typecheck      # tsc --noEmit
 npm run lint           # eslint (flat config, next core-web-vitals + typescript)
 npm run build          # production build; a malformed round fails here
 npm run test:e2e       # playwright, builds and serves on :3100, SwiftShader WebGL
+npm run audit:rounds   # the pool's difficulty, vector geometry and lane spread
 npm run ship-stills    # re-render public/ships/*.png; needs a built app on :3100
 ```
 
@@ -562,6 +564,14 @@ Contact, Open Sky, Where on Earth). The loader validates cluster, vector and
 earth shape at import. Stages carry an optional `phase` number for the card
 to announce, so a round can skip a number if it has to.
 
+**`content/AUTHORING.md` is the rubric, and it is the thing to read before
+writing a question.** How hard a question is allowed to be used to be nobody's
+job, and the pool drifted to the point where "which of these are made from
+milk" and "which of these are dwarf planets" were worth the same. Every quiz
+question now declares a `difficulty` of 1, 2 or 3, every authored day is held
+to one profile, and `npm run audit:rounds` prints the whole pool's spread. The
+short version is below; the reasoning is in that file.
+
 - Every quiz question carries a `topic` (see the corners below) as well as
   the fields its type needs. The JSON is never type-checked, so `validate` is
   the only thing that catches a missing or invented one.
@@ -574,6 +584,21 @@ to announce, so a round can skip a number if it has to.
 - Vector: a numeric `answer` (never zero), `min` and `max` for the slider,
   optional `unit` and `log`, a `fact`. Nothing about closeness is authored:
   the bands are fractions of the answer and live in `VECTOR.bands`.
+- **A vector's difficulty is its `min..max`, not its question.** The bands are
+  fractions of the answer but the slider runs over the authored range, so the
+  range decides what share of the track scores, and for a long time nothing
+  checked it. The pool ran from 2.8% of the track to 100%: the Sun's surface
+  temperature could not be hit even with a hint, while every "in which year"
+  question scored a direct hit from any position at all. The close band must
+  now cover 10% to 20% of the slider, the answer must sit 20% in from either
+  end, and the slider must not open on the answer. Dates are rejected by name:
+  5% of 2001 is a century, and widening the range is not the fix. See
+  `lib/content/difficulty.ts`, which the build and the audit both read.
+- **Every quiz question declares a `difficulty`**, 1 to 3, and an authored day
+  sums to 11..13 with at most two of each extreme and never a 3 in the opening
+  slot. Like `topic` it is authoring metadata: never rendered, never scored,
+  never in `GameState`. A cluster's difficulty is in its decoys, not its
+  category, which is why the number cannot be derived and has to be declared.
 - Earth: the slot in the round file carries only `id`, `type` and `prompt`.
   The site itself comes from `lib/content/sites.ts`, seeded on the round's own
   date, so two sites a day are drawn without anyone authoring them and every

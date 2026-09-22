@@ -8,19 +8,20 @@
       "id": "q1",
       "type": "cluster",
       "topic": "misc",
+      "difficulty": 2,
       "prompt": "Which of these are moons of Jupiter?",
       "options": [
-        "Titan",
-        "Io",
+        "Triton",
         "Europa",
         "Phobos",
-        "Callisto",
-        "Triton"
+        "Io",
+        "Titan",
+        "Callisto"
       ],
       "answers": [
         1,
-        2,
-        4
+        3,
+        5
       ],
       "fact": "Jupiter has 95 known moons. Titan orbits Saturn, Phobos orbits Mars and Triton orbits Neptune."
     },
@@ -28,18 +29,19 @@
       "id": "q2",
       "type": "cluster",
       "topic": "history",
+      "difficulty": 2,
       "prompt": "Which of these people were Roman emperors?",
       "options": [
-        "Nero",
-        "Hannibal",
-        "Pericles",
-        "Augustus",
         "Cleopatra",
+        "Hannibal",
+        "Augustus",
+        "Pericles",
+        "Nero",
         "Hadrian"
       ],
       "answers": [
-        0,
-        3,
+        2,
+        4,
         5
       ],
       "fact": "Hadrian's Wall took about six years to build across northern Britain, and much of it still stands."
@@ -48,10 +50,11 @@
       "id": "q3",
       "type": "vector",
       "topic": "geography",
+      "difficulty": 1,
       "prompt": "How tall is Mount Everest above sea level?",
       "answer": 8849,
-      "min": 3000,
-      "max": 15000,
+      "min": 2000,
+      "max": 13000,
       "unit": "m",
       "fact": "8,849 m by the 2020 China and Nepal survey, and still rising by about 4 mm a year."
     },
@@ -59,10 +62,11 @@
       "id": "q4",
       "type": "vector",
       "topic": "sport",
+      "difficulty": 2,
       "prompt": "How many players does a rugby union side have on the field?",
       "answer": 15,
-      "min": 5,
-      "max": 30,
+      "min": 4,
+      "max": 22,
       "unit": "players",
       "fact": "Fifteen a side, eight forwards and seven backs. Rugby league plays thirteen."
     },
@@ -70,14 +74,15 @@
       "id": "q5",
       "type": "mcq",
       "topic": "science",
+      "difficulty": 1,
       "prompt": "What is the hardest naturally occurring substance?",
       "options": [
-        "Quartz",
-        "Titanium",
         "Diamond",
-        "Graphite"
+        "Titanium",
+        "Graphite",
+        "Quartz"
       ],
-      "answer": 2,
+      "answer": 0,
       "hint": "It is pure carbon, and so is one of the wrong answers.",
       "fact": "Diamond and graphite are both pure carbon. The only difference is how the atoms are bonded together."
     },
@@ -85,14 +90,15 @@
       "id": "q6",
       "type": "mcq",
       "topic": "misc",
+      "difficulty": 3,
       "prompt": "Which planet spins on its side?",
       "options": [
         "Venus",
+        "Uranus",
         "Mars",
-        "Neptune",
-        "Uranus"
+        "Neptune"
       ],
-      "answer": 3,
+      "answer": 1,
       "hint": "Each of its seasons lasts about 21 years.",
       "fact": "Uranus is tilted 98 degrees, so each pole gets 42 years of sunlight followed by 42 years of dark."
     },
@@ -108,9 +114,23 @@
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ]
 }

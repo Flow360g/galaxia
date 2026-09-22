@@ -4,48 +4,89 @@
   "seed": 20260925,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
       "topic": "misc",
+      "difficulty": 2,
       "prompt": "Which of these are planets in our solar system?",
-      "options": ["Neptune", "Mercury", "Europa", "Uranus", "Ceres", "Titan"],
-      "answers": [0, 1, 3],
+      "options": [
+        "Europa",
+        "Uranus",
+        "Mercury",
+        "Titan",
+        "Ceres",
+        "Neptune"
+      ],
+      "answers": [
+        1,
+        2,
+        5
+      ],
       "fact": "Europa and Titan are moons, and Ceres is a dwarf planet in the asteroid belt."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "screen",
+      "difficulty": 1,
       "prompt": "Which of these instruments do you play with a bow?",
-      "options": ["Flute", "Trumpet", "Cello", "Harp", "Violin", "Double bass"],
-      "answers": [2, 4, 5],
+      "options": [
+        "Cello",
+        "Violin",
+        "Trumpet",
+        "Double bass",
+        "Harp",
+        "Flute"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
       "fact": "A harp is plucked, not bowed, even though it is a string instrument like the other three."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "history",
-      "prompt": "In which year did the Berlin Wall come down?",
-      "answer": 1989,
-      "min": 1900,
-      "max": 2020,
-      "fact": "The wall was opened on 9 November 1989 after an East German official misread a note at a press conference."
+      "difficulty": 3,
+      "prompt": "How many years did the Berlin Wall stand?",
+      "answer": 28,
+      "min": 5,
+      "max": 40,
+      "fact": "Twenty-eight. It went up overnight in August 1961 and came down in November 1989.",
+      "unit": "years"
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "How tall is the Eiffel Tower, in metres?",
       "answer": 330,
       "min": 50,
-      "max": 800,
+      "max": 450,
       "unit": "m",
       "fact": "330 metres to the tip. It was the tallest building in the world for 41 years."
     },
@@ -53,21 +94,33 @@
       "id": "q5",
       "type": "mcq",
       "topic": "sport",
-      "prompt": "Which sport uses a shuttlecock?",
-      "options": ["Badminton", "Squash", "Tennis", "Hockey"],
-      "answer": 0,
-      "hint": "It is the only one of the four that is not played with a ball.",
-      "fact": "A shuttlecock can leave the racket at over 400 km/h, the fastest of any racket sport."
+      "difficulty": 2,
+      "prompt": "In which event would you see a Fosbury flop?",
+      "options": [
+        "Pole vault",
+        "High jump",
+        "Diving",
+        "Gymnastics"
+      ],
+      "answer": 1,
+      "hint": "Dick Fosbury changed how one event is cleared, by going over backwards.",
+      "fact": "Dick Fosbury went over the bar backwards at the 1968 Olympics and won. Every high jumper does it his way now."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "screen",
-      "prompt": "Which animated film has a snowman called Olaf?",
-      "options": ["Moana", "Frozen", "Tangled", "Encanto"],
+      "difficulty": 3,
+      "prompt": "Who composed the music for Star Wars?",
+      "options": [
+        "Ennio Morricone",
+        "John Williams",
+        "Danny Elfman",
+        "Hans Zimmer"
+      ],
       "answer": 1,
-      "hint": "The one with two royal sisters and a lot of ice.",
-      "fact": "Olaf was almost cut from Frozen. The song Let It Go was written late and changed the whole story around him."
+      "hint": "The same composer wrote the themes for Jaws and Indiana Jones.",
+      "fact": "John Williams wrote it in 1977 for a full orchestra, at a time when film scores were going electronic."
     },
     {
       "id": "q7",
