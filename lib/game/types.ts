@@ -132,9 +132,11 @@ export interface ClusterQuestion {
 /**
  * A Vector: a numeric answer aimed on a slider. The ship steers to match and
  * a beam fires on lock; the alien decloaks at the truth. The error is read
- * against `VECTOR.bands`, fractions of the answer, widened to the whole
- * units of `VECTOR.minBands` where a fraction of a small count would be
- * nonsense. The same bands for every question, so nothing is authored.
+ * against `VECTOR.bands`, fractions of the answer, capped to the share of
+ * the slider in `VECTOR.maxBands` where the answer sits far from zero, and
+ * widened to the whole units of `VECTOR.minBands` where a fraction of a
+ * small count would be nonsense. The same bands for every question, so
+ * nothing about closeness is authored.
  */
 export interface VectorQuestion {
   id: string;

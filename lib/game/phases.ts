@@ -102,6 +102,7 @@ const GUIDES: Record<Question["type"], PhaseGuide> = {
       "The answer is a number. Slide to your best guess, then tap FIRE.",
       `The closer you are, the more points you score. A guess that is way off costs you up to ${SCORE.penalty.collision} points and a shield; the nearer you were, the less you lose.`,
       `On a small number, closeness is counted in whole numbers instead: being ${VECTOR.minBands.close} out is close, and ${VECTOR.minBands.graze} out is a near miss that costs you nothing.`,
+      `And when every answer is a big number, like a year, closeness is measured across the slider instead, so ${percent(VECTOR.maxBands.direct)} means ${percent(VECTOR.maxBands.direct)} of the slider.`,
     ],
     scoring: [
       {

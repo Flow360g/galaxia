@@ -20,7 +20,7 @@ import type {
 } from "@/lib/game/types";
 import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, SCORE, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
-import { formatValue } from "@/lib/game/Run";
+import { formatAim } from "@/lib/game/Run";
 import { multiplierFor } from "@/lib/game/Score";
 import { phaseGuide } from "@/lib/game/phases";
 import { stepT } from "@/lib/game/nova";
@@ -687,10 +687,10 @@ function VectorPanel({
       <div className={styles.aimReadout}>
         <span className={`${styles.aimLabel} arcade`}>AIM</span>
         <span className={`${styles.aimValue} arcade`} data-testid="aim-value">
-          {formatValue(value, question.unit)}
+          {formatAim(question, value)}
         </span>
         <span className={styles.aimEnds}>
-          {formatValue(question.min, question.unit)} to {formatValue(question.max, question.unit)}
+          {formatAim(question, question.min)} to {formatAim(question, question.max)}
         </span>
       </div>
       <div className={styles.sliderRow}>
@@ -723,7 +723,7 @@ function VectorPanel({
                 onLock();
               }
             }}
-            aria-label={`Aim, ${formatValue(value, question.unit)}`}
+            aria-label={`Aim, ${formatAim(question, value)}`}
             data-testid="aim"
           />
         </div>

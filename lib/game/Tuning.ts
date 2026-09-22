@@ -343,6 +343,20 @@ export const VECTOR = {
    */
   minBands: { direct: 0, close: 1, graze: 2 },
   /**
+   * The same bands as a share of the SLIDER'S SPAN, and a band is never wider
+   * than these. The mirror of `minBands`: a fraction of the answer is also
+   * nonsense when the answer is a long way from zero. "In which year did the
+   * Berlin Wall come down" is answered on a dial from 1900 to 2020, and 5% of
+   * 1989 is 99 years, wider than the whole dial, so every position on it was
+   * a direct hit and the question could not be got wrong. Five of them
+   * shipped that way. Capped, a direct hit is within 6 years of 1989, which
+   * is what the question was asking for.
+   *
+   * It bites only where the answer is far from zero relative to the dial. Of
+   * the pool's vectors it touches the five years and nothing else.
+   */
+  maxBands: { direct: 0.05, close: 0.1, graze: 0.15 },
+  /**
    * A vector whose ends are both whole numbers and no further apart than
    * this aims in whole units: the slider lands on 7, never 7.04. The number
    * on screen is then the number scored, which is what makes `minBands`

@@ -458,8 +458,8 @@ export class Run {
       streakBefore: this.flight.streak,
       streakAfter: this.flight.streak,
       chosen: null,
-      guessText: formatValue(guess, question.unit),
-      answerText: formatValue(question.answer, question.unit),
+      guessText: formatAim(question, guess),
+      answerText: formatAim(question, question.answer),
       error,
       errorText: missText(question, off, error),
       guessValue: guess,
@@ -1275,12 +1275,24 @@ function normaliseGuess(text: string): string {
  * The three bands in ANSWER UNITS, for one question.
  *
  * A band is a fraction of the truth, which is the rule a player can hold in
- * their head, and the rule falls apart on a small count: 5% of 6 strings is
- * a third of a string, so every whole number but the answer was a wild shot
- * and 7 was docked 25 points, a shield and the streak for being one out.
- * `VECTOR.minBands` is the floor in whole units, and it only ever widens a
- * band. It bites below about 20 and is invisible above it: at 116 years the
- * close band is already 11.6 years wide, far past the floor of 1.
+ * their head, and it is the wrong rule at both ends of the scale.
+ *
+ * Too tight on a small count: 5% of 6 strings is a third of a string, so
+ * every whole number but the answer was a wild shot and 7 was docked 25
+ * points, a shield and the streak for being one out. `VECTOR.minBands` is
+ * the floor, in whole units.
+ *
+ * Too loose when the answer sits a long way from zero: 5% of 1989 is 99
+ * years on a dial that runs 1900 to 2020, so every position on it was a
+ * direct hit and the Berlin Wall could not be got wrong. `VECTOR.maxBands`
+ * is the cap, as a share of the dial.
+ *
+ * So: a fraction of the answer, capped to the dial, then floored to whole
+ * units. The floor is applied LAST on purpose, so a question that aims in
+ * whole units can never end up with a band narrower than one of them.
+ *
+ * A log slider skips the cap. It is relative by construction, which is why
+ * it exists; measuring its span in answer units would mean nothing.
  */
 export function toleranceOf(question: VectorQuestion): {
   direct: number;
@@ -1288,12 +1300,11 @@ export function toleranceOf(question: VectorQuestion): {
   graze: number;
 } {
   const scale = Math.max(Math.abs(question.answer), 1e-9);
-  const { bands, minBands } = VECTOR;
-  return {
-    direct: Math.max(bands.direct * scale, minBands.direct),
-    close: Math.max(bands.close * scale, minBands.close),
-    graze: Math.max(bands.graze * scale, minBands.graze),
-  };
+  const span = question.log ? Infinity : Math.max(question.max - question.min, 0);
+  const { bands, minBands, maxBands } = VECTOR;
+  const band = (key: "direct" | "close" | "graze"): number =>
+    Math.max(Math.min(bands[key] * scale, maxBands[key] * span), minBands[key]);
+  return { direct: band("direct"), close: band("close"), graze: band("graze") };
 }
 
 /**
@@ -1335,12 +1346,34 @@ export function rateStage(plasma: number, shields: number): Rating {
   return "C";
 }
 
-/** A number with grouping and its unit, for toasts and the share record. */
-export function formatValue(value: number, unit: string | undefined): string {
+/** A number and its unit, for toasts and the share record. */
+export function formatValue(
+  value: number,
+  unit: string | undefined,
+  grouped = true,
+): string {
   const rounded = Math.abs(value) >= 100 ? Math.round(value) : Math.round(value * 10) / 10;
-  const text = rounded.toLocaleString("en-AU");
+  const text = grouped ? rounded.toLocaleString("en-AU") : `${rounded}`;
   return unit ? `${text} ${unit}` : text;
 }
+
+/**
+ * A vector's figure, as every screen that shows one should print it.
+ *
+ * The one thing it decides over `formatValue` is the thousands separator.
+ * "In which year did the Berlin Wall come down" is aimed on a dial of whole
+ * years and read out as a year, and "1,989" is not how anybody writes one. A
+ * dial that aims in whole units and spans fewer than a thousand of them is
+ * an index, not a quantity, so its figures are not grouped; every other
+ * vector keeps its separator, because 6,650 km is exactly a quantity.
+ */
+export function formatAim(question: VectorQuestion, value: number): string {
+  const counted = stepFor(question) > 0 && question.max - question.min < GROUP_ABOVE;
+  return formatValue(value, question.unit, !counted);
+}
+
+/** A dial shorter than this many whole units reads as an index, not a total. */
+const GROUP_ABOVE = 1000;
 
 /** The three right answers, for the toast and the share record. */
 function clusterAnswerText(question: ClusterQuestion): string {
@@ -1356,7 +1389,7 @@ function answerTextFor(question: Question): string {
     case "cluster":
       return clusterAnswerText(question);
     case "vector":
-      return formatValue(question.answer, question.unit);
+      return formatAim(question, question.answer);
   }
 }
 

@@ -3,6 +3,9 @@ import round from "../content/rounds/2026-09-18.json";
 // A round with a small counting answer: a guitar has 6 strings, on a 1..20
 // slider, which is where a band measured in percent used to fall apart.
 import countingRound from "../content/rounds/2026-09-27.json";
+// A round whose answer is a year: 1989 on a dial from 1900 to 2020, where a
+// band measured as a share of the answer was wider than the dial itself.
+import yearRound from "../content/rounds/2026-09-25.json";
 import { pickSites } from "../lib/content/sites";
 import { acknowledge, launch, readUp, stubImagery } from "./helpers";
 
@@ -598,6 +601,45 @@ test("a small count is scored in whole numbers, not in percent", async ({ page }
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   await expect(page.getByTestId("damage")).toHaveCount(0);
   await shot(page, "18-one-off");
+});
+
+test("a year is scored against its dial, not against the year", async ({ page }) => {
+  await page.goto("/play?replay=1&round=2026-09-25");
+  const toast = page.getByTestId("toast");
+
+  await launch(page);
+  // Past the two clusters: one plasma banked on each.
+  for (const index of [0, 1]) {
+    await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+    await readUp(page);
+    const question = yearRound.questions[index] as { answers: number[] };
+    await page.getByTestId(`option-${question.answers[0]}`).click();
+    await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
+    await page.getByTestId("burn").click();
+    await expect(toast).toHaveAttribute("data-outcome", "burn", { timeout: 10_000 });
+    await advance(page);
+  }
+  await expect(page.getByTestId("waypoint")).toBeVisible({ timeout: 15_000 });
+  await advance(page);
+
+  // The Berlin Wall came down in 1989, aimed on a dial of whole years. A year
+  // is an index, not a total, so it is not printed with a thousands
+  // separator: 1920, never 1,920.
+  await expect(page.getByTestId("question")).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("aim").fill("167");
+  await expect(page.getByTestId("aim-value")).toHaveText("1920");
+
+  // 69 years out. The bands are 5, 10 and 15% of the answer, and 5% of 1989
+  // is 99 years, so under the old rule this was a direct hit worth 200 points
+  // and there was no way to miss. Capped to the same share of the dial, a
+  // direct hit is within 6 years and this is the wild shot it always was.
+  await page.getByTestId("lock").click();
+  await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
+  await expect(toast).toContainText("WAY OFF");
+  await expect(page.getByTestId("toast-points")).toHaveText(/^-25 POINTS$/);
+  await expect(page.getByTestId("wide-by")).toHaveText("69 off");
+  await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
+  await shot(page, "19-wild-year");
 });
 
 async function readVelocity(page: Page): Promise<number> {
