@@ -7,18 +7,19 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "geography",
       "prompt": "Which of these countries are landlocked?",
       "options": [
-        "Vietnam",
         "Bolivia",
-        "Portugal",
+        "Vietnam",
         "Mongolia",
+        "Portugal",
         "Kenya",
         "Austria"
       ],
       "answers": [
-        1,
-        3,
+        0,
+        2,
         5
       ],
       "fact": "Bolivia lost its coast to Chile in 1884 and still keeps a navy on Lake Titicaca."
@@ -26,18 +27,19 @@
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "food",
       "prompt": "Which of these are citrus fruits?",
       "options": [
         "Lime",
         "Mango",
-        "Lemon",
         "Kiwi",
+        "Lemon",
         "Yuzu",
         "Papaya"
       ],
       "answers": [
         0,
-        2,
+        3,
         4
       ],
       "fact": "Yuzu is a Japanese citrus that shrugs off frost, which almost nothing else in the family can do."
@@ -45,6 +47,7 @@
     {
       "id": "q3",
       "type": "vector",
+      "topic": "geography",
       "prompt": "How deep is the Mariana Trench, the deepest point in Earth's oceans?",
       "answer": 10935,
       "min": 1000,
@@ -55,6 +58,7 @@
     {
       "id": "q4",
       "type": "vector",
+      "topic": "screen",
       "prompt": "How many keys does a standard piano have?",
       "answer": 88,
       "min": 20,
@@ -65,20 +69,22 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "misc",
       "prompt": "Which planet has the most known moons?",
       "options": [
-        "Jupiter",
         "Saturn",
+        "Jupiter",
         "Uranus",
         "Neptune"
       ],
-      "answer": 1,
+      "answer": 0,
       "hint": "The ringed one pulled ahead in 2023.",
       "fact": "Saturn overtook Jupiter in 2023 and now has well over a hundred confirmed moons, most of them tiny."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "nature",
       "prompt": "What is the largest animal that has ever lived?",
       "options": [
         "Megalodon",
@@ -102,23 +108,9 @@
     }
   ],
   "stages": [
-    {
-      "name": "Cluster Belt",
-      "after": 1,
-      "landmark": "moon"
-    },
-    {
-      "name": "Alien Contact",
-      "after": 3,
-      "landmark": "planet"
-    },
-    {
-      "name": "Open Sky",
-      "after": 5
-    },
-    {
-      "name": "Where on Earth",
-      "after": 7
-    }
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
   ]
 }

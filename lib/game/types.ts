@@ -5,11 +5,55 @@ export type QualityTier = 0 | 1 | 2;
 
 // ------------------------------------------------------------------ content
 
+/**
+ * The corner of general knowledge a question comes from.
+ *
+ * Authoring metadata, and nothing else: it is never rendered, never scored and
+ * never reaches `GameState`. It exists so the build can hold the one rule that
+ * keeps a day playable by everybody, that no round leans more than twice on any
+ * one corner, and so the practice shuffle can spread its draw instead of
+ * handing a tester six questions about the solar system.
+ *
+ * `misc` is the catch-all for the fringes, space among them: a corner of its
+ * own for space made a round read as a specialist's quiz. Mythology, language,
+ * transport, money and oddities live there too.
+ */
+export type Topic =
+  | "geography"
+  | "history"
+  /** Science and technology. */
+  | "science"
+  /** Animals and the natural world. */
+  | "nature"
+  /** Food and drink. */
+  | "food"
+  | "sport"
+  /** Film, television and music. */
+  | "screen"
+  /** Art and literature. */
+  | "arts"
+  /** The fringes: space, mythology, language, transport, money, oddities. */
+  | "misc";
+
+export const TOPICS: readonly Topic[] = [
+  "geography",
+  "history",
+  "science",
+  "nature",
+  "food",
+  "sport",
+  "screen",
+  "arts",
+  "misc",
+];
+
 /** A normal trivia encounter: four options, one right. */
 export interface McqQuestion {
   id: string;
   type: "mcq";
   prompt: string;
+  /** The corner it is drawn from. Authoring metadata; never shown. */
+  topic: Topic;
   options: string[];
   /** Index into `options`. */
   answer: number;
@@ -76,6 +120,8 @@ export interface ClusterQuestion {
   id: string;
   type: "cluster";
   prompt: string;
+  /** The corner it is drawn from. Authoring metadata; never shown. */
+  topic: Topic;
   /** Exactly six. */
   options: string[];
   /** Indices into `options`. Exactly three, distinct. */
@@ -93,6 +139,8 @@ export interface VectorQuestion {
   id: string;
   type: "vector";
   prompt: string;
+  /** The corner it is drawn from. Authoring metadata; never shown. */
+  topic: Topic;
   /** Never zero: the bands are relative to it. */
   answer: number;
   min: number;

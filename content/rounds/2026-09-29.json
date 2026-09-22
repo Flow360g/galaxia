@@ -13,22 +13,25 @@
     {
       "id": "q1",
       "type": "cluster",
-      "prompt": "Which of these are capital cities?",
-      "options": ["Nairobi", "Sydney", "Lima", "Casablanca", "Hanoi", "Zurich"],
-      "answers": [0, 2, 4],
-      "fact": "Australia's capital is Canberra, Morocco's is Rabat, and Switzerland's is Bern."
+      "topic": "history",
+      "prompt": "Which of these were presidents of the United States?",
+      "options": ["Lincoln", "Franklin", "Kennedy", "Hamilton", "Burr", "Roosevelt"],
+      "answers": [0, 2, 5],
+      "fact": "Benjamin Franklin, Alexander Hamilton and Aaron Burr never held the office. Burr shot Hamilton dead in a duel."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "nature",
       "prompt": "Which of these live in the ocean their whole lives?",
-      "options": ["Blue whale", "Frog", "Octopus", "Camel", "Coral", "Crocodile"],
-      "answers": [0, 2, 4],
+      "options": ["Blue whale", "Frog", "Camel", "Octopus", "Coral", "Crocodile"],
+      "answers": [0, 3, 4],
       "fact": "Coral looks like a rock but is an animal, and it spends its whole life fixed to one spot."
     },
     {
       "id": "q3",
       "type": "vector",
+      "topic": "sport",
       "prompt": "How many players are on the field for one football team?",
       "answer": 11,
       "min": 2,
@@ -39,6 +42,7 @@
     {
       "id": "q4",
       "type": "vector",
+      "topic": "misc",
       "prompt": "How hot is the surface of the Sun, in degrees Celsius?",
       "answer": 5500,
       "min": 100,
@@ -50,18 +54,20 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "science",
       "prompt": "Which of these is a prime number?",
-      "options": ["21", "27", "29", "33"],
-      "answer": 2,
+      "options": ["29", "27", "21", "33"],
+      "answer": 0,
       "hint": "Three of them divide neatly by 3.",
       "fact": "A prime divides by nothing but itself and one. 29 is the only one here that manages it."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "arts",
       "prompt": "Which artist cut off part of his own ear?",
-      "options": ["Van Gogh", "Picasso", "Monet", "Dali"],
-      "answer": 0,
+      "options": ["Picasso", "Van Gogh", "Monet", "Dali"],
+      "answer": 1,
       "hint": "He painted a night sky full of swirling stars.",
       "fact": "He painted himself afterwards with the bandage on, and sold almost nothing in his lifetime."
     },

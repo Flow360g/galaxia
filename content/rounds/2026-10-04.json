@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-04",
+  "roundNumber": 16,
+  "seed": 20261004,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "arts",
+      "prompt": "Which of these are kinds of poem?",
+      "options": [
+        "Fresco",
+        "Sonnet",
+        "Sonata",
+        "Mural",
+        "Haiku",
+        "Limerick"
+      ],
+      "answers": [
+        1,
+        4,
+        5
+      ],
+      "fact": "A haiku is seventeen sounds long. A fresco is painted into wet plaster and a sonata is played, not written down as verse."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "prompt": "Which of these are gods in Norse myth?",
+      "options": [
+        "Apollo",
+        "Hermes",
+        "Thor",
+        "Odin",
+        "Ares",
+        "Loki"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "Thursday is Thor's day and Wednesday is Odin's, under his other name, Woden."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "prompt": "How old was Tutankhamun when he died?",
+      "answer": 19,
+      "min": 1,
+      "max": 90,
+      "fact": "About nineteen. He was a minor pharaoh and was only famous because his tomb was the one nobody had robbed."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "screen",
+      "prompt": "In which year did the first Harry Potter film come out?",
+      "answer": 2001,
+      "min": 1970,
+      "max": 2025,
+      "fact": "The books had sold so well by then that the studio was told the cast had to be British, and it was."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "sport",
+      "prompt": "Which country hosted the 2000 Summer Olympics?",
+      "options": [
+        "China",
+        "Greece",
+        "Australia",
+        "Spain"
+      ],
+      "answer": 2,
+      "hint": "The harbour and the opera house were on every broadcast.",
+      "fact": "Sydney built its main stadium to hold 110,000 people, the biggest in Olympic history, then shrank it afterwards."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "prompt": "Which nut is marzipan made from?",
+      "options": [
+        "Hazelnut",
+        "Walnut",
+        "Peanut",
+        "Almond"
+      ],
+      "answer": 3,
+      "hint": "The same nut as amaretto and frangipane.",
+      "fact": "Ground almonds and sugar, and nothing else in the traditional recipe. It is older than the sugar trade in Europe."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

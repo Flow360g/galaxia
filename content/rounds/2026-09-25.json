@@ -13,32 +13,35 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "misc",
       "prompt": "Which of these are planets in our solar system?",
-      "options": ["Neptune", "Europa", "Mercury", "Ceres", "Uranus", "Titan"],
-      "answers": [0, 2, 4],
+      "options": ["Neptune", "Mercury", "Europa", "Uranus", "Ceres", "Titan"],
+      "answers": [0, 1, 3],
       "fact": "Europa and Titan are moons, and Ceres is a dwarf planet in the asteroid belt."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "screen",
       "prompt": "Which of these instruments do you play with a bow?",
-      "options": ["Cello", "Flute", "Violin", "Trumpet", "Double bass", "Harp"],
-      "answers": [0, 2, 4],
+      "options": ["Flute", "Trumpet", "Cello", "Harp", "Violin", "Double bass"],
+      "answers": [2, 4, 5],
       "fact": "A harp is plucked, not bowed, even though it is a string instrument like the other three."
     },
     {
       "id": "q3",
       "type": "vector",
-      "prompt": "How many bones are there in an adult human body?",
-      "answer": 206,
-      "min": 50,
-      "max": 500,
-      "unit": "bones",
-      "fact": "Babies start with about 300. Some fuse together as you grow, which is how you end up with 206."
+      "topic": "history",
+      "prompt": "In which year did the Berlin Wall come down?",
+      "answer": 1989,
+      "min": 1900,
+      "max": 2020,
+      "fact": "The wall was opened on 9 November 1989 after an East German official misread a note at a press conference."
     },
     {
       "id": "q4",
       "type": "vector",
+      "topic": "geography",
       "prompt": "How tall is the Eiffel Tower, in metres?",
       "answer": 330,
       "min": 50,
@@ -49,20 +52,22 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "sport",
       "prompt": "Which sport uses a shuttlecock?",
-      "options": ["Squash", "Badminton", "Tennis", "Hockey"],
-      "answer": 1,
+      "options": ["Badminton", "Squash", "Tennis", "Hockey"],
+      "answer": 0,
       "hint": "It is the only one of the four that is not played with a ball.",
       "fact": "A shuttlecock can leave the racket at over 400 km/h, the fastest of any racket sport."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "prompt": "Which spice is the most expensive in the world by weight?",
-      "options": ["Saffron", "Vanilla", "Cardamom", "Cinnamon"],
-      "answer": 0,
-      "hint": "It is picked by hand from the middle of a flower.",
-      "fact": "Saffron is the dried threads of a crocus flower, and it takes about 150 flowers to make a single gram."
+      "topic": "screen",
+      "prompt": "Which animated film has a snowman called Olaf?",
+      "options": ["Moana", "Frozen", "Tangled", "Encanto"],
+      "answer": 1,
+      "hint": "The one with two royal sisters and a lot of ice.",
+      "fact": "Olaf was almost cut from Frozen. The song Let It Go was written late and changed the whole story around him."
     },
     {
       "id": "q7",

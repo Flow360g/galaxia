@@ -13,22 +13,25 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "nature",
       "prompt": "Which of these are fruits, to a botanist?",
-      "options": ["Tomato", "Carrot", "Cucumber", "Lettuce", "Pumpkin", "Celery"],
-      "answers": [0, 2, 4],
+      "options": ["Carrot", "Lettuce", "Celery", "Tomato", "Cucumber", "Pumpkin"],
+      "answers": [3, 4, 5],
       "fact": "A fruit is the part that holds the seeds, which is why a tomato counts and a carrot does not."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "sport",
       "prompt": "Which of these sports are played at the Summer Olympics?",
-      "options": ["Archery", "Curling", "Fencing", "Bobsleigh", "Judo", "Ski jumping"],
-      "answers": [0, 2, 4],
+      "options": ["Archery", "Fencing", "Curling", "Bobsleigh", "Ski jumping", "Judo"],
+      "answers": [0, 1, 5],
       "fact": "Curling, bobsleigh and ski jumping all need ice or snow, so they belong to the Winter Games."
     },
     {
       "id": "q3",
       "type": "vector",
+      "topic": "screen",
       "prompt": "How many strings does a standard guitar have?",
       "answer": 6,
       "min": 1,
@@ -39,6 +42,7 @@
     {
       "id": "q4",
       "type": "vector",
+      "topic": "nature",
       "prompt": "How deep can an emperor penguin dive, in metres?",
       "answer": 550,
       "min": 10,
@@ -49,15 +53,17 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "history",
       "prompt": "Which country gave the world the Taj Mahal?",
-      "options": ["Iran", "India", "Turkey", "Egypt"],
-      "answer": 1,
+      "options": ["India", "Iran", "Turkey", "Egypt"],
+      "answer": 0,
       "hint": "It stands on the bank of the Yamuna river.",
       "fact": "It was built as a tomb for the emperor's wife, and took about twenty years to finish."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "science",
       "prompt": "What does a Geiger counter measure?",
       "options": ["Sound", "Radiation", "Pressure", "Wind speed"],
       "answer": 1,

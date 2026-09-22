@@ -536,6 +536,9 @@ Contact, Open Sky, Where on Earth). The loader validates cluster, vector and
 earth shape at import. Stages carry an optional `phase` number for the card
 to announce, so a round can skip a number if it has to.
 
+- Every quiz question carries a `topic` (see the corners below) as well as
+  the fields its type needs. The JSON is never type-checked, so `validate` is
+  the only thing that catches a missing or invented one.
 - Cluster: exactly six `options`, exactly three distinct `answers`
   (indices), a `fact`. All three right lanes must be unarguably right and
   all three wrong lanes unarguably wrong; one debatable lane ruins the
@@ -558,13 +561,31 @@ to announce, so a round can skip a number if it has to.
   distinctive word of its opener, which matters most when this prose is
   generated rather than written. A Commons filename is never rendered: it
   usually names the answer.
-- **Every day is mixed general knowledge, never a themed round.** The six
-  quiz questions come from six different corners (geography, space, animals,
-  history, food, sport, science, the arts) and never more than two from any
-  one, placed apart in the run. A day of all-geography or all-space reads as
-  a specialist's quiz and drives off everyone else. `theme` stays "General
-  knowledge" for every round; it is the sector label on the title screen and
-  the share card, not a subject.
+- **Every day is mixed general knowledge, never a themed round.** Every quiz
+  question carries a `topic`, one of nine corners: `geography`, `history`,
+  `science` (and technology), `nature` (animals and the natural world), `food`
+  (and drink), `sport`, `screen` (film, television and music), `arts` (art and
+  literature), and `misc`. A round may take no more than two from any one
+  corner, placed apart in the run, and the build fails if it does. A day of
+  all-geography reads as a specialist's quiz and drives off everyone else.
+  Space is not a corner. It lives in `misc` with mythology, language,
+  transport, money and the other fringes, because a corner of its own had a
+  seventh of the pool asking about planets.
+  The tag is authoring metadata and is never rendered, never scored and never
+  put in `GameState`. `theme` stays "General knowledge" for every round; it is
+  the sector label on the title screen and the share card, not a subject.
+- **No two questions in the pool may ask the same thing.** Checked across the
+  whole pool at import, not per round, because a duplicate is only visible
+  with every round in hand. Eight pairs shipped before the check existed, and
+  with the pool drawn two at a time they came round fast enough that the game
+  felt like it had a dozen questions. Rewording is not a fix: the check
+  normalises hard, and a question that survives it but asks the same thing in
+  other words is still a duplicate.
+- **Spread the correct lane.** Twelve questions written in one sitting all put
+  the answer in the first square, and twenty-seven of thirty-four clusters used
+  lanes 1, 3 and 5. A player who notices that stops reading the question. The
+  pool is levelled by hand when it drifts; check the spread after adding a
+  batch rather than trusting the order a question was written in.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.
@@ -576,10 +597,16 @@ to announce, so a round can skip a number if it has to.
 - **A practice round is drawn from the pool, not authored.**
   `getShuffledRound(seed)` takes two clusters, two numbers and two lanes from
   every round there is, plus a pair of sites seeded on the same string, and
-  runs the result through the same `validate`. It relaxes one authoring rule
-  and only one: a random draw can land three questions from the same corner
-  in a round, which an authored day may never do. That is the price of a
-  hatch nobody but a tester sees; do not "fix" it by tagging topics.
+  runs the result through the same `validate`, minus the corner cap: the draw
+  spreads corners as it goes and in practice never lands three of a kind, but
+  it is a preference, not a promise, and a hatch nobody but a tester sees is
+  not worth failing a build over. `seededShuffle` is the other half of this.
+  It used to step a plain LCG and read `hash % (i + 1)`, which is the low bits,
+  and an LCG's low bits barely move: the first question of a thirty-four
+  question pool never once came out in a draw of two. That, not the size of
+  the pool, is what made practice runs feel like the same eight questions
+  forever. If a draw ever looks lopsided again, check the stream before
+  blaming the content.
 
 ## Deliberately not done
 

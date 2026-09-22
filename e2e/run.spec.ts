@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import round from "../content/rounds/2026-09-18.json";
+import { pickSites } from "../lib/content/sites";
 import { acknowledge, launch, readUp, stubImagery } from "./helpers";
 
 const SHOTS = process.env.SHOT_DIR;
@@ -256,7 +257,11 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
 
-  for (const [index, site] of ["Dubai", "Cape Town"].entries()) {
+  // Read the pair rather than naming it: the sites are drawn from the pool by
+  // date, so hard-coding two names makes any change to that pool look like a
+  // broken run. Every site's own name is one of its accepted answers.
+  const pair = pickSites("2026-09-18").map((s) => s.name);
+  for (const [index, site] of pair.entries()) {
     // The clock is held until the imagery settles, so the box is disabled
     // until the feed is up. The grace timeout guarantees it opens regardless.
     const box = page.getByTestId("site-answer");

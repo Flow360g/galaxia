@@ -7,44 +7,47 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "sport",
       "prompt": "Which of these countries have won the men's football World Cup?",
       "options": [
         "Uruguay",
         "Belgium",
-        "France",
         "Portugal",
-        "Spain",
-        "Mexico"
+        "Mexico",
+        "France",
+        "Spain"
       ],
       "answers": [
         0,
-        2,
-        4
+        4,
+        5
       ],
       "fact": "Uruguay won the first World Cup in 1930, at home, and did it again in 1950 in Brazil's own stadium."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "science",
       "prompt": "Which of these are noble gases?",
       "options": [
-        "Neon",
         "Nitrogen",
-        "Argon",
+        "Neon",
         "Oxygen",
-        "Helium",
-        "Hydrogen"
+        "Argon",
+        "Hydrogen",
+        "Helium"
       ],
       "answers": [
-        0,
-        2,
-        4
+        1,
+        3,
+        5
       ],
       "fact": "Noble gases have full outer electron shells, which is why they barely react. Helium was found in the Sun's light before it was found on Earth."
     },
     {
       "id": "q3",
       "type": "vector",
+      "topic": "geography",
       "prompt": "How long is the Nile?",
       "answer": 6650,
       "min": 1000,
@@ -55,6 +58,7 @@
     {
       "id": "q4",
       "type": "vector",
+      "topic": "nature",
       "prompt": "How fast can a cheetah run, in km/h?",
       "answer": 110,
       "min": 30,
@@ -65,20 +69,22 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "misc",
       "prompt": "Which planet has the shortest day?",
       "options": [
         "Mars",
-        "Jupiter",
         "Saturn",
+        "Jupiter",
         "Neptune"
       ],
-      "answer": 1,
+      "answer": 2,
       "hint": "The biggest one spins the fastest.",
       "fact": "Jupiter spins once every 9 hours 56 minutes."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "misc",
       "prompt": "Which language has the most native speakers?",
       "options": [
         "English",
@@ -102,23 +108,9 @@
     }
   ],
   "stages": [
-    {
-      "name": "Cluster Belt",
-      "after": 1,
-      "landmark": "moon"
-    },
-    {
-      "name": "Alien Contact",
-      "after": 3,
-      "landmark": "planet"
-    },
-    {
-      "name": "Open Sky",
-      "after": 5
-    },
-    {
-      "name": "Where on Earth",
-      "after": 7
-    }
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
   ]
 }
