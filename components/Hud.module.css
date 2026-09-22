@@ -9,6 +9,9 @@
   display: flex;
   flex-direction: column;
   --pad: 16px;
+  /* The Cluster dial's outside diameter. The callout that points down at it
+     is positioned off this, so the two can never drift apart. */
+  --dial: 92px;
 }
 
 /* The top band. Sized by its contents, capped so it can never creep down over
@@ -598,8 +601,8 @@
   z-index: 3;
   right: max(var(--pad), env(safe-area-inset-right));
   bottom: max(var(--pad), env(safe-area-inset-bottom));
-  width: 92px;
-  height: 92px;
+  width: var(--dial);
+  height: var(--dial);
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -684,6 +687,93 @@
  */
 .burnFull:not(:disabled) {
   animation: dialGlow 520ms ease-in-out infinite;
+}
+
+/*
+ * The first Cluster of the run, and the first plasma aboard: a flashing
+ * label and an arrow, sat on top of the dial, pointing down at it.
+ *
+ * The dial is the only thing that banks a charge and the only control the
+ * run draws below the band, and testers did not read it as something they
+ * had to press: they kept picking lanes until a boulder took the lot. This
+ * is not a third element down here, it is part of the dial's own corner: it
+ * is drawn off `--dial`, takes no pointer events, and is gone for the rest
+ * of the run the moment the first Cluster resolves.
+ */
+.bankNudge {
+  position: fixed;
+  z-index: 3;
+  /* Right-aligned to the dial's own rail: the lines run left over empty sky,
+     on one line each, and the block can never push past the screen edge. */
+  right: max(var(--pad), env(safe-area-inset-right));
+  bottom: calc(max(var(--pad), env(safe-area-inset-bottom)) + var(--dial) + 6px);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+  animation: cornerIn 260ms ease-out;
+}
+
+.bankNudgeCall {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  animation: nudgeBlink 1100ms ease-in-out infinite;
+}
+
+.bankNudgeLead {
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #ff8a1f;
+  letter-spacing: var(--track-label);
+  text-shadow: 0 0 10px rgba(255, 138, 31, 0.55);
+}
+
+.bankNudgeSub {
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--panel-label);
+  letter-spacing: var(--track-label);
+}
+
+/* The arrow: drawn, not a glyph, so it stays crisp at this size, and nudged
+   in off the rail so it lands over the middle of the cap rather than its edge. */
+.bankNudgeArrow {
+  width: 0;
+  height: 0;
+  margin-right: calc(var(--dial) / 2 - 7px);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid #ff8a1f;
+  filter: drop-shadow(0 0 6px rgba(255, 138, 31, 0.6));
+  animation: nudgeNod 1100ms ease-in-out infinite;
+}
+
+@keyframes nudgeBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes nudgeNod {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(3px);
+    opacity: 0.6;
+  }
 }
 
 .boostOn {
@@ -1626,6 +1716,9 @@
 
   .gauge,
   .burnDial,
+  .bankNudge,
+  .bankNudgeCall,
+  .bankNudgeArrow,
   .gaugeFull,
   .burnFull:not(:disabled),
   .burnHot:not(:disabled),
@@ -1656,6 +1749,7 @@
 @media (max-width: 720px) {
   .hud {
     --pad: 11px;
+    --dial: 80px;
   }
 
   .board {
@@ -1765,8 +1859,6 @@
 
   .burnDial {
     --travel: 5px;
-    width: 80px;
-    height: 80px;
   }
 
   .burnDialCap {
