@@ -422,6 +422,19 @@ export const STATION = {
   /** Longest the clock waits for tiles before starting regardless. */
   feedGraceMs: 6000,
   /**
+   * Seconds the feed is held after Sergeant Soap's hail has finished typing.
+   * He says what the job is before anything else is on screen, and this is the
+   * beat to read the last of it; a tap gets there sooner. The answer clock is
+   * held with the feed, so none of this is played against it.
+   */
+  hailHoldSeconds: 1.5,
+  /**
+   * Seconds the verdict holds in the middle of the screen before it clears.
+   * Long enough to read a word and a figure, short enough to be gone by the
+   * time the player looks for the answer and the fact underneath it.
+   */
+  verdictSeconds: 2.4,
+  /**
    * Width of a ground photograph, in pixels. Wikimedia only renders a fixed
    * list of thumbnail widths now (640 is refused, 960 and 500 are served), and
    * 960 is what a 320px figure on a 3x phone wants. See `thumbUrl` in feed.ts.
@@ -449,7 +462,7 @@ export const STATION = {
   /** Slow roll about the docking axis, radians per second. */
   spin: 0.04,
   /** Seconds from first sight to alongside. Arrival is this timer, never an asset. */
-  approachSeconds: 7,
+  approachSeconds: 5.5,
   /** Ambient rock density on the approach: a station does not sit in a belt. */
   fieldDensity: 0.05,
   /** The cruise floor while docking, as a fraction of normal. See Flight.throttle. */
@@ -913,6 +926,45 @@ export const AUDIO = {
     hiss: { seconds: 1.4, gain: 0.09, hz: [3200, 900], q: 0.9, attack: 0.15, delay: 0.3 },
     send: 0.6,
     duck: 0.35,
+  },
+
+  /**
+   * WHERE ON EARTH: the call back to Earth Command when a site is named.
+   *
+   * Aboard the station there is no lane and no hull, so the verdict cannot
+   * borrow the flight's contact cues: nothing flew past and nothing was hit.
+   * This is a radio answering. The transmitter keys up the same way both
+   * times, then the answer either confirms or refuses.
+   */
+  site: {
+    /** Keying up: a short burst of air off the top of the band. */
+    key: { seconds: 0.06, gain: 0.1, hz: [2600, 1700], q: 3 },
+    send: 0.55,
+    /** Confirmed: two bells a fifth apart, the second late, over a swell. */
+    good: {
+      hz: 620,
+      fifth: 1.5,
+      seconds: 1.2,
+      gain: 0.21,
+      delay: 0.1,
+      ratio: 2.01,
+      index: 190,
+      swell: { hz: [120, 240], seconds: 0.8, gain: 0.16 },
+    },
+    /** Refused: a flat double blat, static behind it, the hull ringing low. */
+    bad: {
+      hz: 196,
+      sweepTo: 138,
+      seconds: 0.26,
+      gain: 0.19,
+      q: 3,
+      filterHz: 900,
+      /** Seconds between the two blats. */
+      gap: 0.21,
+      static: { seconds: 1.0, gain: 0.1, hz: [2600, 400], q: 0.8, delay: 0.18 },
+      ring: { hz: 98, seconds: 1.3, gain: 0.1, delay: 0.1, ratio: 1.41, index: 90 },
+      duck: 0.3,
+    },
   },
 
   /** Boost, slingshot and the burn: thrust you can hear winding up. */

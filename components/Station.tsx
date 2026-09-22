@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
-import { PHASE_TITLE } from "@/lib/game/phaseTitles";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Orbit } from "@/lib/game/Orbit";
+import { STATION } from "@/lib/game/Tuning";
 import { StationFeed } from "./StationFeed";
-import type { EarthQuestion, GameState } from "@/lib/game/types";
+import { StationHail } from "./StationHail";
+import type { EarthQuestion, GameState, Outcome } from "@/lib/game/types";
 import styles from "./Station.module.css";
 
 interface Props {
@@ -40,6 +41,13 @@ interface Props {
  * intel stack and a text input do not fit in the band's usual 62vh, so the
  * panel takes the screen and `StationFeed` scrolls inside itself. The page
  * still never scrolls, and the band lifts when the keyboard opens.
+ *
+ * The panel opens on Sergeant Soap and nothing else: he says what the job is,
+ * the feed follows a beat later, and only then does the answer clock start.
+ * That last part is what this component is holding: the feed's imagery settles
+ * behind the hail as usual, but `onFeedReady` is not passed on until the hail
+ * is done with the screen, so no site is ever read against a clock that
+ * started while somebody was still talking.
  */
 export function Station({
   showPanel,
@@ -62,6 +70,28 @@ export function Station({
     return () => orbit.dispose();
   }, []);
 
+  /**
+   * Whether the hail is done and the feed has the screen. Refs alongside the
+   * state because both of these are read from callbacks that must not be
+   * re-made on every change: the feed settling and the hail finishing race
+   * each other, and whichever lands second is the one that starts the clock.
+   */
+  const [open, setOpen] = useState(false);
+  const openRef = useRef(false);
+  const settled = useRef(false);
+
+  const feedSettled = useCallback(() => {
+    settled.current = true;
+    if (openRef.current) onFeedReady();
+  }, [onFeedReady]);
+
+  const openFeed = useCallback(() => {
+    if (openRef.current) return;
+    openRef.current = true;
+    setOpen(true);
+    if (settled.current) onFeedReady();
+  }, [onFeedReady]);
+
   const keyboard = useSyncExternalStore(subscribeViewport, keyboardInset, () => 0);
 
   return (
@@ -78,30 +108,88 @@ export function Station({
       {showPanel && question && state ? (
         <div className={styles.band} style={{ bottom: keyboard }}>
           <section className={styles.panel}>
-            {/* One line at the top and nothing else. The tag, the phase number,
-                a second title and a hint count all stacked up here and pushed
-                the picture down the screen; the task is the only thing a player
-                needs before they look. What the hints are and what they cost is
-                said once, on the hint button that sells them. */}
-            <h2 className={`${styles.title} arcade`} data-testid="station-title">
-              {PHASE_TITLE.earth} SHOWN IN THE SATELLITE IMAGE
-            </h2>
+            {/* The order, and nothing else until it has been said. The tag, the
+                phase number, a second title and a hint count all stacked up
+                here once and pushed the picture down the screen; the task is
+                the only thing a player needs before they look. What the hints
+                are and what they cost is said once, on the button that sells
+                them. */}
+            <StationHail open={open} onOpen={openFeed} />
 
-            {/* Keyed on the site, so a new one starts with a clear box and dial. */}
-            <StationFeed
-              key={question.id}
-              question={question}
-              state={state}
-              more={more}
-              onFeedReady={onFeedReady}
-              onBuyIntel={onBuyIntel}
-              onOptics={onOptics}
-              onSubmit={onSubmit}
-              onNext={onNext}
-            />
+            {/* Mounted from the start and merely hidden, so the tiles settle
+                while Soap is talking rather than after him. Hidden this way
+                and not with `display: none`: the optic measures its own width
+                to lay the mosaic out, and a box of no width measures nothing. */}
+            <div
+              className={`${styles.rest} ${open ? styles.restOpen : ""}`}
+              aria-hidden={!open}
+            >
+              {/* Keyed on the site, so a new one starts with a clear box and dial. */}
+              <StationFeed
+                key={question.id}
+                question={question}
+                state={state}
+                more={more}
+                onFeedReady={feedSettled}
+                onBuyIntel={onBuyIntel}
+                onOptics={onOptics}
+                onSubmit={onSubmit}
+                onNext={onNext}
+              />
+            </div>
           </section>
         </div>
       ) : null}
+
+      {/* The verdict, over the lot. The panel says it too, at the foot of a
+          scroll region with a photograph and five bought hints above it, where
+          a tester read the answer and never saw what it scored. Keyed on the
+          site so the second one punches in again, and lifted with the band
+          when the keyboard is still up. */}
+      {showPanel && question && state?.awaitingTap && state.outcome ? (
+        <SiteVerdict key={question.id} outcome={state.outcome} lift={keyboard} />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * What the site was worth, in the middle of the screen.
+ *
+ * The one figure that matters at the end of a site, said once and said loudly:
+ * the panel's own line under it carries what was spent getting there and no
+ * points at all, because the same number in two places reads as two.
+ *
+ * It clears itself rather than waiting for a tap. Nothing in the run advances
+ * on a timer once a verdict is up and nothing here does either: the verdict,
+ * the answer, the fact and NEXT PLACE all sit in the panel until the player is
+ * done with them. This is the noise the moment makes, not the moment.
+ */
+function SiteVerdict({ outcome, lift }: { outcome: Outcome; lift: number }) {
+  const [gone, setGone] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setGone(true), STATION.verdictSeconds * 1000);
+    return () => window.clearTimeout(id);
+  }, []);
+  if (gone) return null;
+
+  const points = outcome.points ?? 0;
+  const headline = outcome.correct ? "CORRECT" : outcome.timedOut ? "TOO SLOW" : "WRONG";
+
+  return (
+    <div
+      className={styles.verdict}
+      style={{ bottom: lift, animationDuration: `${STATION.verdictSeconds}s` }}
+      data-testid="site-verdict"
+      role="status"
+    >
+      <div className={`${styles.verdictCard} ${outcome.correct ? styles.won : styles.lost}`}>
+        <span className={`${styles.verdictWord} arcade`}>{headline}</span>
+        <span className={`${styles.verdictPoints} arcade`}>
+          {points >= 0 ? "+" : ""}
+          {points} POINTS
+        </span>
+      </div>
     </div>
   );
 }

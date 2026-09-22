@@ -944,6 +944,94 @@ export class AudioEngine {
   }
 
   /**
+   * WHERE ON EARTH: the call back to Earth Command, confirmed or refused.
+   *
+   * The station is not the flight: nothing came down a lane and nothing hit
+   * the hull, so `contact` would be describing a thing that never happened.
+   * What is actually going on is a radio call, so that is what this is. The
+   * transmitter keys up the same way both times and the answer carries the
+   * verdict: two bells a fifth apart over a swell when the site is named, or
+   * a flat double blat with static and a low ring behind it when it is not.
+   * Numbers in `AUDIO.site`.
+   */
+  site(correct: boolean): void {
+    const cfg = AUDIO.site;
+
+    // Keying up. Identical on both, so the answer is what the ear reads.
+    this.noiseVoice(0, {
+      duration: cfg.key.seconds,
+      gain: cfg.key.gain,
+      type: "bandpass",
+      from: cfg.key.hz[0],
+      to: cfg.key.hz[1],
+      q: cfg.key.q,
+      send: cfg.send * 0.5,
+    });
+
+    if (correct) {
+      const good = cfg.good;
+      for (const [i, step] of [1, good.fifth].entries()) {
+        this.bell(good.hz * step, {
+          duration: good.seconds,
+          gain: good.gain,
+          delay: good.delay * (i + 1),
+          ratio: good.ratio,
+          index: good.index,
+        });
+      }
+      // The swell under them, so the confirmation has a floor and is not two
+      // beeps in a void.
+      this.tone(good.swell.hz[0], 0, {
+        duration: good.swell.seconds,
+        gain: good.swell.gain,
+        type: "sine",
+        sweepTo: good.swell.hz[1],
+        attack: good.swell.seconds * 0.35,
+        delay: good.delay,
+        send: cfg.send,
+      });
+      return;
+    }
+
+    const bad = cfg.bad;
+    this.duck(bad.duck);
+    // Two of them, flat and falling: the sound of an answer not being taken.
+    for (const delay of [0, bad.gap]) {
+      this.tone(bad.hz, 0, {
+        duration: bad.seconds,
+        gain: bad.gain,
+        type: "sawtooth",
+        sweepTo: bad.sweepTo,
+        filterHz: bad.filterHz,
+        filterQ: bad.q,
+        drive: true,
+        delay,
+        send: cfg.send * 0.6,
+      });
+    }
+    // Dead air behind it, falling away.
+    this.noiseVoice(0, {
+      duration: bad.static.seconds,
+      gain: bad.static.gain,
+      type: "bandpass",
+      from: bad.static.hz[0],
+      to: bad.static.hz[1],
+      q: bad.static.q,
+      attack: 0.04,
+      delay: bad.static.delay,
+      send: cfg.send,
+    });
+    // And the hull ringing low under the lot, inharmonic, like the crash does.
+    this.bell(bad.ring.hz, {
+      duration: bad.ring.seconds,
+      gain: bad.ring.gain,
+      delay: bad.ring.delay,
+      ratio: bad.ring.ratio,
+      index: bad.ring.index,
+    });
+  }
+
+  /**
    * The launch countdown. `step` is 3, 2 or 1, then 0 for GO.
    *
    * The pips are deliberately plain -- one clean tone with a click on the
