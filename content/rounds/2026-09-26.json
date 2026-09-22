@@ -13,32 +13,35 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "geography",
       "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
-      "options": ["Egypt", "Portugal", "Greece", "Austria", "Turkey", "Romania"],
-      "answers": [0, 2, 4],
+      "options": ["Egypt", "Greece", "Portugal", "Austria", "Turkey", "Romania"],
+      "answers": [0, 1, 4],
       "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "nature",
       "prompt": "Which of these animals can fly?",
-      "options": ["Bat", "Ostrich", "Hummingbird", "Penguin", "Dragonfly", "Kiwi"],
-      "answers": [0, 2, 4],
+      "options": ["Bat", "Ostrich", "Hummingbird", "Dragonfly", "Penguin", "Kiwi"],
+      "answers": [0, 2, 3],
       "fact": "Ostriches, penguins and kiwis are all birds, and not one of them can get off the ground."
     },
     {
       "id": "q3",
       "type": "vector",
-      "prompt": "How many keys does a standard piano have?",
-      "answer": 88,
-      "min": 20,
-      "max": 200,
-      "unit": "keys",
-      "fact": "88 keys: 52 white and 36 black, covering just over seven octaves."
+      "topic": "history",
+      "prompt": "In which year did the Titanic sink?",
+      "answer": 1912,
+      "min": 1850,
+      "max": 1980,
+      "fact": "She struck the iceberg late on 14 April 1912 and was gone in under three hours."
     },
     {
       "id": "q4",
       "type": "vector",
+      "topic": "nature",
       "prompt": "How many years ago did the last dinosaurs die out, in millions?",
       "answer": 66,
       "min": 1,
@@ -49,18 +52,20 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "science",
       "prompt": "Which metal is liquid at room temperature?",
-      "options": ["Lead", "Mercury", "Tin", "Zinc"],
-      "answer": 1,
+      "options": ["Lead", "Tin", "Mercury", "Zinc"],
+      "answer": 2,
       "hint": "It shares its name with a planet.",
       "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "arts",
       "prompt": "Who wrote the play Romeo and Juliet?",
-      "options": ["Dickens", "Chaucer", "Shakespeare", "Austen"],
-      "answer": 2,
+      "options": ["Dickens", "Chaucer", "Austen", "Shakespeare"],
+      "answer": 3,
       "hint": "He was writing in England around 1595.",
       "fact": "Shakespeare did not invent the story. He took it from an English poem published thirty years earlier."
     },

@@ -10,8 +10,14 @@ import round20260927 from "@/content/rounds/2026-09-27.json";
 import round20260928 from "@/content/rounds/2026-09-28.json";
 import round20260929 from "@/content/rounds/2026-09-29.json";
 import round20260930 from "@/content/rounds/2026-09-30.json";
+import round20261001 from "@/content/rounds/2026-10-01.json";
+import round20261002 from "@/content/rounds/2026-10-02.json";
+import round20261003 from "@/content/rounds/2026-10-03.json";
+import round20261004 from "@/content/rounds/2026-10-04.json";
+import round20261005 from "@/content/rounds/2026-10-05.json";
 import { pickSites } from "@/lib/content/sites";
-import type { EarthQuestion, Question, Round } from "@/lib/game/types";
+import { TOPICS } from "@/lib/game/types";
+import type { EarthQuestion, Question, Round, Topic } from "@/lib/game/types";
 
 /**
  * Round loading.
@@ -27,6 +33,12 @@ import type { EarthQuestion, Question, Round } from "@/lib/game/types";
  * is one JSON file and one line in `POOL`.
  */
 
+/** The corners, as a set, for the tag check below. */
+const KNOWN_TOPICS = new Set<string>(TOPICS);
+
+/** No round leans more than this many questions on one corner. */
+const TOPIC_CAP = 2;
+
 const POOL: Round[] = [
   round20260918,
   round20260920,
@@ -40,15 +52,62 @@ const POOL: Round[] = [
   round20260928,
   round20260929,
   round20260930,
+  round20261001,
+  round20261002,
+  round20261003,
+  round20261004,
+  round20261005,
 ]
   // Hydrate before validating: the earth slots carry no site of their own, so
   // validation has nothing to check until the pool has filled them in.
-  .map((round) => validate(hydrateEarth(round as unknown as Round)))
+  .map((round) => validate(hydrateEarth(round as unknown as Round), true))
   .sort((a, b) => a.date.localeCompare(b.date));
 
 const ROUNDS: Record<string, Round> = Object.fromEntries(POOL.map((round) => [round.date, round]));
 
 const sampleRound = POOL[0]!;
+
+/**
+ * No two quiz questions in the pool may ask the same thing.
+ *
+ * Cross-round, so `validate` cannot hold it: a duplicate is only visible with
+ * every round in hand. It shipped eight times before this existed, and the
+ * practice shuffle is where it showed, because a draw of two from twenty-four
+ * lands the same pair often. Earth slots are exempt: they carry the same two
+ * lines in every round by design, and the site itself comes from `pickSites`.
+ *
+ * Normalised hard enough that "How many bones are in an adult human body?" and
+ * "How many bones are there in an adult human body?" collide. A near-duplicate
+ * that survives this (the same question with its unit spelled out) is still on
+ * the author to spot; the rule is here to stop the exact repeat coming back.
+ */
+function askedAs(prompt: string): string {
+  return prompt
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\b(?:the|a|an|of|is|are|there|in|on|at|to|do|does|your|it)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+{
+  const seen = new Map<string, string>();
+  for (const round of POOL) {
+    for (const question of round.questions) {
+      if (question.type === "earth") continue;
+      const key = askedAs(question.prompt);
+      const first = seen.get(key);
+      if (first) {
+        throw new Error(
+          `Round ${round.date} ${question.id} asks what ${first} already asks: ` +
+            `"${question.prompt}". The pool is drawn from two at a time, so a ` +
+            `repeat comes round fast. Write a different question.`,
+        );
+      }
+      seen.set(key, `${round.date} ${question.id}`);
+    }
+  }
+}
 
 /**
  * WHERE ON EARTH slots carry only an id and a prompt; the site itself comes
@@ -101,13 +160,28 @@ function hashSeed(seed: string): number {
   return hash;
 }
 
-/** Stable shuffle: the same seed always gives the same order. */
+/**
+ * Stable shuffle: the same seed always gives the same order.
+ *
+ * Fisher-Yates on a seeded stream.
+ *
+ * The stream used to be a plain LCG read as `hash % (i + 1)`, and an LCG's low
+ * bits are the ones that barely move: over 5,000 draws from a 34 question
+ * pool, the first item never once came out in the leading two, while the
+ * second came out three and a half times more often than chance. That, far
+ * more than the size of the pool, is why a practice run kept asking the same
+ * questions. So: a proper 32-bit mixer, read from the top bits down.
+ */
 function seededShuffle<T>(items: readonly T[], seed: string): T[] {
-  let hash = hashSeed(seed);
+  let state = hashSeed(seed) | 0;
   const out = [...items];
   for (let i = out.length - 1; i > 0; i -= 1) {
-    hash = (hash * 1103515245 + 12345) & 0x7fffffff;
-    const j = hash % (i + 1);
+    state = (state + 0x9e3779b9) | 0;
+    let z = state;
+    z = Math.imul(z ^ (z >>> 16), 0x21f0aaad);
+    z = Math.imul(z ^ (z >>> 15), 0x735a2d97);
+    const roll = (z ^ (z >>> 15)) >>> 0;
+    const j = Math.floor((roll / 0x100000000) * (i + 1));
     const a = out[i] as T;
     out[i] = out[j] as T;
     out[j] = a;
@@ -118,8 +192,14 @@ function seededShuffle<T>(items: readonly T[], seed: string): T[] {
 /**
  * A malformed round should fail at import, in the build, not mid-flight for
  * a player. Clusters are the fiddly ones: six lanes, three distinct answers.
+ *
+ * `authored` marks a round somebody wrote as a day, which is held to the one
+ * rule a random draw cannot be: no more than two questions from any one
+ * corner. The practice shuffle passes false, because a draw from the whole
+ * pool can legitimately land three of a kind and a hatch nobody but a tester
+ * sees is not worth failing the build over. See `getShuffledRound`.
  */
-function validate(round: Round): Round {
+function validate(round: Round, authored = false): Round {
   const stages = round.stages ?? [];
   stages.forEach((stage, i) => {
     const previous = stages[i - 1];
@@ -138,6 +218,30 @@ function validate(round: Round): Round {
       }
     }
   });
+  // The JSON is cast, never type-checked, so a question that forgot its corner
+  // or invented one gets here intact. This is the only thing that catches it.
+  const corners = new Map<Topic, number>();
+  for (const question of round.questions) {
+    if (question.type === "earth") continue;
+    const topic = question.topic as string | undefined;
+    if (!topic || !KNOWN_TOPICS.has(topic)) {
+      throw new Error(
+        `Round ${round.date} ${question.type} ${question.id}: topic "${topic}" is not a corner. ` +
+          `One of: ${TOPICS.join(", ")}.`,
+      );
+    }
+    corners.set(question.topic, (corners.get(question.topic) ?? 0) + 1);
+  }
+  if (authored) {
+    for (const [topic, count] of corners) {
+      if (count > TOPIC_CAP) {
+        throw new Error(
+          `Round ${round.date}: ${count} questions on ${topic}, at most ${TOPIC_CAP}. ` +
+            `A day that leans on one corner reads as a specialist's quiz.`,
+        );
+      }
+    }
+  }
   for (const question of round.questions) {
     if (question.type === "earth") {
       const { options, answer, name, lat, lon, zoom } = question;
@@ -263,10 +367,28 @@ export function newShuffleSeed(): string {
 
 export function getShuffledRound(seed: string): Round {
   const questions: Question[] = [];
+  // Spread the corners as the draw goes. A blind draw from a pool this size
+  // handed testers three space questions often enough to be the reason the
+  // pool was widened in the first place. It only ever reads the already
+  // seeded order, so a seed still rebuilds the identical round.
+  const corners = new Map<Topic, number>();
 
   for (const { type, count } of MIX) {
     const pool = POOL.flatMap((round) => round.questions).filter((q) => q.type === type);
-    questions.push(...seededShuffle(pool, `${seed}:${type}`).slice(0, count));
+    const shuffled = seededShuffle(pool, `${seed}:${type}`);
+    for (let taken = 0; taken < count; taken += 1) {
+      // First choice that keeps the round inside the cap; failing that, the
+      // first one left, because a hatch has to hand back a round either way.
+      const index = shuffled.findIndex(
+        (q) => q.type !== "earth" && (corners.get(q.topic) ?? 0) < TOPIC_CAP,
+      );
+      const picked = shuffled.splice(index >= 0 ? index : 0, 1)[0];
+      if (!picked) break;
+      if (picked.type !== "earth") {
+        corners.set(picked.topic, (corners.get(picked.topic) ?? 0) + 1);
+      }
+      questions.push(picked);
+    }
   }
   // The earth slots carry only an id and a prompt wherever they come from, so
   // any round's will do; the sites come from `pickSites`, seeded here rather

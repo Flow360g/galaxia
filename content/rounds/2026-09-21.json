@@ -7,37 +7,39 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "geography",
       "prompt": "Which of these countries share a land border with Germany?",
       "options": [
-        "Poland",
         "Portugal",
+        "Poland",
         "Denmark",
         "Norway",
-        "Austria",
-        "Ireland"
+        "Ireland",
+        "Austria"
       ],
       "answers": [
-        0,
+        1,
         2,
-        4
+        5
       ],
       "fact": "Germany has nine land neighbours, from Denmark in the north round to Austria and Switzerland in the south."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "nature",
       "prompt": "Which of these animals are mammals?",
       "options": [
-        "Dolphin",
         "Shark",
-        "Bat",
+        "Dolphin",
         "Penguin",
+        "Bat",
         "Platypus",
         "Crocodile"
       ],
       "answers": [
-        0,
-        2,
+        1,
+        3,
         4
       ],
       "fact": "The platypus lays eggs and still feeds its young on milk, which is the rule that makes it a mammal."
@@ -45,6 +47,7 @@
     {
       "id": "q3",
       "type": "vector",
+      "topic": "history",
       "prompt": "How many years did the Hundred Years' War actually last?",
       "answer": 116,
       "min": 50,
@@ -55,6 +58,7 @@
     {
       "id": "q4",
       "type": "vector",
+      "topic": "misc",
       "prompt": "How long does sunlight take to reach Earth, in minutes?",
       "answer": 8.3,
       "min": 1,
@@ -65,28 +69,30 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "arts",
       "prompt": "Who painted the ceiling of the Sistine Chapel?",
       "options": [
-        "Leonardo",
-        "Raphael",
         "Michelangelo",
+        "Raphael",
+        "Leonardo",
         "Donatello"
       ],
-      "answer": 2,
+      "answer": 0,
       "hint": "He considered himself a sculptor, not a painter.",
       "fact": "Michelangelo painted it standing on scaffolding, craning upward, over four years from 1508."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "geography",
       "prompt": "Which country has the most islands?",
       "options": [
         "Indonesia",
-        "Philippines",
         "Sweden",
+        "Philippines",
         "Canada"
       ],
-      "answer": 2,
+      "answer": 1,
       "hint": "Think Scandinavia, and count the tiny ones.",
       "fact": "Sweden counts about 267,000 islands, and only around a thousand of them are inhabited."
     },
@@ -102,23 +108,9 @@
     }
   ],
   "stages": [
-    {
-      "name": "Cluster Belt",
-      "after": 1,
-      "landmark": "moon"
-    },
-    {
-      "name": "Alien Contact",
-      "after": 3,
-      "landmark": "planet"
-    },
-    {
-      "name": "Open Sky",
-      "after": 5
-    },
-    {
-      "name": "Where on Earth",
-      "after": 7
-    }
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
   ]
 }
