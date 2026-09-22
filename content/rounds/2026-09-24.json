@@ -7,44 +7,47 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "misc",
       "prompt": "Which of these are dwarf planets?",
       "options": [
-        "Pluto",
         "Titan",
-        "Ceres",
+        "Pluto",
         "Europa",
-        "Eris",
-        "Io"
+        "Io",
+        "Ceres",
+        "Eris"
       ],
       "answers": [
-        0,
-        2,
-        4
+        1,
+        4,
+        5
       ],
       "fact": "Ceres sits in the asteroid belt and is the only dwarf planet inside Neptune's orbit. The others are moons."
     },
     {
       "id": "q2",
       "type": "cluster",
+      "topic": "geography",
       "prompt": "Which of these are capital cities today?",
       "options": [
         "Sydney",
+        "Istanbul",
         "Ottawa",
         "Canberra",
-        "Istanbul",
-        "Lima",
-        "Rio"
+        "Rio",
+        "Lima"
       ],
       "answers": [
-        1,
         2,
-        4
+        3,
+        5
       ],
       "fact": "Canberra was built from scratch as a compromise between Sydney and Melbourne. Rio lost the title to Brasilia in 1960, and Istanbul lost it to Ankara in 1923."
     },
     {
       "id": "q3",
       "type": "vector",
+      "topic": "science",
       "prompt": "How many bones are in an adult human body?",
       "answer": 206,
       "min": 50,
@@ -54,6 +57,7 @@
     {
       "id": "q4",
       "type": "vector",
+      "topic": "sport",
       "prompt": "How long is a marathon, in kilometres?",
       "answer": 42.195,
       "min": 10,
@@ -64,28 +68,30 @@
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "geography",
       "prompt": "Which is the largest desert outside the polar regions?",
       "options": [
         "Gobi",
-        "Sahara",
         "Arabian",
+        "Sahara",
         "Kalahari"
       ],
-      "answer": 1,
+      "answer": 2,
       "hint": "It covers most of North Africa.",
       "fact": "Antarctica is the largest desert of all. A desert is defined by how little rain falls, not by sand."
     },
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "food",
       "prompt": "Which country is the croissant originally from?",
       "options": [
         "France",
-        "Austria",
+        "Belgium",
         "Italy",
-        "Belgium"
+        "Austria"
       ],
-      "answer": 1,
+      "answer": 3,
       "hint": "Think of the kipferl.",
       "fact": "The kipferl came from Vienna. Paris bakers turned it into the buttery croissant in the 1830s."
     },
@@ -101,23 +107,9 @@
     }
   ],
   "stages": [
-    {
-      "name": "Cluster Belt",
-      "after": 1,
-      "landmark": "moon"
-    },
-    {
-      "name": "Alien Contact",
-      "after": 3,
-      "landmark": "planet"
-    },
-    {
-      "name": "Open Sky",
-      "after": 5
-    },
-    {
-      "name": "Where on Earth",
-      "after": 7
-    }
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
   ]
 }

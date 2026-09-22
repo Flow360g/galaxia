@@ -213,12 +213,15 @@ export function StationFeed({
             <p className={`${styles.answer} arcade`}>
               {question.name}, {question.country}
             </p>
+            {/* What it was worth is said in the middle of the screen, on the
+                verdict, and nowhere else: the same number in two places on one
+                screen reads as two different numbers. This line is the record
+                of what was spent getting there, which is why the figure up
+                there is not the full 300. */}
             <p className={`${styles.gained} mono`}>
-              {(outcome.points ?? 0) >= 0 ? "+" : ""}
-              {outcome.points ?? 0} points &middot; {state.earthIntel} hint
-              {state.earthIntel === 1 ? "" : "s"} &middot;{" "}
-              {state.earthOptics.length} zoom
-              {state.earthOptics.length === 1 ? "" : "s"}
+              {state.earthIntel} hint{state.earthIntel === 1 ? "" : "s"} used
+              &middot; {state.earthOptics.length} zoom
+              {state.earthOptics.length === 1 ? "" : "s"} used
             </p>
             {question.fact ? (
               <p className={styles.fact}>{question.fact}</p>

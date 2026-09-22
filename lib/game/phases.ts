@@ -275,6 +275,19 @@ export const MISSION_TRANSMISSION: Transmission = {
   ],
 };
 
+/**
+ * The standing order on the satellite feed, typed in when the station screen
+ * opens. It is the only thing on screen while it arrives, so it carries the
+ * task: a player who reads nothing else knows what the box under it is for.
+ */
+export const SITE_HAIL: Transmission = {
+  from: "EARTH COMMAND",
+  speaker: SOAP,
+  lines: [
+    "Tell me the location shown on the satellite image, so we can send reinforcements!",
+  ],
+};
+
 /** The debrief, after a run that named every landing site. */
 export const EARTH_SAVED_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",

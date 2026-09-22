@@ -3,6 +3,7 @@ import round from "../content/rounds/2026-09-18.json";
 // A round with a small counting answer: a guitar has 6 strings, on a 1..20
 // slider, which is where a band measured in percent used to fall apart.
 import countingRound from "../content/rounds/2026-09-27.json";
+import { pickSites } from "../lib/content/sites";
 import { acknowledge, launch, readUp, stubImagery } from "./helpers";
 
 const SHOTS = process.env.SHOT_DIR;
@@ -68,6 +69,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await readUp(page);
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "0");
   await expect(page.getByTestId("burn")).toBeDisabled();
+  // Nothing to bank yet, so nothing is pointing at the dial.
+  await expect(page.getByTestId("bank-nudge")).toHaveCount(0);
   await shot(page, "01-cluster");
   const [right1, right2] = answersOf(0);
   await page.getByTestId(`option-${right1}`).click();
@@ -76,6 +79,10 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   });
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1");
   await expect(page.getByTestId("burn")).toBeEnabled();
+  // First plasma of the run's first cluster: the callout comes up over the
+  // dial, because nothing else says the dial has to be pressed.
+  await expect(page.getByTestId("bank-nudge")).toBeVisible();
+  await expect(page.getByTestId("bank-nudge")).toContainText("TAP TO BANK");
   await page.getByTestId(`option-${right2}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "2", { timeout: 5_000 });
   await shot(page, "02-two-plasma");
@@ -102,6 +109,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const [firstRight, secondRight] = answersOf(1);
   await page.getByTestId(`option-${firstRight}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
+  // The callout was for the first cluster only. It does not come back.
+  await expect(page.getByTestId("bank-nudge")).toHaveCount(0);
   const [wrongA, wrongB] = wrongLanesOf(1);
   await page.getByTestId(`option-${wrongA}`).click();
   // The boulder's run-in and its final strike play out first. The shield saves
@@ -247,23 +256,36 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // answered rather than back at the approach.
   const station = page.getByTestId("station");
   await expect(station).toBeVisible();
-  // One line at the top, saying the task and nothing else: the tag, the phase
-  // number, a second title and a hint count all stacked up here and pushed the
-  // picture down the screen.
-  await expect(page.getByTestId("station-title")).toContainText(
-    /name the place shown in the satellite image/i,
-  );
+  // The panel opens on Sergeant Soap and nothing else. The order is the one
+  // thing at the top now: the tag, the phase number, a second title and a hint
+  // count all stacked up here once and pushed the picture down the screen.
+  const order = page.getByTestId("station-order");
+  await expect(order).toBeVisible();
+  // He is talking and the feed is held behind him, which means the answer
+  // clock is too: nobody is timed on reading.
+  await expect(page.getByTestId("site-answer")).toBeDisabled();
+  await shot(page, "13b-station-hail");
+  await expect(order).toContainText(/so we can send reinforcements/i, { timeout: 20_000 });
+  // Then the feed comes up on its own, a beat after the last word.
+  await expect(page.getByTestId("hail-catcher")).toHaveCount(0, { timeout: 20_000 });
   // The hint count is said once now, on the button that sells them: a tester
   // once played the whole phase without knowing hints existed.
   await expect(page.getByTestId("request-intel")).toContainText(/hints left/i);
   await expect(question).toHaveCount(0);
   await shot(page, "14-station");
 
-  for (const [index, site] of ["Dubai", "Cape Town"].entries()) {
+  // Read the pair rather than naming it: the sites are drawn from the pool by
+  // date, so hard-coding two names makes any change to that pool look like a
+  // broken run. Every site's own name is one of its accepted answers.
+  const pair = pickSites("2026-09-18").map((s) => s.name);
+  for (const [index, site] of pair.entries()) {
     // The clock is held until the imagery settles, so the box is disabled
     // until the feed is up. The grace timeout guarantees it opens regardless.
     const box = page.getByTestId("site-answer");
     await expect(box).toBeEnabled({ timeout: 20_000 });
+    // The order is said once, on arrival: the second site of the dock picks up
+    // where the first was answered and is not hailed again.
+    await expect(page.getByTestId("hail-catcher")).toHaveCount(0);
 
     // The mosaic was fetched at launch too, so the optic mounts on blobs and a
     // zoom step never waits on the tile server. Nine tiles, all warm.
@@ -376,7 +398,19 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     if (index === 0) {
       await expect(page.getByTestId("next-site")).toBeVisible({ timeout: 60_000 });
     } else {
+      // What the site was worth, in the middle of the screen. The panel says
+      // the word at the foot of a scroll region under a photograph and five
+      // bought hints, which is where a tester read the answer and never saw
+      // what it scored, so the figure is said here and only here. Asserted on
+      // site 1, the one played straight: site 0 is allowed to time out.
+      const verdict = page.getByTestId("site-verdict");
+      await expect(verdict).toContainText("CORRECT");
+      await expect(verdict).toContainText(/\+\d+ POINTS/);
+      await shot(page, "15b-station-verdict");
       await expect(station).toContainText(/correct/i);
+      // And it clears itself. NEXT PLACE is under it and the thumb has to
+      // reach it, which is why it never takes a tap to get rid of.
+      await expect(verdict).toHaveCount(0, { timeout: 15_000 });
     }
     if (index === 0) await shot(page, "15-station-site");
     await page.getByTestId("next-site").click();

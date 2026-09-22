@@ -102,6 +102,12 @@ export interface RunHooks {
   onFinished(): void;
   /** WHERE ON EARTH: the ship is aboard. The station screen takes over from the scene. */
   onDock(): void;
+  /**
+   * WHERE ON EARTH: a site was called in. There is no lane to fly down and no
+   * hull to hit, so nothing reaches `onLock` or `onContact`; this is the one
+   * announcement the verdict gets, and the engine answers it with the radio.
+   */
+  onSiteCalled(index: number, outcome: Outcome): void;
 }
 
 const SAMPLE_INTERVAL = 0.25;
@@ -628,6 +634,10 @@ export class Run {
     });
 
     this.awaitingTap = true;
+    // The verdict is on screen in silence otherwise: nothing else in the run
+    // announces a site, because nothing flies down a lane here. `record` has
+    // just scored this outcome and left it on `this.outcome`.
+    if (this.outcome) this.hooks.onSiteCalled(this.index, this.outcome);
   }
 
   /**

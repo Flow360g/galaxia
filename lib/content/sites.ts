@@ -231,7 +231,10 @@ export const SITES: Site[] = [
     id: "capetown",
     name: "Cape Town",
     country: "South Africa",
-    lat: -33.925,
+    // Nudged north of the city centre so the stadium pin stays inside the crop
+    // at the tightest zoom the dial reaches. It used to fall just outside, and
+    // the marker silently vanished on a rung the player had paid for.
+    lat: -33.92,
     lon: 18.424,
     tier: "medium",
     zoom: 13,
@@ -330,6 +333,212 @@ export const SITES: Site[] = [
     accept: ["buenos aires"],
     fact: "The Rio de la Plata is 220 km wide at its mouth, so wide that the far bank is over the horizon.",
   },
+  {
+    id: "paris",
+    name: "Paris",
+    country: "France",
+    lat: 48.869,
+    lon: 2.31,
+    tier: "easy",
+    zoom: 13,
+    opener: "Northern Europe, inland, on a wide river. Dense, pale and low, with almost no skyscrapers.",
+    clue: "Twelve grand avenues meet at one arch, cut straight through the medieval lanes in the 1850s.",
+    landmark: { name: "Iron lattice tower standing on its own by the water", lat: 48.8584, lon: 2.2945 },
+    street: { file: "Fontaine Wallace - Place de la République.jpg", credit: "Coyau", licence: "CC BY-SA 3.0" },
+    structure: { file: "Der Eiffelturm - panoramio.jpg", credit: "Jola Sik", licence: "CC BY 3.0" },
+    decoys: ["Vienna", "Brussels", "Lyon"],
+    accept: ["paris"],
+    fact: "The iron tower was meant to stand for twenty years and come down. The army kept it because it made a good radio mast.",
+  },
+  {
+    id: "london",
+    name: "London",
+    country: "United Kingdom",
+    lat: 51.5033,
+    lon: -0.1196,
+    tier: "easy",
+    zoom: 13,
+    opener: "Northern Europe, on a tidal river that doubles back on itself. Grey, sprawling and unusually green.",
+    clue: "A chain of royal parks runs west from the old centre, and the bend in the water wraps a rebuilt dock.",
+    landmark: { name: "Clock tower at the end of a riverside parliament", lat: 51.5007, lon: -0.1246 },
+    street: { file: "Steam Passage Tavern, Islington, N1 (6246147534).jpg", credit: "Ewan Munro from London, UK", licence: "CC BY-SA 2.0" },
+    structure: { file: "Big Ben, London (7601807122).jpg", credit: "Berit from Redhill/Surrey, UK", licence: "CC BY 2.0" },
+    decoys: ["Dublin", "Manchester", "Birmingham"],
+    accept: ["london"],
+    fact: "The river stank so badly in 1858 that Parliament hung lime-soaked curtains at the windows and nearly moved out.",
+  },
+  {
+    id: "moscow",
+    name: "Moscow",
+    country: "Russia",
+    lat: 55.752,
+    lon: 37.6175,
+    tier: "medium",
+    zoom: 13,
+    opener: "Far north, deep inland, and bitterly cold in winter. Huge blocks and enormously wide roads.",
+    clue: "The plan is a set of rings drawn around a walled citadel, each ring a fortification that was pulled down.",
+    landmark: { name: "Cathedral topped with a cluster of twisted coloured domes", lat: 55.7525, lon: 37.6231 },
+    street: { file: "Moscow, Goncharnaya 27.jpg", credit: "NVO", licence: "CC BY 3.0" },
+    structure: { file: "Saint Basil's Cathedral, Exterior 01.jpg", credit: "Godot13", licence: "CC BY-SA 3.0" },
+    decoys: ["Kyiv", "Saint Petersburg", "Minsk"],
+    accept: ["moscow", "moskva"],
+    fact: "Each ring road traces a defensive wall. They were demolished one by one and paved over where they had stood.",
+  },
+  {
+    id: "santorini",
+    name: "Santorini",
+    country: "Greece",
+    lat: 36.416,
+    lon: 25.432,
+    tier: "hard",
+    zoom: 12,
+    opener: "A Mediterranean island, dry and almost treeless, curved like a broken ring.",
+    clue: "The bay in the middle is a flooded volcanic crater. An eruption blew the centre out about 1600 BC.",
+    landmark: { name: "White town strung along the top of a sheer cliff", lat: 36.4167, lon: 25.4318 },
+    street: { file: "Santorini (8299019156).jpg", credit: "Pedro Szekely from Los Angeles, USA", licence: "CC BY-SA 2.0" },
+    structure: { file: "Fira - crater rim - Santorini - Greece - 01.jpg", credit: "Norbert Nagel", licence: "CC BY-SA 3.0" },
+    decoys: ["Mykonos", "Ibiza", "Malta"],
+    accept: ["santorini", "thira", "thera"],
+    fact: "The eruption that made the bay was one of the largest in human history and may have finished Minoan Crete.",
+  },
+  {
+    id: "marrakesh",
+    name: "Marrakesh",
+    country: "Morocco",
+    lat: 31.6258,
+    lon: -7.9891,
+    tier: "medium",
+    zoom: 13,
+    opener: "North Africa, well inland, at the foot of a snow-capped range. Dry, reddish ground.",
+    clue: "The old quarter is ringed by rammed earth, and local rule keeps every wall inside it the same ochre.",
+    landmark: { name: "Square stone minaret rising over a walled quarter", lat: 31.6238, lon: -7.9938 },
+    street: { file: "City Walls, Marrakech (363261710).jpg", credit: "Antony Stanley from Gloucester, UK", licence: "CC BY-SA 2.0" },
+    structure: { file: "Marrakech, Morocco (5421595453) (5).jpg", credit: "YoTuT from United States", licence: "CC BY 2.0" },
+    decoys: ["Fez", "Tunis", "Algiers"],
+    accept: ["marrakesh", "marrakech"],
+    fact: "The ochre is required by law, which is why the entire city photographs as one shade of red.",
+  },
+  {
+    id: "lagos",
+    name: "Lagos",
+    country: "Nigeria",
+    lat: 6.455,
+    lon: 3.42,
+    tier: "hard",
+    zoom: 12,
+    opener: "West Africa, tropical, on a lagoon behind a long sandbar. Enormous, and still growing fast.",
+    clue: "Much of the land in view was pumped up off the seabed, and no city on the continent holds more people.",
+    landmark: { name: "Waterfront hall with a row of blue spikes for a roof", lat: 6.431, lon: 3.424 },
+    street: { file: "1004 building, lekki road, Lagos, Nigeria.jpg", credit: "Johnbrainyvisuals (OgedengbeTobi John)", licence: "CC BY-SA 4.0" },
+    structure: { file: "Civic Centre at night, Lagos Nigeria.jpg", credit: "Ade Marquis", licence: "CC BY-SA 4.0" },
+    decoys: ["Accra", "Abidjan", "Douala"],
+    accept: ["lagos"],
+    fact: "Around twenty million people live here, more than any other African city, and the figure climbs every year.",
+  },
+  {
+    id: "rio",
+    name: "Rio de Janeiro",
+    country: "Brazil",
+    lat: -22.95,
+    lon: -43.21,
+    tier: "medium",
+    zoom: 12,
+    opener: "South America, tropical coast, with forested granite peaks dropping right onto the beaches.",
+    clue: "A wide bay opens east through a narrow mouth, and a statue looks down from the tallest hill in view.",
+    landmark: { name: "Giant statue with outstretched arms on a mountain top", lat: -22.9519, lon: -43.2105 },
+    street: { file: "Igreja Matriz Santa Margarida Maria, vista do Corcovado.JPG", credit: "Geogast", licence: "CC BY-SA 4.0" },
+    structure: { file: "Estamos Juntos Com O Cristo Redentor.jpg", credit: "Raul Vaccaro", licence: "CC BY-SA 3.0" },
+    decoys: ["Salvador", "Santos", "Montevideo"],
+    accept: ["rio de janeiro", "janeiro", "rio"],
+    fact: "Sailors named it on the first of January 1502, having mistaken the mouth of the bay for a river.",
+  },
+  {
+    id: "sanfrancisco",
+    name: "San Francisco",
+    country: "United States",
+    lat: 37.78,
+    lon: -122.435,
+    tier: "medium",
+    zoom: 12,
+    opener: "West coast of North America, cool and often fogbound, on the tip of a peninsula.",
+    clue: "One orange suspension bridge closes the strait, and the street grid runs dead straight over steep hills.",
+    landmark: { name: "Orange suspension bridge carried on two tall towers", lat: 37.8078, lon: -122.475 },
+    street: { file: "Muni 1060 at 17th and Castro, September 2007.jpg", credit: "Roman SUZUKI", licence: "CC BY 3.0" },
+    structure: { file: "Golden Gate Bridge San Francisco September 2012 005.jpg", credit: "King of Hearts", licence: "CC BY-SA 3.0" },
+    decoys: ["Seattle", "Portland", "San Diego"],
+    accept: ["san francisco", "frisco"],
+    fact: "The bridge is painted international orange because it stands out in the fog that fills the strait most mornings.",
+  },
+  {
+    id: "vancouver",
+    name: "Vancouver",
+    country: "Canada",
+    lat: 49.283,
+    lon: -123.118,
+    tier: "medium",
+    zoom: 12,
+    opener: "Pacific coast of North America, wet and mild, with mountains rising straight behind the city.",
+    clue: "A forested headland as big as the downtown sits at the harbour mouth, kept as parkland since 1888.",
+    landmark: { name: "Waterfront hall roofed with five white sails", lat: 49.2888, lon: -123.1111 },
+    street: { file: "Vernon Block Vancouver.JPG", credit: "Canadian2006", licence: "CC BY-SA 3.0" },
+    structure: { file: "Canada Place evening (3702771906).jpg", credit: "BriYYZ from Toronto, Canada", licence: "CC BY-SA 2.0" },
+    decoys: ["Seattle", "Portland", "Victoria"],
+    accept: ["vancouver"],
+    fact: "The park at the harbour mouth is larger than New York's Central Park and most of it was never cleared.",
+  },
+  {
+    id: "hongkong",
+    name: "Hong Kong",
+    country: "China",
+    // Off the clock tower on purpose: with the pin at the exact centre of the
+    // crop its label covers the optic and its position says nothing.
+    lat: 22.299,
+    lon: 114.175,
+    tier: "hard",
+    zoom: 13,
+    opener: "Subtropical East Asia, on a deep natural harbour between a mountainous island and the mainland.",
+    clue: "The tallest cluster faces the water across a gap barely a kilometre wide, crossed by tunnels, not bridges.",
+    landmark: { name: "Lone brick clock tower left over from a vanished railway station", lat: 22.2936, lon: 114.1694 },
+    street: { file: "Langham Place, Mongkok, Hong Kong - panoramio.jpg", credit: "y-yoshiike", licence: "CC BY 3.0" },
+    structure: { file: "HongKong ClockTower Wikimania.jpg", credit: "Polimerek", licence: "CC BY-SA 3.0" },
+    decoys: ["Macau", "Shenzhen", "Taipei"],
+    accept: ["hong kong", "hongkong"],
+    fact: "The clock tower is all that is left of the terminus where the railway line from Europe once ended.",
+  },
+  {
+    id: "bangkok",
+    name: "Bangkok",
+    country: "Thailand",
+    lat: 13.735,
+    lon: 100.498,
+    tier: "hard",
+    zoom: 13,
+    opener: "Tropical Southeast Asia, flat as a table, on a river that coils back on itself again and again.",
+    clue: "The old royal quarter sits inside one of the loops, and an elevated railway runs above the main roads.",
+    landmark: { name: "Riverside temple with a tall spire crusted in porcelain", lat: 13.7437, lon: 100.4889 },
+    street: { file: "Phaya Thai Road AMLO IMG 7021.jpg", credit: "Bjoertvedt", licence: "CC BY-SA 4.0" },
+    structure: { file: "Central Prang--Wat Arun.jpg", credit: "Kevinsmithnyc", licence: "CC BY-SA 3.0" },
+    decoys: ["Hanoi", "Yangon", "Phnom Penh"],
+    accept: ["bangkok", "krung thep"],
+    fact: "Its full ceremonial name runs to 168 letters and holds the record for the longest place name anywhere.",
+  },
+  {
+    id: "seoul",
+    name: "Seoul",
+    country: "South Korea",
+    lat: 37.53,
+    lon: 126.98,
+    tier: "hard",
+    zoom: 12,
+    opener: "Temperate East Asia, on a broad river, ringed by low forested mountains.",
+    clue: "Wooded peaks push right into the built-up area, and a tower on one of them can be seen from almost anywhere.",
+    landmark: { name: "Broadcast tower on a wooded hill above the centre", lat: 37.5512, lon: 126.9882 },
+    street: { file: "Seogyo-dong, Mapo-gu, Seoul, South Korea - panoramio.jpg", credit: "Phong Phat G", licence: "CC BY-SA 3.0" },
+    structure: { file: "Namsan Mountain and Seoul Tower (49174479208).jpg", credit: "Matt Kieffer from London, United Kingdom", licence: "CC BY-SA 2.0" },
+    decoys: ["Busan", "Osaka", "Pyongyang"],
+    accept: ["seoul"],
+    fact: "Half the country's people live in this one metropolitan area, which is why it spread along the river valley.",
+  },
 ];
 
 /**
@@ -392,20 +601,31 @@ for (const site of SITES) {
  * the same day gets the same pair in the same order, which is the whole basis
  * of comparing two runs.
  *
- * The pair is always two different sites. With sixteen sites the pool repeats
- * after eight days; topping it up is the only thing needed to run longer, and
- * nothing else has to change.
+ * The pair is always two different sites. Twenty-eight sites is two weeks of
+ * pairs before one comes round again; topping it up is the only thing needed
+ * to run longer, and nothing else has to change.
  */
 export function pickSites(dateKey: string): [Site, Site] {
   let hash = 0;
   for (let i = 0; i < dateKey.length; i += 1) {
     hash = (hash * 31 + dateKey.charCodeAt(i)) | 0;
   }
+  // Two consecutive dates differ by one character, so the raw fold lands in
+  // nearby places and `% span` clusters: over a year some sites came up fifty
+  // times and others nine, against an even twenty-six. Mix the fold properly
+  // and read the top bits, the same fix `seededShuffle` needed.
   const span = SITES.length;
-  const first = Math.abs(hash) % span;
+  const first = Math.floor(spread(hash) * span);
   // A second, independent step so the pair is not always adjacent, and never
   // the same site twice.
-  const stride = 1 + (Math.abs(Math.imul(hash, 2246822519)) % (span - 1));
+  const stride = 1 + Math.floor(spread(hash ^ 0x5bf03635) * (span - 1));
   const second = (first + stride) % span;
   return [SITES[first] as Site, SITES[second] as Site];
+}
+
+/** A 32-bit fold to a well spread 0..1, so a modulo of it does not clump. */
+function spread(seed: number): number {
+  let z = Math.imul(seed ^ (seed >>> 16), 0x21f0aaad);
+  z = Math.imul(z ^ (z >>> 15), 0x735a2d97);
+  return ((z ^ (z >>> 15)) >>> 0) / 0x100000000;
 }

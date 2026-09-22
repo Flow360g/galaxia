@@ -263,6 +263,7 @@ export class Engine {
         onContact: (index, outcome) => this.onContact(index, outcome),
         onFinished: () => this.endRun(),
         onDock: () => this.onDock(),
+        onSiteCalled: (index, outcome) => this.onSiteCalled(index, outcome),
       },
       random,
     );
@@ -719,6 +720,16 @@ export class Engine {
   /** Aboard. The station screen is up; the airlock is the one thing the scene adds. */
   private onDock(): void {
     this.audio.dock();
+  }
+
+  /**
+   * Aboard. A site was called in and the verdict is up. The scene is parked,
+   * so there is nothing to shake or shatter: the answer is a radio call, and
+   * the radio is the whole of what the engine adds to it.
+   */
+  private onSiteCalled(index: number, outcome: Outcome): void {
+    this.audio.site(outcome.correct);
+    this.options.onOutcome?.(outcome, index);
   }
 
   private endRun(): void {

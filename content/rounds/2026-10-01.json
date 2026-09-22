@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-01",
+  "roundNumber": 13,
+  "seed": 20261001,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "arts",
+      "prompt": "Which of these were written by Charles Dickens?",
+      "options": [
+        "Jane Eyre",
+        "Oliver Twist",
+        "Bleak House",
+        "Dracula",
+        "Frankenstein",
+        "Hard Times"
+      ],
+      "answers": [
+        1,
+        2,
+        5
+      ],
+      "fact": "Dickens published most of his novels a chapter at a time in magazines, so he could change the plot if readers hated it."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "sport",
+      "prompt": "Which of these sports are played over a net?",
+      "options": [
+        "Golf",
+        "Tennis",
+        "Boxing",
+        "Volleyball",
+        "Badminton",
+        "Archery"
+      ],
+      "answers": [
+        1,
+        3,
+        4
+      ],
+      "fact": "A badminton shuttle leaves the racket faster than any other sporting projectile, at over 400 km/h."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "prompt": "In which year did the Second World War end?",
+      "answer": 1945,
+      "min": 1900,
+      "max": 2000,
+      "fact": "Fighting stopped in Europe in May 1945 and in the Pacific that September, six years after it began."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "food",
+      "prompt": "How many calories are in one large hen's egg?",
+      "answer": 72,
+      "min": 5,
+      "max": 400,
+      "unit": "kcal",
+      "fact": "About 72, and almost all of the fat sits in the yolk. The white is mostly water and protein."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "prompt": "Which band recorded Bohemian Rhapsody?",
+      "options": [
+        "Queen",
+        "ABBA",
+        "Oasis",
+        "The Who"
+      ],
+      "answer": 0,
+      "hint": "Their singer was Freddie Mercury.",
+      "fact": "It runs almost six minutes with no chorus. The record company said radio would never play it, and radio played it constantly."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "misc",
+      "prompt": "In Greek myth, which god ruled the sea?",
+      "options": [
+        "Zeus",
+        "Poseidon",
+        "Apollo",
+        "Hades"
+      ],
+      "answer": 1,
+      "hint": "His brothers took the sky and the underworld.",
+      "fact": "The three brothers drew lots for the world. Zeus got the sky, Hades the underworld, Poseidon the sea."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

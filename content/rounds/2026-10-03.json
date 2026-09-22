@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-03",
+  "roundNumber": 15,
+  "seed": 20261003,
+  "theme": "General knowledge",
+  "stages": [
+    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
+    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
+    { "name": "Open Sky", "after": 5 },
+    { "name": "Where on Earth", "after": 7 }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "history",
+      "prompt": "Which of these were civilisations of the Americas?",
+      "options": [
+        "Viking",
+        "Zulu",
+        "Aztec",
+        "Inca",
+        "Maya",
+        "Celt"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
+      "fact": "The Inca ran an empire of ten million people across the Andes without money, wheels or a written alphabet."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "prompt": "Which of these animals are reptiles?",
+      "options": [
+        "Crocodile",
+        "Tortoise",
+        "Snake",
+        "Frog",
+        "Salamander",
+        "Newt"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ],
+      "fact": "Frogs, salamanders and newts are amphibians. They start life in water and breathe partly through their skin."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "screen",
+      "prompt": "How many notes are there in a musical octave?",
+      "answer": 8,
+      "min": 2,
+      "max": 40,
+      "fact": "Eight, and the word means eighth. The top note sounds like the bottom one because its sound wave is exactly twice as fast."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "food",
+      "prompt": "How many teaspoons of sugar are in a can of cola?",
+      "answer": 9,
+      "min": 1,
+      "max": 50,
+      "fact": "About nine. You cannot taste how sweet it is because the acid in it hides the sugar."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "sport",
+      "prompt": "In which sport would you score a slam dunk?",
+      "options": [
+        "Basketball",
+        "Netball",
+        "Volleyball",
+        "Handball"
+      ],
+      "answer": 0,
+      "hint": "The hoop is three metres off the floor.",
+      "fact": "Dunking was banned in American college basketball for nine years because one player was too good at it."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "misc",
+      "prompt": "Which country's money is the yen?",
+      "options": [
+        "China",
+        "Japan",
+        "South Korea",
+        "Thailand"
+      ],
+      "answer": 1,
+      "hint": "An island country in East Asia.",
+      "fact": "Yen means round, after the shape of the coins that replaced the older oval and bar shaped money in 1871."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

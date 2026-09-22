@@ -13,6 +13,7 @@
     {
       "id": "q1",
       "type": "cluster",
+      "topic": "food",
       "prompt": "Which of these are made from milk?",
       "options": ["Butter", "Honey", "Yoghurt", "Olive oil", "Cheese", "Vinegar"],
       "answers": [0, 2, 4],
@@ -21,14 +22,16 @@
     {
       "id": "q2",
       "type": "cluster",
-      "prompt": "Which of these were real Roman emperors?",
-      "options": ["Nero", "Hannibal", "Hadrian", "Spartacus", "Augustus", "Cicero"],
-      "answers": [0, 2, 4],
-      "fact": "Hannibal fought Rome for Carthage, Spartacus led a slave revolt, and Cicero was a senator."
+      "topic": "arts",
+      "prompt": "Which of these were written by Shakespeare?",
+      "options": ["Oliver Twist", "Macbeth", "Hamlet", "The Tempest", "Frankenstein", "Don Quixote"],
+      "answers": [1, 2, 3],
+      "fact": "Shakespeare invented or first wrote down around 1,700 English words, including lonely, bedroom and eyeball."
     },
     {
       "id": "q3",
       "type": "vector",
+      "topic": "geography",
       "prompt": "How many countries are there in Africa?",
       "answer": 54,
       "min": 10,
@@ -39,16 +42,17 @@
     {
       "id": "q4",
       "type": "vector",
-      "prompt": "How fast can a cheetah run, in kilometres per hour?",
-      "answer": 110,
-      "min": 20,
-      "max": 300,
-      "unit": "km/h",
-      "fact": "About 110 km/h, but only for around twenty seconds before it has to stop and cool down."
+      "topic": "sport",
+      "prompt": "How many holes are played in a full round of golf?",
+      "answer": 18,
+      "min": 1,
+      "max": 60,
+      "fact": "Eighteen became the standard at St Andrews in 1764, when four short holes were merged into two."
     },
     {
       "id": "q5",
       "type": "mcq",
+      "topic": "science",
       "prompt": "Which gas do plants take in to make their food?",
       "options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
       "answer": 2,
@@ -58,9 +62,10 @@
     {
       "id": "q6",
       "type": "mcq",
+      "topic": "geography",
       "prompt": "Which ocean is the largest?",
-      "options": ["Atlantic", "Indian", "Pacific", "Arctic"],
-      "answer": 2,
+      "options": ["Atlantic", "Indian", "Arctic", "Pacific"],
+      "answer": 3,
       "hint": "Its name means peaceful.",
       "fact": "The Pacific covers about a third of the planet, more than every piece of land put together."
     },

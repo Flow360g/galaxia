@@ -162,6 +162,18 @@ export function Hud({
   const foundMax = round.questions.filter((q) => q.type === "cluster").length * FULL_CHARGE;
   const outcome = state?.outcome ?? null;
   const isCluster = question?.type === "cluster";
+  /*
+   * The dial is the only thing that banks a charge, and a first-time player
+   * does not know it wants pressing: testers kept picking lanes on the very
+   * first Cluster until a boulder took the lot. So the run's FIRST Cluster,
+   * and only that one, puts a flashing callout and an arrow over the dial the
+   * moment there is something to bank. After that the player has been told.
+   */
+  const bankNudge =
+    isCluster &&
+    state?.encounter === 0 &&
+    state?.phase === "approach" &&
+    (state?.cluster?.charge ?? 0) > 0;
   const isEarth = question?.type === "earth";
   const isVector = question?.type === "vector";
   const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
@@ -454,11 +466,25 @@ export function Hud({
         />
       ) : null}
 
+      {bankNudge ? (
+        <div className={styles.bankNudge} data-testid="bank-nudge" aria-hidden="true">
+          <span className={styles.bankNudgeCall}>
+            <span className={`${styles.bankNudgeLead} arcade`}>
+              {state?.cluster?.full ? "TAP TO FIRE" : "TAP TO BANK"}
+            </span>
+            {state?.cluster?.full ? null : (
+              <span className={`${styles.bankNudgeSub} arcade`}>OR KEEP GOING</span>
+            )}
+          </span>
+          <span className={styles.bankNudgeArrow} />
+        </div>
+      ) : null}
+
       {isCluster && flying ? (
         <button
           type="button"
           className={`${styles.burnDial} ${
-            (state?.cluster?.charge ?? 0) >= 2 ? styles.burnHot : ""
+            (state?.cluster?.charge ?? 0) >= 2 || bankNudge ? styles.burnHot : ""
           } ${state?.cluster?.full ? styles.burnFull : ""} arcade`}
           disabled={!answering || (state?.cluster?.charge ?? 0) <= 0}
           onClick={onBurn}
