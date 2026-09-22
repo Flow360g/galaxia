@@ -66,6 +66,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await readUp(page);
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "0");
   await expect(page.getByTestId("burn")).toBeDisabled();
+  // Nothing to bank yet, so nothing is pointing at the dial.
+  await expect(page.getByTestId("bank-nudge")).toHaveCount(0);
   await shot(page, "01-cluster");
   const [right1, right2] = answersOf(0);
   await page.getByTestId(`option-${right1}`).click();
@@ -74,6 +76,10 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   });
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1");
   await expect(page.getByTestId("burn")).toBeEnabled();
+  // First plasma of the run's first cluster: the callout comes up over the
+  // dial, because nothing else says the dial has to be pressed.
+  await expect(page.getByTestId("bank-nudge")).toBeVisible();
+  await expect(page.getByTestId("bank-nudge")).toContainText("TAP TO BANK");
   await page.getByTestId(`option-${right2}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "2", { timeout: 5_000 });
   await shot(page, "02-two-plasma");
@@ -100,6 +106,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const [firstRight, secondRight] = answersOf(1);
   await page.getByTestId(`option-${firstRight}`).click();
   await expect(page.getByTestId("reactor")).toHaveAttribute("data-charge", "1", { timeout: 5_000 });
+  // The callout was for the first cluster only. It does not come back.
+  await expect(page.getByTestId("bank-nudge")).toHaveCount(0);
   const [wrongA, wrongB] = wrongLanesOf(1);
   await page.getByTestId(`option-${wrongA}`).click();
   // The boulder's run-in and its final strike play out first. The shield saves

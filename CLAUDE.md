@@ -138,7 +138,13 @@ The screen has two zones. Respect them:
   charge is the most dramatic thing in the run and the band had no room left
   to dramatise it, and a thumb reaches a bottom corner without crossing the
   screen. The gauge takes no taps at all; the dial is the only button the
-  run draws below the band. Both hug `env(safe-area-inset-*)`. Do not read
+  run draws below the band. On the run's FIRST Cluster only, once there is
+  something to bank, a flashing TAP TO BANK / OR KEEP GOING callout and an
+  arrow sit on top of the dial and it starts breathing: testers read the dial
+  as a readout rather than a control and kept picking until a boulder took
+  the lot. The callout is part of that corner, not a third element, so it is
+  drawn off the dial's own `--dial` size, takes no pointer events, and never
+  appears again after the first Cluster resolves. Both hug `env(safe-area-inset-*)`. Do not read
   them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
   nowhere and only exists while the run is parked on a verdict; the visible
   TAP TO CONTINUE prompt lives in the band like everything else.
