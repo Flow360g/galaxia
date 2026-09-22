@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "ship-stills": "node scripts/ship-stills.mjs"
+    "ship-stills": "node scripts/ship-stills.mjs",
+    "check-deploy": "node scripts/check-deploy.mjs"
   },
   "dependencies": {
     "next": "16.3.5",

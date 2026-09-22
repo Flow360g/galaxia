@@ -1,0 +1,53 @@
+# Is what is live what is on main?
+#
+# Vercel builds on a webhook, and a webhook can be dropped. One was: PR #19
+# merged and no build was ever queued for the merge commit, so the game ran
+# for hours on a bundle from before it. The deploys either side went out
+# fine, which is what made it invisible.
+#
+# This runs on GitHub's own scheduler rather than Vercel's webhook, so it
+# still fires on the day the webhook does not. It only compares two shas; it
+# does not check that the site is healthy.
+#
+# Needs a repository secret named VERCEL_TOKEN, read scope is enough:
+# https://vercel.com/account/tokens -> Settings -> Secrets -> Actions.
+
+name: Deploy check
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 08:00 Melbourne, as a net under the push check.
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-check
+  cancel-in-progress: true
+
+jobs:
+  live-matches-main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the check rules a later commit a pass, and it needs
+          # both commits present to tell a later one from a wrong one.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # On a push, production has to build first, so give it time. On the
+      # schedule there is nothing to wait for: it is either live or it is not.
+      - name: Check production is serving this commit
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            node scripts/check-deploy.mjs --wait=900
+          else
+            node scripts/check-deploy.mjs --sha="$(git rev-parse origin/main)"
+          fi

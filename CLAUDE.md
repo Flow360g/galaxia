@@ -348,6 +348,7 @@ e2e/audio.spec.ts     Playwright: taps the master output and asserts on the sign
 e2e/onboarding.spec.ts  Playwright: the briefing and the ship bay, unlocks included
 e2e/practice.spec.ts  Playwright: the ?shuffle= hatch, and that it records nothing
 scripts/ship-stills.mjs  renders public/ships/*.png off the /hangar?shot= hatch
+scripts/check-deploy.mjs  asks whether production is serving what is on main
 public/ships/         one still per hull, drawn on the results card
 ```
 
@@ -527,6 +528,7 @@ npm run lint           # eslint (flat config, next core-web-vitals + typescript)
 npm run build          # production build; a malformed round fails here
 npm run test:e2e       # playwright, builds and serves on :3100, SwiftShader WebGL
 npm run ship-stills    # re-render public/ships/*.png; needs a built app on :3100
+npm run check-deploy   # is production serving main? needs VERCEL_TOKEN
 ```
 
 Run typecheck and lint before committing. Run the e2e test after any change
@@ -633,6 +635,39 @@ to announce, so a round can skip a number if it has to.
   the pool, is what made practice runs feel like the same eight questions
   forever. If a draw ever looks lopsided again, check the stream before
   blaming the content.
+
+## Shipping
+
+Vercel builds on a webhook from GitHub, and a webhook is a thing that can be
+dropped. One was. PR #19 merged and no build was ever queued for the merge
+commit, so the station kept Sergeant Soap quiet, the site verdict silent and
+the points figure off the screen for hours after the work had shipped, and
+nothing anywhere said so. The two deploys either side of it went out fine,
+which is exactly what made it invisible: the dashboard looked busy and
+healthy, and the only symptom was a game that behaved like the code had never
+been written.
+
+`scripts/check-deploy.mjs` compares one sha against one sha: what Vercel is
+serving as production, against what `main` says should be there. It runs from
+`.github/workflows/deploy-check.yml` on every push to `main`, on GitHub's
+scheduler rather than Vercel's webhook, so it still fires on the day the
+webhook does not.
+
+- **It reads the project's `targets.production`, not the newest build.** Roll
+  production back and the newest ready deployment is no longer the live one.
+  The deployments list is only the fallback, and the script says which of the
+  two answered so a surprising result can be read properly.
+- **A later commit is a pass.** Another merge can land while the check is
+  still polling, and production moving on to it is the system working. That
+  needs both commits in the clone, which is why the workflow checks out full
+  history; a sha the clone has never seen is never assumed to be newer.
+- **It fails loudly with no token rather than passing.** A check that skips
+  itself when it cannot answer is worse than no check, because it reports
+  green. The token is a repository secret named `VERCEL_TOKEN`; the project
+  and team ids are identifiers, not credentials, and sit in the script.
+- **It is not a health check.** It does not fetch a page and does not care
+  whether the build was any good. It answers the one narrow question that
+  nothing else was answering.
 
 ## Deliberately not done
 
