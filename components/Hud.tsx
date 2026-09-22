@@ -20,9 +20,10 @@ import type {
 } from "@/lib/game/types";
 import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, SCORE, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
-import { formatValue } from "@/lib/game/Run";
+import { formatAim } from "@/lib/game/Run";
 import { multiplierFor } from "@/lib/game/Score";
 import { phaseGuide } from "@/lib/game/phases";
+import { stepT } from "@/lib/game/nova";
 import { ScoringDisclosure } from "./ScoringTable";
 import { formatPoints, formatScore, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
@@ -91,6 +92,15 @@ function bankPoints(charge: number, streak: number): number {
 
 /** Slider step for a nudge button or an arrow key. */
 const NUDGE = 0.01;
+
+/**
+ * How far one nudge or arrow key moves the aim. A counting question moves a
+ * whole unit at a time, because the aim snaps to whole units and a nudge
+ * smaller than a step is a button that does nothing.
+ */
+function nudgeOf(question: VectorQuestion): number {
+  return Math.max(NUDGE, stepT(question));
+}
 
 const RATING_TEXT: Record<Rating, string> = {
   S: "FLAWLESS",
@@ -670,17 +680,17 @@ function VectorPanel({
   const t = vector?.t ?? 0.5;
   const [lo, hi] = vector?.window ?? [0, 1];
   const value = vector?.value ?? (question.min + question.max) / 2;
-  const nudge = (direction: -1 | 1) => onAim(t + direction * NUDGE);
+  const nudge = (direction: -1 | 1) => onAim(t + direction * nudgeOf(question));
 
   return (
     <div className={styles.vector}>
       <div className={styles.aimReadout}>
         <span className={`${styles.aimLabel} arcade`}>AIM</span>
         <span className={`${styles.aimValue} arcade`} data-testid="aim-value">
-          {formatValue(value, question.unit)}
+          {formatAim(question, value)}
         </span>
         <span className={styles.aimEnds}>
-          {formatValue(question.min, question.unit)} to {formatValue(question.max, question.unit)}
+          {formatAim(question, question.min)} to {formatAim(question, question.max)}
         </span>
       </div>
       <div className={styles.sliderRow}>
@@ -713,7 +723,7 @@ function VectorPanel({
                 onLock();
               }
             }}
-            aria-label={`Aim, ${formatValue(value, question.unit)}`}
+            aria-label={`Aim, ${formatAim(question, value)}`}
             data-testid="aim"
           />
         </div>
@@ -975,11 +985,6 @@ function PulseOverlay({ pulse }: { pulse: Pulse }) {
  * How wide a vector shot was, as a percentage of the truth. The number the
  * bands are read against, so the player can see which one they landed in.
  */
-function formatError(error: number): string {
-  const percent = error * 100;
-  return percent >= 10 ? `${Math.round(percent)}%` : `${(Math.round(percent * 10) / 10).toFixed(1)}%`;
-}
-
 function OutcomeToast({
   outcome,
   fact,
@@ -1005,7 +1010,13 @@ function OutcomeToast({
             ? "NEAR MISS · NOTHING LOST"
             : outcome.timedOut
               ? "TOO SLOW"
-              : "WAY OFF"
+              : // WAY OFF is what a wild shot is called, and a wild shot is
+                // what the flat dock is for. A shot that missed by a hair
+                // outside the bands pays a fraction of it, so calling that
+                // one WAY OFF too read as the game shouting at a near miss.
+                (outcome.severity ?? 1) >= 1
+                ? "WAY OFF"
+                : "MISSED"
       : OUTCOME_LABEL[outcome.kind];
   const picked = !outcome.correct && outcome.chosen !== null;
   return (
@@ -1046,10 +1057,10 @@ function OutcomeToast({
           {!outcome.timedOut ? (
             <span className={styles.toastAnswer}>
               Your guess: {outcome.guessText}
-              {outcome.error !== undefined ? (
+              {outcome.errorText ? (
                 <>
                   {" "}
-                  (<strong data-testid="wide-by">{formatError(outcome.error)} off</strong>)
+                  (<strong data-testid="wide-by">{outcome.errorText}</strong>)
                 </>
               ) : null}
             </span>
@@ -1255,7 +1266,8 @@ function useKeyboard({
 
       if (vector && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
         const t = current.state?.vector?.t ?? 0.5;
-        current.onAim(t + (event.key === "ArrowLeft" ? -NUDGE : NUDGE));
+        const step = nudgeOf(current.question as VectorQuestion);
+        current.onAim(t + (event.key === "ArrowLeft" ? -step : step));
       } else if (vector && event.key === "Enter") {
         current.onLockVector();
       } else if (cluster && event.key >= "1" && event.key <= "6") {

@@ -58,8 +58,14 @@ things that make those games sticky:
   first (the perfect run assumes it was; unboosted it is half, and a wrong
   boosted answer is the one lane that docks points), and a Vector is scored on bands
   that are fractions of the true answer (`VECTOR.bands`), never on anything
-  authored per question. Inside the widest band a shot is a `graze`: no
-  points, no damage, streak untouched.
+  authored per question, never narrower than the whole units of
+  `VECTOR.minBands`, because 5% of 6 strings is a third of a string and being
+  one out is not a wild shot, and never wider than the share of the slider in
+  `VECTOR.maxBands`, because 5% of 1989 is 99 years and a question nobody can
+  get wrong is not a question. Inside the widest band a shot is a `graze`: no
+  points, no damage, streak untouched. Past it the dock scales with how wrong
+  the shot was, so the flat 25 is what a wild shot costs and a near one costs
+  a fraction of it.
 - **The player says when to move on.** Nothing advances on a timer once a
   verdict is up. The outcome toast and the waypoint card carry the right
   answer and a fact, and they sit there until the screen is tapped. Only the
@@ -573,7 +579,16 @@ to announce, so a round can skip a number if it has to.
   clue reveals), a `fact`.
 - Vector: a numeric `answer` (never zero), `min` and `max` for the slider,
   optional `unit` and `log`, a `fact`. Nothing about closeness is authored:
-  the bands are fractions of the answer and live in `VECTOR.bands`.
+  the bands are fractions of the answer and live in `VECTOR.bands`, floored
+  to the whole units of `VECTOR.minBands` so a small count is not scored on
+  thirds of a string, and capped to the share of the slider in
+  `VECTOR.maxBands` so a year is scored against its dial rather than against
+  1989. Set `min` and `max` to the range a player would actually consider:
+  the cap is read off them, so a lazy range is now a loose question rather
+  than a free one. Whole ends no further apart than `VECTOR.snapMaxSpan`
+  make the slider aim in whole units, so the number on screen is the number
+  scored; keep the ends whole for a counting question, and leave them wide or
+  fractional where the answer is a measurement.
 - Earth: the slot in the round file carries only `id`, `type` and `prompt`.
   The site itself comes from `lib/content/sites.ts`, seeded on the round's own
   date, so two sites a day are drawn without anyone authoring them and every

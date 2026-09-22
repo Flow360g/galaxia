@@ -16,6 +16,9 @@ import round20261003 from "@/content/rounds/2026-10-03.json";
 import round20261004 from "@/content/rounds/2026-10-04.json";
 import round20261005 from "@/content/rounds/2026-10-05.json";
 import { pickSites } from "@/lib/content/sites";
+import { toleranceOf } from "@/lib/game/Run";
+import { stepFor } from "@/lib/game/nova";
+import { VECTOR } from "@/lib/game/Tuning";
 import { TOPICS } from "@/lib/game/types";
 import type { EarthQuestion, Question, Round, Topic } from "@/lib/game/types";
 
@@ -273,6 +276,16 @@ function validate(round: Round, authored = false): Round {
       }
       if (log && !(min > 0)) {
         throw new Error(`Round ${round.date} vector ${question.id}: log scale needs min > 0`);
+      }
+      // A question with whole ends close together aims in whole units, so a
+      // fractional answer has to be reachable: the nearest whole number must
+      // still be a direct hit, or the question can never be answered fully.
+      // An answer of 2.5 on a 1..10 slider is the shape that fails here.
+      if (stepFor(question) > 0 && Math.abs(Math.round(answer) - answer) > toleranceOf(question).direct) {
+        throw new Error(
+          `Round ${round.date} vector ${question.id}: this slider aims in whole units and ${answer} ` +
+            `is not reachable. Widen min..max past ${VECTOR.snapMaxSpan}, or round the answer.`,
+        );
       }
       continue;
     }

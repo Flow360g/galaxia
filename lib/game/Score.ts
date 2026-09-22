@@ -47,6 +47,18 @@ export function penaltyFor(outcome: Outcome, question?: Question): number {
       return SCORE.penalty.cluster;
     case "mcq":
       return outcome.boosted ? SCORE.penalty.laneBoosted : SCORE.penalty.lane;
+    case "vector":
+      // The flat dock is what a WILD shot costs. A shot that missed by a
+      // hair outside the graze band is not a wild shot and should not pay
+      // like one, so the same severity that softens the impact softens the
+      // dock, rounded to a multiple of 5 so the toast stays arcade. A
+      // timeout is not a shot at all and keeps the flat figure.
+      return outcome.timedOut
+        ? SCORE.penalty.timeout
+        : roundTo5(
+            (outcome.kind === "wreck" ? SCORE.penalty.wreck : SCORE.penalty.collision) *
+              (outcome.severity ?? 1),
+          );
     default:
       return outcome.timedOut
         ? SCORE.penalty.timeout
@@ -54,6 +66,11 @@ export function penaltyFor(outcome: Outcome, question?: Question): number {
           ? SCORE.penalty.wreck
           : SCORE.penalty.collision;
   }
+}
+
+/** Docks land on a multiple of 5: -10, never -7. */
+function roundTo5(points: number): number {
+  return Math.round(points / 5) * 5;
 }
 
 /** Points on offer at encounter `index` of a perfect run. */

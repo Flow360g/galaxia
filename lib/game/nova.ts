@@ -67,6 +67,51 @@ export function resolveVectorNova(
   return { kind: "narrow", window: [lo, lo + width] };
 }
 
+/**
+ * The step a vector's aim moves in, in answer units, or 0 for a smooth
+ * slider. A question whose ends are both whole numbers and close together is
+ * a counting question: aiming at 7.04 strings and being scored on 7.04 while
+ * the readout says 7 is a lie the player cannot see. A wide range stays
+ * smooth, because whole metres of the Mariana Trench is false precision.
+ *
+ * It is derived from the ENDS, never the answer, so it can never leak one.
+ */
+export function stepFor(question: VectorQuestion): number {
+  const { min, max } = question;
+  if (question.log) return 0;
+  if (!Number.isInteger(min) || !Number.isInteger(max)) return 0;
+  return max - min <= VECTOR.snapMaxSpan ? 1 : 0;
+}
+
+/** That step in slider space, or 0 when the slider is smooth. */
+export function stepT(question: VectorQuestion): number {
+  const step = stepFor(question);
+  const span = question.max - question.min;
+  return step > 0 && span > 0 ? step / span : 0;
+}
+
+/**
+ * Snap an aim to the nearest whole unit inside `window`, if this question
+ * aims in whole units. Snapping and clamping have to happen together: snap
+ * then clamp and the aim can sit between two units at the window's edge,
+ * clamp then snap and it can sit a half-step outside the window.
+ */
+export function snapT(
+  question: VectorQuestion,
+  t: number,
+  window: [number, number] = [0, 1],
+): number {
+  const [lo, hi] = window;
+  const step = stepT(question);
+  const held = Math.min(hi, Math.max(lo, clamp01(t)));
+  if (step <= 0) return held;
+  let snapped = Math.round(held / step) * step;
+  if (snapped < lo) snapped += step;
+  if (snapped > hi) snapped -= step;
+  // A window narrower than one step has no whole unit in it; the clamp wins.
+  return snapped < lo || snapped > hi ? held : clamp01(snapped);
+}
+
 /** Answer units to slider space 0..1, honouring the log flag. */
 export function toSlider(question: VectorQuestion, value: number): number {
   const { min, max } = question;
