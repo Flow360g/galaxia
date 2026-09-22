@@ -64,6 +64,18 @@ export function StationFeed({
   const outcome = state.outcome;
   const revealed = state.awaitingTap && outcome !== null;
 
+  /** The authors of the photographs the player actually bought, for the reveal. */
+  const credits = useMemo(() => {
+    const shots = [
+      shown.has("street") ? question.street : undefined,
+      shown.has("structure") ? question.structure : undefined,
+    ];
+    const names = shots
+      .filter((shot): shot is EarthShot => shot !== undefined)
+      .map((shot) => shot.credit);
+    return names.filter((name, index) => names.indexOf(name) === index);
+  }, [shown, question.street, question.structure]);
+
   /**
    * Intel and the verdict both land at the bottom of the stack, which on a
    * phone is off the bottom of the scroll region. Bring it into view: the
@@ -226,6 +238,15 @@ export function StationFeed({
             {question.fact ? (
               <p className={styles.fact}>{question.fact}</p>
             ) : null}
+            {/* The photographers, held back while the answer was still in play
+                because several of them are named after the place they live.
+                Only the pictures that were actually bought are credited: one
+                that was never shown was never used. */}
+            {credits.length > 0 ? (
+              <p className={styles.credits}>
+                Photographs: {credits.join("; ")}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -354,10 +375,15 @@ function Ground({
         <div className={styles.sweep} aria-hidden="true" />
         <div className={styles.groundVignette} aria-hidden="true" />
       </div>
+      {/* The licence and the source, but not the author, while the question is
+          live: "Ewan Munro from London, UK" and "BriYYZ from Toronto, Canada"
+          both name the answer under a photograph the player has just paid for.
+          The names are given on the reveal instead, on the same screen, with
+          these pictures still in the stack above it. */}
       <figcaption className={styles.groundCap}>
         {caption}
         <span className={styles.groundCredit}>
-          {shot.credit} &middot; {shot.licence} &middot; Wikimedia Commons
+          {shot.licence} &middot; Wikimedia Commons
         </span>
       </figcaption>
     </figure>
