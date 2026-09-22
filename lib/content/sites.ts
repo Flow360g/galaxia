@@ -597,13 +597,27 @@ for (const site of SITES) {
 }
 
 /**
+ * The finale ramps, like the rest of the run.
+ *
+ * Every site has always carried a `tier`, and for a long time nothing read it:
+ * the pair was drawn blind, so a run could finish on two hard sites or coast
+ * home on two easy ones. The first site is drawn from the gentler end and the
+ * second from the harder one, which makes WHERE ON EARTH part of the same
+ * difficulty system as the quiz instead of an exception to it. Medium sits in
+ * both, so neither pool is thin.
+ */
+const OPENING_SITES = SITES.filter((site) => site.tier !== "hard");
+const CLOSING_SITES = SITES.filter((site) => site.tier !== "easy");
+
+/**
  * The two sites for a date. Seeded by the date key alone, so every player on
  * the same day gets the same pair in the same order, which is the whole basis
  * of comparing two runs.
  *
- * The pair is always two different sites. Twenty-eight sites is two weeks of
- * pairs before one comes round again; topping it up is the only thing needed
- * to run longer, and nothing else has to change.
+ * The pair is always two different sites, and the second is never easier than
+ * the first. Twenty-eight sites is two weeks of pairs before one comes round
+ * again; topping it up is the only thing needed to run longer, and nothing
+ * else has to change.
  */
 export function pickSites(dateKey: string): [Site, Site] {
   let hash = 0;
@@ -614,13 +628,13 @@ export function pickSites(dateKey: string): [Site, Site] {
   // nearby places and `% span` clusters: over a year some sites came up fifty
   // times and others nine, against an even twenty-six. Mix the fold properly
   // and read the top bits, the same fix `seededShuffle` needed.
-  const span = SITES.length;
-  const first = Math.floor(spread(hash) * span);
-  // A second, independent step so the pair is not always adjacent, and never
-  // the same site twice.
-  const stride = 1 + Math.floor(spread(hash ^ 0x5bf03635) * (span - 1));
-  const second = (first + stride) % span;
-  return [SITES[first] as Site, SITES[second] as Site];
+  const first = OPENING_SITES[Math.floor(spread(hash) * OPENING_SITES.length)] as Site;
+  // A second, independent draw. The pools overlap on medium, so the first site
+  // is taken out by hand rather than by a stride: a run must never name the
+  // same place twice.
+  const rest = CLOSING_SITES.filter((site) => site.id !== first.id);
+  const second = rest[Math.floor(spread(hash ^ 0x5bf03635) * rest.length)] as Site;
+  return [first, second];
 }
 
 /** A 32-bit fold to a well spread 0..1, so a modulo of it does not clump. */

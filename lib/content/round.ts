@@ -16,6 +16,12 @@ import round20261003 from "@/content/rounds/2026-10-03.json";
 import round20261004 from "@/content/rounds/2026-10-04.json";
 import round20261005 from "@/content/rounds/2026-10-05.json";
 import { pickSites } from "@/lib/content/sites";
+import {
+  ROUND_PROFILE,
+  checkVector,
+  rangeFor,
+  trackShare,
+} from "@/lib/content/difficulty";
 import { TOPICS } from "@/lib/game/types";
 import type { EarthQuestion, Question, Round, Topic } from "@/lib/game/types";
 
@@ -38,6 +44,18 @@ const KNOWN_TOPICS = new Set<string>(TOPICS);
 
 /** No round leans more than this many questions on one corner. */
 const TOPIC_CAP = 2;
+
+/**
+ * A vector asks for a magnitude, never a date.
+ *
+ * The scoring bands are fractions of the answer, and a calendar year has no
+ * true zero to take a fraction of: five percent of 2001 is a century, so every
+ * "in which year" question in the pool covered the whole slider and handed out
+ * a direct hit for any position at all. The geometry rule below would let an
+ * author "fix" that by widening the range to 200..3000, which passes the maths
+ * and is a worse question, so the shape is rejected by name instead.
+ */
+const DATE_PROMPT = /\b(what|which)\s+year\b/i;
 
 const POOL: Round[] = [
   round20260918,
@@ -193,11 +211,18 @@ function seededShuffle<T>(items: readonly T[], seed: string): T[] {
  * A malformed round should fail at import, in the build, not mid-flight for
  * a player. Clusters are the fiddly ones: six lanes, three distinct answers.
  *
- * `authored` marks a round somebody wrote as a day, which is held to the one
- * rule a random draw cannot be: no more than two questions from any one
- * corner. The practice shuffle passes false, because a draw from the whole
- * pool can legitimately land three of a kind and a hatch nobody but a tester
- * sees is not worth failing the build over. See `getShuffledRound`.
+ * It also holds the two difficulty rules, because how hard a round is turned
+ * out to be just as malformable as its shape and nothing was watching. Every
+ * quiz question declares a level, and every vector's slider has to put the
+ * scoring bands within reach: see `lib/content/difficulty.ts` for why that is
+ * a property of `min..max` rather than of the question.
+ *
+ * `authored` marks a round somebody wrote as a day, which is held to the two
+ * rules a random draw cannot be: no more than two questions from any one
+ * corner, and one difficulty profile for every day. The practice shuffle
+ * passes false, because a draw from the whole pool can legitimately land three
+ * of a kind and a hatch nobody but a tester sees is not worth failing the
+ * build over. See `getShuffledRound`, which steers rather than throws.
  */
 function validate(round: Round, authored = false): Round {
   const stages = round.stages ?? [];
@@ -231,6 +256,15 @@ function validate(round: Round, authored = false): Round {
       );
     }
     corners.set(question.topic, (corners.get(question.topic) ?? 0) + 1);
+    // Same reason as the corner above: the JSON is cast, so a question that
+    // forgot to declare how hard it is gets here intact.
+    const level = question.difficulty as number | undefined;
+    if (level !== 1 && level !== 2 && level !== 3) {
+      throw new Error(
+        `Round ${round.date} ${question.type} ${question.id}: difficulty "${level}" is not 1, 2 or 3. ` +
+          `See content/AUTHORING.md.`,
+      );
+    }
   }
   if (authored) {
     for (const [topic, count] of corners) {
@@ -241,6 +275,7 @@ function validate(round: Round, authored = false): Round {
         );
       }
     }
+    checkProfile(round);
   }
   for (const question of round.questions) {
     if (question.type === "earth") {
@@ -274,6 +309,25 @@ function validate(round: Round, authored = false): Round {
       if (log && !(min > 0)) {
         throw new Error(`Round ${round.date} vector ${question.id}: log scale needs min > 0`);
       }
+      if (DATE_PROMPT.test(question.prompt)) {
+        throw new Error(
+          `Round ${round.date} vector ${question.id}: a slider asks for a magnitude, not a date. ` +
+            `The bands are fractions of the answer and a calendar year has no zero to take a ` +
+            `fraction of, so every position scores. Ask for a duration or a count instead.`,
+        );
+      }
+      // How hard a vector is comes down to how much of the slider the scoring
+      // bands cover, which nothing checked until this existed. See
+      // `lib/content/difficulty.ts` for what the numbers mean.
+      const faults = checkVector(question);
+      if (faults.length > 0) {
+        const fixed = rangeFor(question.answer);
+        throw new Error(
+          `Round ${round.date} vector ${question.id} ("${question.prompt}"): ${faults.join("; ")}. ` +
+            `Try min ${fixed.min}, max ${fixed.max}, which puts the close band at ` +
+            `${Math.round(trackShare({ ...question, ...fixed, log: false }) * 1000) / 10}% of the slider.`,
+        );
+      }
       continue;
     }
     if (question.type !== "cluster") continue;
@@ -292,6 +346,50 @@ function validate(round: Round, authored = false): Round {
     }
   }
   return round;
+}
+
+/**
+ * One authored day's difficulty profile.
+ *
+ * The sum is what makes two days comparable: a round of six 1s and a round of
+ * six 3s both used to pass, and a score out of 1,800 means nothing if today
+ * was a gift and yesterday was not. The counts stop a round reaching the sum
+ * by pairing gifts with obscurities, which is the same problem wearing a
+ * disguise. The opener is capped because the run is the product and a hard
+ * first question ends it before the player is warm.
+ *
+ * Authored rounds only, like `TOPIC_CAP`: a draw from the whole pool cannot
+ * control its own profile, and failing the build over a hatch nobody but a
+ * tester sees is not worth it. See `getShuffledRound`, which steers instead.
+ */
+function checkProfile(round: Round): void {
+  const levels = round.questions
+    .filter((question) => question.type !== "earth")
+    .map((question) => question.difficulty as number);
+  const sum = levels.reduce((total, level) => total + level, 0);
+  const { sum: band, maxEasy, maxHard, openerMax } = ROUND_PROFILE;
+  const shape = levels.join(", ");
+  if (sum < band.min || sum > band.max) {
+    throw new Error(
+      `Round ${round.date}: difficulty sums to ${sum} (${shape}), outside ${band.min}..${band.max}. ` +
+        `Two days have to be worth comparing.`,
+    );
+  }
+  const easy = levels.filter((level) => level === 1).length;
+  if (easy > maxEasy) {
+    throw new Error(`Round ${round.date}: ${easy} questions at difficulty 1 (${shape}), at most ${maxEasy}.`);
+  }
+  const hard = levels.filter((level) => level === 3).length;
+  if (hard > maxHard) {
+    throw new Error(`Round ${round.date}: ${hard} questions at difficulty 3 (${shape}), at most ${maxHard}.`);
+  }
+  const opener = levels[0];
+  if (opener !== undefined && opener > openerMax) {
+    throw new Error(
+      `Round ${round.date}: the run opens on difficulty ${opener} (${shape}), at most ${openerMax}. ` +
+        `A hard first question ends a run before the player is warm.`,
+    );
+  }
 }
 
 /** Local calendar date as YYYY-MM-DD. Rounds turn over at the player's midnight. */
@@ -372,20 +470,35 @@ export function getShuffledRound(seed: string): Round {
   // pool was widened in the first place. It only ever reads the already
   // seeded order, so a seed still rebuilds the identical round.
   const corners = new Map<Topic, number>();
+  // And steer the difficulty the same way. An authored day is held to a
+  // profile by `checkProfile`; a draw cannot be held to one, because the pool
+  // it is drawing from might not contain a question that satisfies it. So it
+  // is a preference here rather than a promise: prefer a pick that leaves the
+  // profile still reachable, and take what is left if none does.
+  const quizSlots = MIX.reduce((total, { count }) => total + count, 0);
+  let levels = 0;
 
   for (const { type, count } of MIX) {
     const pool = POOL.flatMap((round) => round.questions).filter((q) => q.type === type);
     const shuffled = seededShuffle(pool, `${seed}:${type}`);
     for (let taken = 0; taken < count; taken += 1) {
-      // First choice that keeps the round inside the cap; failing that, the
-      // first one left, because a hatch has to hand back a round either way.
-      const index = shuffled.findIndex(
-        (q) => q.type !== "earth" && (corners.get(q.topic) ?? 0) < TOPIC_CAP,
-      );
+      const room = (q: Question) => q.type !== "earth" && (corners.get(q.topic) ?? 0) < TOPIC_CAP;
+      // After this pick, can the remaining slots still land inside the band?
+      const reachable = (q: Question) => {
+        if (q.type === "earth") return false;
+        const left = quizSlots - questions.length - 1;
+        const total = levels + q.difficulty;
+        return total + left * 3 >= ROUND_PROFILE.sum.min && total + left <= ROUND_PROFILE.sum.max;
+      };
+      // First choice that keeps both; then one that keeps the corner cap;
+      // then the first one left, because a hatch has to hand back a round.
+      let index = shuffled.findIndex((q) => room(q) && reachable(q));
+      if (index < 0) index = shuffled.findIndex(room);
       const picked = shuffled.splice(index >= 0 ? index : 0, 1)[0];
       if (!picked) break;
       if (picked.type !== "earth") {
         corners.set(picked.topic, (corners.get(picked.topic) ?? 0) + 1);
+        levels += picked.difficulty;
       }
       questions.push(picked);
     }

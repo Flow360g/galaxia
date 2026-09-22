@@ -47,6 +47,21 @@ export const TOPICS: readonly Topic[] = [
   "misc",
 ];
 
+/**
+ * How hard a quiz question is, declared by whoever wrote it.
+ *
+ * Authoring metadata like `topic`, and held to the same line: never rendered,
+ * never scored, never in `GameState`. It exists so the build can hold a round
+ * to one difficulty profile instead of letting a day pair "which of these are
+ * made from milk" with "which of these are dwarf planets", which is what the
+ * pool did before this existed.
+ *
+ * 1 is a warm-up, 2 is the spine of the game, 3 is the one you brag about.
+ * `content/AUTHORING.md` is the rubric, and it matters more than the number:
+ * a cluster's difficulty is in its decoys, not its category.
+ */
+export type Difficulty = 1 | 2 | 3;
+
 /** A normal trivia encounter: four options, one right. */
 export interface McqQuestion {
   id: string;
@@ -54,6 +69,8 @@ export interface McqQuestion {
   prompt: string;
   /** The corner it is drawn from. Authoring metadata; never shown. */
   topic: Topic;
+  /** How hard it is. Authoring metadata; never shown. */
+  difficulty: Difficulty;
   options: string[];
   /** Index into `options`. */
   answer: number;
@@ -122,6 +139,8 @@ export interface ClusterQuestion {
   prompt: string;
   /** The corner it is drawn from. Authoring metadata; never shown. */
   topic: Topic;
+  /** How hard it is. Authoring metadata; never shown. */
+  difficulty: Difficulty;
   /** Exactly six. */
   options: string[];
   /** Indices into `options`. Exactly three, distinct. */
@@ -141,6 +160,8 @@ export interface VectorQuestion {
   prompt: string;
   /** The corner it is drawn from. Authoring metadata; never shown. */
   topic: Topic;
+  /** How hard it is. Authoring metadata; never shown. */
+  difficulty: Difficulty;
   /** Never zero: the bands are relative to it. */
   answer: number;
   min: number;

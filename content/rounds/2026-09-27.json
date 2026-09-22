@@ -4,38 +4,77 @@
   "seed": 20260927,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "nature",
-      "prompt": "Which of these are fruits, to a botanist?",
-      "options": ["Carrot", "Lettuce", "Celery", "Tomato", "Cucumber", "Pumpkin"],
-      "answers": [3, 4, 5],
-      "fact": "A fruit is the part that holds the seeds, which is why a tomato counts and a carrot does not."
+      "topic": "sport",
+      "difficulty": 1,
+      "prompt": "Which of these sports are played at the Summer Olympics?",
+      "options": [
+        "Fencing",
+        "Judo",
+        "Ski jumping",
+        "Archery",
+        "Bobsleigh",
+        "Curling"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
+      "fact": "Curling, bobsleigh and ski jumping all need ice or snow, so they belong to the Winter Games."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "sport",
-      "prompt": "Which of these sports are played at the Summer Olympics?",
-      "options": ["Archery", "Fencing", "Curling", "Bobsleigh", "Ski jumping", "Judo"],
-      "answers": [0, 1, 5],
-      "fact": "Curling, bobsleigh and ski jumping all need ice or snow, so they belong to the Winter Games."
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "Which of these are fruits, to a botanist?",
+      "options": [
+        "Carrot",
+        "Pumpkin",
+        "Cucumber",
+        "Celery",
+        "Tomato",
+        "Lettuce"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "A fruit is the part that holds the seeds, which is why a tomato counts and a carrot does not."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "screen",
+      "difficulty": 1,
       "prompt": "How many strings does a standard guitar have?",
       "answer": 6,
-      "min": 1,
-      "max": 20,
+      "min": 2,
+      "max": 12,
       "unit": "strings",
       "fact": "Six. A bass guitar usually has four, and a ukulele has four as well."
     },
@@ -43,10 +82,11 @@
       "id": "q4",
       "type": "vector",
       "topic": "nature",
+      "difficulty": 3,
       "prompt": "How deep can an emperor penguin dive, in metres?",
       "answer": 550,
-      "min": 10,
-      "max": 1000,
+      "min": 150,
+      "max": 750,
       "unit": "m",
       "fact": "Over 500 metres, and it can hold its breath for more than twenty minutes doing it."
     },
@@ -54,19 +94,31 @@
       "id": "q5",
       "type": "mcq",
       "topic": "history",
-      "prompt": "Which country gave the world the Taj Mahal?",
-      "options": ["India", "Iran", "Turkey", "Egypt"],
-      "answer": 0,
-      "hint": "It stands on the bank of the Yamuna river.",
-      "fact": "It was built as a tomb for the emperor's wife, and took about twenty years to finish."
+      "difficulty": 2,
+      "prompt": "Which empire built the Taj Mahal?",
+      "options": [
+        "Persian",
+        "Ottoman",
+        "Mughal",
+        "Maratha"
+      ],
+      "answer": 2,
+      "hint": "The same empire ruled most of the Indian subcontinent for three centuries.",
+      "fact": "Shah Jahan built it as a tomb for his wife Mumtaz Mahal. It took about twenty years."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "science",
+      "difficulty": 2,
       "prompt": "What does a Geiger counter measure?",
-      "options": ["Sound", "Radiation", "Pressure", "Wind speed"],
-      "answer": 1,
+      "options": [
+        "Pressure",
+        "Sound",
+        "Wind speed",
+        "Radiation"
+      ],
+      "answer": 3,
       "hint": "The clicking sound is the giveaway.",
       "fact": "Each click is one particle striking the tube, so a faster clicking means a stronger source."
     },

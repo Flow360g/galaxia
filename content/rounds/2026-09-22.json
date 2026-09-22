@@ -8,19 +8,20 @@
       "id": "q1",
       "type": "cluster",
       "topic": "sport",
+      "difficulty": 2,
       "prompt": "Which of these countries have won the men's football World Cup?",
       "options": [
-        "Uruguay",
         "Belgium",
-        "Portugal",
-        "Mexico",
         "France",
-        "Spain"
+        "Spain",
+        "Uruguay",
+        "Portugal",
+        "Mexico"
       ],
       "answers": [
-        0,
-        4,
-        5
+        1,
+        2,
+        3
       ],
       "fact": "Uruguay won the first World Cup in 1930, at home, and did it again in 1950 in Brazil's own stadium."
     },
@@ -28,18 +29,19 @@
       "id": "q2",
       "type": "cluster",
       "topic": "science",
+      "difficulty": 1,
       "prompt": "Which of these are noble gases?",
       "options": [
         "Nitrogen",
-        "Neon",
+        "Helium",
         "Oxygen",
-        "Argon",
         "Hydrogen",
-        "Helium"
+        "Neon",
+        "Argon"
       ],
       "answers": [
         1,
-        3,
+        4,
         5
       ],
       "fact": "Noble gases have full outer electron shells, which is why they barely react. Helium was found in the Sun's light before it was found on Earth."
@@ -48,10 +50,11 @@
       "id": "q3",
       "type": "vector",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "How long is the Nile?",
       "answer": 6650,
-      "min": 1000,
-      "max": 12000,
+      "min": 1500,
+      "max": 10000,
       "unit": "km",
       "fact": "About 6,650 km. The Amazon runs it close, and some surveys put the Amazon ahead."
     },
@@ -59,10 +62,11 @@
       "id": "q4",
       "type": "vector",
       "topic": "nature",
+      "difficulty": 2,
       "prompt": "How fast can a cheetah run, in km/h?",
       "answer": 110,
-      "min": 30,
-      "max": 250,
+      "min": 20,
+      "max": 170,
       "unit": "km/h",
       "fact": "Around 110 km/h in a short burst, and 0 to 100 in about three seconds, quicker than most sports cars."
     },
@@ -70,10 +74,11 @@
       "id": "q5",
       "type": "mcq",
       "topic": "misc",
+      "difficulty": 2,
       "prompt": "Which planet has the shortest day?",
       "options": [
-        "Mars",
         "Saturn",
+        "Mars",
         "Jupiter",
         "Neptune"
       ],
@@ -85,14 +90,15 @@
       "id": "q6",
       "type": "mcq",
       "topic": "misc",
+      "difficulty": 2,
       "prompt": "Which language has the most native speakers?",
       "options": [
         "English",
         "Hindi",
-        "Spanish",
-        "Mandarin"
+        "Mandarin",
+        "Spanish"
       ],
-      "answer": 3,
+      "answer": 2,
       "hint": "Not the most learned, the most born into.",
       "fact": "Mandarin has around 940 million native speakers. English has more speakers in total once second languages are counted."
     },
@@ -108,9 +114,23 @@
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ]
 }

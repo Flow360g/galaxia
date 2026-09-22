@@ -8,18 +8,19 @@
       "id": "q1",
       "type": "cluster",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "Which of these countries are landlocked?",
       "options": [
-        "Bolivia",
+        "Austria",
+        "Kenya",
         "Vietnam",
         "Mongolia",
         "Portugal",
-        "Kenya",
-        "Austria"
+        "Bolivia"
       ],
       "answers": [
         0,
-        2,
+        3,
         5
       ],
       "fact": "Bolivia lost its coast to Chile in 1884 and still keeps a navy on Lake Titicaca."
@@ -28,19 +29,20 @@
       "id": "q2",
       "type": "cluster",
       "topic": "food",
+      "difficulty": 2,
       "prompt": "Which of these are citrus fruits?",
       "options": [
         "Lime",
         "Mango",
+        "Papaya",
         "Kiwi",
         "Lemon",
-        "Yuzu",
-        "Papaya"
+        "Yuzu"
       ],
       "answers": [
         0,
-        3,
-        4
+        4,
+        5
       ],
       "fact": "Yuzu is a Japanese citrus that shrugs off frost, which almost nothing else in the family can do."
     },
@@ -48,10 +50,11 @@
       "id": "q3",
       "type": "vector",
       "topic": "geography",
+      "difficulty": 2,
       "prompt": "How deep is the Mariana Trench, the deepest point in Earth's oceans?",
       "answer": 10935,
-      "min": 1000,
-      "max": 30000,
+      "min": 2000,
+      "max": 15000,
       "unit": "m",
       "fact": "Challenger Deep reaches about 10,935 m. Everest would fit inside with 2 km of water to spare."
     },
@@ -59,10 +62,11 @@
       "id": "q4",
       "type": "vector",
       "topic": "screen",
+      "difficulty": 2,
       "prompt": "How many keys does a standard piano have?",
       "answer": 88,
-      "min": 20,
-      "max": 200,
+      "min": 30,
+      "max": 170,
       "unit": "keys",
       "fact": "88: 52 white and 36 black, a range settled on in the 1880s and never changed."
     },
@@ -70,30 +74,32 @@
       "id": "q5",
       "type": "mcq",
       "topic": "misc",
-      "prompt": "Which planet has the most known moons?",
+      "difficulty": 3,
+      "prompt": "Which planet would float if you could drop it in water?",
       "options": [
+        "Uranus",
         "Saturn",
         "Jupiter",
-        "Uranus",
         "Neptune"
       ],
-      "answer": 0,
-      "hint": "The ringed one pulled ahead in 2023.",
-      "fact": "Saturn overtook Jupiter in 2023 and now has well over a hundred confirmed moons, most of them tiny."
+      "answer": 1,
+      "hint": "It is not the biggest one, it is the least tightly packed.",
+      "fact": "Saturn's average density is lower than water's. It is mostly hydrogen and helium, wrapped around a small core."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "nature",
+      "difficulty": 1,
       "prompt": "What is the largest animal that has ever lived?",
       "options": [
-        "Megalodon",
         "Blue whale",
+        "Megalodon",
         "Mammoth",
         "Sperm whale"
       ],
-      "answer": 1,
-      "hint": "It is still alive today.",
+      "answer": 0,
+      "hint": "Bigger than any dinosaur, and it is still swimming today.",
       "fact": "A blue whale's heart is the size of a small car and beats as slowly as twice a minute on a deep dive."
     },
     {
@@ -108,9 +114,23 @@
     }
   ],
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ]
 }

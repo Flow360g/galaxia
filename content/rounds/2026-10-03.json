@@ -4,29 +4,44 @@
   "seed": 20261003,
   "theme": "General knowledge",
   "stages": [
-    { "name": "Cluster Belt", "after": 1, "landmark": "moon" },
-    { "name": "Alien Contact", "after": 3, "landmark": "planet" },
-    { "name": "Open Sky", "after": 5 },
-    { "name": "Where on Earth", "after": 7 }
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
   ],
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
       "topic": "history",
+      "difficulty": 1,
       "prompt": "Which of these were civilisations of the Americas?",
       "options": [
+        "Aztec",
+        "Celt",
         "Viking",
         "Zulu",
-        "Aztec",
         "Inca",
-        "Maya",
-        "Celt"
+        "Maya"
       ],
       "answers": [
-        2,
-        3,
-        4
+        0,
+        4,
+        5
       ],
       "fact": "The Inca ran an empire of ten million people across the Andes without money, wheels or a written alphabet."
     },
@@ -34,71 +49,77 @@
       "id": "q2",
       "type": "cluster",
       "topic": "nature",
+      "difficulty": 2,
       "prompt": "Which of these animals are reptiles?",
       "options": [
-        "Crocodile",
+        "Toad",
         "Tortoise",
         "Snake",
         "Frog",
-        "Salamander",
-        "Newt"
+        "Crocodile",
+        "Salamander"
       ],
       "answers": [
-        0,
         1,
-        2
+        2,
+        4
       ],
-      "fact": "Frogs, salamanders and newts are amphibians. They start life in water and breathe partly through their skin."
+      "fact": "Frogs, salamanders and toads are amphibians: they breathe through wet skin and most of them start life in water."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "screen",
-      "prompt": "How many notes are there in a musical octave?",
-      "answer": 8,
-      "min": 2,
-      "max": 40,
-      "fact": "Eight, and the word means eighth. The top note sounds like the bottom one because its sound wave is exactly twice as fast."
+      "difficulty": 3,
+      "prompt": "How long is the film Titanic, in minutes?",
+      "answer": 194,
+      "min": 60,
+      "max": 280,
+      "fact": "About 194 minutes. The studio wanted it cut, and the director refused.",
+      "unit": "min"
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "food",
+      "difficulty": 2,
       "prompt": "How many teaspoons of sugar are in a can of cola?",
       "answer": 9,
-      "min": 1,
-      "max": 50,
+      "min": 2,
+      "max": 18,
       "fact": "About nine. You cannot taste how sweet it is because the acid in it hides the sugar."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "sport",
-      "prompt": "In which sport would you score a slam dunk?",
+      "difficulty": 2,
+      "prompt": "In which sport is the Ryder Cup contested?",
       "options": [
-        "Basketball",
-        "Netball",
-        "Volleyball",
-        "Handball"
+        "Sailing",
+        "Tennis",
+        "Cycling",
+        "Golf"
       ],
-      "answer": 0,
-      "hint": "The hoop is three metres off the floor.",
-      "fact": "Dunking was banned in American college basketball for nine years because one player was too good at it."
+      "answer": 3,
+      "hint": "Europe against the United States, every two years, in teams.",
+      "fact": "The Ryder Cup is Europe against the United States. It is one of the few times golf is played as a team."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "misc",
-      "prompt": "Which country's money is the yen?",
+      "difficulty": 3,
+      "prompt": "Which letter does not appear in the name of any US state?",
       "options": [
-        "China",
-        "Japan",
-        "South Korea",
-        "Thailand"
+        "Q",
+        "X",
+        "J",
+        "Z"
       ],
-      "answer": 1,
-      "hint": "An island country in East Asia.",
-      "fact": "Yen means round, after the shape of the coins that replaced the older oval and bar shaped money in 1871."
+      "answer": 0,
+      "hint": "Arizona has one of the other three, Texas another, New Jersey the last.",
+      "fact": "Q is the only one. Z is in Arizona, X in Texas and J in New Jersey."
     },
     {
       "id": "q7",
