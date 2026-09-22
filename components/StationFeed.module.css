@@ -575,6 +575,14 @@
   line-height: 1.45;
   color: #c3cad6;
 }
+/* The same treatment the caption's credit line used to get, because it is the
+   same line: it has only moved down to where it cannot give the answer away. */
+.credits {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #6f7a8c;
+}
 .next {
   min-height: 48px;
   font-size: 10px;
