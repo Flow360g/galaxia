@@ -47,6 +47,13 @@
   color: var(--arcade-yellow);
 }
 
+.intro {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--panel-label);
+}
+
 .lines {
   margin: 0;
   padding: 0;

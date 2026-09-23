@@ -141,14 +141,18 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "05-waypoint-rating");
   await expect(waypoint).toContainText("ALIEN CONTACT", { timeout: 6_000 });
   await expect(waypoint).toContainText("PHASE 2");
+  // The next phase in a few short lines, counted off the round.
+  await expect(page.getByTestId("waypoint-rules")).toContainText("2 questions.");
+  await expect(page.getByTestId("waypoint-rules")).toContainText(/always a number/i);
   await shot(page, "06-waypoint-entering");
-  // The scoring is behind a button, shut. Opening it must not count as the
-  // tap that moves the run on.
+  // The finer print and the scoring are behind a button, shut. Opening it
+  // must not count as the tap that moves the run on.
   const scoringToggle = page.getByTestId("scoring-toggle");
   await expect(scoringToggle).toHaveAttribute("aria-expanded", "false");
   await expect(page.getByTestId("tap-prompt")).toBeVisible({ timeout: 15_000 });
   await scoringToggle.click();
   await expect(page.getByTestId("scoring")).toContainText("WITHIN 5%");
+  await expect(page.getByTestId("more-detail")).toContainText(/wins back a shield/i);
   await expect(waypoint).toBeVisible();
   await shot(page, "06b-waypoint-scoring");
   // The stage card waits to be tapped on too, banner included.

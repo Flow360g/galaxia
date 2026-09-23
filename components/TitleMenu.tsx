@@ -8,10 +8,10 @@ import styles from "./TitleMenu.module.css";
 
 /**
  * The three things on the title screen that are not Press Start: the ship
- * bay, the profile (the player's record and today's round), and the briefing
- * again.
+ * bay, the profile (the player's record and today's round), and how to play:
+ * the whole rulebook, end to end, for anyone who wants it before flying.
  *
- * A client component only because the briefing is an overlay with state. The
+ * A client component only because the rulebook is an overlay with state. The
  * bay and the profile are plain links, so a shared link still lands one tap
  * from flying and nothing here gets in front of that. `?round=` carries
  * through to the profile so it shows the same round the title does.
@@ -34,16 +34,12 @@ export function TitleMenu({ round, query = "" }: { round: Round; query?: string 
           onClick={() => setBriefing(true)}
           data-testid="view-briefing"
         >
-          Briefing
+          How to play
         </button>
       </nav>
 
       {briefing ? (
-        <Briefing
-          round={round}
-          firstFlight={false}
-          onDone={() => setBriefing(false)}
-        />
+        <Briefing round={round} onDone={() => setBriefing(false)} />
       ) : null}
     </>
   );

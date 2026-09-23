@@ -1,16 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  hintRows,
-  phaseGuide,
-  stageMaxima,
-  streakLine,
-  type ScoringRow,
-} from "@/lib/game/phases";
+import { phaseGuide, stageMaxima, streakLine, type ScoringRow } from "@/lib/game/phases";
 import { maxScoreFor } from "@/lib/game/Score";
-import { PHASE_TITLE } from "@/lib/game/phaseTitles";
-import { NOVA } from "@/lib/game/Tuning";
+import { SHIELDS } from "@/lib/game/Tuning";
 import type { Round } from "@/lib/game/types";
 import { formatScore } from "@/lib/game/format";
 import { ScoringTable } from "./ScoringTable";
@@ -18,10 +11,8 @@ import styles from "./Briefing.module.css";
 
 interface Props {
   round: Round;
-  /** Read to the end, or skipped. Either way the run starts next. */
+  /** Read to the end, or closed. */
   onDone: () => void;
-  /** True on a first flight, which changes the framing and the last button. */
-  firstFlight: boolean;
 }
 
 interface Card {
@@ -29,6 +20,8 @@ interface Card {
   title: string;
   /** Plain sentences, one paragraph each. */
   lines: string[];
+  /** The finer print, set smaller under the lines. */
+  details?: string[];
   /** The scoring table under the lines, if the page has one. */
   scoring?: ScoringRow[];
   /** The welcome page's table: the phases and what each is worth. */
@@ -36,21 +29,21 @@ interface Card {
 }
 
 /**
- * Pre-flight briefing. What the run is, one page per phase with its scoring
- * at the bottom, and the hints.
+ * The rulebook: HOW TO PLAY on the title screen. What the run is, then one
+ * page per phase with its short rules, its finer print and its scoring.
  *
- * Shown once, on a first flight, and reachable again from the title screen
- * afterwards. It is a full-screen card rather than something in the HUD band
- * because there is no run underneath it yet: the shell holds the engine back
- * until this closes, so the first thing a new player sees is not a five
- * second clock draining on a rule they have not read.
+ * It is NOT shown before a first flight any more. Six pages of rules ahead
+ * of the first question was what new players said was too much text; each
+ * phase now explains itself in a few lines on its own card just before it
+ * is played. This is where the whole thing lives end to end, for anyone who
+ * asks for it.
  *
  * Every figure in the copy is read from `Tuning.ts` through `phases.ts` and
  * every count from the round itself, so retuning the game cannot leave the
  * briefing lying. The voice is plain on purpose: a scoring system a player
  * cannot repeat to a friend is one nobody argues about.
  */
-export function Briefing({ round, onDone, firstFlight }: Props) {
+export function Briefing({ round, onDone }: Props) {
   const cards = useMemo(() => buildCards(round), [round]);
   const [step, setStep] = useState(0);
   const last = step >= cards.length - 1;
@@ -96,13 +89,11 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
       data-testid="briefing"
       role="dialog"
       aria-modal="true"
-      aria-label="Pre-flight briefing"
+      aria-label="How to play"
     >
       <div className={styles.panel}>
         <header className={styles.header}>
-          <span className="eyebrow">
-            {firstFlight ? "First flight" : "Briefing"}
-          </span>
+          <span className="eyebrow">How to play</span>
           <span className={`${styles.count} arcade`}>
             {step + 1}/{cards.length}
           </span>
@@ -118,6 +109,15 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
               </p>
             ))}
           </div>
+          {card.details ? (
+            <div className={styles.details}>
+              {card.details.map((line) => (
+                <p className={styles.detailText} key={line}>
+                  {line}
+                </p>
+              ))}
+            </div>
+          ) : null}
           {card.phases ? (
             <ol className={styles.phases} data-testid="briefing-phases">
               {card.phases.map((entry) => (
@@ -152,7 +152,7 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
             onClick={step === 0 ? onDone : back}
             data-testid="briefing-back"
           >
-            {step === 0 ? "Skip" : "Back"}
+            {step === 0 ? "Close" : "Back"}
           </button>
           <button
             type="button"
@@ -160,7 +160,7 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
             onClick={next}
             data-testid="briefing-next"
           >
-            {last ? "Launch" : "Next"}
+            {last ? "Done" : "Next"}
           </button>
         </div>
       </div>
@@ -169,8 +169,8 @@ export function Briefing({ round, onDone, firstFlight }: Props) {
 }
 
 /**
- * The briefing, built against the round in front of the player: a welcome
- * page, one page per phase the round actually holds, and the hints.
+ * The rulebook, built against the round in front of the player: a welcome
+ * page with the phases and what each is worth, then one page per phase.
  */
 function buildCards(round: Round): Card[] {
   const stages = stageMaxima(round);
@@ -178,10 +178,11 @@ function buildCards(round: Round): Card[] {
   const questions = round.questions.length;
 
   const welcome: Card = {
-    tag: "Welcome aboard",
-    title: `One run a day. ${formatScore(total)} points to play for.`,
+    tag: "One run a day",
+    title: `${formatScore(total)} points to play for.`,
     lines: [
-      `${questions} questions, the same for everyone today. Correct answers score points. Most wrong answers cost nothing.`,
+      `${questions} questions in ${stages.length} phases, the same for everyone today. Correct answers score points. Most wrong answers cost nothing.`,
+      `You have ${SHIELDS.perRun} shields. Each one saves you from a wrong answer.`,
       streakLine(),
     ],
     phases: stages.map((stage) => ({
@@ -193,24 +194,15 @@ function buildCards(round: Round): Card[] {
   };
 
   const phases: Card[] = stages.map((stage) => {
-    const guide = phaseGuide(stage.type);
+    const guide = phaseGuide(stage.type, round);
     return {
       tag: `Phase ${stage.phase} · ${stage.name}`,
       title: guide.title,
-      lines: guide.how,
+      lines: guide.rules,
+      details: guide.details,
       scoring: guide.scoring,
     };
   });
 
-  const hints: Card = {
-    tag: "Hints",
-    title: "Stuck? Use a hint.",
-    lines: [
-      `You get ${NOVA.perRun} hints for the whole run, and they are free. Tap HINT and it removes a wrong answer or gives you a clue, and puts ${NOVA.bonusSeconds} extra second${NOVA.bonusSeconds === 1 ? "" : "s"} on the clock. Everyone gets the same hint on the same question.`,
-      `${PHASE_TITLE.earth} is different. You can take as many hints as you like, and zoom out too, but each one costs a few points. If you are stuck, take them: a correct answer with hints still beats a wrong one.`,
-    ],
-    scoring: hintRows(),
-  };
-
-  return [welcome, ...phases, hints];
+  return [welcome, ...phases];
 }

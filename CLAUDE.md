@@ -432,28 +432,32 @@ Rules that fall out of this:
 
 ## The briefing and the ship bay
 
-Two screens wrap the run. Neither is part of it, and neither may slow the
+Two screens wrap the run, plus the rulebook. Neither is part of it, and neither may slow the
 path from a shared link to flying.
 
-- **The briefing** is the rules and the scoring system, shown once, before
-  the first round, when the flight log is empty and it has never been read.
-  A welcome page with the phases and what each is worth, one page per phase
-  with its scoring table, and the kit. Plain words, a 12 year old's reading
-  level, no flight-model figures. The shell holds the engine back until it
-  closes, so a new player is never reading a rule against a draining clock.
-  Every figure in its copy comes through `lib/game/phases.ts` from
+- **Rules arrive a phase at a time.** A first flight opens on the **mission
+  transmission** (a Mayday from Earth Command, `components/Transmission.tsx`)
+  and then the launch card, and nothing else: no rulebook up front. Six pages
+  of rules before the first question was what testers called too much text.
+  Each phase explains itself on its own card just before it is played, in
+  the two or three lines you would text your mum (`rules` in
+  `lib/game/phases.ts`). A run that names every landing site gets a debrief
+  from the same voice after the tally, before the share card. `?replay=1`
+  skips the Mayday along with today's stored run.
+- **Every phase card carries the rest, shut.** The launch card and the
+  waypoint card both read `phaseGuide(type, round)` and render
+  `ScoringDisclosure`: a MORE DETAIL button, collapsed by default, that opens
+  the phase's finer print (`details`: clock, shields, hints, what a wrong
+  answer really costs) and its scoring table, in a box that scrolls inside
+  itself so the band cannot grow over the ship. The button swallows its tap
+  so opening it never advances the run. Keep `rules` short; anything a
+  first-time player does not need to play the phase belongs in `details`.
+- **HOW TO PLAY** on the title screen (`components/Briefing.tsx`) is the whole
+  rulebook end to end: a welcome page with the phases and what each is worth,
+  then one page per phase with its rules, details and table. Plain words, no
+  flight-model figures. Every figure comes through `phases.ts` from
   `Tuning.ts` and every count from the round, so retuning cannot leave it
-  lying: add a number to it the same way. `?replay=1` skips it along with
-  today's stored run, and the title screen can call it up again. When it
-  closes on a first flight, the **mission transmission** (a Mayday from Earth
-  Command, `components/Transmission.tsx`) plays before the launch card; a run
-  that names every landing site gets a debrief from the same voice after the
-  tally, before the share card.
-- **Every phase card carries its scoring, shut.** The launch card and the
-  waypoint card both read `phaseGuide()` and render `ScoringDisclosure`: a
-  HOW SCORING WORKS button, collapsed by default, that opens the same table
-  the briefing showed. The button swallows its tap so opening it never
-  advances the run.
+  lying: add a number to it the same way.
 - **The ship bay** (`/hangar`) is a launch bay inside the carrier the run
   deploys from: a concrete pad, plated walls, floodlit ceiling, and the bay
   door open onto the game's own sky. One hull stands on the pad, turning.

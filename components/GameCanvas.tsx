@@ -23,7 +23,6 @@ import {
   MISSION_TRANSMISSION,
   earthSaved,
 } from "@/lib/game/phases";
-import { Briefing } from "./Briefing";
 import { Ready } from "./Ready";
 import { Transmission } from "./Transmission";
 import { Hud } from "./Hud";
@@ -38,8 +37,8 @@ interface Props {
   debug: boolean;
   /**
    * Skip the stored run and fly again regardless. A dev and QA hatch, so it
-   * also skips the first-flight briefing: a tester re-flying a round is not
-   * a new player.
+   * also skips the first-flight Mayday: a tester re-flying a round is not a
+   * new player.
    */
   replay?: boolean;
   /**
@@ -95,14 +94,8 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
    * not a thing, so this never updates.
    */
   const [ship] = useState(selectedShip);
-  /** Dismissed this visit, by reading the briefing through or skipping it. */
+  /** The first-flight Mayday has been heard (or skipped) this visit. */
   const [briefed, setBriefed] = useState(false);
-  /**
-   * The mission transmission is up. It follows the briefing on a first flight
-   * and sits between it and the launch card: the Mayday that says why the
-   * ship is out here at all, before the card says what Phase 1 is.
-   */
-  const [transmission, setTransmission] = useState(false);
   /**
    * The debrief after the tally has been read. Only a run that named every
    * landing site gets one, and the share card waits behind it.
@@ -118,9 +111,11 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
     () => undefined,
   );
   /**
-   * Whether this device has never flown and has never read the briefing.
+   * Whether this device has never flown and has never heard the Mayday.
    * `undefined` until hydration, like `stored`, so the engine cannot start
-   * behind a briefing that is about to appear.
+   * behind a transmission that is about to appear. The storage key is still
+   * `galaxia:briefed` from when a full briefing opened the first flight; a
+   * player who read that one has heard enough and is not called again.
    */
   const unbriefed = useSyncExternalStore(
     subscribeStorage,
@@ -166,12 +161,18 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
     [ship, practice],
   );
 
-  /** The briefing holds the run back until it is closed. */
-  const briefing = unbriefed === true && !briefed;
-  /** Then the launch card holds it back until READY. */
-  const readying =
-    !briefing && !transmission && !launched && stored === null && summary === null;
-  const playing = stored === null && summary === null && !briefing && launched;
+  /**
+   * A first flight opens on Sergeant Soap's Mayday, which says why the ship
+   * is out here, and nothing else. The rules are NOT read out up front any
+   * more: each phase explains itself in a few lines on its own card, just
+   * before it is played, and the whole rulebook is on the title screen for
+   * anyone who wants it. A six page briefing before the first question was
+   * the thing new players said was too much to read.
+   */
+  const mayday = unbriefed === true && !briefed;
+  /** Then the launch card holds the run back until READY. */
+  const readying = !mayday && !launched && stored === null && summary === null;
+  const playing = stored === null && summary === null && !mayday && launched;
 
   /**
    * WHERE ON EARTH is six questions away when the run launches, and its
@@ -184,12 +185,10 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
     if (playing) preloadFeed(round);
   }, [playing, round]);
 
-  const closeBriefing = useCallback(() => {
+  const closeMayday = useCallback(() => {
     saveBriefed(true);
     setBriefed(true);
-    setTransmission(true);
   }, []);
-  const closeTransmission = useCallback(() => setTransmission(false), []);
   const closeDebrief = useCallback(() => setDebriefed(true), []);
   /** The debrief is owed only to a run just flown that saved Earth. */
   const debrief = summary !== null && tallied && !debriefed && earthSaved(round, summary);
@@ -228,7 +227,7 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
   useEffect(() => {
     const container = containerRef.current;
     // `undefined` on either of these means storage has not been read yet.
-    if (!container || stored !== null || unbriefed !== false || !launched) return;
+    if (!container || stored !== null || unbriefed === undefined || mayday || !launched) return;
 
     const engine = new Engine({
       container,
@@ -249,7 +248,7 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
       engineRef.current = null;
     };
     // `attempt` is a deliberate dependency: bumping it remounts the engine.
-  }, [round, debug, stored, unbriefed, ship, attempt, launched, handleState, handleRunEnd]);
+  }, [round, debug, stored, unbriefed, mayday, ship, attempt, launched, handleState, handleRunEnd]);
 
   const replayRun = useCallback(() => {
     // FLY AGAIN off a practice run means a NEW set of questions, not the same
@@ -316,12 +315,8 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
         />
       ) : null}
 
-      {briefing ? (
-        <Briefing round={round} onDone={closeBriefing} firstFlight />
-      ) : null}
-
-      {transmission && !briefing ? (
-        <Transmission script={MISSION_TRANSMISSION} kind="incoming" onDone={closeTransmission} />
+      {mayday && stored === null && summary === null ? (
+        <Transmission script={MISSION_TRANSMISSION} kind="incoming" onDone={closeMayday} />
       ) : null}
 
       {readying ? <Ready round={round} onReady={launch} /> : null}

@@ -22,10 +22,12 @@ interface Props {
  * so, which is the same rule the rest of the game is built on -- nothing
  * else advances on a timer either.
  *
- * Kept to a few lines. This is not the briefing: it says what the next
- * ninety seconds are, and gets out of the way. The scoring sits behind a
- * button, collapsed, like it does on every phase card in the run. The copy
- * is the same `phaseGuide` the briefing and the waypoint card read.
+ * Kept to a few lines. On a first flight this is the only rules a player is
+ * shown before the first question: the round in one line, then Phase 1 the
+ * way you would text it to your mum. The finer print and the scoring sit
+ * behind MORE DETAIL, collapsed, like they do on every phase card in the
+ * run. The copy is the same `phaseGuide` the rulebook and the waypoint card
+ * read.
  */
 export function Ready({ round, onReady }: Props) {
   // Desktop convenience only; the button is the real target.
@@ -40,7 +42,8 @@ export function Ready({ round, onReady }: Props) {
   }, [onReady]);
 
   const first = round.questions[0];
-  const guide = phaseGuide(first?.type ?? "cluster");
+  const guide = phaseGuide(first?.type ?? "cluster", round);
+  const phases = round.stages?.length ?? 0;
   const stage = round.stages?.[0];
   const phase = stage?.phase ?? 1;
 
@@ -58,15 +61,26 @@ export function Ready({ round, onReady }: Props) {
         </span>
         <h2 className={`${styles.title} arcade`}>{guide.title}</h2>
 
+        {phases > 1 ? (
+          <p className={styles.intro}>
+            {round.questions.length} questions in {phases} phases. Same questions for everyone
+            today.
+          </p>
+        ) : null}
+
         <ul className={styles.lines}>
-          {guide.how.map((line) => (
+          {guide.rules.map((line) => (
             <li key={line} className={styles.line}>
               {line}
             </li>
           ))}
         </ul>
 
-        <ScoringDisclosure rows={guide.scoring} className={styles.scoring} />
+        <ScoringDisclosure
+          rows={guide.scoring}
+          details={guide.details}
+          className={styles.scoring}
+        />
 
         <button
           type="button"

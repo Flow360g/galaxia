@@ -462,7 +462,7 @@ export const STATION = {
   /** Slow roll about the docking axis, radians per second. */
   spin: 0.04,
   /** Seconds from first sight to alongside. Arrival is this timer, never an asset. */
-  approachSeconds: 5.5,
+  approachSeconds: 4,
   /** Ambient rock density on the approach: a station does not sit in a belt. */
   fieldDensity: 0.05,
   /** The cruise floor while docking, as a fraction of normal. See Flight.throttle. */

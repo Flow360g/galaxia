@@ -1,6 +1,6 @@
 import { maxPointsAt } from "./Score";
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
-import { CLUSTER, NOVA, SCORE, VECTOR } from "./Tuning";
+import { CLUSTER, ENCOUNTER, NOVA, SCORE, SHIELDS, STATION, VECTOR } from "./Tuning";
 import type { Question, Round, RunSummary } from "./types";
 
 /**
@@ -33,10 +33,20 @@ export interface PhaseGuide {
   type: Question["type"];
   /** The phase's name as the cards shout it: FIND THE 3, PICK ONE, ... */
   title: string;
-  /** For the welcome table: what you do, in about ten words. */
+  /** For the rulebook's opening table: what you do, in about ten words. */
   oneLiner: string;
-  /** Two or three short sentences on how it is played. */
-  how: string[];
+  /**
+   * The phase, the way you would text it to your mum: two or three short
+   * lines, nothing she would have to ask about. This is all a phase card
+   * shows until MORE DETAIL is tapped, so it has to be enough to play on.
+   */
+  rules: string[];
+  /**
+   * The finer print, behind MORE DETAIL and in full on the rulebook: the
+   * clock, the shields, what a wrong answer really costs. Read by the few
+   * who want it, never put in front of a player who has not asked.
+   */
+  details: string[];
   /** The scoring table, top row the best outcome, bottom row the worst. */
   scoring: ScoringRow[];
   /**
@@ -69,100 +79,134 @@ if (FULL_CHARGE !== CLUSTER_FIND) {
   );
 }
 
-const GUIDES: Record<Question["type"], PhaseGuide> = {
-  cluster: {
-    type: "cluster",
-    title: PHASE_TITLE.cluster,
-    oneLiner: `${LANES} answers, ${FULL_CHARGE} are correct. Find them.`,
-    how: [
-      `Read the question, then tap READY. ${LANES} answers appear and ${FULL_CHARGE} of them are correct.`,
-      `Tap an answer. If it is correct you collect plasma, which speeds your ship up and is worth points. Tap BANK to take the points you have, or keep going to find all ${FULL_CHARGE} and earn the most.`,
-      `If you tap a wrong answer, your shield saves you: you lose the plasma you have banked, but you can keep going. A second wrong answer ends this question with ${SCORE.penalty.cluster} points. You never lose points on this question.`,
-    ],
-    readNote: `One wrong answer uses it up and you lose the plasma you have banked, but you can keep going. A second wrong answer ends this question with ${SCORE.penalty.cluster} points.`,
-    scoring: [
-      ...SCORE.clusterShare.map((share, index) => ({
-        label: index + 1 === FULL_CHARGE ? `ALL ${FULL_CHARGE} FOUND` : `${index + 1} FOUND`,
-        worth: pts(share),
-        tone: "good" as const,
-      })),
-      { label: "FIRST WRONG", worth: "SHIELD USED · PLASMA LOST", tone: "neutral" },
-      {
-        label: "SECOND WRONG",
-        worth: `${SCORE.penalty.cluster} POINTS`,
-        tone: "bad",
-      },
-    ],
-  },
-  vector: {
-    type: "vector",
-    title: PHASE_TITLE.vector,
-    oneLiner: "Guess a number. The closer, the better.",
-    how: [
-      "The answer is a number. Slide to your best guess, then tap FIRE.",
-      `The closer you are, the more points you score. A guess that is way off costs you ${SCORE.penalty.collision} points and a shield.`,
-    ],
-    scoring: [
-      {
-        label: `WITHIN ${percent(VECTOR.bands.direct)}`,
-        worth: `${pts(SCORE.vectorDirect)} + SHIELD`,
-        tone: "good",
-      },
-      { label: `WITHIN ${percent(VECTOR.bands.close)}`, worth: pts(SCORE.vectorGlance), tone: "good" },
-      {
-        label: `WITHIN ${percent(VECTOR.bands.graze)}`,
-        worth: "0 POINTS · NO HARM",
-        tone: "neutral",
-      },
-      { label: "WAY OFF", worth: `-${SCORE.penalty.collision} POINTS · SHIELD USED`, tone: "bad" },
-    ],
-  },
-  mcq: {
-    type: "mcq",
-    title: PHASE_TITLE.mcq,
-    oneLiner: "4 answers, 1 is correct. Boost if you are sure.",
-    how: [
-      `4 answers, 1 is correct. Tap it. A correct answer scores ${pts(SCORE.laneShare).toLowerCase()}. A wrong answer scores ${SCORE.penalty.lane} points and uses a shield.`,
-      `Sure of it? Tap BOOST before you answer to double the stakes: a correct answer scores ${pts(1).toLowerCase()}, a wrong one loses ${SCORE.penalty.laneBoosted} points.`,
-    ],
-    scoring: [
-      { label: "CORRECT + BOOST", worth: pts(1), tone: "good" },
-      { label: "CORRECT", worth: pts(SCORE.laneShare), tone: "good" },
-      { label: "WRONG", worth: `${SCORE.penalty.lane} POINTS · SHIELD USED`, tone: "neutral" },
-      {
-        label: "WRONG + BOOST",
-        worth: lose(SCORE.penalty.laneBoosted),
-        tone: "bad",
-      },
-    ],
-  },
-  earth: {
-    type: "earth",
-    title: PHASE_TITLE.earth,
-    oneLiner: "Look at the satellite view. Name the place.",
-    how: [
-      "A satellite view of somewhere on Earth. Type the name of the place.",
-      "Stuck? Tap GET A HINT for a clue, or ZOOM the view in and out. Each one costs a few points, so a correct answer with no help scores the most.",
-    ],
-    scoring: [
-      { label: "CORRECT", worth: pts(1, SCORE.earthBase), tone: "good" },
-      {
-        label: "EACH HINT",
-        worth: `-${pts(SCORE.earthIntelCost, SCORE.earthBase)}`,
-        tone: "neutral",
-      },
-      {
-        label: "EACH ZOOM",
-        worth: `-${pts(SCORE.earthOpticsCost, SCORE.earthBase)}`,
-        tone: "neutral",
-      },
-      { label: "WRONG", worth: lose(SCORE.penalty.collision), tone: "bad" },
-    ],
-  },
-};
+/** "2 questions", or nothing when the round is not to hand. */
+function count(n: number | undefined, noun: string): string {
+  if (n === undefined || n <= 0) return "";
+  return `${n} ${noun}${n === 1 ? "" : "s"}. `;
+}
 
-export function phaseGuide(type: Question["type"]): PhaseGuide {
-  return GUIDES[type];
+const HINT_LINE = `Stuck? Tap HINT. You get ${NOVA.perRun} for the whole run, free. Each one takes away a wrong answer or gives you a clue, and adds ${NOVA.bonusSeconds} second${NOVA.bonusSeconds === 1 ? "" : "s"} to the clock.`;
+
+function guides(n?: number): Record<Question["type"], PhaseGuide> {
+  return {
+    cluster: {
+      type: "cluster",
+      title: PHASE_TITLE.cluster,
+      oneLiner: `${LANES} answers, ${FULL_CHARGE} are correct. Find them.`,
+      rules: [
+        `${count(n, "question")}Each one has ${LANES} answers and ${FULL_CHARGE} of them are correct.`,
+        `Every correct answer you tap is worth more points. Tap BANK to keep them, or keep going for more.`,
+        `Tap a wrong one and you lose what you have not banked. Two wrong and the question is over.`,
+      ],
+      details: [
+        `Read the question, then tap READY. You get ${ENCOUNTER.thrustSeconds} seconds for each answer, ${ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds} for the first.`,
+        `Correct answers collect plasma, which speeds your ship up. Each question comes with its own shield, which saves you from one wrong answer: you lose the plasma you have not banked but can keep going. You never lose points here.`,
+        HINT_LINE,
+      ],
+      readNote: `One wrong answer is allowed. Two ends the question.`,
+      scoring: [
+        ...SCORE.clusterShare.map((share, index) => ({
+          label: index + 1 === FULL_CHARGE ? `ALL ${FULL_CHARGE} FOUND` : `${index + 1} FOUND`,
+          worth: pts(share),
+          tone: "good" as const,
+        })),
+        { label: "FIRST WRONG", worth: "UNBANKED POINTS LOST", tone: "neutral" },
+        {
+          label: "SECOND WRONG",
+          worth: `${SCORE.penalty.cluster} POINTS`,
+          tone: "bad",
+        },
+      ],
+    },
+    vector: {
+      type: "vector",
+      title: PHASE_TITLE.vector,
+      oneLiner: "Guess a number. The closer, the better.",
+      rules: [
+        `${count(n, "question")}The answer is always a number.`,
+        "Slide to your guess and tap FIRE. The closer you are, the more points you get.",
+      ],
+      details: [
+        `Within ${percent(VECTOR.bands.direct)} of the answer scores full points and wins back a shield. Within ${percent(VECTOR.bands.close)} scores half. Within ${percent(VECTOR.bands.graze)} is a near miss: no points, no harm.`,
+        `Any further out is way off: you lose ${SCORE.penalty.collision} points and a shield. You have ${SHIELDS.perRun} shields for the whole run, and each one saves you from a wrong answer. With none left, a miss costs more.`,
+        HINT_LINE,
+      ],
+      scoring: [
+        {
+          label: `WITHIN ${percent(VECTOR.bands.direct)}`,
+          worth: `${pts(SCORE.vectorDirect)} + SHIELD`,
+          tone: "good",
+        },
+        { label: `WITHIN ${percent(VECTOR.bands.close)}`, worth: pts(SCORE.vectorGlance), tone: "good" },
+        {
+          label: `WITHIN ${percent(VECTOR.bands.graze)}`,
+          worth: "0 POINTS · NO HARM",
+          tone: "neutral",
+        },
+        { label: "WAY OFF", worth: `-${SCORE.penalty.collision} POINTS · SHIELD USED`, tone: "bad" },
+      ],
+    },
+    mcq: {
+      type: "mcq",
+      title: PHASE_TITLE.mcq,
+      oneLiner: "4 answers, 1 is correct. Boost if you are sure.",
+      rules: [
+        `${count(n, "question")}4 answers, and 1 is correct.`,
+        "Really sure? Tap BOOST first for double points. Wrong with BOOST on and you lose points.",
+      ],
+      details: [
+        `You get ${ENCOUNTER.thrustSeconds} seconds. A correct answer scores ${pts(SCORE.laneShare).toLowerCase()}, or ${pts(1).toLowerCase()} with BOOST.`,
+        `A wrong answer scores ${SCORE.penalty.lane} points and uses one of your ${SHIELDS.perRun} shields. Wrong with BOOST on loses ${SCORE.penalty.laneBoosted} points as well.`,
+        HINT_LINE,
+      ],
+      scoring: [
+        { label: "CORRECT + BOOST", worth: pts(1), tone: "good" },
+        { label: "CORRECT", worth: pts(SCORE.laneShare), tone: "good" },
+        { label: "WRONG", worth: `${SCORE.penalty.lane} POINTS · SHIELD USED`, tone: "neutral" },
+        {
+          label: "WRONG + BOOST",
+          worth: lose(SCORE.penalty.laneBoosted),
+          tone: "bad",
+        },
+      ],
+    },
+    earth: {
+      type: "earth",
+      title: PHASE_TITLE.earth,
+      oneLiner: "Look at the satellite view. Name the place.",
+      rules: [
+        `${count(n, "place")}You get a satellite photo of somewhere on Earth. Type where it is.`,
+        "Stuck? Get a hint or zoom out. Each one costs a few points.",
+      ],
+      details: [
+        `You have ${STATION.answerSeconds} seconds for each place, and the clock waits until the photo has loaded.`,
+        `A correct answer with no help scores ${pts(1, SCORE.earthBase).toLowerCase()}. Each hint costs ${pts(SCORE.earthIntelCost, SCORE.earthBase).toLowerCase()} and each zoom ${pts(SCORE.earthOpticsCost, SCORE.earthBase).toLowerCase()}, so a correct answer with help still beats a wrong one.`,
+      ],
+      scoring: [
+        { label: "CORRECT", worth: pts(1, SCORE.earthBase), tone: "good" },
+        {
+          label: "EACH HINT",
+          worth: `-${pts(SCORE.earthIntelCost, SCORE.earthBase)}`,
+          tone: "neutral",
+        },
+        {
+          label: "EACH ZOOM",
+          worth: `-${pts(SCORE.earthOpticsCost, SCORE.earthBase)}`,
+          tone: "neutral",
+        },
+        { label: "WRONG", worth: lose(SCORE.penalty.collision), tone: "bad" },
+      ],
+    },
+  };
+}
+
+/**
+ * A phase's guide. Hand it the round and the short rules open on how many
+ * questions the phase holds ("2 questions."), counted rather than typed.
+ */
+export function phaseGuide(type: Question["type"], round?: Round): PhaseGuide {
+  const n = round ? round.questions.filter((question) => question.type === type).length : undefined;
+  return guides(n)[type];
 }
 
 /**
@@ -179,24 +223,6 @@ export function streakRows(): ScoringRow[] {
   return [
     { label: "A STREAK", worth: "KEEPS YOU FAST", tone: "good" },
     { label: "A WRONG ANSWER", worth: "RESETS IT", tone: "bad" },
-  ];
-}
-
-/** The hints, for the last briefing page: the free ones, and the ones that cost. */
-export function hintRows(): ScoringRow[] {
-  return [
-    { label: "HINTS", worth: `${NOVA.perRun} FOR THE RUN`, tone: "good" },
-    { label: "EACH HINT", worth: `+${NOVA.bonusSeconds} SEC ON THE CLOCK`, tone: "good" },
-    {
-      label: `${PHASE_TITLE.earth} HINT`,
-      worth: `-${pts(SCORE.earthIntelCost, SCORE.earthBase)}`,
-      tone: "neutral",
-    },
-    {
-      label: `${PHASE_TITLE.earth} ZOOM`,
-      worth: `-${pts(SCORE.earthOpticsCost, SCORE.earthBase)}`,
-      tone: "neutral",
-    },
   ];
 }
 

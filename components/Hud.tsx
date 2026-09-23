@@ -429,6 +429,7 @@ export function Hud({
         {waypoint ? (
           <WaypointCard
             waypoint={waypoint}
+            round={round}
             foundMax={foundMax}
             awaitingTap={awaitingTap}
             onConfirm={onConfirm}
@@ -749,11 +750,14 @@ function TapPrompt({ shown }: { shown: boolean }) {
 /** Between stages: what you just flew, the rating, and what is coming. */
 function WaypointCard({
   waypoint,
+  round,
   foundMax,
   awaitingTap,
   onConfirm,
 }: {
   waypoint: WaypointState;
+  /** For the next phase's question count: "2 questions." */
+  round: Round;
   /** Every FIND THE 3 answer in the round, so "4 OF 6 FOUND" has its 6. */
   foundMax: number;
   awaitingTap: boolean;
@@ -761,9 +765,9 @@ function WaypointCard({
 }) {
   const rated = waypoint.t >= WAYPOINT.ratingAt;
   const entering = waypoint.t >= WAYPOINT.enteringAt;
-  // The same words the briefing used for this phase, so the card is a
-  // reminder rather than a second explanation.
-  const guide = phaseGuide(waypoint.nextType);
+  // The phase the way you would text it to your mum; everything finer is
+  // behind MORE DETAIL. The rulebook on the title screen reads the same words.
+  const guide = phaseGuide(waypoint.nextType, round);
   return (
     <section
       className={`${styles.panel} ${styles.waypoint} ${entering ? styles.waypointEntering : ""} ${
@@ -801,13 +805,17 @@ function WaypointCard({
           </span>
           <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
           <span className={`${styles.wpGame} arcade`}>{guide.title}</span>
-          <span className={styles.wpHint}>{guide.how.join(" ")}</span>
+          <ul className={styles.wpRules} data-testid="waypoint-rules">
+            {guide.rules.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
           {waypoint.nextType === "earth" ? (
             <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
               SATELLITE VIEW · LOADING
             </span>
           ) : null}
-          <ScoringDisclosure rows={guide.scoring} />
+          <ScoringDisclosure rows={guide.scoring} details={guide.details} />
         </>
       )}
       <TapPrompt shown={awaitingTap} />

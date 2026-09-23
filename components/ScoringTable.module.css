@@ -75,6 +75,26 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Opened, the finer print and the table scroll inside their own box, capped,
+   because a waypoint card lives in the band and the band cannot grow over
+   the ship. Same treatment as the station feed: the page never scrolls. */
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 34vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: left;
+}
+
+.detail {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d5dbe6;
+}
+
 .toggle[aria-expanded="true"] {
   border-color: rgba(255, 224, 61, 0.45);
 }
@@ -104,6 +124,10 @@
 
   .row {
     font-size: 9px;
+  }
+
+  .more {
+    max-height: 28vh;
   }
 
   .toggle {
