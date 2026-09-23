@@ -555,6 +555,8 @@ export interface DebugInfo {
   frameMs: number;
   drawCalls: number;
   triangles: number;
+  /** Real bloom is on. Its passes are fill rate, not counted in `drawCalls`. */
+  bloom: boolean;
   tier: QualityTier;
   dpr: number;
 }

@@ -539,8 +539,10 @@ never performance. `/play?replay=1` skips today's stored run and
 a practice round built from the whole pool, reachable from `/profile?debug=1`
 and recorded nowhere; the seed is on the URL rather than made up server side
 so the same round can be opened twice and reported against. `?debug=1`
-overlays FPS, draw calls, triangles, tier and DPR on the flight, and on
-`/hangar` puts the bay on `window.galaxiaBay` so its angle and draw count can
+overlays FPS, draw calls, triangles, tier, bloom and DPR on the flight, and
+with it `?tier=0|1|2` pins the quality tier and stops it stepping down: a
+headless browser detects as a low-end phone, and bloom cannot be looked at
+otherwise. On `/hangar` it puts the bay on `window.galaxiaBay` so its angle and draw count can
 be read from the console or a test. `/hangar?shot=<shipId>` is the stills
 hatch, above.
 
@@ -548,16 +550,29 @@ hatch, above.
 
 - Zero allocation in the frame loop. Scratch vectors are module-level.
 - `InstancedMesh` for anything above about 20 copies.
-- `MeshLambertMaterial`, flat shading. No PBR, no shadows, no
-  post-processing. Glow is faked additively.
+- `MeshLambertMaterial`, flat shading. No PBR, no shadows. The one
+  post-process is bloom (`lib/game/Post.ts`): on the high and mid tiers only
+  (`BLOOM.enabled`), at half resolution, with a threshold high enough that
+  only additive light blooms. The governor stepping down to low drops it on
+  the spot, and it is sampled every frame, not only under `?debug=1` (it used
+  to be, so no player's tier ever stepped down). With bloom on, `drawCalls`
+  is the scene's own count, read before the blur passes.
 - DPR capped by tier (2 / 1.5 / 1), never raw `devicePixelRatio`.
 - Under 60 draw calls and 60k triangles. Check with `?debug=1`.
+- Explosions (`Explosion.ts`) are one shader-driven particle cloud for every
+  puff and ember of every blast, plus one `PointLight` created at zero with
+  the scene, so the lit materials compile with it and nothing hitches when a
+  blast throws its light on the rocks. Never add a light mid-run.
+- Hit-stop and bullet time scale the visual clock only (`FX.time`, and
+  `visualDelta` in `Engine.ts`). `run.update` and the sound always step on
+  real time, so the answer clock, the score and the distance never feel them.
 - Glow is one shared halo texture (`lib/game/glow.ts`) on additive sprites:
   the nozzles, the plasma pod, beam hits, the scout's violet running lights,
-  the impact shockwave (`Shockwave.ts`) and the comet heads. Reach for it
+  the impact shockwave (`Shockwave.ts`) and the comet heads. Its sibling is
+  the anamorphic flare (`flareMaterial`) on the nozzles and the pod. Reach for it
   before inventing another glow; it is the whole of the bloom budget.
-- The sky's set dressing (`Comets.ts`, `Dust.ts`) draws from its own seeded
-  stream so it never reshuffles the shared field. Comets fly only in `intro`,
+- The sky's set dressing (`Comets.ts`, `Dust.ts`, `FlyBy.ts`) draws from its own seeded
+  stream so it never reshuffles the shared field. Comets and fly-by rocks start only in `intro`,
   `waypoint` and `aftermath`, never while a question or its verdict is up,
   and `e2e/sky.spec.ts` holds them to it (`window.galaxiaSky` under `?debug=1`).
 - Quality tier comes from device hints and downgrades automatically when

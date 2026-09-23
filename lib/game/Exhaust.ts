@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { disposeGlow, glowMaterial, glowSprite } from "./glow";
+import { disposeFlare, disposeGlow, flareMaterial, glowMaterial, glowSprite } from "./glow";
 import { COLOR, EXHAUST, FX, GLOW } from "./Tuning";
 import type { QualityTier } from "./types";
 
@@ -30,6 +30,9 @@ export class Exhaust {
   /** The light the nozzle throws: a halo that swells with every pulse. */
   private readonly halo: THREE.Sprite;
   private readonly haloMaterial: THREE.SpriteMaterial;
+  /** The lens streak across the nozzle. */
+  private readonly flare: THREE.Sprite;
+  private readonly flareMaterial: THREE.SpriteMaterial;
   private points: THREE.Points | null = null;
   private positions: Float32Array | null = null;
   private colors: Float32Array | null = null;
@@ -69,7 +72,10 @@ export class Exhaust {
 
     this.haloMaterial = glowMaterial(EXHAUST.mid, GLOW.nozzleOpacity);
     this.halo = glowSprite(this.haloMaterial, GLOW.nozzleSize);
-    this.group.add(this.halo);
+    this.flareMaterial = flareMaterial(EXHAUST.core, GLOW.nozzleFlareOpacity);
+    this.flare = new THREE.Sprite(this.flareMaterial);
+    this.flare.scale.set(GLOW.nozzleFlareWidth, GLOW.nozzleFlareHeight, 1);
+    this.group.add(this.halo, this.flare);
 
     this.buildParticles(tier, random);
   }
@@ -154,6 +160,11 @@ export class Exhaust {
     this.halo.scale.setScalar(haloSize);
     this.haloMaterial.color.copy(midColor).lerp(plasmaMid, over * FX.overdrive.flameTint);
     this.haloMaterial.opacity = GLOW.nozzleOpacity * (1 + 0.35 * this.pulseAmount);
+    // The streak widens hard with a pulse and with raw plasma in the burn.
+    const stretch = (1 + 0.6 * this.pulseAmount + 0.9 * over) * (0.85 + 0.15 * flicker);
+    this.flare.scale.set(GLOW.nozzleFlareWidth * stretch, GLOW.nozzleFlareHeight, 1);
+    this.flareMaterial.color.copy(this.haloMaterial.color).lerp(coreColor, 0.5);
+    this.flareMaterial.opacity = GLOW.nozzleFlareOpacity * (0.6 + 0.4 * speedRatio);
 
     this.updateParticles(dt, speedRatio, boost, over, grow);
   }
@@ -232,6 +243,7 @@ export class Exhaust {
     this.disposables.forEach((item) => item.dispose());
     this.disposables.length = 0;
     disposeGlow(this.haloMaterial);
+    disposeFlare(this.flareMaterial);
     this.group.clear();
   }
 }

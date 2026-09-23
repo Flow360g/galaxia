@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { buildRockGeometry } from "./AsteroidField";
-import { disposeGlow, glowMaterial, glowSprite } from "./glow";
+import { disposeFlare, disposeGlow, flareMaterial, glowMaterial, glowSprite } from "./glow";
 import { COLOR, GLOW, LANE, SHIP } from "./Tuning";
 
 /**
@@ -49,6 +49,8 @@ export class Incoming {
   /** The pod's light: the thing that says "pickup" from the vanishing point. */
   private readonly podHalo: THREE.Sprite;
   private readonly podHaloMaterial: THREE.SpriteMaterial;
+  private readonly podFlare: THREE.Sprite;
+  private readonly podFlareMaterial: THREE.SpriteMaterial;
 
   constructor(random: () => number) {
     this.rockGeometry = buildRockGeometry(random);
@@ -85,6 +87,11 @@ export class Incoming {
     });
     this.podHaloMaterial = glowMaterial(COLOR.cyan, GLOW.podOpacity);
     this.podHalo = glowSprite(this.podHaloMaterial, LANE.podRadius * GLOW.podScale);
+    // The flare hangs on the group, not the spinning pod, so it stays level.
+    this.podFlareMaterial = flareMaterial(COLOR.cyan, GLOW.podFlareOpacity);
+    this.podFlare = new THREE.Sprite(this.podFlareMaterial);
+    this.podFlare.scale.set(GLOW.podFlareWidth, GLOW.podFlareHeight, 1);
+    this.podFlare.visible = false;
     this.pod = new THREE.Group();
     this.pod.add(
       this.podHalo,
@@ -94,7 +101,7 @@ export class Incoming {
 
     this.rock.visible = false;
     this.pod.visible = false;
-    this.group.add(this.rock, this.pod);
+    this.group.add(this.rock, this.pod, this.podFlare);
     this.group.visible = false;
   }
 
@@ -120,6 +127,7 @@ export class Incoming {
 
     this.group.visible = true;
     this.body.visible = true;
+    this.podFlare.visible = kind === "pod";
     this.body.scale.setScalar(1);
     this.body.rotation.set(0, 0, 0);
     this.group.position.set(this.xAt(LANE.spawnZ), this.yFor(), LANE.spawnZ);
@@ -166,6 +174,8 @@ export class Incoming {
       if (this.mode !== "pass") {
         this.podHaloMaterial.opacity =
           GLOW.podOpacity * (1 + Math.sin(this.elapsed * 7) * GLOW.podBreath);
+        this.podFlareMaterial.opacity =
+          GLOW.podFlareOpacity * (1 + Math.sin(this.elapsed * 7) * GLOW.podBreath);
       }
     }
 
@@ -205,6 +215,8 @@ export class Incoming {
         this.pod.scale.multiplyScalar(1 + dt * 2.6);
         this.podShell.opacity = Math.max(this.podShell.opacity - dt * 1.6, 0);
         this.podHaloMaterial.opacity = Math.max(this.podHaloMaterial.opacity - dt * 1.4, 0);
+        this.podFlareMaterial.opacity = Math.max(this.podFlareMaterial.opacity - dt * 1.4, 0);
+        this.podFlare.scale.x *= 1 + dt * 3;
         if (g.position.z > 20) this.retire();
         break;
       case "shatter": {
@@ -248,6 +260,9 @@ export class Incoming {
     this.pod.scale.setScalar(1);
     this.podShell.opacity = 0.35;
     this.podHaloMaterial.opacity = GLOW.podOpacity;
+    this.podFlareMaterial.opacity = GLOW.podFlareOpacity;
+    this.podFlare.scale.set(GLOW.podFlareWidth, GLOW.podFlareHeight, 1);
+    this.podFlare.visible = false;
   }
 
   dispose(): void {
@@ -260,6 +275,7 @@ export class Incoming {
     this.podMaterial.dispose();
     this.podShell.dispose();
     disposeGlow(this.podHaloMaterial);
+    disposeFlare(this.podFlareMaterial);
     this.group.clear();
   }
 }

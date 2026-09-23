@@ -8,9 +8,13 @@ import { ChaseCamera } from "./Camera";
 import { Comets } from "./Comets";
 import { Debris } from "./Debris";
 import { Dust } from "./Dust";
+import { Explosion } from "./Explosion";
+import { FlyBy } from "./FlyBy";
+import { Hyperspace } from "./Hyperspace";
 import { EncounterAsteroid } from "./EncounterAsteroid";
 import { Incoming } from "./Incoming";
 import { Landmark } from "./Landmark";
+import { Post } from "./Post";
 import { Run } from "./Run";
 import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
@@ -18,13 +22,17 @@ import { Shockwave } from "./Shockwave";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
 import { Station } from "./Station";
+import { Trails } from "./Trails";
 import { isMaxThrust } from "./Flight";
 import {
   ALIEN,
+  BLOOM,
+  CAMERA,
   CLUSTER,
   COLOR,
   ENCOUNTER,
   FX,
+  HYPER,
   LANE,
   LIGHT,
   PERF,
@@ -63,6 +71,12 @@ export interface EngineOptions {
    * `muted`. Cosmetic: it changes the mesh and its nozzles, nothing else.
    */
   ship?: ShipSpec;
+  /**
+   * Pin the quality tier instead of detecting it, and never step it down.
+   * The `?tier=` QA hatch, honoured only under `?debug=1`: headless Chromium
+   * detects as a low-tier phone, and bloom cannot be looked at otherwise.
+   */
+  tier?: QualityTier;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onOutcome?: (outcome: Outcome, index: number) => void;
@@ -101,6 +115,23 @@ export class Engine {
   private readonly shockwave: Shockwave;
   private readonly comets: Comets;
   private readonly dust: Dust;
+  private readonly explosion: Explosion;
+  private readonly hyper: Hyperspace;
+  private readonly trails: Trails;
+  private readonly flyby: FlyBy;
+  /** Bloom, on the tiers that can afford it. Null when off. */
+  private post: Post | null = null;
+  private readonly reducedMotion: boolean;
+  private readonly tierPinned: boolean;
+  /**
+   * The visual clock's rate. Hit-stop and bullet time slow what is drawn and
+   * nothing else: the run steps on real time, so the answer clock, the score
+   * and the distance never feel them, and neither does the sound.
+   */
+  private timeScale = 1;
+  private stopLeft = 0;
+  private slowLeft = 0;
+  private slowScale = 1;
   private readonly backdrop: Backdrop;
   private readonly governor: QualityGovernor;
   private readonly run: Run;
@@ -168,7 +199,9 @@ export class Engine {
 
   constructor(private readonly options: EngineOptions) {
     const reducedMotion = prefersReducedMotion();
-    this.tier = detectTier();
+    this.reducedMotion = reducedMotion;
+    this.tierPinned = options.tier !== undefined;
+    this.tier = options.tier ?? detectTier();
     this.governor = new QualityGovernor(this.tier);
 
     this.canvas = document.createElement("canvas");
@@ -257,6 +290,18 @@ export class Engine {
     this.scene.add(this.comets.group);
     this.dust = new Dust(this.tier, reducedMotion, skyRandom);
     if (this.dust.points) this.scene.add(this.dust.points);
+    this.flyby = new FlyBy(this.tier, skyRandom);
+    this.scene.add(this.flyby.group);
+
+    // The blast light is in the scene from the first frame at zero, so the
+    // lit materials are compiled with it and nothing hitches when it fires.
+    this.explosion = new Explosion(this.tier, skyRandom);
+    this.scene.add(this.explosion.points, this.explosion.light);
+    this.hyper = new Hyperspace(this.tier, reducedMotion, skyRandom);
+    this.chase.camera.add(this.hyper.group);
+    this.trails = new Trails(this.tier);
+    this.scene.add(this.trails.group);
+    this.buildPost();
 
     // Sound is built now but stays silent until `start()`, and silent after
     // that until the browser hands the context a gesture to unlock on.
@@ -341,6 +386,12 @@ export class Engine {
     this.shockwave.dispose();
     this.comets.dispose();
     this.dust.dispose();
+    this.explosion.dispose();
+    this.hyper.dispose();
+    this.trails.dispose();
+    this.flyby.dispose();
+    this.post?.dispose();
+    this.post = null;
     this.audio.dispose();
 
     this.scene.traverse((object) => {
@@ -583,6 +634,8 @@ export class Engine {
     this.incoming.shatter();
     this.debris.burst(this.scratch, 1, COLOR.panelLabel);
     this.shockwave.burst(this.scratch, COLOR.neg, FX.shockwave.boulder);
+    this.explosion.blast(this.scratch, FX.explosion.boulder);
+    this.hitStop(FX.time.boulderStop);
     this.shield.flash(1);
     this.ship.impact("collision", this.side);
     this.chase.releaseLane();
@@ -592,6 +645,7 @@ export class Engine {
   private onCollect(lane: number, charge: number): void {
     this.incoming.collect();
     this.shockwave.burst(this.ship.group.position, COLOR.cyan, FX.shockwave.collect);
+    this.trails.pulse(0.6);
     this.audio.collect(charge);
     this.shield.flash(FX.collect.shieldFlash, COLOR.cyan);
     this.ship.pulseExhaust(FX.collect.exhaustPulse + FX.collect.exhaustPulsePerCharge * charge);
@@ -666,12 +720,24 @@ export class Engine {
         this.streakSurge = FX.warp.streakSurge;
         this.surgeHold = FX.warp.holdSeconds;
         this.shield.flash(1, COLOR.plasma);
+        // The jump: a held breath of bullet time, then real time lands all
+        // at once with the tunnel wide open and the hull shaking itself apart.
+        this.slowMo(FX.time.maxThrustScale, FX.time.maxThrustSeconds);
+        this.hyper.burn(1, FX.warp.holdSeconds, 1);
+        this.ship.shudder(FX.boost.shudder[2]!, FX.overdrive.seconds);
+        this.trails.pulse(1.4);
       } else {
         const charge = outcome.charge ?? 1;
         const scale = charge >= 2 ? 1 : 0.6;
+        const step = charge >= 2 ? 1 : 0;
         this.chase.burst(FX.pullback.burn * scale, FX.fovKick.burn * scale);
         this.streakSurge = FX.streakSurge * scale;
         if (charge >= 2) this.shield.flash(0.8, COLOR.boost);
+        // Every boost is violent, and more plasma is more violent.
+        this.chase.rumble(FX.boost.seconds[step]!, FX.boost.rumble[step]!, FX.boost.roll[step]!);
+        this.ship.shudder(FX.boost.shudder[step]!, FX.boost.seconds[step]!);
+        this.hyper.burn(HYPER.burn[step]!, HYPER.hold, 0);
+        this.trails.pulse(0.8 + 0.4 * step);
       }
       this.ship.pulseExhaust(FX.exhaustPulse.burn);
     } else if (outcome.correct) {
@@ -683,6 +749,11 @@ export class Engine {
       if (kind === "slingshot") {
         this.shield.flash(0.8, COLOR.boost);
         this.streakSurge = FX.streakSurge;
+        // A boosted answer is a boost: the shake and the tunnel come with it.
+        this.chase.rumble(FX.boost.seconds[0]!, FX.boost.rumble[0]!, FX.boost.roll[0]!);
+        this.ship.shudder(FX.boost.shudder[0]!, FX.boost.seconds[0]!);
+        this.hyper.burn(HYPER.burn[0]!, HYPER.hold, 0);
+        this.trails.pulse(0.8);
       }
     } else {
       this.audio.contact(kind);
@@ -697,6 +768,11 @@ export class Engine {
             COLOR.neg,
             kind === "wreck" ? FX.shockwave.wreck : FX.shockwave.boulder,
           );
+          this.explosion.blast(
+            this.scratch,
+            kind === "wreck" ? FX.explosion.wreck : FX.explosion.boulder,
+          );
+          this.hitStop(kind === "wreck" ? FX.time.wreckStop : FX.time.boulderStop);
         }
         this.chase.releaseLane();
       } else {
@@ -708,6 +784,11 @@ export class Engine {
           COLOR.neg,
           kind === "wreck" ? FX.shockwave.wreck : FX.shockwave.boulder,
         );
+        this.explosion.blast(
+          this.scratch,
+          kind === "wreck" ? FX.explosion.wreck : FX.explosion.boulder,
+        );
+        this.hitStop(kind === "wreck" ? FX.time.wreckStop : FX.time.boulderStop);
       }
       this.shield.flash(kind === "wreck" ? 1.4 : 1);
       this.ship.impact(kind, this.side);
@@ -724,6 +805,7 @@ export class Engine {
       // blast, no burst, no shield: the ship neither gained nor wore anything.
       this.alien.hit("glance");
       this.debris.burst(this.scratchB, 0.3, COLOR.contact);
+      this.explosion.blast(this.scratchB, FX.explosion.alienGlance * 0.6, "contact");
       this.chase.shake(FX.vector.glanceShake);
     } else if (outcome.correct) {
       // Anything on target hits the hull. On the last vector of the run that
@@ -741,6 +823,24 @@ export class Engine {
         COLOR.contact,
         kill ? FX.shockwave.alienKill : FX.shockwave.alienHit,
       );
+      if (kill) {
+        // The scout comes apart in stages, in bullet time: the core goes up,
+        // then the hull cooks off across its length.
+        const E = FX.explosion;
+        this.explosion.blast(this.scratchB, E.alienKill, "fire");
+        this.explosion.chain(
+          this.scratchB,
+          E.chain,
+          E.chainGap,
+          ALIEN.modelLength * E.chainSpread,
+          E.chainStrength,
+          "contact",
+        );
+        this.slowMo(FX.time.killScale, FX.time.killSeconds);
+      } else {
+        this.explosion.blast(this.scratchB, FX.explosion.alienGlance, "contact");
+        this.hitStop(FX.time.glanceStop);
+      }
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
       this.ship.pulseExhaust(FX.exhaustPulse[burst]);
@@ -757,6 +857,8 @@ export class Engine {
       this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP.noseZ);
       this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
       this.shockwave.burst(this.scratch, COLOR.neg, FX.shockwave.returnFire);
+      this.explosion.blast(this.scratch, FX.explosion.returnFire, "damage");
+      this.hitStop(FX.time.glanceStop);
       this.chase.shake(FX.vector.returnFireShake);
       this.shield.flash(kind === "wreck" ? 1.4 : 1, COLOR.neg);
       this.ship.impact(kind, this.side);
@@ -809,6 +911,55 @@ export class Engine {
     this.renderer.setSize(width, height, false);
     this.chase.setAspect(width / height);
     this.backdrop.setAspect(width / height);
+    this.sizeEffects();
+  }
+
+  /** Bloom's targets, and how big a world unit of fire is in pixels. */
+  private sizeEffects(): void {
+    const dpr = this.renderer.getPixelRatio();
+    this.post?.setSize(this.width, this.height, dpr);
+    const halfFov = THREE.MathUtils.degToRad(CAMERA.fov) / 2;
+    this.explosion.setScale((this.height * dpr) / 2 / Math.tan(halfFov));
+  }
+
+  private buildPost(): void {
+    const want = BLOOM.enabled[this.tier] ?? false;
+    if (want && !this.post) {
+      this.post = new Post(this.renderer, this.scene, this.chase.camera, this.tier === 0);
+    } else if (!want && this.post) {
+      this.post.dispose();
+      this.post = null;
+    }
+    this.sizeEffects();
+  }
+
+  /** A few frames of almost nothing: the punch of an impact. */
+  private hitStop(seconds: number): void {
+    this.stopLeft = Math.max(this.stopLeft, seconds);
+  }
+
+  /** Bullet time: the scene at `scale` for `seconds`, then eased back. */
+  private slowMo(scale: number, seconds: number): void {
+    this.slowScale = Math.min(this.slowLeft > 0 ? this.slowScale : 1, scale);
+    this.slowLeft = Math.max(this.slowLeft, seconds);
+  }
+
+  /** Step the visual clock on real time and return the scaled delta. */
+  private visualDelta(dt: number): number {
+    let target = 1;
+    if (this.stopLeft > 0) {
+      this.stopLeft -= dt;
+      target = FX.time.stopScale;
+    } else if (this.slowLeft > 0) {
+      this.slowLeft -= dt;
+      target = this.slowScale;
+      if (this.slowLeft <= 0) this.slowScale = 1;
+    }
+    // Into a stop or a slow at once; back out of it eased, so real time
+    // arrives as a surge rather than a cut.
+    if (target < this.timeScale) this.timeScale = target;
+    else this.timeScale += (target - this.timeScale) * (1 - Math.exp(-FX.time.recover * dt));
+    return dt * this.timeScale;
   }
 
   private onVisibilityChange = (): void => {
@@ -850,7 +1001,9 @@ export class Engine {
     }
 
     this.update(dt);
-    this.renderer.render(this.scene, this.chase.camera);
+    if (this.post) this.post.render(dt);
+    else this.renderer.render(this.scene, this.chase.camera);
+    this.sampleQuality(raw);
     this.emitDebug(raw);
   };
 
@@ -861,13 +1014,15 @@ export class Engine {
     const flight = this.run.flight;
     const speed = flight.worldSpeed;
     const ratio = flight.visualRatio;
+    // Everything below that only draws runs on the visual clock.
+    const vdt = this.visualDelta(dt);
 
-    if (this.surgeHold > 0) this.surgeHold -= dt;
-    else this.streakSurge *= Math.exp(-FX.pullbackDecay * dt);
+    if (this.surgeHold > 0) this.surgeHold -= vdt;
+    else this.streakSurge *= Math.exp(-FX.pullbackDecay * vdt);
 
     // MAXIMUM THRUST: hold the plume at full, then ease it back down on the
     // same curve the camera rumble uses, so flame and shake end together.
-    if (this.overdriveLeft > 0) this.overdriveLeft = Math.max(this.overdriveLeft - dt, 0);
+    if (this.overdriveLeft > 0) this.overdriveLeft = Math.max(this.overdriveLeft - vdt, 0);
     this.ship.setOverdrive(overdriveLevel(this.overdriveLeft));
 
     const phase = this.run.phase;
@@ -900,32 +1055,47 @@ export class Engine {
     // WHERE ON EARTH: the station coming alongside is what arms the door.
     if (this.station.update(dt)) this.run.arriveAtStation();
 
-    this.density += (this.densityTarget - this.density) * (1 - Math.exp(-1.2 * dt));
+    this.density += (this.densityTarget - this.density) * (1 - Math.exp(-1.2 * vdt));
     this.field.setDensity(this.density);
-    this.alien.update(dt);
-    this.beam.update(dt);
-    this.returnBeam.update(dt);
-    this.landmark.update(dt);
-    if (this.salvage.update(dt)) this.shield.flash(0.9, COLOR.cyan);
+    this.alien.update(vdt);
+    this.beam.update(vdt);
+    this.returnBeam.update(vdt);
+    this.landmark.update(vdt);
+    if (this.salvage.update(vdt)) this.shield.flash(0.9, COLOR.cyan);
 
     this.audio.update(dt, ratio, this.run.thrust, open);
-    this.ship.update(dt, ratio, open ? this.run.thrust : 1);
-    this.shield.update(dt);
-    this.chase.update(dt, this.ship, ratio);
-    this.stars.update(dt, speed, streakIntensity(ratio) + this.streakSurge);
-    this.field.update(dt, speed);
-    this.rock.update(dt, speed);
-    this.incoming.update(dt, speed);
-    this.debris.update(dt, speed);
-    this.shockwave.update(dt, this.chase.camera);
+    this.ship.update(vdt, ratio, open ? this.run.thrust : 1);
+    this.shield.update(vdt);
+    this.chase.update(vdt, this.ship, ratio);
+    this.stars.update(vdt, speed, streakIntensity(ratio) + this.streakSurge);
+    this.field.update(vdt, speed);
+    this.rock.update(vdt, speed);
+    this.incoming.update(vdt, speed);
+    this.debris.update(vdt, speed);
+    this.shockwave.update(vdt, this.chase.camera);
+    this.explosion.update(vdt, speed);
+    this.hyper.update(vdt, speed, this.chase.camera);
+    this.trails.update(vdt, this.ship, ratio + this.streakSurge * 0.5, speed);
     // Only between questions: never on a read screen, an open question, the
     // station run-in or the verdict itself. Nothing moves in the sky then.
     const calm = phase === "intro" || phase === "waypoint" || phase === "aftermath";
-    this.comets.update(dt, !calm, this.chase.camera);
-    this.dust.update(dt, speed, ratio + this.streakSurge * 0.5);
+    this.comets.update(vdt, !calm, this.chase.camera);
+    this.flyby.update(vdt, calm, speed);
+    this.dust.update(vdt, speed, ratio + this.streakSurge * 0.5);
     this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 
     if (!this.ended) this.options.onState?.(this.state);
+  }
+
+  /**
+   * Feed the governor every frame. It used to be fed from inside the debug
+   * overlay's emit, which returns early without `?debug=1`, so no player's
+   * tier ever stepped down; with bloom on the high tiers, it has to.
+   */
+  private sampleQuality(rawDelta: number): void {
+    if (this.tierPinned) return;
+    const downgraded = this.governor.sample(rawDelta * 1000);
+    if (downgraded !== null) this.applyTier(downgraded);
   }
 
   private emitDebug(rawDelta: number): void {
@@ -935,9 +1105,6 @@ export class Engine {
     this.fpsAccumulator += frameMs;
     this.fpsFrames += 1;
 
-    const downgraded = this.governor.sample(frameMs);
-    if (downgraded !== null) this.applyTier(downgraded);
-
     this.lastDebugEmit += frameMs;
     if (this.lastDebugEmit < 250) return;
 
@@ -945,8 +1112,11 @@ export class Engine {
     this.options.onDebug({
       fps: averageMs > 0 ? 1000 / averageMs : 0,
       frameMs: averageMs,
-      drawCalls: this.renderer.info.render.calls,
-      triangles: this.renderer.info.render.triangles,
+      // The scene's own cost: with bloom on, the passes after it are fill
+      // rate, not draw calls, and are reported apart.
+      drawCalls: this.post ? this.post.sceneCalls : this.renderer.info.render.calls,
+      triangles: this.post ? this.post.sceneTriangles : this.renderer.info.render.triangles,
+      bloom: this.post !== null,
       tier: this.tier,
       dpr: this.renderer.getPixelRatio(),
     });
@@ -960,6 +1130,8 @@ export class Engine {
     this.tier = tier;
     this.renderer.setPixelRatio(dprForTier(tier));
     this.resize();
+    // Stepping down to a tier without bloom drops it on the spot.
+    this.buildPost();
   }
 }
 

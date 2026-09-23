@@ -85,3 +85,18 @@ test("comets fly between questions, never during one, inside the draw budget", a
   await expect.poll(() => comets(page), { timeout: 1_000, intervals: [50] }).toBe(0);
   expect(await peakComets(page, 3000)).toBe(0);
 });
+
+/**
+ * The top tier blooms, and bloom does not eat the budget: the scene's own
+ * draw calls are counted before the blur passes, and stay inside sixty.
+ * `?tier=0` pins the tier, since a headless browser detects as a low-end phone.
+ */
+test("the high tier renders with bloom, inside the draw budget", async ({ page }) => {
+  test.slow();
+  await page.goto("/play?replay=1&round=2026-09-18&debug=1&tier=0");
+  await launch(page);
+  await expect(page.getByTestId("question")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByTestId("debug-bloom")).toHaveText(/ON/, { timeout: 10_000 });
+  await expect(page.getByTestId("debug-tier")).toHaveText(/HIGH/);
+  expect(await drawCalls(page)).toBeLessThanOrEqual(60);
+});

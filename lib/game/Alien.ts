@@ -62,6 +62,9 @@ export class Alien {
   /** The soft violet pool of light under the hull. */
   private readonly underglow: THREE.Sprite;
   private readonly underglowMaterial: THREE.SpriteMaterial;
+  /** The violet rim: a glow behind the hull that only shows round its edge. */
+  private readonly aura: THREE.Sprite;
+  private readonly auraMaterial: THREE.SpriteMaterial;
 
   constructor(random: () => number) {
     this.group.add(this.body);
@@ -109,6 +112,13 @@ export class Alien {
       this.underglowMaterial,
       ALIEN.modelLength * ALIEN.underglowScale,
     );
+
+    // On the group, not the body: it must stay behind the hull as seen from
+    // the chase camera however the hull rolls and yaws.
+    this.auraMaterial = glowMaterial(COLOR.contact, ALIEN.auraOpacity);
+    this.aura = glowSprite(this.auraMaterial, ALIEN.modelLength * ALIEN.auraScale);
+    this.aura.position.z = -ALIEN.modelLength * ALIEN.auraBack;
+    this.group.add(this.aura);
 
     scratchBox.setFromObject(hull);
     this.placeLights(scratchBox);
@@ -180,6 +190,11 @@ export class Alien {
 
     const pulse = 1 + Math.sin(this.elapsed * ALIEN.underglowRate * Math.PI * 2) * ALIEN.underglowPulse;
     this.underglowMaterial.opacity = ALIEN.underglowOpacity * pulse * level * (1 + this.glow);
+    this.auraMaterial.opacity =
+      ALIEN.auraOpacity *
+      (1 + Math.sin(this.elapsed * ALIEN.underglowRate * Math.PI) * ALIEN.auraPulse) *
+      level *
+      (1 + this.glow * 0.8);
   }
 
   /** Warp in from the far distance and take station at `holdZ`. */
@@ -362,6 +377,7 @@ export class Alien {
     this.lightGeometry.dispose();
     disposeGlow(this.lightMaterial);
     disposeGlow(this.underglowMaterial);
+    disposeGlow(this.auraMaterial);
     this.disposables.forEach((item) => item.dispose());
     this.disposables.length = 0;
     this.body.clear();

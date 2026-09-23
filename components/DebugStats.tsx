@@ -24,6 +24,7 @@ export function DebugStats({ info }: { info: DebugInfo }) {
         testId="debug-tris"
       />
       <Row label="Tier" value={TIER_NAME[info.tier] ?? "?"} testId="debug-tier" />
+      <Row label="Bloom" value={info.bloom ? "ON" : "OFF"} testId="debug-bloom" />
       <Row label="DPR" value={info.dpr.toFixed(2)} testId="debug-dpr" />
     </div>
   );

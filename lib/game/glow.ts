@@ -79,3 +79,66 @@ export function disposeGlow(material: THREE.SpriteMaterial | THREE.PointsMateria
   material.dispose();
   releaseGlow();
 }
+
+/**
+ * The anamorphic flare: a thin horizontal line of light with a hot core,
+ * fading out to both ends. Stretched wide across a nozzle or a pod, it is the
+ * lens streak of every big-budget space film, for the price of one quad.
+ */
+let flare: THREE.CanvasTexture | null = null;
+let flareUsers = 0;
+
+function drawFlare(): THREE.CanvasTexture {
+  const w = GLOW.flareTextureWidth;
+  const h = GLOW.flareTextureHeight;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    const along = ctx.createLinearGradient(0, 0, w, 0);
+    along.addColorStop(0, "rgba(255,255,255,0)");
+    along.addColorStop(0.3, "rgba(255,255,255,0.18)");
+    along.addColorStop(0.46, "rgba(255,255,255,0.7)");
+    along.addColorStop(0.5, "rgba(255,255,255,1)");
+    along.addColorStop(0.54, "rgba(255,255,255,0.7)");
+    along.addColorStop(0.7, "rgba(255,255,255,0.18)");
+    along.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = along;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = "destination-in";
+    const across = ctx.createLinearGradient(0, 0, 0, h);
+    across.addColorStop(0, "rgba(255,255,255,0)");
+    across.addColorStop(0.5, "rgba(255,255,255,1)");
+    across.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = across;
+    ctx.fillRect(0, 0, w, h);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/** An additive anamorphic flare material. Dispose with `disposeFlare`. */
+export function flareMaterial(color: number, opacity = 1): THREE.SpriteMaterial {
+  if (!flare) flare = drawFlare();
+  flareUsers += 1;
+  return new THREE.SpriteMaterial({
+    map: flare,
+    color,
+    transparent: true,
+    opacity,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    fog: false,
+  });
+}
+
+export function disposeFlare(material: THREE.SpriteMaterial): void {
+  material.dispose();
+  flareUsers = Math.max(flareUsers - 1, 0);
+  if (flareUsers === 0 && flare) {
+    flare.dispose();
+    flare = null;
+  }
+}
