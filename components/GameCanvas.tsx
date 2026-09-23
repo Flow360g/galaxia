@@ -325,7 +325,11 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
       {readying ? <Ready round={round} onReady={launch} /> : null}
 
       {summary && !tallied ? (
-        <ScoreTally summary={summary} onDone={() => setTallied(true)} />
+        <ScoreTally
+          summary={summary}
+          onDone={() => setTallied(true)}
+          onCue={(cue) => engineRef.current?.tallyCue(cue)}
+        />
       ) : null}
 
       {debrief ? (

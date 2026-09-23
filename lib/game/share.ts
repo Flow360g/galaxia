@@ -98,7 +98,7 @@ const ARCADE_FALLBACK = '"Press Start 2P", monospace';
  *
  * The emoji are for the copied text only. The card draws its own squares.
  */
-const STAGES: ReadonlyArray<{ type: Question["type"]; name: string; emoji: string }> = [
+export const STAGES: ReadonlyArray<{ type: Question["type"]; name: string; emoji: string }> = [
   { type: "cluster", name: "CLUSTER BELT", emoji: "🪨" },
   { type: "vector", name: "ALIEN CONTACT", emoji: "👽" },
   { type: "mcq", name: "OPEN SKY", emoji: "❔" },
@@ -124,7 +124,7 @@ interface StageRow {
  * a run read back from localStorage may predate it, and its label is the only
  * thing left to go on.
  */
-function typeOf(line: ScoreLine): Question["type"] | null {
+export function typeOf(line: ScoreLine): Question["type"] | null {
   if (line.type) return line.type;
   for (const [type, title] of Object.entries(PHASE_TITLE)) {
     if (title === line.label) return type as Question["type"];

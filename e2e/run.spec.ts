@@ -430,7 +430,12 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("tally-line-7")).toHaveClass(/lineIn/, { timeout: 10_000 });
   // Phases weighted 400/400/400/600 with no points multiplier: 1,800 perfect.
   await expect(page.getByTestId("tally-total")).toContainText("/ 1,800");
-  await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE");
+  // The run is named by how well it went, and the screen says which.
+  await expect(tally).toHaveAttribute("data-tier", /^(perfect|legendary|great|good|complete)$/);
+  await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE", {
+    timeout: 10_000,
+  });
+  await expect(page.getByTestId("tally-tier")).toBeVisible();
   // The total stamps in a beat after the last line.
   await expect(page.getByTestId("tally-total")).toBeVisible();
   await page.waitForTimeout(700);

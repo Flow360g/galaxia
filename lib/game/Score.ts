@@ -1,6 +1,6 @@
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
-import { SCORE } from "./Tuning";
-import type { Outcome, Question, Round, ScoreLine } from "./types";
+import { FINALE, SCORE } from "./Tuning";
+import type { FinaleTier, Outcome, Question, Round, ScoreLine } from "./types";
 
 /**
  * The score: fixed points, whole multipliers, flat penalties.
@@ -165,4 +165,34 @@ function detailFor(outcome: Outcome): string {
     return outcome.kind === "slingshot" ? "SPOT ON" : "CLOSE";
   }
   return outcome.kind === "slingshot" ? "CORRECT · BOOSTED" : "CORRECT";
+}
+
+/**
+ * How well the run went, for the finale. Full marks is its own tier; below it
+ * the thresholds are shares of the perfect run, in `FINALE.tiers`.
+ */
+export function finaleTier(score: number, max: number): FinaleTier {
+  if (!(max > 0)) return "complete";
+  if (score >= max) return "perfect";
+  const share = score / max;
+  if (share >= FINALE.tiers.legendary) return "legendary";
+  if (share >= FINALE.tiers.great) return "great";
+  if (share >= FINALE.tiers.good) return "good";
+  return "complete";
+}
+
+/** A tier as 0..1, for anything that scales with it (the finale's sound). */
+export function tierStrength(tier: FinaleTier): number {
+  switch (tier) {
+    case "perfect":
+      return 1;
+    case "legendary":
+      return 0.8;
+    case "great":
+      return 0.55;
+    case "good":
+      return 0.3;
+    default:
+      return 0;
+  }
 }

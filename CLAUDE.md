@@ -306,6 +306,13 @@ codebase: the engine calls cues, nothing else makes a noise.
   theory wants them, because a phone speaker reproduces almost nothing below
   about 400Hz: a bass at 55Hz is a bass nobody hears. Check a mix change by
   muting one bus and measuring the other, not by ear on a laptop.
+- **The finale scales with the run.** `finish(tier)` is a riser timed to
+  `FINALE.introMs`, an impact as the tally slams RUN COMPLETE in, and a chord
+  that grows with the tier (`finaleTier` in `Score.ts`). The tally then plays
+  its own read-out through `Engine.tallyCue`: a note per line climbing a
+  scale, a chord per stage subtotal, ticks under the running total, and
+  `tallyTotal(tier)` on the stamp. The sound and the tally screen read the
+  same tier, so they cannot disagree about how the run went.
 - **Tapping a lane is silent.** The verdict riding in is the sound of a
   choice. A click on top of it was noise, and it is not coming back.
 - **Never load-bearing.** Browsers hold the context suspended until a
