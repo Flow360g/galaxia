@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many bones are in an adult human body?",
       "answer": 206,
-      "min": 40,
-      "max": 300,
+      "min": 0,
+      "max": 500,
       "fact": "206. A baby is born with around 270, and many of them fuse together as the skeleton grows."
     },
     {
@@ -64,8 +64,8 @@
       "difficulty": 1,
       "prompt": "How long is a marathon, in kilometres?",
       "answer": 42.195,
-      "min": 10,
-      "max": 65,
+      "min": 0,
+      "max": 100,
       "unit": "km",
       "fact": "42.195 km, fixed in 1921 to match the 1908 London course from Windsor Castle to the stadium."
     },

@@ -73,10 +73,10 @@
       "difficulty": 3,
       "prompt": "How many years did the Berlin Wall stand?",
       "answer": 28,
-      "min": 5,
-      "max": 40,
-      "fact": "Twenty-eight. It went up overnight in August 1961 and came down in November 1989.",
-      "unit": "years"
+      "min": 0,
+      "max": 50,
+      "unit": "years",
+      "fact": "Twenty-eight. It went up overnight in August 1961 and came down in November 1989."
     },
     {
       "id": "q4",
@@ -85,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How tall is the Eiffel Tower, in metres?",
       "answer": 330,
-      "min": 50,
-      "max": 450,
+      "min": 0,
+      "max": 500,
       "unit": "m",
       "fact": "330 metres to the tip. It was the tallest building in the world for 41 years."
     },

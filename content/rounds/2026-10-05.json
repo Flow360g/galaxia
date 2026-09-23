@@ -70,12 +70,13 @@
       "id": "q3",
       "type": "vector",
       "topic": "arts",
-      "difficulty": 1,
-      "prompt": "How many lines are there in a sonnet?",
-      "answer": 14,
-      "min": 2,
-      "max": 22,
-      "fact": "Fourteen, always. The last two usually turn the argument of the first twelve on its head."
+      "difficulty": 2,
+      "prompt": "In what year did Leonardo da Vinci start painting the Mona Lisa?",
+      "answer": 1503,
+      "min": 1400,
+      "max": 1600,
+      "year": true,
+      "fact": "Around 1503. He kept working on it for more than ten years and never handed it over."
     },
     {
       "id": "q4",
@@ -84,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How long can a giant tortoise live, in years?",
       "answer": 150,
-      "min": 25,
-      "max": 225,
+      "min": 0,
+      "max": 250,
       "fact": "Well past 150. One taken from the Galapagos by Charles Darwin's crew was still alive in a zoo in 2006."
     },
     {

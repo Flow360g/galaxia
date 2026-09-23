@@ -253,13 +253,10 @@ export const SCORE = {
   perEncounter: 200,
   /** Cluster: share of the base for 1, 2 and 3 plasma banked. */
   clusterShare: [0.3, 0.6, 1],
-  /**
-   * Vector: share of the base for a direct hit (inside `VECTOR.bands.direct`)
-   * and for a close one (inside `VECTOR.bands.close`). Inside `bands.graze`
-   * is a graze: nothing earned, nothing docked, streak untouched.
+  /*
+   * Vector points are not a share table: they fall in a straight line with
+   * the notches between the guess and the answer. See `VECTOR.zeroAt`.
    */
-  vectorDirect: 1,
-  vectorGlance: 0.5,
   /**
    * General knowledge: share of the base for a right answer WITHOUT boost.
    * Boost, pressed before the answer, lifts it to the full base; a wrong
@@ -320,15 +317,46 @@ export const VECTOR = {
   /** How far above the corridor the scout holds station. */
   holdY: 3.2,
   /**
-   * How close counts, as a fraction of the TRUE ANSWER, the same for every
-   * question. Inside `direct` is a DIRECT HIT (full points, salvage). Inside
-   * `close` is a CLOSE hit (half points). Inside `graze` the shot clips the
-   * scout: no points, no damage, streak untouched. Beyond it the scout fires
-   * first. A relative band is what a player can hold in their head: "within
-   * 10%" reads the same on Everest as on a piano.
+   * The slider is a ruler of `notches` steps, straight from the question's
+   * `min` to its `max`, and the guess and the answer are both read off it to
+   * the nearest notch. The gap between them is the whole score.
+   *
+   * It used to be scored against the ANSWER ("33% off") while the player aimed
+   * on the SLIDER, which made a wide range harder rather than more forgiving
+   * and turned every calendar year into a free hit (5% of 1913 is a century).
+   * Scoring on what the player can see is how Estimatle does it, and it is
+   * what makes a range of round numbers around the answer fair.
    */
-  bands: { direct: 0.05, close: 0.1, graze: 0.15 },
-  /** Strength of a close hit at the edge of its band (1.0 at the direct band). */
+  notches: 100,
+  /**
+   * Points fall in a straight line from the full base at a gap of 0 to
+   * nothing at `zeroAt`: 200 - 5 a notch as tuned. No cliff anywhere inside,
+   * so a near miss always reads as nearly right.
+   */
+  zeroAt: 40,
+  /**
+   * A gap beyond this is a wild shot: the flat dock and a shield. With every
+   * answer between notch 10 and 90 (see `lib/content/difficulty.ts`), a guess
+   * dropped in the middle can never be this far off, so the stake only lands
+   * on a confident guess in the wrong direction.
+   */
+  wildBeyond: 40,
+  /**
+   * The verdicts, by the largest gap each covers. The first is DEAD ON, which
+   * salvages a shield or a hint the way a direct hit always has; up to
+   * `hitWithin` counts as a hit, lifting the streak; beyond that up to
+   * `wildBeyond` is a graze: points, but no damage and the streak untouched.
+   */
+  deadOnWithin: 1,
+  hitWithin: 10,
+  verdicts: [
+    { within: 1, label: "DEAD ON" },
+    { within: 5, label: "WITHIN 5%" },
+    { within: 10, label: "WITHIN 10%" },
+    { within: 25, label: "WITHIN 25%" },
+    { within: 40, label: "WITHIN 40%" },
+  ],
+  /** Strength of a hit's burst at the edge of `hitWithin` (1.0 when dead on). */
   glanceFloor: 0.4,
   /**
    * Seconds the beam takes to reach the alien after lock. A shot is a shot:
@@ -350,15 +378,15 @@ export const VECTOR = {
    */
   returnDelaySeconds: 0.85,
   /**
-   * How hard a miss lands. At the edge of the graze band it costs
-   * `severityFloor` of a full impact; a relative error of `severityFullAt`
-   * (50% off) and beyond costs all of it. Being a little wrong should not
-   * read the same as being wild.
+   * How hard a wild shot lands. Just past `wildBeyond` it costs
+   * `severityFloor` of a full impact; a gap of `severityFullAt` notches and
+   * beyond costs all of it. Being a little wild should not read the same as
+   * aiming at the wrong end.
    */
   severityFloor: 0.3,
-  severityFullAt: 0.5,
-  /** Fraction of the slider a NOVA scan leaves open around the truth. */
-  novaWindow: 0.34,
+  severityFullAt: 70,
+  /** Notches of the slider a HINT leaves lit around the truth. */
+  novaWindow: 34,
   /** Slow drift of the scout, so its rest position is never the answer. */
   driftAmplitude: 6,
   driftRate: 0.23,

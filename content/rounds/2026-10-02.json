@@ -73,8 +73,8 @@
       "difficulty": 1,
       "prompt": "How long is an Olympic swimming pool, in metres?",
       "answer": 50,
-      "min": 15,
-      "max": 70,
+      "min": 0,
+      "max": 100,
       "unit": "m",
       "fact": "Fifty metres, and ten lanes wide, though only eight are ever raced in. The outer two keep the waves down."
     },
@@ -85,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How fast does a passenger jet cruise, in km/h?",
       "answer": 900,
-      "min": 300,
-      "max": 1300,
+      "min": 0,
+      "max": 2000,
       "unit": "km/h",
       "fact": "About 900 km/h, which is roughly three quarters of the speed of sound at that height."
     },

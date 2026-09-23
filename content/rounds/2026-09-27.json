@@ -71,12 +71,12 @@
       "type": "vector",
       "topic": "screen",
       "difficulty": 1,
-      "prompt": "How many strings does a standard guitar have?",
-      "answer": 6,
-      "min": 2,
-      "max": 12,
-      "unit": "strings",
-      "fact": "Six. A bass guitar usually has four, and a ukulele has four as well."
+      "prompt": "In what year did the first Harry Potter film come out?",
+      "answer": 2001,
+      "min": 1925,
+      "max": 2025,
+      "year": true,
+      "fact": "2001. The last of the eight came out ten years later, in 2011."
     },
     {
       "id": "q4",
@@ -85,8 +85,8 @@
       "difficulty": 3,
       "prompt": "How deep can an emperor penguin dive, in metres?",
       "answer": 550,
-      "min": 150,
-      "max": 750,
+      "min": 0,
+      "max": 1000,
       "unit": "m",
       "fact": "Over 500 metres, and it can hold its breath for more than twenty minutes doing it."
     },

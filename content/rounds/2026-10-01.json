@@ -70,13 +70,13 @@
       "id": "q3",
       "type": "vector",
       "topic": "history",
-      "difficulty": 2,
-      "prompt": "How many years did the Second World War last?",
-      "answer": 6,
-      "min": 3,
-      "max": 13,
-      "fact": "Six, from the invasion of Poland in September 1939 to the surrender of Japan in September 1945.",
-      "unit": "years"
+      "difficulty": 1,
+      "prompt": "In what year did the Second World War end?",
+      "answer": 1945,
+      "min": 1825,
+      "max": 2025,
+      "year": true,
+      "fact": "1945: in May in Europe, and in September in the Pacific."
     },
     {
       "id": "q4",
@@ -85,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How many calories are in one large hen's egg?",
       "answer": 72,
-      "min": 20,
-      "max": 100,
+      "min": 0,
+      "max": 200,
       "unit": "kcal",
       "fact": "About 72, and almost all of the fat sits in the yolk. The white is mostly water and protein."
     },

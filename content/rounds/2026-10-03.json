@@ -73,10 +73,10 @@
       "difficulty": 3,
       "prompt": "How long is the film Titanic, in minutes?",
       "answer": 194,
-      "min": 60,
-      "max": 280,
-      "fact": "About 194 minutes. The studio wanted it cut, and the director refused.",
-      "unit": "min"
+      "min": 0,
+      "max": 500,
+      "unit": "min",
+      "fact": "About 194 minutes. The studio wanted it cut, and the director refused."
     },
     {
       "id": "q4",
@@ -85,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How many teaspoons of sugar are in a can of cola?",
       "answer": 9,
-      "min": 2,
-      "max": 18,
+      "min": 0,
+      "max": 20,
       "fact": "About nine. You cannot taste how sweet it is because the acid in it hides the sugar."
     },
     {

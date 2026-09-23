@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How deep is the Mariana Trench, the deepest point in Earth's oceans?",
       "answer": 10935,
-      "min": 2000,
-      "max": 15000,
+      "min": 0,
+      "max": 20000,
       "unit": "m",
       "fact": "Challenger Deep reaches about 10,935 m. Everest would fit inside with 2 km of water to spare."
     },
@@ -65,9 +65,10 @@
       "difficulty": 2,
       "prompt": "How many keys does a standard piano have?",
       "answer": 88,
-      "min": 30,
-      "max": 170,
+      "min": 0,
+      "max": 200,
       "unit": "keys",
+      "route": "Seven full octaves of 12 keys is 84, plus a few spare at the ends.",
       "fact": "88: 52 white and 36 black, a range settled on in the 1880s and never changed."
     },
     {

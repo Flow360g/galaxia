@@ -71,12 +71,13 @@
       "type": "vector",
       "topic": "sport",
       "difficulty": 1,
-      "prompt": "How many players are on the field for one football team?",
-      "answer": 11,
-      "min": 2,
-      "max": 16,
-      "unit": "players",
-      "fact": "Eleven, including the goalkeeper. It has been eleven since the rules were written down in 1863."
+      "prompt": "How many minutes does a football (soccer) match last, not counting added time?",
+      "answer": 90,
+      "min": 0,
+      "max": 200,
+      "unit": "minutes",
+      "route": "Two halves of 45 minutes each.",
+      "fact": "90 minutes: two halves of 45, plus whatever the referee adds for stoppages."
     },
     {
       "id": "q4",
@@ -85,8 +86,8 @@
       "difficulty": 3,
       "prompt": "How hot is the surface of the Sun, in degrees Celsius?",
       "answer": 5500,
-      "min": 1000,
-      "max": 8000,
+      "min": 0,
+      "max": 10000,
       "unit": "C",
       "fact": "About 5,500 degrees at the surface, and around 15 million at the core."
     },

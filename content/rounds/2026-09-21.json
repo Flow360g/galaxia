@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many years did the Hundred Years' War actually last?",
       "answer": 116,
-      "min": 40,
-      "max": 160,
+      "min": 0,
+      "max": 200,
       "unit": "years",
       "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How long does sunlight take to reach Earth, in minutes?",
       "answer": 8.3,
-      "min": 1,
-      "max": 13,
+      "min": 0,
+      "max": 20,
       "unit": "min",
       "fact": "About 8 minutes 20 seconds. From the next nearest star it takes more than four years."
     },

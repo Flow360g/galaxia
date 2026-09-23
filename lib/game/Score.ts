@@ -1,5 +1,5 @@
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
-import { SCORE } from "./Tuning";
+import { SCORE, VECTOR } from "./Tuning";
 import type { Outcome, Question, Round, ScoreLine } from "./types";
 
 /**
@@ -78,10 +78,21 @@ export function scoreOutcome(
   question?: Question,
 ): { base: number; multiplier: number; points: number } {
   const multiplier = multiplierFor(outcome.streakBefore);
-  // Docking is neutral until the satellite feed scores, and a vector graze is
-  // neutral full stop: nothing earned, nothing docked, and the streak carried
-  // in is left exactly as it was.
-  if (outcome.kind === "dock" || outcome.kind === "graze") {
+  // A vector is scored on the ruler: the notches between the guess and the
+  // answer, whatever kind of outcome that made. A graze earns here too; it is
+  // neutral for the streak and the hull, not for the score.
+  if (outcome.notches !== undefined && !outcome.timedOut) {
+    if (outcome.notches > VECTOR.wildBeyond) {
+      const penalty = penaltyFor(outcome, question);
+      return { base: 0, multiplier, points: penalty > 0 ? -penalty : 0 };
+    }
+    const base = Math.round(
+      (question ? baseFor(question) : SCORE.perEncounter) * vectorShare(outcome.notches),
+    );
+    return { base, multiplier, points: base * multiplier };
+  }
+  // Docking is neutral until the satellite feed scores.
+  if (outcome.kind === "dock") {
     return { base: 0, multiplier, points: 0 };
   }
   const share = shareOf(outcome);
@@ -117,9 +128,6 @@ function shareOf(outcome: Outcome): number {
     if (charge <= 0) return 0;
     return SCORE.clusterShare[Math.min(charge, SCORE.clusterShare.length) - 1] ?? 0;
   }
-  if (outcome.error !== undefined) {
-    return outcome.kind === "slingshot" ? SCORE.vectorDirect : SCORE.vectorGlance;
-  }
   // A lane: full marks only with boost pressed before the answer. The perfect
   // run assumes it was, so the fixed total is the boosted one.
   return outcome.boosted ? 1 : SCORE.laneShare;
@@ -138,8 +146,7 @@ export function scoreLines(round: Round, outcomes: Outcome[]): ScoreLine[] {
       multiplier: outcome.multiplier ?? 1,
       points: outcome.points ?? 0,
       max: question ? maxPointsAt(question, index) : SCORE.perEncounter * multiplierFor(index),
-      // A dock left nothing on the table: there was nothing on it yet. A
-      // graze left all of it, and says so.
+      // A dock left nothing on the table: there was nothing on it yet.
       full:
         outcome.kind === "dock" ||
         (question ? (outcome.base ?? 0) >= baseFor(question) : false),
@@ -154,15 +161,33 @@ function labelFor(question: Question | undefined, index: number): string {
 /** The one short line the tally shows under a result. Arcade voice, no prose. */
 function detailFor(outcome: Outcome): string {
   if (outcome.kind === "dock") return "ARRIVED";
-  if (outcome.kind === "graze") return "NEAR MISS";
   if (outcome.timedOut) return "TOO SLOW";
+  if (outcome.notches !== undefined) return vectorVerdict(outcome.notches);
   if (!outcome.correct) return outcome.kind === "wreck" ? "WRONG · NO SHIELDS" : "WRONG";
   if (outcome.kind === "burn") {
     const charge = outcome.charge ?? 0;
     return `${charge} OF ${CLUSTER_FIND} FOUND`;
   }
-  if (outcome.error !== undefined) {
-    return outcome.kind === "slingshot" ? "SPOT ON" : "CLOSE";
-  }
   return outcome.kind === "slingshot" ? "CORRECT · BOOSTED" : "CORRECT";
+}
+
+/**
+ * A vector's share of its base, from the notches between guess and answer: a
+ * straight line from 1 at a gap of 0 to nothing at `VECTOR.zeroAt`. There is
+ * no step inside it, so one notch more always costs the same, and a near miss
+ * is always worth nearly as much as a hit.
+ */
+export function vectorShare(notches: number): number {
+  return Math.max(0, 1 - notches / VECTOR.zeroAt);
+}
+
+/**
+ * What a gap is called: DEAD ON, WITHIN 5%, and so on, as a share of the
+ * ruler, or WAY OFF past `VECTOR.wildBeyond`. The toast, the tally and the
+ * scoring card all say it the same way.
+ */
+export function vectorVerdict(notches: number): string {
+  if (notches > VECTOR.wildBeyond) return "WAY OFF";
+  const band = VECTOR.verdicts.find((verdict) => notches <= verdict.within);
+  return band?.label ?? "WAY OFF";
 }

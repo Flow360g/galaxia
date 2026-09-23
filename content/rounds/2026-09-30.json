@@ -73,10 +73,10 @@
       "difficulty": 2,
       "prompt": "How long is the first Star Wars film, in minutes?",
       "answer": 121,
-      "min": 30,
-      "max": 165,
-      "fact": "About 121 minutes. It was cut down from a much longer first assembly that the director's friends thought was unwatchable.",
-      "unit": "min"
+      "min": 0,
+      "max": 200,
+      "unit": "min",
+      "fact": "About 121 minutes. It was cut down from a much longer first assembly that the director's friends thought was unwatchable."
     },
     {
       "id": "q4",
@@ -85,9 +85,10 @@
       "difficulty": 1,
       "prompt": "How many teeth does an adult human usually have?",
       "answer": 32,
-      "min": 10,
-      "max": 45,
+      "min": 0,
+      "max": 100,
       "unit": "teeth",
+      "route": "Count your own: 16 along the top and 16 along the bottom.",
       "fact": "32, counting the four wisdom teeth that many people never grow at all."
     },
     {

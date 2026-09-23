@@ -73,8 +73,8 @@
       "difficulty": 2,
       "prompt": "How old was Tutankhamun when he died?",
       "answer": 19,
-      "min": 4,
-      "max": 28,
+      "min": 0,
+      "max": 50,
       "fact": "About nineteen. He was a minor pharaoh and was only famous because his tomb was the one nobody had robbed."
     },
     {
@@ -84,10 +84,11 @@
       "difficulty": 3,
       "prompt": "How many episodes of Friends were made?",
       "answer": 236,
-      "min": 50,
-      "max": 350,
-      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States.",
-      "unit": "episodes"
+      "min": 0,
+      "max": 500,
+      "unit": "episodes",
+      "route": "Ten series of about two dozen episodes each.",
+      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States."
     },
     {
       "id": "q5",

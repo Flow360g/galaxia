@@ -61,8 +61,9 @@ test("a first flight is briefed on the rules before the round starts", async ({
   // playing, and every figure in it is read from Tuning. One page per phase,
   // each with its table, in plain words.
   expect(everything).toMatch(/ALL 3 FOUND\s+200 POINTS/);
-  expect(everything).toMatch(/WITHIN 5%/);
-  expect(everything).toMatch(/WITHIN 15%\s+0 POINTS · NO HARM/);
+  expect(everything).toMatch(/DEAD ON\s+195 TO 200 POINTS \+ SHIELD/);
+  expect(everything).toMatch(/WITHIN 40%\s+0 TO 70 POINTS · NO HARM/);
+  expect(everything).toMatch(/every step away from the answer costs 5 points/i);
   expect(everything).toMatch(/CORRECT \+ BOOST\s+200 POINTS/);
   expect(everything).toMatch(/a streak of correct answers keeps your ship fast/i);
   expect(everything).toMatch(/PICK ONE/);

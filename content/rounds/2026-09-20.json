@@ -53,8 +53,8 @@
       "difficulty": 1,
       "prompt": "How tall is Mount Everest above sea level?",
       "answer": 8849,
-      "min": 2000,
-      "max": 13000,
+      "min": 0,
+      "max": 20000,
       "unit": "m",
       "fact": "8,849 m by the 2020 China and Nepal survey, and still rising by about 4 mm a year."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "sport",
       "difficulty": 2,
-      "prompt": "How many players does a rugby union side have on the field?",
-      "answer": 15,
-      "min": 4,
-      "max": 22,
-      "unit": "players",
-      "fact": "Fifteen a side, eight forwards and seven backs. Rugby league plays thirteen."
+      "prompt": "How high is a basketball hoop off the floor, in metres?",
+      "answer": 3.05,
+      "min": 0,
+      "max": 5,
+      "unit": "m",
+      "fact": "3.05 metres, the same in every league in the world. It was set by nailing a peach basket to a balcony rail in 1891."
     },
     {
       "id": "q5",
