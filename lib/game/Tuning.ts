@@ -570,6 +570,41 @@ export const ALIEN = {
   warpOutSeconds: 1.2,
   /** Seconds the hull takes to come apart on a kill. */
   destroySeconds: 0.9,
+  /**
+   * The scout's running lights: small violet beacons on the hull that strobe
+   * on staggered beats, a sharp flash and a slow decay, the way an aircraft's
+   * do. Positions are fractions of the loaded hull's half-extents (x across,
+   * y up, z along), so they sit on the model whatever its proportions.
+   */
+  lights: [
+    { x: 1, y: 0, z: 0, phase: 0 },
+    { x: -1, y: 0, z: 0, phase: 0.5 },
+    { x: 0.55, y: 0.1, z: 0.6, phase: 0.25 },
+    { x: -0.55, y: 0.1, z: 0.6, phase: 0.75 },
+    { x: 0.55, y: 0.1, z: -0.6, phase: 0.12 },
+    { x: -0.55, y: 0.1, z: -0.6, phase: 0.62 },
+    { x: 0, y: 1, z: 0, phase: 0.37 },
+  ],
+  /**
+   * World size of a beacon's glow, and how bright it idles between flashes
+   * (0..1 of full). The flash is brightness, not size: all the beacons are
+   * one draw call, and a point cloud has one size.
+   */
+  lightSize: 3.2,
+  lightRest: 0.3,
+  /** Seconds per strobe cycle, and how fast a flash decays within it. */
+  lightPeriod: 1.3,
+  lightDecay: 9,
+  /** The soft violet glow under the hull: size (in hull lengths) and pulse. */
+  underglowScale: 1.35,
+  underglowOpacity: 0.34,
+  underglowPulse: 0.1,
+  underglowRate: 1.7,
+  /**
+   * A trace of violet in the hull at rest, so the dark model reads as powered
+   * rather than as a silhouette. A hit still flashes it red over the top.
+   */
+  restEmissive: 0.18,
 } as const;
 
 export const NOVA = {
@@ -666,6 +701,28 @@ export const FX = {
   exhaustPulse: { thread: 1.2, slingshot: 2.4, burn: 3.4 },
   /** Extra speed-streak intensity on a slingshot, decaying like pullback. */
   streakSurge: 0.9,
+  /**
+   * The shockwave on contact: a flat ring that races out from the impact and
+   * a white-hot flash at its heart. Sizes are world units at `strength` 1;
+   * the ring is billboarded so it always reads as a circle.
+   */
+  shockwave: {
+    /** Rings in the pool. Two contacts inside one ring's life is the most a run asks. */
+    pool: 3,
+    ringSeconds: 0.5,
+    ringFrom: 1.5,
+    ringTo: 17,
+    ringOpacity: 0.85,
+    flashSeconds: 0.18,
+    flashSize: 16,
+    /** Per-event strength. */
+    boulder: 1,
+    wreck: 1.4,
+    collect: 0.55,
+    alienHit: 0.8,
+    alienKill: 1.6,
+    returnFire: 0.7,
+  },
 } as const;
 
 /**
@@ -1432,6 +1489,101 @@ export const STARS = {
   /** Speed streaks. Fade in with the visual speed ratio, see Starfield. */
   streakCount: [180, 110, 0],
   streakLength: 14,
+} as const;
+
+/**
+ * The shared halo sprite (`lib/game/glow.ts`), and where it is used. Glow is
+ * the game's stand-in for bloom: an additive gradient quad, no post pass.
+ */
+export const GLOW = {
+  textureSize: 64,
+  /** Gradient stops, 0 (centre) .. 1 (edge), and alpha at each. */
+  falloff: [
+    [0, 1],
+    [0.12, 0.85],
+    [0.3, 0.38],
+    [0.55, 0.12],
+    [1, 0],
+  ] as ReadonlyArray<readonly [number, number]>,
+  /** Nozzle halo: size at cruise, extra per unit of exhaust pulse, opacity. */
+  nozzleSize: 2.4,
+  nozzlePulse: 1.3,
+  nozzleOpacity: 0.55,
+  /** Plasma pod halo, as a multiple of the pod's radius, and its breathing. */
+  podScale: 8.5,
+  podOpacity: 0.6,
+  podBreath: 0.18,
+  /** Flare where a beam lands: size and opacity at the beam's peak. */
+  beamFlare: 9,
+  beamFlareOpacity: 0.9,
+} as const;
+
+/**
+ * Things in the sky that are not the game. None of it can say anything about
+ * an answer: comets only fly while no question is open, and dust is uniform.
+ */
+export const AMBIENCE = {
+  comets: {
+    /** Comets in the pool, per quality tier (high, mid, low). */
+    count: [2, 1, 1],
+    /** Seconds between launches, drawn from this range on the round's seed. */
+    intervalMin: 5,
+    intervalMax: 11,
+    /** One in this many is a slow comet with a long tail; the rest are shooting stars. */
+    cometEvery: 4,
+    /** Shooting star: seconds to cross, tail length, head size. */
+    starSeconds: 0.9,
+    starTail: 110,
+    starWidth: 2.6,
+    starHead: 11,
+    /** Comet: seconds to cross, tail length, head size. */
+    cometSeconds: 3.2,
+    cometTail: 150,
+    cometWidth: 6,
+    cometHead: 16,
+    /** How far away they fly: beyond the fog, in front of the backdrop. */
+    depthMin: 300,
+    depthMax: 440,
+    /**
+     * Where a crossing starts, as a fraction of the half-height of the view
+     * above the camera. Higher than this is under the HUD band.
+     */
+    skyFrom: 0,
+    skyTo: 0.35,
+    /** Distance travelled across the sky per crossing. */
+    travel: 360,
+    /** Seconds to fade out when a question opens mid-flight. */
+    abortSeconds: 0.25,
+    starColor: 0xffffff,
+    cometColor: 0xcfe9ff,
+  },
+  dust: {
+    /** Specks per quality tier (high, mid, low). */
+    count: [240, 150, 80],
+    /** Box around the ship the dust lives in, half extents, and its depth. */
+    halfWidth: 34,
+    halfHeight: 22,
+    depth: 140,
+    /** Fraction of world speed the dust streams past at. Above 1 reads as close. */
+    parallax: 1.15,
+    size: 0.16,
+    /** Opacity at cruise and at the top of the speed band. */
+    opacityMin: 0.22,
+    opacityMax: 0.7,
+    color: 0xb9d4ff,
+  },
+} as const;
+
+/** The scene's light rig, beyond the key and hemisphere set in Engine. */
+export const LIGHT = {
+  /**
+   * A cool light from behind and above, toward the camera: it catches the far
+   * edges of the rocks and the hull and gives every silhouette a rim against
+   * the dark. Lambert has no fresnel, so a back light is how a rim is had.
+   */
+  rimColor: 0x9fc4ff,
+  rimIntensity: 1.25,
+  rimPosition: [4, 7, -12] as readonly [number, number, number],
 } as const;
 
 /** Palette, lifted straight from the design system. */

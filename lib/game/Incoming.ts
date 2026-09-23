@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { buildRockGeometry } from "./AsteroidField";
-import { COLOR, LANE, SHIP } from "./Tuning";
+import { disposeGlow, glowMaterial, glowSprite } from "./glow";
+import { COLOR, GLOW, LANE, SHIP } from "./Tuning";
 
 /**
  * The one thing that comes at the ship after a lane is picked.
@@ -45,6 +46,9 @@ export class Incoming {
   private readonly podShellGeometry: THREE.BufferGeometry;
   private readonly podMaterial: THREE.MeshBasicMaterial;
   private readonly podShell: THREE.MeshBasicMaterial;
+  /** The pod's light: the thing that says "pickup" from the vanishing point. */
+  private readonly podHalo: THREE.Sprite;
+  private readonly podHaloMaterial: THREE.SpriteMaterial;
 
   constructor(random: () => number) {
     this.rockGeometry = buildRockGeometry(random);
@@ -79,8 +83,11 @@ export class Incoming {
       wireframe: true,
       fog: false,
     });
+    this.podHaloMaterial = glowMaterial(COLOR.cyan, GLOW.podOpacity);
+    this.podHalo = glowSprite(this.podHaloMaterial, LANE.podRadius * GLOW.podScale);
     this.pod = new THREE.Group();
     this.pod.add(
+      this.podHalo,
       new THREE.Mesh(this.podGeometry, this.podMaterial),
       new THREE.Mesh(this.podShellGeometry, this.podShell),
     );
@@ -156,6 +163,10 @@ export class Incoming {
     } else {
       this.pod.rotation.y += dt * 2.4;
       this.pod.rotation.x += dt * 1.1;
+      if (this.mode !== "pass") {
+        this.podHaloMaterial.opacity =
+          GLOW.podOpacity * (1 + Math.sin(this.elapsed * 7) * GLOW.podBreath);
+      }
     }
 
     switch (this.mode) {
@@ -193,6 +204,7 @@ export class Incoming {
         g.position.z += Math.max(worldSpeed, 70) * 1.8 * dt;
         this.pod.scale.multiplyScalar(1 + dt * 2.6);
         this.podShell.opacity = Math.max(this.podShell.opacity - dt * 1.6, 0);
+        this.podHaloMaterial.opacity = Math.max(this.podHaloMaterial.opacity - dt * 1.4, 0);
         if (g.position.z > 20) this.retire();
         break;
       case "shatter": {
@@ -235,6 +247,7 @@ export class Incoming {
     this.rock.scale.setScalar(1);
     this.pod.scale.setScalar(1);
     this.podShell.opacity = 0.35;
+    this.podHaloMaterial.opacity = GLOW.podOpacity;
   }
 
   dispose(): void {
@@ -246,6 +259,7 @@ export class Incoming {
     this.podShellGeometry.dispose();
     this.podMaterial.dispose();
     this.podShell.dispose();
+    disposeGlow(this.podHaloMaterial);
     this.group.clear();
   }
 }

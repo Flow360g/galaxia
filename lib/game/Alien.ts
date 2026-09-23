@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { disposeGlow, glowMaterial, glowSprite, glowTexture } from "./glow";
 import { loadLambertModel } from "./gltf";
 import { ALIEN, COLOR, VECTOR } from "./Tuning";
 
@@ -16,6 +17,10 @@ import { ALIEN, COLOR, VECTOR } from "./Tuning";
  * near, and big enough to read as a ship. A flat-shaded octahedron stands in
  * only until the GLB lands.
  */
+
+const contactColor = new THREE.Color(COLOR.contact);
+const damageColor = new THREE.Color(COLOR.neg);
+const scratchBox = new THREE.Box3();
 
 type Mode = "idle" | "warpIn" | "station" | "reveal" | "destroyed" | "glanced" | "warpOut";
 
@@ -43,6 +48,20 @@ export class Alien {
   private glow = 0;
   /** Which way a glancing hit knocked it. */
   private knock = 0;
+  /** Current hull opacity, which the lights follow out on a warp or a kill. */
+  private opacity = 1;
+
+  /**
+   * Running lights: every beacon in one point cloud, brightness carried in
+   * vertex colour (additive, so black is off). One draw call for the lot.
+   */
+  private readonly lights: THREE.Points;
+  private readonly lightColors: Float32Array;
+  private readonly lightGeometry: THREE.BufferGeometry;
+  private readonly lightMaterial: THREE.PointsMaterial;
+  /** The soft violet pool of light under the hull. */
+  private readonly underglow: THREE.Sprite;
+  private readonly underglowMaterial: THREE.SpriteMaterial;
 
   constructor(random: () => number) {
     this.group.add(this.body);
@@ -64,8 +83,55 @@ export class Alien {
     this.materials = [material];
     this.disposables = [geometry, material];
 
+    const count = ALIEN.lights.length;
+    this.lightColors = new Float32Array(count * 3);
+    this.lightGeometry = new THREE.BufferGeometry();
+    this.lightGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(count * 3), 3),
+    );
+    this.lightGeometry.setAttribute("color", new THREE.BufferAttribute(this.lightColors, 3));
+    this.lightMaterial = new THREE.PointsMaterial({
+      map: glowTexture(),
+      size: ALIEN.lightSize,
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: false,
+    });
+    this.lights = new THREE.Points(this.lightGeometry, this.lightMaterial);
+    this.lights.frustumCulled = false;
+
+    this.underglowMaterial = glowMaterial(COLOR.contact, ALIEN.underglowOpacity);
+    this.underglow = glowSprite(
+      this.underglowMaterial,
+      ALIEN.modelLength * ALIEN.underglowScale,
+    );
+
+    scratchBox.setFromObject(hull);
+    this.placeLights(scratchBox);
+
     this.group.visible = false;
     void this.loadModel();
+  }
+
+  /** Stand the beacons and the underglow on the hull's own extents. */
+  private placeLights(box: THREE.Box3): void {
+    const position = this.lightGeometry.getAttribute("position") as THREE.BufferAttribute;
+    const cx = (box.min.x + box.max.x) / 2;
+    const cy = (box.min.y + box.max.y) / 2;
+    const cz = (box.min.z + box.max.z) / 2;
+    const hx = (box.max.x - box.min.x) / 2;
+    const hy = (box.max.y - box.min.y) / 2;
+    const hz = (box.max.z - box.min.z) / 2;
+    ALIEN.lights.forEach((light, i) => {
+      position.setXYZ(i, cx + light.x * hx, cy + light.y * hy, cz + light.z * hz);
+    });
+    position.needsUpdate = true;
+    this.underglow.position.set(cx, box.min.y, cz);
+    this.body.add(this.lights, this.underglow);
   }
 
   private async loadModel(): Promise<void> {
@@ -73,19 +139,47 @@ export class Alien {
     if (!loaded || this.disposed) return;
     for (const material of loaded.materials) {
       material.transparent = true;
-      material.emissive.setHex(COLOR.neg);
-      material.emissiveIntensity = 0;
+      material.emissive.setHex(COLOR.contact);
+      material.emissiveIntensity = ALIEN.restEmissive;
     }
+    scratchBox.setFromObject(loaded.group);
     this.body.clear();
     this.disposables.forEach((item) => item.dispose());
     this.body.add(loaded.group);
     this.materials = loaded.materials;
     this.disposables = [...loaded.disposables];
+    this.placeLights(scratchBox);
     this.setOpacity(1);
   }
 
   private setOpacity(opacity: number): void {
+    this.opacity = opacity;
     for (const material of this.materials) material.opacity = opacity;
+  }
+
+  /**
+   * Strobe the beacons and breathe the underglow. A hit flares every light
+   * at once; a kill makes them stutter as the hull comes apart.
+   */
+  private updateLights(): void {
+    const period = ALIEN.lightPeriod;
+    const stutter =
+      this.mode === "destroyed" ? (Math.sin(this.elapsed * 47) > 0 ? 1 : 0.15) : 1;
+    const level = this.opacity * stutter;
+    ALIEN.lights.forEach((light, i) => {
+      const cycle = (this.elapsed / period + light.phase) % 1;
+      const flash = Math.exp(-cycle * period * ALIEN.lightDecay);
+      const b =
+        Math.min(ALIEN.lightRest + (1 - ALIEN.lightRest) * Math.max(flash, this.glow), 1) *
+        level;
+      this.lightColors[i * 3] = contactColor.r * b;
+      this.lightColors[i * 3 + 1] = contactColor.g * b;
+      this.lightColors[i * 3 + 2] = contactColor.b * b;
+    });
+    this.lightGeometry.getAttribute("color").needsUpdate = true;
+
+    const pulse = 1 + Math.sin(this.elapsed * ALIEN.underglowRate * Math.PI * 2) * ALIEN.underglowPulse;
+    this.underglowMaterial.opacity = ALIEN.underglowOpacity * pulse * level * (1 + this.glow);
   }
 
   /** Warp in from the far distance and take station at `holdZ`. */
@@ -177,7 +271,11 @@ export class Alien {
 
     if (this.glow > 0) {
       this.glow = Math.max(this.glow - dt / 0.6, 0);
-      for (const material of this.materials) material.emissiveIntensity = this.glow * 1.6;
+      // The hit flashes the hull red, then it settles back to its own violet.
+      for (const material of this.materials) {
+        material.emissive.copy(contactColor).lerp(damageColor, Math.min(this.glow * 1.5, 1));
+        material.emissiveIntensity = Math.max(this.glow * 1.6, ALIEN.restEmissive);
+      }
     }
 
     switch (this.mode) {
@@ -255,10 +353,15 @@ export class Alien {
       case "idle":
         break;
     }
+
+    if (this.present) this.updateLights();
   }
 
   dispose(): void {
     this.disposed = true;
+    this.lightGeometry.dispose();
+    disposeGlow(this.lightMaterial);
+    disposeGlow(this.underglowMaterial);
     this.disposables.forEach((item) => item.dispose());
     this.disposables.length = 0;
     this.body.clear();

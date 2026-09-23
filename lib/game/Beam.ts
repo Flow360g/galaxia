@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { COLOR } from "./Tuning";
+import { disposeGlow, glowMaterial, glowSprite } from "./glow";
+import { COLOR, GLOW } from "./Tuning";
 
 /**
  * A beam: one additive cylinder stretched between two points, scaled in
@@ -19,6 +20,9 @@ export class Beam {
   private readonly outerMaterial: THREE.MeshBasicMaterial;
   private readonly coreMaterial: THREE.MeshBasicMaterial;
   private readonly geometry: THREE.CylinderGeometry;
+  /** Light at the business end: rides the tip out, then burns where it lands. */
+  private readonly flare: THREE.Sprite;
+  private readonly flareMaterial: THREE.SpriteMaterial;
 
   private t = 0;
   private seconds = 0.3;
@@ -53,7 +57,9 @@ export class Beam {
     this.outer = new THREE.Mesh(this.geometry, this.outerMaterial);
     this.core = new THREE.Mesh(this.geometry, this.coreMaterial);
     this.core.scale.set(0.4, 0.4, 1);
-    this.group.add(this.outer, this.core);
+    this.flareMaterial = glowMaterial(COLOR.cyan, 0);
+    this.flare = glowSprite(this.flareMaterial, GLOW.beamFlare);
+    this.group.add(this.outer, this.core, this.flare);
     this.group.visible = false;
   }
 
@@ -65,6 +71,7 @@ export class Beam {
     this.group.position.copy(scratchFrom);
     this.group.lookAt(scratchTo);
     this.outerMaterial.color.setHex(color);
+    this.flareMaterial.color.setHex(color);
     this.t = 0;
     this.fade = 0;
     this.seconds = Math.max(seconds, 0.05);
@@ -89,12 +96,18 @@ export class Beam {
       this.core.position.z = grown / 2;
       this.outerMaterial.opacity = this.peak;
       this.coreMaterial.opacity = this.peak;
+      this.flare.position.z = grown;
+      this.flare.scale.setScalar(GLOW.beamFlare * (0.5 + 0.5 * this.t));
+      this.flareMaterial.opacity = GLOW.beamFlareOpacity * this.peak;
       return;
     }
     this.fade += dt / 0.3;
     const k = 1 - Math.min(this.fade, 1);
     this.outerMaterial.opacity = this.peak * k;
     this.coreMaterial.opacity = this.peak * k;
+    // The flare blooms as the beam lets go, then dies with it.
+    this.flare.scale.setScalar(GLOW.beamFlare * (1 + this.fade * 0.8));
+    this.flareMaterial.opacity = GLOW.beamFlareOpacity * this.peak * k;
     if (this.fade >= 1) this.hide();
   }
 
@@ -102,6 +115,7 @@ export class Beam {
     this.geometry.dispose();
     this.outerMaterial.dispose();
     this.coreMaterial.dispose();
+    disposeGlow(this.flareMaterial);
     this.group.clear();
   }
 }
