@@ -1,5 +1,5 @@
-/* Pre-flight briefing. A full-screen card over the stage, shown before the
-   engine starts, so unlike everything else in a live run it is allowed to own
+/* How to play: the rulebook, opened from the title screen. A full-screen card
+   with no run underneath it, so unlike everything else it is allowed to own
    the whole screen. Same dark panel, hairlines and square yellow button as
    the rest of the cabinet. */
 
@@ -51,11 +51,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Keyed on the step, so each card fades up as it arrives. */
+/* Keyed on the step, so each card fades up as it arrives. A phase page with
+   its finer print and table can outgrow a short phone, so the card scrolls
+   inside the panel and Back and Next stay put under it. */
 .card {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: rise 240ms ease-out;
 }
 
@@ -84,6 +89,22 @@
   font-size: 14px;
   line-height: 1.5;
   color: #d5dbe6;
+}
+
+/* The finer print: set under the short rules, a step quieter. */
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--rule-dark);
+  padding-top: 10px;
+}
+
+.detailText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--panel-label);
 }
 
 /* The welcome table: the phases in order, and what a perfect run scores on

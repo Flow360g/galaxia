@@ -29,7 +29,7 @@ export function ScoringTable({
 }
 
 /**
- * The same table behind a button, collapsed by default. For the cards inside
+ * The phase's finer print and its table behind a button, collapsed by default. For the cards inside
  * the run, where the band has no room to show the scoring to a player who
  * already knows it, and every room in the world for one who does not.
  *
@@ -38,10 +38,13 @@ export function ScoringTable({
  */
 export function ScoringDisclosure({
   rows,
-  label = "HOW SCORING WORKS",
+  details = [],
+  label = "MORE DETAIL",
   className = "",
 }: {
   rows: ScoringRow[];
+  /** The phase's finer print, shown above the table once opened. */
+  details?: string[];
   label?: string;
   className?: string;
 }) {
@@ -62,7 +65,16 @@ export function ScoringDisclosure({
         {label}
         <span className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`} aria-hidden="true" />
       </button>
-      {open ? <ScoringTable rows={rows} /> : null}
+      {open ? (
+        <div className={styles.more} data-testid="more-detail">
+          {details.map((line) => (
+            <p key={line} className={styles.detail}>
+              {line}
+            </p>
+          ))}
+          <ScoringTable rows={rows} />
+        </div>
+      ) : null}
     </div>
   );
 }

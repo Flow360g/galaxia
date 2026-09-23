@@ -2,8 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { acknowledge, launch } from "./helpers";
 
 /**
- * The two things that wrap a run: the briefing a first-time player is walked
- * through before the first round, and the ship bay they pick a hull in.
+ * The things that wrap a run: the Mayday and launch card a first-time player
+ * meets before the first round, the rulebook on the title screen, and the
+ * ship bay they pick a hull in.
  *
  * Both are storage-driven, and both fall back to something flyable when
  * storage says nothing, so every test here starts from a fresh profile and
@@ -25,100 +26,54 @@ async function seedFlown(page: Page, runs: number) {
   } catch (error) {}`);
 }
 
-test("a first flight is briefed on the rules before the round starts", async ({
+test("a first flight hears the Mayday, then gets Phase 1 in a few lines", async ({
   page,
 }) => {
-  // Nothing seeded: no runs on file, never briefed.
+  // Nothing seeded: no runs on file, never called.
   await page.goto("/play");
 
-  const briefing = page.getByTestId("briefing");
-  await expect(briefing).toBeVisible({ timeout: 20_000 });
-  await expect(briefing).toContainText(/first flight/i);
-  await expect(briefing).toContainText(/welcome aboard/i);
-  // The welcome page names every phase and what a perfect run scores on it,
-  // and those figures add up to the total in the title.
-  const phases = page.getByTestId("briefing-phases");
-  await expect(phases).toContainText("Cluster Belt");
-  await expect(phases).toContainText("Open Sky");
-  await expect(phases).toContainText("Where on Earth");
-  await expect(briefing).toContainText("1,800");
-  // The run is held back: no question is open behind the briefing.
-  await expect(page.getByTestId("question")).toHaveCount(0);
-  await shot(page, "b01-briefing");
-
-  // Read it through, keeping every card's copy. The last one launches.
-  const next = page.getByTestId("briefing-next");
-  const read: string[] = [];
-  for (let card = 0; card < 12; card += 1) {
-    read.push(await briefing.innerText());
-    if ((await next.innerText()).trim().toUpperCase() === "LAUNCH") break;
-    await next.click();
-    await expect(briefing).not.toHaveText(read[read.length - 1] ?? "");
-  }
-  const everything = read.join("\n");
-
-  // The scoring system is the half of this a player cannot work out by
-  // playing, and every figure in it is read from Tuning. One page per phase,
-  // each with its table, in plain words.
-  expect(everything).toMatch(/ALL 3 FOUND\s+200 POINTS/);
-  expect(everything).toMatch(/WITHIN 5%/);
-  expect(everything).toMatch(/WITHIN 15%\s+0 POINTS · NO HARM/);
-  expect(everything).toMatch(/CORRECT \+ BOOST\s+200 POINTS/);
-  expect(everything).toMatch(/a streak of correct answers keeps your ship fast/i);
-  expect(everything).toMatch(/PICK ONE/);
-  expect(everything).toMatch(/NAME THE PLACE/);
-  // The last page is about hints: the free ones, and the ones that cost.
-  expect(everything).toMatch(/HINTS\s+2 FOR THE RUN/i);
-  expect(everything).toMatch(/NAME THE PLACE HINT\s+-45 POINTS/i);
-  // No flight-model figures: distance is a speedometer, not the score.
-  expect(everything).not.toMatch(/km\/h/i);
-  await shot(page, "b02-briefing-last");
-  await expect(next).toHaveText(/launch/i);
-  await next.click();
-
-  // Briefing gone. The Mayday from Earth Command comes in, then the launch
-  // card behind it, with its scoring shut until it is asked for.
-  await expect(briefing).toHaveCount(0);
+  // No rulebook up front. The first thing a new player sees is the Mayday.
   const mayday = page.getByTestId("transmission");
-  await expect(mayday).toContainText(/mayday/i, { timeout: 15_000 });
+  await expect(mayday).toContainText(/mayday/i, { timeout: 20_000 });
+  await expect(page.getByTestId("briefing")).toHaveCount(0);
   // The mayday has a face on it, not a voice alone.
   await expect(mayday).toContainText(/sergeant soap/i);
   await expect(mayday.getByTestId("transmission-portrait").locator("img")).toBeVisible();
-  await shot(page, "b02b-transmission");
+  // The run is held back: no question is open behind it.
+  await expect(page.getByTestId("question")).toHaveCount(0);
+  await shot(page, "b01-transmission");
   await acknowledge(page);
+
+  // The launch card: the round in one line and Phase 1 the short way, with
+  // the finer print and the scoring shut until they are asked for.
+  const ready = page.getByTestId("ready");
+  await expect(ready).toContainText(/8 questions in 4 phases/i);
+  await expect(ready).toContainText(/2 questions\. Each one has 6 answers and 3 of them are correct/);
+  await expect(ready).toContainText(/Tap BANK/);
+  await expect(ready).not.toContainText(/plasma/i);
   const toggle = page.getByTestId("scoring-toggle");
+  await expect(toggle).toHaveText(/more detail/i);
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(page.getByTestId("scoring")).toHaveCount(0);
+  await shot(page, "b02-ready");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByTestId("scoring")).toContainText("1 FOUND");
-  // Opening the table did not launch the run.
-  await expect(page.getByTestId("ready")).toBeVisible();
-  await shot(page, "b02c-ready-scoring");
+  await expect(page.getByTestId("more-detail")).toContainText(/plasma, which speeds your ship up/i);
+  // Opening it did not launch the run.
+  await expect(ready).toBeVisible();
+  await shot(page, "b02c-ready-detail");
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 
-  // It was read once and does not come back, and nor does the Mayday.
+  // The Mayday was heard once and does not come back.
   await page.goto("/play");
   await launch(page);
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
-  await expect(page.getByTestId("briefing")).toHaveCount(0);
+  await expect(page.getByTestId("transmission")).toHaveCount(0);
 });
 
-test("the briefing can be skipped from the first card", async ({ page }) => {
-  await page.goto("/play");
-  await expect(page.getByTestId("briefing")).toBeVisible({ timeout: 20_000 });
-  await page.getByTestId("briefing-back").click();
-  await expect(page.getByTestId("briefing")).toHaveCount(0);
-  // Skipping the rules does not skip the mission.
-  await acknowledge(page);
-  await launch(page);
-  await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
-});
-
-test("a returning player is not briefed, and can read it again from the title", async ({
-  page,
-}) => {
+test("how to play: the whole rulebook, end to end, from the title", async ({ page }) => {
   await seedFlown(page, 3);
   await page.goto("/play");
   await launch(page);
@@ -126,11 +81,50 @@ test("a returning player is not briefed, and can read it again from the title", 
   await expect(page.getByTestId("briefing")).toHaveCount(0);
 
   await page.goto("/");
-  await page.getByTestId("view-briefing").click();
+  const open = page.getByTestId("view-briefing");
+  await expect(open).toHaveText(/how to play/i);
+  await open.click();
   const briefing = page.getByTestId("briefing");
   await expect(briefing).toBeVisible();
-  await expect(briefing).toContainText(/briefing/i);
-  await expect(briefing).not.toContainText(/first flight/i);
+  await expect(briefing).toContainText(/how to play/i);
+  // The welcome page names every phase and what a perfect run scores on it,
+  // and those figures add up to the total in the title.
+  const phases = page.getByTestId("briefing-phases");
+  await expect(phases).toContainText("Cluster Belt");
+  await expect(phases).toContainText("Open Sky");
+  await expect(phases).toContainText("Where on Earth");
+  await expect(briefing).toContainText("1,800");
+  await shot(page, "b03-rulebook");
+
+  // Read it through, keeping every card's copy. The last one says DONE.
+  const next = page.getByTestId("briefing-next");
+  const read: string[] = [];
+  for (let card = 0; card < 12; card += 1) {
+    read.push(await briefing.innerText());
+    if ((await next.innerText()).trim().toUpperCase() === "DONE") break;
+    await next.click();
+    await expect(briefing).not.toHaveText(read[read.length - 1] ?? "");
+  }
+  const everything = read.join("\n");
+
+  // The short rules, the finer print and every table, all read from Tuning.
+  expect(everything).toMatch(/ALL 3 FOUND\s+200 POINTS/);
+  expect(everything).toMatch(/WITHIN 5%/);
+  expect(everything).toMatch(/WITHIN 15%\s+0 POINTS · NO HARM/);
+  expect(everything).toMatch(/CORRECT \+ BOOST\s+200 POINTS/);
+  expect(everything).toMatch(/a streak of correct answers keeps your ship fast/i);
+  expect(everything).toMatch(/You get 2 for the whole run/);
+  expect(everything).toMatch(/EACH HINT\s+-45 POINTS/);
+  expect(everything).toMatch(/PICK ONE/);
+  expect(everything).toMatch(/NAME THE PLACE/);
+  // No flight-model figures: distance is a speedometer, not the score.
+  expect(everything).not.toMatch(/km\/h/i);
+  await shot(page, "b04-rulebook-last");
+  await next.click();
+  await expect(briefing).toHaveCount(0);
+
+  // And it closes from the first page as well.
+  await open.click();
   await briefing.getByTestId("briefing-back").click();
   await expect(briefing).toHaveCount(0);
 });
