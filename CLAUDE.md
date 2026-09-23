@@ -552,6 +552,14 @@ hatch, above.
   post-processing. Glow is faked additively.
 - DPR capped by tier (2 / 1.5 / 1), never raw `devicePixelRatio`.
 - Under 60 draw calls and 60k triangles. Check with `?debug=1`.
+- Glow is one shared halo texture (`lib/game/glow.ts`) on additive sprites:
+  the nozzles, the plasma pod, beam hits, the scout's violet running lights,
+  the impact shockwave (`Shockwave.ts`) and the comet heads. Reach for it
+  before inventing another glow; it is the whole of the bloom budget.
+- The sky's set dressing (`Comets.ts`, `Dust.ts`) draws from its own seeded
+  stream so it never reshuffles the shared field. Comets fly only in `intro`,
+  `waypoint` and `aftermath`, never while a question or its verdict is up,
+  and `e2e/sky.spec.ts` holds them to it (`window.galaxiaSky` under `?debug=1`).
 - Quality tier comes from device hints and downgrades automatically when
   frame time misses 20ms for a sustained window. Any new scene element must
   take its count from a per-tier array in `Tuning.ts`.

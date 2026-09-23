@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { COLOR, EXHAUST, FX } from "./Tuning";
+import { disposeGlow, glowMaterial, glowSprite } from "./glow";
+import { COLOR, EXHAUST, FX, GLOW } from "./Tuning";
 import type { QualityTier } from "./types";
 
 /**
@@ -26,6 +27,9 @@ export class Exhaust {
 
   private readonly outer: THREE.Mesh;
   private readonly core: THREE.Mesh;
+  /** The light the nozzle throws: a halo that swells with every pulse. */
+  private readonly halo: THREE.Sprite;
+  private readonly haloMaterial: THREE.SpriteMaterial;
   private points: THREE.Points | null = null;
   private positions: Float32Array | null = null;
   private colors: Float32Array | null = null;
@@ -62,6 +66,10 @@ export class Exhaust {
     this.outer = new THREE.Mesh(cone, outerMaterial);
     this.core = new THREE.Mesh(cone, coreMaterial);
     this.group.add(this.outer, this.core);
+
+    this.haloMaterial = glowMaterial(EXHAUST.mid, GLOW.nozzleOpacity);
+    this.halo = glowSprite(this.haloMaterial, GLOW.nozzleSize);
+    this.group.add(this.halo);
 
     this.buildParticles(tier, random);
   }
@@ -141,6 +149,12 @@ export class Exhaust {
     this.core.scale.set(radius * 0.48, radius * 0.48, length * 0.72);
     this.tint(over);
 
+    const haloSize =
+      (GLOW.nozzleSize + GLOW.nozzlePulse * this.pulseAmount) * (1 + 0.5 * over) * flicker;
+    this.halo.scale.setScalar(haloSize);
+    this.haloMaterial.color.copy(midColor).lerp(plasmaMid, over * FX.overdrive.flameTint);
+    this.haloMaterial.opacity = GLOW.nozzleOpacity * (1 + 0.35 * this.pulseAmount);
+
     this.updateParticles(dt, speedRatio, boost, over, grow);
   }
 
@@ -217,6 +231,7 @@ export class Exhaust {
   dispose(): void {
     this.disposables.forEach((item) => item.dispose());
     this.disposables.length = 0;
+    disposeGlow(this.haloMaterial);
     this.group.clear();
   }
 }

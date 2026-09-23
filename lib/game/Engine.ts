@@ -5,13 +5,16 @@ import { AudioEngine } from "./Audio";
 import { Backdrop } from "./Backdrop";
 import { Beam } from "./Beam";
 import { ChaseCamera } from "./Camera";
+import { Comets } from "./Comets";
 import { Debris } from "./Debris";
+import { Dust } from "./Dust";
 import { EncounterAsteroid } from "./EncounterAsteroid";
 import { Incoming } from "./Incoming";
 import { Landmark } from "./Landmark";
 import { Run } from "./Run";
 import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
+import { Shockwave } from "./Shockwave";
 import { Ship } from "./Ship";
 import { Starfield } from "./Starfield";
 import { Station } from "./Station";
@@ -23,6 +26,7 @@ import {
   ENCOUNTER,
   FX,
   LANE,
+  LIGHT,
   PERF,
   SHIP,
   STATION,
@@ -94,6 +98,9 @@ export class Engine {
   private readonly salvage: Salvage;
   private readonly debris: Debris;
   private readonly shield: Shield;
+  private readonly shockwave: Shockwave;
+  private readonly comets: Comets;
+  private readonly dust: Dust;
   private readonly backdrop: Backdrop;
   private readonly governor: QualityGovernor;
   private readonly run: Run;
@@ -193,6 +200,9 @@ export class Engine {
     key.position.set(-6, 9, 4);
     this.scene.add(key);
     this.scene.add(new THREE.HemisphereLight(COLOR.white, COLOR.accent, 0.85));
+    const rim = new THREE.DirectionalLight(LIGHT.rimColor, LIGHT.rimIntensity);
+    rim.position.set(...LIGHT.rimPosition);
+    this.scene.add(rim);
 
     const random = createRandom(options.round.seed);
 
@@ -237,6 +247,17 @@ export class Engine {
     this.debris = new Debris(this.tier, random);
     this.scene.add(this.debris.mesh);
 
+    this.shockwave = new Shockwave(reducedMotion);
+    this.scene.add(this.shockwave.group);
+
+    // The sky's set dressing draws from a stream of its own, so adding it did
+    // not reshuffle the field or the scans that every player shares.
+    const skyRandom = createRandom(options.round.seed ^ 0x5bd1e995);
+    this.comets = new Comets(this.tier, reducedMotion, skyRandom);
+    this.scene.add(this.comets.group);
+    this.dust = new Dust(this.tier, reducedMotion, skyRandom);
+    if (this.dust.points) this.scene.add(this.dust.points);
+
     // Sound is built now but stays silent until `start()`, and silent after
     // that until the browser hands the context a gesture to unlock on.
     this.audio = new AudioEngine(options.muted ?? false);
@@ -245,6 +266,11 @@ export class Engine {
     // only practical way to audition one without playing to it.
     if (options.onDebug) {
       (window as Window & { galaxiaAudio?: AudioEngine }).galaxiaAudio = this.audio;
+      // And the sky, so a test can hold the comets to the rule that nothing
+      // crosses it while a question is up.
+      (window as Window & { galaxiaSky?: { comets(): number } }).galaxiaSky = {
+        comets: () => this.comets.flying,
+      };
     }
 
     this.run = new Run(
@@ -312,6 +338,9 @@ export class Engine {
     this.station.dispose();
     this.salvage.dispose();
     this.debris.dispose();
+    this.shockwave.dispose();
+    this.comets.dispose();
+    this.dust.dispose();
     this.audio.dispose();
 
     this.scene.traverse((object) => {
@@ -553,6 +582,7 @@ export class Engine {
     this.incoming.position(this.scratch);
     this.incoming.shatter();
     this.debris.burst(this.scratch, 1, COLOR.panelLabel);
+    this.shockwave.burst(this.scratch, COLOR.neg, FX.shockwave.boulder);
     this.shield.flash(1);
     this.ship.impact("collision", this.side);
     this.chase.releaseLane();
@@ -561,6 +591,7 @@ export class Engine {
 
   private onCollect(lane: number, charge: number): void {
     this.incoming.collect();
+    this.shockwave.burst(this.ship.group.position, COLOR.cyan, FX.shockwave.collect);
     this.audio.collect(charge);
     this.shield.flash(FX.collect.shieldFlash, COLOR.cyan);
     this.ship.pulseExhaust(FX.collect.exhaustPulse + FX.collect.exhaustPulsePerCharge * charge);
@@ -661,12 +692,22 @@ export class Engine {
           this.incoming.position(this.scratch);
           this.incoming.shatter();
           this.debris.burst(this.scratch, strength, COLOR.panelLabel);
+          this.shockwave.burst(
+            this.scratch,
+            COLOR.neg,
+            kind === "wreck" ? FX.shockwave.wreck : FX.shockwave.boulder,
+          );
         }
         this.chase.releaseLane();
       } else {
         this.rock.contact(true);
         this.scratch.copy(this.rock.group.position);
         this.debris.burst(this.scratch, strength, COLOR.panelLabel);
+        this.shockwave.burst(
+          this.scratch,
+          COLOR.neg,
+          kind === "wreck" ? FX.shockwave.wreck : FX.shockwave.boulder,
+        );
       }
       this.shield.flash(kind === "wreck" ? 1.4 : 1);
       this.ship.impact(kind, this.side);
@@ -695,6 +736,11 @@ export class Engine {
       // comes apart and a blast lands out there with it.
       this.audio.blast(kill ? 1 : heavy ? 0.8 : 0.55);
       this.debris.burst(this.scratchB, kill ? 1.8 : heavy ? 1.0 : 0.5, COLOR.contact);
+      this.shockwave.burst(
+        this.scratchB,
+        COLOR.contact,
+        kill ? FX.shockwave.alienKill : FX.shockwave.alienHit,
+      );
       this.chase.burst(FX.pullback[burst], FX.fovKick[burst]);
       this.chase.shake(kill || heavy ? FX.vector.directShake : FX.vector.glanceShake);
       this.ship.pulseExhaust(FX.exhaustPulse[burst]);
@@ -710,6 +756,7 @@ export class Engine {
       this.audio.laser(ALIEN.gunPitch);
       this.scratch.set(this.ship.group.position.x, this.ship.group.position.y, SHIP.noseZ);
       this.returnBeam.fire(this.scratchB, this.scratch, COLOR.neg, ALIEN.returnFireSeconds, 1);
+      this.shockwave.burst(this.scratch, COLOR.neg, FX.shockwave.returnFire);
       this.chase.shake(FX.vector.returnFireShake);
       this.shield.flash(kind === "wreck" ? 1.4 : 1, COLOR.neg);
       this.ship.impact(kind, this.side);
@@ -870,6 +917,12 @@ export class Engine {
     this.rock.update(dt, speed);
     this.incoming.update(dt, speed);
     this.debris.update(dt, speed);
+    this.shockwave.update(dt, this.chase.camera);
+    // Only between questions: never on a read screen, an open question, the
+    // station run-in or the verdict itself. Nothing moves in the sky then.
+    const calm = phase === "intro" || phase === "waypoint" || phase === "aftermath";
+    this.comets.update(dt, !calm, this.chase.camera);
+    this.dust.update(dt, speed, ratio + this.streakSurge * 0.5);
     this.backdrop.update(this.ship.group.position.x, this.ship.group.position.y);
 
     if (!this.ended) this.options.onState?.(this.state);
