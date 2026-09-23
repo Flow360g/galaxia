@@ -188,8 +188,14 @@ export class ChaseCamera {
     // A rumble wallows the horizon as well as jittering it, which is what
     // separates "the hull is struggling" from "something went bang".
     if (this.rumbleRoll > 0) {
-      this.camera.rotation.z +=
-        Math.sin(this.rumbleLeft * 11) * this.rumbleRoll * this.rumbleLevel;
+      const level = this.rumbleLevel;
+      this.camera.rotation.z += Math.sin(this.rumbleLeft * 11) * this.rumbleRoll * level;
+      // And the lens itself fights: a jittered tilt on both axes, scaled by
+      // how hard the rig is rumbling. This is what makes a boost feel like the
+      // ship is about to get away from you.
+      const tilt = FX.rumbleTilt * this.rumbleMagnitude * level;
+      this.camera.rotation.x += (Math.random() * 2 - 1) * tilt;
+      this.camera.rotation.y += (Math.random() * 2 - 1) * tilt;
     }
 
     const fov =
@@ -212,6 +218,14 @@ export class ChaseCamera {
       return;
     }
 
+    // Sharp jolts on top of the rumble's steady jitter: random, a few a
+    // second at full, each a kick that decays like any other shake.
+    if (rumble > 0 && Math.random() < FX.rumbleJolts * dt) {
+      this.shakeAmount = Math.min(
+        this.shakeAmount + FX.rumbleJoltSize * rumble * CAMERA.shakeMagnitude,
+        CAMERA.shakeMagnitude * 3,
+      );
+    }
     const amount = this.shakeAmount + rumble;
     this.shakeX = (Math.random() - 0.5) * 2 * amount;
     this.shakeY = (Math.random() - 0.5) * 2 * amount;

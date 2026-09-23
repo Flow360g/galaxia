@@ -596,15 +596,24 @@ export const ALIEN = {
   lightPeriod: 1.3,
   lightDecay: 9,
   /** The soft violet glow under the hull: size (in hull lengths) and pulse. */
-  underglowScale: 1.35,
-  underglowOpacity: 0.34,
+  underglowScale: 1.1,
+  underglowOpacity: 0.2,
   underglowPulse: 0.1,
   underglowRate: 1.7,
   /**
-   * A trace of violet in the hull at rest, so the dark model reads as powered
-   * rather than as a silhouette. A hit still flashes it red over the top.
+   * The hull at rest: black. It was lit violet once and read as a purple toy;
+   * the menace is a dark shape edged in light. A hit still flashes it red.
    */
-  restEmissive: 0.18,
+  restEmissive: 0,
+  /**
+   * The aura: a big violet glow parked just behind the hull. The hull hides
+   * its middle, so what shows is a rim of light around the silhouette. Size in
+   * hull lengths, and how far behind the centre it sits, in hull lengths.
+   */
+  auraScale: 2.1,
+  auraOpacity: 0.6,
+  auraBack: 0.45,
+  auraPulse: 0.12,
 } as const;
 
 export const NOVA = {
@@ -684,8 +693,8 @@ export const FX = {
      */
     flameTint: 0.9,
     /** Sustained camera shake, and the slow roll that sells losing the line. */
-    rumble: 0.75,
-    rumbleRoll: 0.05,
+    rumble: 1.7,
+    rumbleRoll: 0.13,
   },
   /** Collecting a plasma pod on a correct lane. */
   collect: { shake: 0.15, exhaustPulse: 1.4, exhaustPulsePerCharge: 0.3, shieldFlash: 0.6 },
@@ -706,6 +715,84 @@ export const FX = {
    * a white-hot flash at its heart. Sizes are world units at `strength` 1;
    * the ring is billboarded so it always reads as a circle.
    */
+  /**
+   * Explosions: a fireball of billboard puffs that burn white to red and
+   * cool to smoke, a spray of embers, and a point light that throws the fire
+   * onto the rocks and the hull for a moment. Sizes are world units at
+   * strength 1; counts are per tier (high, mid, low).
+   */
+  explosion: {
+    pool: 4,
+    puffs: [7, 5, 4],
+    embers: [56, 36, 20],
+    /** Seconds the fireball lives, and the size of a puff at birth and death. */
+    seconds: 1.1,
+    puffFrom: 3.5,
+    puffTo: 11,
+    /** How far puffs are thrown from the centre, and how fast. */
+    puffSpread: 3.2,
+    emberSpeed: 38,
+    emberSeconds: 0.95,
+    emberSize: 0.9,
+    emberDrag: 2.4,
+    /** Fraction of world speed the blast drifts aft at. */
+    stream: 0.12,
+    /** The light the blast throws on the scene. */
+    lightColor: 0xffa24a,
+    lightIntensity: 900,
+    lightDistance: 90,
+    lightSeconds: 0.32,
+    /** Strength per event. */
+    boulder: 1,
+    wreck: 1.45,
+    alienGlance: 0.6,
+    alienKill: 1.9,
+    returnFire: 0.55,
+    /** The kill chains secondary blasts across the hull. */
+    chain: 3,
+    chainGap: 0.17,
+    /** Chain offsets, as a fraction of the scout's length. */
+    chainSpread: 0.38,
+    chainStrength: 0.75,
+  },
+  /**
+   * Time. Hit-stop is a few frames at almost nothing, the punch of a fighting
+   * game; slow-mo is bullet time for the two biggest moments in the run. Both
+   * scale only what is drawn: the run, its clock, its score and its distance
+   * always step on real time, and so does the sound.
+   */
+  time: {
+    stopScale: 0.04,
+    boulderStop: 0.07,
+    wreckStop: 0.11,
+    glanceStop: 0.05,
+    killScale: 0.3,
+    killSeconds: 0.6,
+    maxThrustScale: 0.35,
+    maxThrustSeconds: 0.35,
+    /** How fast slow-mo eases back to real time once it lets go, per second. */
+    recover: 7,
+  },
+  /**
+   * Boost is violent. A burn shakes the rig as if the hull is about to come
+   * apart, grows with the plasma spent, and MAXIMUM THRUST (the `overdrive`
+   * block) goes further again. Indexed by charge 1 and 2.
+   */
+  boost: {
+    seconds: [1.1, 1.6],
+    rumble: [0.55, 1.0],
+    roll: [0.035, 0.07],
+    /** The hull's own shudder, 0..1, for charge 1, 2 and a full reactor. */
+    shudder: [0.35, 0.6, 1],
+  },
+  /**
+   * Rumble texture on top of the jitter: sharp random jolts, how often they
+   * land per second at full rumble, and a tilt of the lens so the horizon
+   * fights the camera too.
+   */
+  rumbleJolts: 5,
+  rumbleJoltSize: 0.9,
+  rumbleTilt: 0.012,
   shockwave: {
     /** Rings in the pool. Two contacts inside one ring's life is the most a run asks. */
     pool: 3,
@@ -1090,6 +1177,9 @@ export const SHIP = {
    * catalogue length and centred, so this is about half the longest one.
    */
   noseZ: -2.6,
+  /** A boost shudder at full: how far the hull jolts, and how hard it yaws. */
+  shudderOffset: 0.22,
+  shudderYaw: 0.07,
 } as const;
 
 /**
@@ -1513,6 +1603,19 @@ export const GLOW = {
   podScale: 8.5,
   podOpacity: 0.6,
   podBreath: 0.18,
+  /**
+   * Anamorphic flares: a thin horizontal streak across a hot light, the lens
+   * look of every big-budget space film. Width and height in world units, and
+   * opacity, for a nozzle and for a plasma pod.
+   */
+  flareTextureWidth: 256,
+  flareTextureHeight: 16,
+  nozzleFlareWidth: 9,
+  nozzleFlareHeight: 0.55,
+  nozzleFlareOpacity: 0.55,
+  podFlareWidth: 26,
+  podFlareHeight: 1.2,
+  podFlareOpacity: 0.75,
   /** Flare where a beam lands: size and opacity at the beam's peak. */
   beamFlare: 9,
   beamFlareOpacity: 0.9,
@@ -1572,6 +1675,85 @@ export const AMBIENCE = {
     opacityMax: 0.7,
     color: 0xb9d4ff,
   },
+} as const;
+
+/**
+ * Real bloom: bright light bleeding across the lens. Tier-gated, rendered at
+ * a fraction of the canvas, and dropped automatically when the quality
+ * governor steps down to low. The threshold is high on purpose: only the
+ * additive light (engines, plasma, beams, blasts, stars) should bloom, never
+ * the painted sky or a lit rock face.
+ */
+export const BLOOM = {
+  enabled: [true, true, false],
+  resolution: 0.5,
+  threshold: 0.82,
+  strength: 0.8,
+  radius: 0.55,
+} as const;
+
+/**
+ * Hyperspace: the tunnel of stretched light around the lens on a burn, and
+ * the streaked rim of the frame. Intensity is 0..1; a partial burn opens it
+ * part way, MAXIMUM THRUST all the way.
+ */
+export const HYPER = {
+  streaks: [320, 220, 140],
+  radiusMin: 7,
+  radiusMax: 38,
+  depth: 320,
+  /** Streak length at full intensity, and how much faster than the world they run. */
+  length: 70,
+  speed: 3.4,
+  core: 0xe6f6ff,
+  edge: 0x7fd8ff,
+  /** Per charge 1 and 2; MAXIMUM THRUST is 1. */
+  burn: [0.45, 0.7],
+  /** Seconds to open, and the rate it closes once the hold is over. */
+  rise: 7,
+  fall: 1.1,
+  /** Seconds a partial burn holds before closing. MAXIMUM THRUST holds FX.warp.holdSeconds. */
+  hold: 0.7,
+  /** The streaked frame edge: opacity at full intensity. */
+  edgeOpacity: 0.55,
+  /** Reduced motion: the tunnel is this much of itself, and the edge is off. */
+  reducedScale: 0.5,
+} as const;
+
+/** Light trails off the wingtips, above cruise. */
+export const TRAILS = {
+  /** Samples per trail, per tier; 0 turns trails off. */
+  points: [28, 20, 14],
+  /** World length of a trail at full, and its width. */
+  length: 7,
+  width: 0.11,
+  color: 0x9fe6ff,
+  /** Speed ratio below which there is no trail, and opacity at full speed. */
+  minRatio: 0.12,
+  opacity: 0.9,
+  /** How far inboard of the hull's widest point the trail leaves, 0..1. */
+  inset: 0.08,
+} as const;
+
+/**
+ * Huge rocks that sweep past close to the lens between questions: scale.
+ * Only in calm phases (the comet gate), always outside the lane corridor.
+ */
+export const FLYBY = {
+  count: [2, 1, 1],
+  intervalMin: 4,
+  intervalMax: 9,
+  scaleMin: 5,
+  scaleMax: 9,
+  /** Distance off the centreline on X, and height range. */
+  xMin: 14,
+  xMax: 22,
+  yMin: -8,
+  yMax: 9,
+  spawnZ: -280,
+  /** Their own closing speed, on top of the world's. */
+  speed: 120,
+  spin: 0.9,
 } as const;
 
 /** The scene's light rig, beyond the key and hemisphere set in Engine. */

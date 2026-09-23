@@ -239,6 +239,9 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
       onState: handleState,
       onRunEnd: handleRunEnd,
       onDebug: debug ? setDebugInfo : undefined,
+      // `?tier=0|1|2` pins the quality tier, under `?debug=1` only: headless
+      // browsers detect as low-end phones, and bloom is tier-gated.
+      tier: debug ? pinnedTier() : undefined,
     });
     engineRef.current = engine;
     engine.start();
@@ -383,4 +386,10 @@ function stateBeat(state: GameState): string {
     cluster ? cluster.struck.length : -1,
     cluster ? cluster.shields : -1,
   ].join(":");
+}
+
+/** The `?tier=` QA hatch: 0, 1 or 2, or nothing. */
+function pinnedTier(): 0 | 1 | 2 | undefined {
+  const value = new URLSearchParams(window.location.search).get("tier");
+  return value === "0" || value === "1" || value === "2" ? (Number(value) as 0 | 1 | 2) : undefined;
 }
