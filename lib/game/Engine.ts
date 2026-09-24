@@ -16,6 +16,7 @@ import { Incoming } from "./Incoming";
 import { Landmark } from "./Landmark";
 import { Post } from "./Post";
 import { Run } from "./Run";
+import { finaleTier } from "./Score";
 import { Salvage } from "./Salvage";
 import { Shield } from "./Shield";
 import { Shockwave } from "./Shockwave";
@@ -52,6 +53,7 @@ import type {
   Question,
   Round,
   RunSummary,
+  TallyCue,
   WaypointState,
 } from "./types";
 
@@ -881,11 +883,34 @@ export class Engine {
     this.options.onOutcome?.(outcome, index);
   }
 
+  /**
+   * The end-of-run tally reading the score out. The tally is a React screen,
+   * so it calls through here for its sounds the way the HUD calls `answer`:
+   * the engine owns the audio and nothing else makes a noise.
+   */
+  tallyCue(cue: TallyCue): void {
+    switch (cue.kind) {
+      case "line":
+        this.audio.tallyLine(cue.index, cue.points, cue.max);
+        break;
+      case "tick":
+        this.audio.tallyTick();
+        break;
+      case "stage":
+        this.audio.tallyStage(cue.share);
+        break;
+      case "total":
+        this.audio.tallyTotal(cue.tier);
+        break;
+    }
+  }
+
   private endRun(): void {
     if (this.ended) return;
     this.ended = true;
-    this.audio.finish();
-    this.options.onRunEnd?.(this.run.summary());
+    const summary = this.run.summary();
+    this.audio.finish(finaleTier(summary.score, summary.maxScore));
+    this.options.onRunEnd?.(summary);
     // Keep flying under the share card: the ship coasting on is the story's
     // last frame. State updates stop mattering, the loop just renders.
   }

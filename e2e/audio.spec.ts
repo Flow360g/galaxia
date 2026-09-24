@@ -18,6 +18,8 @@ declare global {
     galaxiaAudio: {
       musicBus: GainNode;
       pick?: unknown;
+      finish: (tier?: string) => void;
+      tallyTotal: (tier: string) => void;
     };
     __peak: number;
     /** Brightness of the mix right now, as a spectral centroid in hertz. */
@@ -191,6 +193,46 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   await expect(page.getByTestId("sound")).toHaveAttribute("data-muted", "true", {
     timeout: 20_000,
   });
+});
+
+test("sound: the finale clears the bed and never clips", async ({ page }) => {
+  await page.addInitScript(probe);
+  await page.goto("/play?replay=1&debug=1&round=2026-09-18");
+  await launch(page);
+  await expect(page.getByTestId("question")).toBeVisible({ timeout: 20_000 });
+  await readUp(page);
+  const toggle = page.getByTestId("sound");
+  await toggle.click();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("data-muted", "false");
+  await expect.poll(() => page.evaluate(() => window.__audioState())).toBe("running");
+
+  // Measured against the engine alone, as the hit above is.
+  await page.evaluate(() => {
+    window.galaxiaAudio.musicBus.gain.value = 0;
+  });
+  const engineOnly = (await measure(page, 1200)).peak;
+
+  // The end of the run: riser, impact, chord. The top tier is the biggest
+  // thing the game plays, and it still has to stay under clipping.
+  await page.evaluate(() => {
+    window.__peak = 0;
+    window.galaxiaAudio.finish("perfect");
+  });
+  await page.waitForTimeout(2600);
+  const finale = await page.evaluate(() => window.__peak);
+  expect(finale).toBeGreaterThan(engineOnly * 2);
+  expect(finale).toBeLessThan(1);
+
+  // The tally's total stamp, likewise.
+  await page.evaluate(() => {
+    window.__peak = 0;
+    window.galaxiaAudio.tallyTotal("legendary");
+  });
+  await page.waitForTimeout(1600);
+  const stamp = await page.evaluate(() => window.__peak);
+  expect(stamp).toBeGreaterThan(engineOnly * 2);
+  expect(stamp).toBeLessThan(1);
 });
 
 /** The wrong lanes of a cluster, in lane order. There are always three. */

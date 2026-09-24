@@ -560,3 +560,17 @@ export interface DebugInfo {
   tier: QualityTier;
   dpr: number;
 }
+
+/**
+ * How well the run went, as the finale reads it. `finaleTier` in `Score.ts`
+ * decides it; the finish cue, the tally's sounds and the tally's headline all
+ * read the same one.
+ */
+export type FinaleTier = "perfect" | "legendary" | "great" | "good" | "complete";
+
+/** A beat of the end-of-run tally that makes a sound. See `Engine.tallyCue`. */
+export type TallyCue =
+  | { kind: "line"; index: number; points: number; max: number }
+  | { kind: "tick" }
+  | { kind: "stage"; share: number }
+  | { kind: "total"; tier: FinaleTier };
