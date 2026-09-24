@@ -13,6 +13,7 @@ import {
   WINDOW,
   type EarthRung,
 } from "@/lib/game/feed";
+import { isCountryGuess } from "@/lib/game/countries";
 import { directUrl, groundUrl, warmUrl } from "@/lib/game/prefetch";
 import { SCORE, STATION } from "@/lib/game/Tuning";
 import type { EarthQuestion, EarthShot, GameState } from "@/lib/game/types";
@@ -55,6 +56,7 @@ export function StationFeed({
   more,
 }: Props) {
   const [typed, setTyped] = useState("");
+  const [countryNudge, setCountryNudge] = useState(false);
   const ladder = useMemo(() => earthLadder(question), [question]);
   const shown = useMemo<Set<EarthRung>>(
     () => new Set(ladder.slice(0, state.earthIntel)),
@@ -283,11 +285,28 @@ export function StationFeed({
               <p className={`${styles.spent} arcade`}>All hints used</p>
             )}
 
+            {/* What to type, said on the box itself. "Morocco" for Marrakesh
+                was marked wrong when nothing had said a country would not do. */}
+            <p
+              className={`${styles.ask} ${countryNudge ? styles.askNudge : ""}`}
+              data-testid="site-ask"
+              aria-live="polite"
+            >
+              {countryNudge
+                ? `That is a country. Type the name of the ${question.kind}.`
+                : `Name the ${question.kind}, not the country.`}
+            </p>
             <form
               className={styles.typedRow}
               onSubmit={(event) => {
                 event.preventDefault();
                 if (!state.feedReady) return;
+                // A country is sent back rather than marked wrong: the player
+                // has not misread the photo, they have misread the question.
+                if (isCountryGuess(question, typed)) {
+                  setCountryNudge(true);
+                  return;
+                }
                 onSubmit(typed);
               }}
             >
@@ -295,8 +314,11 @@ export function StationFeed({
                 id="station-answer"
                 className={styles.input}
                 value={typed}
-                onChange={(event) => setTyped(event.target.value)}
-                placeholder="Type the name of the place here"
+                onChange={(event) => {
+                  setTyped(event.target.value);
+                  setCountryNudge(false);
+                }}
+                placeholder={`Type the ${question.kind} here`}
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}

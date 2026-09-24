@@ -410,6 +410,17 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     // already up. That is a legitimate outcome of the mechanic, not a failure,
     // so it is tolerated here and the correct identification is asserted on
     // site 1, which is played straight.
+    if (index === 1) {
+      // A country is not an answer, and is not marked wrong either: the box
+      // says so and the site stays open. "Morocco" for Marrakesh lost a site
+      // once when nothing on screen had said a city was wanted.
+      await expect(page.getByTestId("site-ask")).toContainText(/not the country/i);
+      await box.fill("Morocco");
+      await page.getByTestId("site-submit").click();
+      await expect(page.getByTestId("site-ask")).toContainText(/that is a country/i);
+      await expect(page.getByTestId("next-site")).toHaveCount(0);
+      await expect(box).toBeEnabled();
+    }
     if ((await box.count()) > 0) {
       await box.fill(site);
       await page.getByTestId("site-submit").click();

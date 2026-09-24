@@ -189,9 +189,9 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
     earth: {
       type: "earth",
       title: PHASE_TITLE.earth,
-      oneLiner: "Look at the satellite view. Name the place.",
+      oneLiner: "Look at the satellite view. Name the city.",
       rules: [
-        `${count(n, "place")}You get a satellite photo of somewhere on Earth. Type where it is.`,
+        `${count(n, "place")}You get a satellite photo of somewhere on Earth. Type the name of the city, not the country. A few are a famous landmark or island instead, and the answer box says so.`,
         "Stuck? Get a hint or zoom out. Each one costs a few points.",
       ],
       details: [
@@ -321,7 +321,7 @@ export const SITE_HAIL: Transmission = {
   from: "EARTH COMMAND",
   speaker: SOAP,
   lines: [
-    "Tell me the location shown on the satellite image, so we can send reinforcements!",
+    "Tell me which city is on the satellite image. The name of the city, not just the country, so we can send reinforcements!",
   ],
 };
 
