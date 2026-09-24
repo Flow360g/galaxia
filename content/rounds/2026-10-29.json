@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-29",
+  "roundNumber": 41,
+  "seed": 20261029,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which of these go into a classic basil pesto?",
+      "options": [
+        "Pine nuts",
+        "Parmesan",
+        "Tomato",
+        "Oregano",
+        "Coriander",
+        "Garlic"
+      ],
+      "answers": [
+        0,
+        1,
+        5
+      ],
+      "fact": "Pesto comes from Genoa and takes its name from pestare, to pound, because it was made with a pestle and mortar."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these are fish?",
+      "options": [
+        "Shark",
+        "Dolphin",
+        "Seahorse",
+        "Jellyfish",
+        "Eel",
+        "Starfish"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "A seahorse is a fish, and it is the male that carries the eggs and gives birth."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How many countries are there in South America?",
+      "answer": 12,
+      "min": 4,
+      "max": 17,
+      "unit": "countries",
+      "fact": "Twelve. French Guiana is part of France, and so counts as part of the European Union."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How many years did Queen Victoria reign?",
+      "answer": 63,
+      "min": 20,
+      "max": 90,
+      "unit": "years",
+      "fact": "63 years, from 1837 to 1901. Elizabeth II passed her record in 2015."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which group was Beyoncé a member of?",
+      "options": [
+        "TLC",
+        "Destiny's Child",
+        "Spice Girls",
+        "En Vogue"
+      ],
+      "answer": 1,
+      "hint": "Kelly Rowland was in it too.",
+      "fact": "Destiny's Child took its name from a passage in the Book of Isaiah."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "What was the capital of the Byzantine Empire?",
+      "options": [
+        "Athens",
+        "Alexandria",
+        "Constantinople",
+        "Rome"
+      ],
+      "answer": 2,
+      "hint": "Today it is called Istanbul.",
+      "fact": "Constantinople stood for more than a thousand years until the Ottomans took it in 1453."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

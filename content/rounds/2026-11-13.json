@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-13",
+  "roundNumber": 56,
+  "seed": 20261113,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these animals hibernate?",
+      "options": [
+        "Hedgehog",
+        "Deer",
+        "Brown bear",
+        "Rabbit",
+        "Fox",
+        "Dormouse"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "A dormouse can spend six months or more asleep, which is how it got a name from the French for sleep."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these sculptures are by Michelangelo?",
+      "options": [
+        "Discobolus",
+        "Pietà",
+        "Moses",
+        "Venus de Milo",
+        "David",
+        "The Thinker"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "Michelangelo carved David from a block of marble that another sculptor had given up on."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How high is the top Olympic diving platform, in metres?",
+      "answer": 10,
+      "min": 2,
+      "max": 14,
+      "unit": "m",
+      "fact": "Ten metres, and a diver hits the water at about 50 km/h."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many eyes does a spider usually have?",
+      "answer": 8,
+      "min": 2,
+      "max": 11,
+      "unit": "eyes",
+      "fact": "Most spiders have eight, though many see poorly and feel their way by vibration."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "What is the main ingredient of hummus?",
+      "options": [
+        "Chickpeas",
+        "Broad beans",
+        "Lentils",
+        "Peas"
+      ],
+      "answer": 0,
+      "hint": "They are also used to make falafel.",
+      "fact": "Hummus is simply the Arabic word for chickpeas."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which was Daniel Craig's first James Bond film?",
+      "options": [
+        "Casino Royale",
+        "Spectre",
+        "Skyfall",
+        "Quantum of Solace"
+      ],
+      "answer": 0,
+      "hint": "It was based on the very first Bond novel.",
+      "fact": "Casino Royale (2006) went back to Ian Fleming's first book, from 1953."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

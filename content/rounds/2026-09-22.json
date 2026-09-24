@@ -7,29 +7,29 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "sport",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these countries have won the men's football World Cup?",
+      "prompt": "Which of these trees keep their leaves all year?",
       "options": [
-        "Belgium",
-        "France",
-        "Spain",
-        "Uruguay",
-        "Portugal",
-        "Mexico"
+        "Holly",
+        "Yew",
+        "Pine",
+        "Beech",
+        "Maple",
+        "Oak"
       ],
       "answers": [
+        0,
         1,
-        2,
-        3
+        2
       ],
-      "fact": "Uruguay won the first World Cup in 1930, at home, and did it again in 1950 in Brazil's own stadium."
+      "fact": "Evergreens do drop their leaves, just a few at a time instead of all at once in autumn."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "science",
-      "difficulty": 1,
+      "difficulty": 3,
       "prompt": "Which of these are noble gases?",
       "options": [
         "Nitrogen",
@@ -73,18 +73,18 @@
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "misc",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "Which planet has the shortest day?",
+      "prompt": "In which country did the Industrial Revolution begin?",
       "options": [
-        "Saturn",
-        "Mars",
-        "Jupiter",
-        "Neptune"
+        "Britain",
+        "USA",
+        "Germany",
+        "France"
       ],
-      "answer": 2,
-      "hint": "The biggest one spins the fastest.",
-      "fact": "Jupiter spins once every 9 hours 56 minutes."
+      "answer": 0,
+      "hint": "It started with cotton mills and coal mines in the 1700s.",
+      "fact": "Britain had coal, iron, rivers and a big empire to sell to, all at once."
     },
     {
       "id": "q6",

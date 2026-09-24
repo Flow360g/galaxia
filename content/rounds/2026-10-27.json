@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-27",
+  "roundNumber": 39,
+  "seed": 20261027,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are Queen songs?",
+      "options": [
+        "Roxanne",
+        "Radio Ga Ga",
+        "Heroes",
+        "Killer Queen",
+        "Money",
+        "Bicycle Race"
+      ],
+      "answers": [
+        1,
+        3,
+        5
+      ],
+      "fact": "Queen's twenty minutes at Live Aid in 1985 is often voted the greatest live rock performance ever."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which of these are types of rice?",
+      "options": [
+        "Basmati",
+        "Semolina",
+        "Bulgur",
+        "Quinoa",
+        "Jasmine",
+        "Arborio"
+      ],
+      "answers": [
+        0,
+        4,
+        5
+      ],
+      "fact": "Arborio rice is used for risotto because it releases starch and makes the dish creamy."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How heavy is a men's Olympic shot put, in kilograms?",
+      "answer": 7.26,
+      "min": 1.5,
+      "max": 10.5,
+      "unit": "kg",
+      "fact": "7.26 kg, which is exactly 16 pounds. The women's shot is 4 kg."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many people signed the US Declaration of Independence?",
+      "answer": 56,
+      "min": 20,
+      "max": 80,
+      "unit": "people",
+      "fact": "56. John Hancock signed so large that his name became American slang for a signature."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "Which city is home to the headquarters of the United Nations?",
+      "options": [
+        "Vienna",
+        "New York",
+        "Brussels",
+        "Geneva"
+      ],
+      "answer": 1,
+      "hint": "It is on the East River in the United States.",
+      "fact": "The land for the UN building was bought by John D. Rockefeller Jr. and donated."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Who wrote Matilda?",
+      "options": [
+        "J. K. Rowling",
+        "Beatrix Potter",
+        "Roald Dahl",
+        "Enid Blyton"
+      ],
+      "answer": 2,
+      "hint": "He also wrote Charlie and the Chocolate Factory.",
+      "fact": "Roald Dahl wrote his books in a shed at the bottom of his garden."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-15",
+  "roundNumber": 58,
+  "seed": 20261115,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which of these cities have hosted the Summer Olympics?",
+      "options": [
+        "Barcelona",
+        "Cape Town",
+        "Sydney",
+        "Istanbul",
+        "Seoul",
+        "Toronto"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Triathlon made its Olympic debut at Sydney 2000, starting with a swim beside the Opera House."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which of these cities stand on the Danube?",
+      "options": [
+        "Warsaw",
+        "Budapest",
+        "Vienna",
+        "Belgrade",
+        "Prague",
+        "Munich"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "The Danube runs through or along ten countries, more than any other river on Earth."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "How heavy is a newborn baby, on average, in kilograms?",
+      "answer": 3.5,
+      "min": 1,
+      "max": 5,
+      "unit": "kg",
+      "fact": "About 3.5 kg. Most babies lose a little weight in their first few days, then gain it back within a fortnight."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many characters could a tweet have when Twitter started?",
+      "answer": 140,
+      "min": 45,
+      "max": 195,
+      "unit": "characters",
+      "fact": "140, so a tweet would fit in a text message with room for a username."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which bird lays the biggest egg?",
+      "options": [
+        "Emu",
+        "Condor",
+        "Albatross",
+        "Ostrich"
+      ],
+      "answer": 3,
+      "hint": "It is also the biggest bird alive.",
+      "fact": "One ostrich egg holds as much as about two dozen hen's eggs."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which pastry are profiteroles made from?",
+      "options": [
+        "Filo",
+        "Shortcrust",
+        "Puff",
+        "Choux"
+      ],
+      "answer": 3,
+      "hint": "It is also used for eclairs.",
+      "fact": "Choux pastry puffs up in the oven because the water in it turns to steam."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

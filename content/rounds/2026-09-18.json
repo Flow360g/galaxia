@@ -28,23 +28,23 @@
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which of these are citrus fruits?",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "Which of these are events in the decathlon?",
       "options": [
-        "Lime",
-        "Mango",
-        "Papaya",
-        "Kiwi",
-        "Lemon",
-        "Yuzu"
+        "100 metres",
+        "Triple jump",
+        "Pole vault",
+        "Javelin",
+        "Hammer",
+        "200 metres"
       ],
       "answers": [
         0,
-        4,
-        5
+        2,
+        3
       ],
-      "fact": "Yuzu is a Japanese citrus that shrugs off frost, which almost nothing else in the family can do."
+      "fact": "The decathlon is ten events over two days, and the 1500 metres always comes last."
     },
     {
       "id": "q3",
@@ -74,17 +74,17 @@
       "id": "q5",
       "type": "mcq",
       "topic": "misc",
-      "difficulty": 3,
-      "prompt": "Which planet would float if you could drop it in water?",
+      "difficulty": 2,
+      "prompt": "Which currency is used in Switzerland?",
       "options": [
-        "Uranus",
-        "Saturn",
-        "Jupiter",
-        "Neptune"
+        "Euro",
+        "Franc",
+        "Krone",
+        "Mark"
       ],
       "answer": 1,
-      "hint": "It is not the biggest one, it is the least tightly packed.",
-      "fact": "Saturn's average density is lower than water's. It is mostly hydrogen and helium, wrapped around a small core."
+      "hint": "France used the same name before it switched to the euro.",
+      "fact": "Switzerland is surrounded by euro countries but has kept the Swiss franc."
     },
     {
       "id": "q6",

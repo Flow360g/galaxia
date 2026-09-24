@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-10",
+  "roundNumber": 22,
+  "seed": 20261010,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these capital cities are in Africa?",
+      "options": [
+        "Nairobi",
+        "Beirut",
+        "Baku",
+        "Accra",
+        "Dakar",
+        "Muscat"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "Dakar, the capital of Senegal, stands on the westernmost point of mainland Africa."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these characters did Shakespeare create?",
+      "options": [
+        "Beowulf",
+        "Ophelia",
+        "Faustus",
+        "Tartuffe",
+        "Puck",
+        "Hamlet"
+      ],
+      "answers": [
+        1,
+        4,
+        5
+      ],
+      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Molière's, and Beowulf is an Old English poem nobody knows the author of."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many ribs does a person have?",
+      "answer": 24,
+      "min": 8,
+      "max": 34,
+      "unit": "ribs",
+      "fact": "24, in twelve pairs. Men and women have the same number."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "How far is it from Perth to Sydney in a straight line, in kilometres?",
+      "answer": 3300,
+      "min": 1200,
+      "max": 4600,
+      "unit": "km",
+      "fact": "About 3,300 km, further than London to Moscow."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Who created the detective Sherlock Holmes?",
+      "options": [
+        "Agatha Christie",
+        "Dickens",
+        "Conan Doyle",
+        "Edgar Allan Poe"
+      ],
+      "answer": 2,
+      "hint": "He was a doctor from Edinburgh.",
+      "fact": "Arthur Conan Doyle killed Holmes off in 1893 and had to bring him back ten years later because readers were furious."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which fruit is dried to make a prune?",
+      "options": [
+        "Date",
+        "Grape",
+        "Plum",
+        "Fig"
+      ],
+      "answer": 2,
+      "hint": "It is small and purple, with a stone inside.",
+      "fact": "A dried grape is a raisin, sultana or currant, depending on the grape."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

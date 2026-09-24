@@ -69,14 +69,14 @@
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "How long is the first Star Wars film, in minutes?",
-      "answer": 121,
-      "min": 30,
-      "max": 165,
-      "fact": "About 121 minutes. It was cut down from a much longer first assembly that the director's friends thought was unwatchable.",
-      "unit": "min"
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "How many litres of milk does it take to make one kilogram of cheese?",
+      "answer": 10,
+      "min": 2,
+      "max": 14,
+      "unit": "litres",
+      "fact": "About ten litres for a hard cheese. Most of the milk drains away as whey."
     },
     {
       "id": "q4",
@@ -109,18 +109,18 @@
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "screen",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which band recorded the album Abbey Road?",
+      "prompt": "What is the chemical symbol for gold?",
       "options": [
-        "Pink Floyd",
-        "The Beatles",
-        "Queen",
-        "ABBA"
+        "Au",
+        "Gd",
+        "Ag",
+        "Go"
       ],
-      "answer": 1,
-      "hint": "They named it after the London street where their studio was.",
-      "fact": "The cover was shot in ten minutes on the street outside the studio. The crossing is now a listed landmark."
+      "answer": 0,
+      "hint": "It comes from the Latin word for gold, aurum.",
+      "fact": "Ag, silver, comes from the Latin argentum, which is also where Argentina got its name."
     },
     {
       "id": "q7",

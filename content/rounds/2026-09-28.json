@@ -27,44 +27,44 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which of these are made from milk?",
+      "prompt": "Which of these martial arts come from Japan?",
       "options": [
-        "Tofu",
-        "Cheese",
-        "Coconut cream",
-        "Yoghurt",
-        "Margarine",
-        "Butter"
+        "Taekwondo",
+        "Capoeira",
+        "Aikido",
+        "Judo",
+        "Karate",
+        "Kung fu"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
+      "fact": "Judo became the first Asian martial art in the Olympics, at Tokyo in 1964."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "Which of these explorers sailed for Spain?",
+      "options": [
+        "Cook",
+        "Columbus",
+        "Drake",
+        "Magellan",
+        "Vasco da Gama",
+        "Balboa"
       ],
       "answers": [
         1,
         3,
         5
       ],
-      "fact": "Margarine is made from vegetable oil, tofu from soybeans and coconut cream from coconut flesh. None of them has ever been near a cow."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Which of these were written by Shakespeare?",
-      "options": [
-        "Macbeth",
-        "Frankenstein",
-        "The Tempest",
-        "Don Quixote",
-        "Hamlet",
-        "Oliver Twist"
-      ],
-      "answers": [
-        0,
-        2,
-        4
-      ],
-      "fact": "Shakespeare invented or first wrote down around 1,700 English words, including lonely, bedroom and eyeball."
+      "fact": "Magellan was Portuguese but sailed for Spain. He died in the Philippines, and his crew finished the first voyage round the world."
     },
     {
       "id": "q3",
@@ -81,13 +81,14 @@
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
+      "topic": "arts",
       "difficulty": 1,
-      "prompt": "How many holes are played in a full round of golf?",
-      "answer": 18,
-      "min": 4,
-      "max": 26,
-      "fact": "Eighteen became the standard at St Andrews in 1764, when four short holes were merged into two."
+      "prompt": "In the Jules Verne novel, how many days does it take Phileas Fogg to go around the world?",
+      "answer": 80,
+      "min": 25,
+      "max": 110,
+      "unit": "days",
+      "fact": "Eighty days, and he wins his bet only because travelling east has gained him a day."
     },
     {
       "id": "q5",

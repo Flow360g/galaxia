@@ -69,14 +69,15 @@
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
+      "topic": "science",
       "difficulty": 3,
-      "prompt": "How long is the film Titanic, in minutes?",
-      "answer": 194,
-      "min": 60,
-      "max": 280,
-      "fact": "About 194 minutes. The studio wanted it cut, and the director refused.",
-      "unit": "min"
+      "prompt": "Roughly how many hairs are on a person's head?",
+      "answer": 100000,
+      "min": 30000,
+      "max": 200000,
+      "unit": "hairs",
+      "log": true,
+      "fact": "About 100,000, and you lose 50 to 100 of them every day."
     },
     {
       "id": "q4",
@@ -92,18 +93,18 @@
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "In which sport is the Ryder Cup contested?",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which is the only mammal that can truly fly?",
       "options": [
-        "Sailing",
-        "Tennis",
-        "Cycling",
-        "Golf"
+        "Sugar glider",
+        "Flying squirrel",
+        "Colugo",
+        "Bat"
       ],
       "answer": 3,
-      "hint": "Europe against the United States, every two years, in teams.",
-      "fact": "The Ryder Cup is Europe against the United States. It is one of the few times golf is played as a team."
+      "hint": "The others only glide.",
+      "fact": "Bats make up about a fifth of all mammal species."
     },
     {
       "id": "q6",

@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-16",
+  "roundNumber": 28,
+  "seed": 20261016,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these words read the same backwards?",
+      "options": [
+        "Level",
+        "Kayak",
+        "Banana",
+        "Llama",
+        "Salsa",
+        "Radar"
+      ],
+      "answers": [
+        0,
+        1,
+        5
+      ],
+      "fact": "Christopher Nolan's 2020 film Tenet has a palindrome for a title."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these are breads?",
+      "options": [
+        "Naan",
+        "Focaccia",
+        "Brioche",
+        "Couscous",
+        "Tofu",
+        "Polenta"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ],
+      "fact": "Brioche is rich with butter and eggs, which sits it halfway between bread and cake."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many coloured squares does a Rubik's Cube have?",
+      "answer": 54,
+      "min": 20,
+      "max": 75,
+      "unit": "squares",
+      "fact": "Nine on each of six faces makes 54."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many degrees is each corner of a regular hexagon?",
+      "answer": 120,
+      "min": 35,
+      "max": 165,
+      "unit": "degrees",
+      "fact": "120 degrees, which is why hexagons fit together with no gaps, as in a honeycomb."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "What is the largest kind of shark?",
+      "options": [
+        "Whale shark",
+        "Hammerhead",
+        "Great white",
+        "Tiger shark"
+      ],
+      "answer": 0,
+      "hint": "It eats only tiny plankton.",
+      "fact": "A whale shark can grow to about 12 m and is completely harmless to people."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Who painted Girl with a Pearl Earring?",
+      "options": [
+        "Rubens",
+        "Van Eyck",
+        "Vermeer",
+        "Rembrandt"
+      ],
+      "answer": 2,
+      "hint": "He worked in Delft and left fewer than forty paintings.",
+      "fact": "Johannes Vermeer painted it around 1665. Nobody knows who the girl was."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

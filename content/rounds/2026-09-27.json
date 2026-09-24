@@ -27,23 +27,23 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "sport",
-      "difficulty": 1,
-      "prompt": "Which of these sports are played at the Summer Olympics?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are woodwind instruments?",
       "options": [
-        "Fencing",
-        "Judo",
-        "Ski jumping",
-        "Archery",
-        "Bobsleigh",
-        "Curling"
+        "Cornet",
+        "French horn",
+        "Trumpet",
+        "Flute",
+        "Saxophone",
+        "Bassoon"
       ],
       "answers": [
-        0,
-        1,
-        3
+        3,
+        4,
+        5
       ],
-      "fact": "Curling, bobsleigh and ski jumping all need ice or snow, so they belong to the Winter Games."
+      "fact": "A saxophone is made of brass but counts as woodwind, because a reed makes its sound."
     },
     {
       "id": "q2",
@@ -69,14 +69,14 @@
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
+      "topic": "misc",
       "difficulty": 1,
-      "prompt": "How many strings does a standard guitar have?",
-      "answer": 6,
-      "min": 2,
-      "max": 12,
-      "unit": "strings",
-      "fact": "Six. A bass guitar usually has four, and a ukulele has four as well."
+      "prompt": "How many pieces does each player start a game of chess with?",
+      "answer": 16,
+      "min": 4,
+      "max": 22,
+      "unit": "pieces",
+      "fact": "Sixteen: eight pawns, two rooks, two knights, two bishops, a queen and a king."
     },
     {
       "id": "q4",

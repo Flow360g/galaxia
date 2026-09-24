@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-25",
+  "roundNumber": 37,
+  "seed": 20261025,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which of these TV shows are set in a hospital?",
+      "options": [
+        "Scrubs",
+        "Grey's Anatomy",
+        "Mad Men",
+        "Suits",
+        "ER",
+        "The Wire"
+      ],
+      "answers": [
+        0,
+        1,
+        4
+      ],
+      "fact": "ER ran for fifteen seasons and made a star of George Clooney."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "Which of these were civilisations of ancient Mesopotamia?",
+      "options": [
+        "Minoans",
+        "Assyria",
+        "Sumer",
+        "Carthage",
+        "Babylon",
+        "Etruscans"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "Sumer gave the world some of its earliest writing, pressed into wet clay with a reed."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "How many years did it take to build the Sydney Opera House?",
+      "answer": 14,
+      "min": 3,
+      "max": 20,
+      "unit": "years",
+      "fact": "Fourteen, from 1959 to 1973: ten years late and around fourteen times over budget."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How far is it from Sydney to Melbourne by road, in kilometres?",
+      "answer": 880,
+      "min": 300,
+      "max": 1200,
+      "unit": "km",
+      "fact": "The Hume Highway covers about 880 km, and the flight between the two is one of the busiest in the world."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which film is set on the moon Pandora?",
+      "options": [
+        "Dune",
+        "Prometheus",
+        "Interstellar",
+        "Avatar"
+      ],
+      "answer": 3,
+      "hint": "Its people are tall and blue.",
+      "fact": "James Cameron waited more than ten years for film technology to catch up with his idea for Avatar."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which country has the longest coastline?",
+      "options": [
+        "Russia",
+        "Canada",
+        "Indonesia",
+        "Australia"
+      ],
+      "answer": 1,
+      "hint": "Thousands of Arctic islands add to its total.",
+      "fact": "Canada's coast is about 243,000 km long, enough to go round the Earth six times."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

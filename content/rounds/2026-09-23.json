@@ -7,23 +7,23 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these instruments have strings?",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these people led the Soviet Union?",
       "options": [
-        "Trumpet",
-        "Harp",
-        "Flute",
-        "Banjo",
-        "Cello",
-        "Oboe"
+        "Putin",
+        "Lenin",
+        "Trotsky",
+        "Tito",
+        "Stalin",
+        "Gorbachev"
       ],
       "answers": [
         1,
-        3,
-        4
+        4,
+        5
       ],
-      "fact": "A concert harp has 47 strings and seven pedals, each of which retunes a whole set of strings at once."
+      "fact": "Trotsky lost the power struggle after Lenin died and was murdered in exile in Mexico in 1940."
     },
     {
       "id": "q2",
@@ -49,26 +49,26 @@
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How far is the Moon from Earth, on average?",
-      "answer": 384400,
-      "min": 80000,
-      "max": 600000,
-      "unit": "km",
-      "fact": "About 384,400 km, and drifting away by 3.8 cm a year. Light makes the trip in 1.3 seconds."
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "How many films are there in the main Harry Potter series?",
+      "answer": 8,
+      "min": 2,
+      "max": 11,
+      "unit": "films",
+      "fact": "Eight. The last book, Deathly Hallows, was split into two films."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "How fast does light travel, in kilometres per second?",
-      "answer": 299792,
-      "min": 50000,
-      "max": 400000,
-      "unit": "km/s",
-      "fact": "299,792 km every second. The sunlight on your face left the Sun about eight minutes ago."
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How long is a cricket pitch, in metres?",
+      "answer": 20.12,
+      "min": 6,
+      "max": 28,
+      "unit": "m",
+      "fact": "22 yards, the length of an old surveyor's chain."
     },
     {
       "id": "q5",

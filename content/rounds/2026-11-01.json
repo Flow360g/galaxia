@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-01",
+  "roundNumber": 44,
+  "seed": 20261101,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these are star signs?",
+      "options": [
+        "Libra",
+        "Aries",
+        "Pegasus",
+        "Orion",
+        "Ursa",
+        "Pisces"
+      ],
+      "answers": [
+        0,
+        1,
+        5
+      ],
+      "fact": "Orion and Pegasus are constellations too, but the Sun never passes in front of them, so they are not signs of the zodiac."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which of these are Grand Slam tennis tournaments?",
+      "options": [
+        "Wimbledon",
+        "Indian Wells",
+        "US Open",
+        "Queen's",
+        "Davis Cup",
+        "Roland Garros"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "Wimbledon is the only Grand Slam still played on grass."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "How many days does a human pregnancy last, on average?",
+      "answer": 280,
+      "min": 100,
+      "max": 400,
+      "unit": "days",
+      "fact": "Forty weeks, counted from the start of the last period, so a baby is really growing for about 38 of them."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How long is a tennis court, in metres?",
+      "answer": 23.77,
+      "min": 8,
+      "max": 32,
+      "unit": "m",
+      "fact": "78 feet from baseline to baseline, set down in the 1870s."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which Shakespeare play features the moneylender Shylock?",
+      "options": [
+        "Merchant of Venice",
+        "Macbeth",
+        "King Lear",
+        "Othello"
+      ],
+      "answer": 0,
+      "hint": "It is set in an Italian city of canals.",
+      "fact": "Shylock demands a pound of flesh as his price for an unpaid loan."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which philosopher taught Alexander the Great?",
+      "options": [
+        "Socrates",
+        "Aristotle",
+        "Pythagoras",
+        "Plato"
+      ],
+      "answer": 1,
+      "hint": "He was Plato's student.",
+      "fact": "Aristotle taught the young Alexander for about three years."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

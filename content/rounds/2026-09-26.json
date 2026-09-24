@@ -109,18 +109,18 @@
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "Who wrote the novel Pride and Prejudice?",
+      "prompt": "Who composed The Four Seasons?",
       "options": [
-        "Elizabeth Gaskell",
-        "George Eliot",
-        "Charlotte Bronte",
-        "Jane Austen"
+        "Mozart",
+        "Handel",
+        "Vivaldi",
+        "Bach"
       ],
-      "answer": 3,
-      "hint": "She wrote six novels and published every one of them anonymously.",
-      "fact": "Jane Austen published it in 1813. The title page said only 'By the author of Sense and Sensibility'."
+      "answer": 2,
+      "hint": "He was a priest from Venice, nicknamed the Red Priest for his hair.",
+      "fact": "The Four Seasons is four violin concertos, one for each season, written around 1720."
     },
     {
       "id": "q7",

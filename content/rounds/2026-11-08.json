@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-08",
+  "roundNumber": 51,
+  "seed": 20261108,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these are types of pasta?",
+      "options": [
+        "Risotto",
+        "Farfalle",
+        "Focaccia",
+        "Fusilli",
+        "Penne",
+        "Polenta"
+      ],
+      "answers": [
+        1,
+        3,
+        4
+      ],
+      "fact": "Farfalle means butterflies in Italian, and fusilli comes from the word for a spindle."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which of these are birds of prey?",
+      "options": [
+        "Albatross",
+        "Osprey",
+        "Eagle",
+        "Kestrel",
+        "Heron",
+        "Pelican"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "A kestrel can hang still in the air against the wind while it watches the grass for mice."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How many minutes does a rugby union match last, not counting stoppages?",
+      "answer": 80,
+      "min": 25,
+      "max": 110,
+      "unit": "minutes",
+      "fact": "Two halves of 40 minutes, and the ball has to go dead before the referee can end a half."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How old was Alexander the Great when he died?",
+      "answer": 32,
+      "min": 8,
+      "max": 46,
+      "unit": "years",
+      "fact": "32, and by then he ruled an empire stretching from Greece to what is now Pakistan."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which part of the eye controls how much light gets in?",
+      "options": [
+        "Cornea",
+        "Lens",
+        "Iris",
+        "Retina"
+      ],
+      "answer": 2,
+      "hint": "It is the coloured part.",
+      "fact": "The iris is a ring of muscle that opens and closes the pupil like a camera shutter."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "What is a male bee called?",
+      "options": [
+        "A worker",
+        "A drone",
+        "A buck",
+        "A soldier"
+      ],
+      "answer": 1,
+      "hint": "It is also a word for a flying robot.",
+      "fact": "Drones do no work in the hive. Their only job is to mate with a queen."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

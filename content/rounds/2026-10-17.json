@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-17",
+  "roundNumber": 29,
+  "seed": 20261017,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are James Bond villains?",
+      "options": [
+        "Blofeld",
+        "Moriarty",
+        "Hannibal",
+        "Jaws",
+        "Lex Luthor",
+        "Goldfinger"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "Jaws, the giant with steel teeth, changes sides at the end of Moonraker."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 1,
+      "prompt": "Which of these were invented in ancient China?",
+      "options": [
+        "Gunpowder",
+        "Telescope",
+        "Steam engine",
+        "Thermometer",
+        "Compass",
+        "Paper"
+      ],
+      "answers": [
+        0,
+        4,
+        5
+      ],
+      "fact": "China counts four great inventions: paper, printing, gunpowder and the compass."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "How fast does sound travel through air, in metres per second?",
+      "answer": 343,
+      "min": 120,
+      "max": 480,
+      "unit": "m/s",
+      "fact": "About 343 m/s, so count the seconds between lightning and thunder and divide by three to get the distance in kilometres."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Roughly how many people died when the Titanic sank?",
+      "answer": 1500,
+      "min": 400,
+      "max": 2200,
+      "unit": "people",
+      "fact": "About 1,500 of the roughly 2,200 on board. There were lifeboats for only about half of them."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which novel opens with the line \"Call me Ishmael\"?",
+      "options": [
+        "Robinson Crusoe",
+        "Moby-Dick",
+        "Treasure Island",
+        "Old Man and the Sea"
+      ],
+      "answer": 1,
+      "hint": "It is about a captain hunting a whale.",
+      "fact": "Herman Melville's Moby-Dick flopped when it came out in 1851 and only became a classic after he died."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which sport would you bowl a googly?",
+      "options": [
+        "Lawn bowls",
+        "Baseball",
+        "Tenpin",
+        "Cricket"
+      ],
+      "answer": 3,
+      "hint": "It is a ball that spins the opposite way to the one the batter expects.",
+      "fact": "The googly was invented by an English bowler, Bernard Bosanquet, around 1900."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

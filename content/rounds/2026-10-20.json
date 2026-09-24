@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-20",
+  "roundNumber": 32,
+  "seed": 20261020,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these scientists won a Nobel Prize?",
+      "options": [
+        "Edison",
+        "Curie",
+        "Einstein",
+        "Newton",
+        "Feynman",
+        "Darwin"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "The first Nobel Prizes were given in 1901. Darwin died in 1882, and Newton almost two hundred years before that."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "Which of these animals live wild only in Africa?",
+      "options": [
+        "Hippo",
+        "Leopard",
+        "Zebra",
+        "Giraffe",
+        "Lion",
+        "Cheetah"
+      ],
+      "answers": [
+        0,
+        2,
+        3
+      ],
+      "fact": "A few hundred wild lions still live in India, in the Gir Forest in Gujarat."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How high does a passenger jet usually cruise, in kilometres?",
+      "answer": 11,
+      "min": 3,
+      "max": 16,
+      "unit": "km",
+      "fact": "About 11 km, above most of the weather and in air thin enough to save fuel."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How fast can an ostrich run, in km/h?",
+      "answer": 70,
+      "min": 20,
+      "max": 95,
+      "unit": "km/h",
+      "fact": "About 70 km/h, faster than any other bird on land. One stride can cover 5 m."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "What is the Japanese art of folding paper called?",
+      "options": [
+        "Bonsai",
+        "Haiku",
+        "Ikebana",
+        "Origami"
+      ],
+      "answer": 3,
+      "hint": "The word means folding paper.",
+      "fact": "Ikebana is flower arranging, and bonsai is growing tiny trees in pots."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which strait separates Spain from Morocco?",
+      "options": [
+        "Bosphorus",
+        "Messina",
+        "Gibraltar",
+        "Hormuz"
+      ],
+      "answer": 2,
+      "hint": "A famous rock stands at its northern end.",
+      "fact": "At its narrowest the strait is about 14 km wide, and on a clear day you can see Africa from Europe."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

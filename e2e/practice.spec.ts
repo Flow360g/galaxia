@@ -62,6 +62,24 @@ test("a seed rebuilds its round, and two seeds are two rounds", async ({ page })
   expect(other).not.toBe(first);
 });
 
+test("the practice button deals from one deck, a run at a time", async ({ page }) => {
+  await seedFlown(page);
+
+  // Each press is the next deal from this device's deck, so a tester works
+  // through the pool instead of meeting the same questions every few runs.
+  const deal = async () => {
+    await page.goto("/profile?debug=1");
+    await page.getByTestId("profile-shuffle").click();
+    await expect(page).toHaveURL(/\/play\?shuffle=[a-z0-9]+\.\d+&debug=1/, { timeout: 20_000 });
+    return new URL(page.url()).searchParams.get("shuffle") ?? "";
+  };
+  const [deck, first] = (await deal()).split(".");
+  const [again, second] = (await deal()).split(".");
+
+  expect(again).toBe(deck);
+  expect(Number(second)).toBe(Number(first) + 1);
+});
+
 test("a practice run writes nothing down", async ({ page }) => {
   await seedFlown(page, 3);
 
