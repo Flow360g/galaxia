@@ -1218,6 +1218,14 @@ export const SHIPS = [
      */
     modelYaw: Math.PI,
     /**
+     * A correction for a model authored off its own centreline, radians,
+     * applied in the model's own frame before anything else: `yaw` about its
+     * up axis, `roll` about its length. Zero for a model that was built
+     * square. Found by mirroring the hull across its centreline and turning
+     * it until the two halves line up, not by eye.
+     */
+    modelTrim: { yaw: 0, roll: 0 },
+    /**
      * Exhaust nozzle positions in ship space (after normalisation and yaw),
      * +Z is the rear. Tuned by eye against the loaded model.
      */
@@ -1237,6 +1245,7 @@ export const SHIPS = [
     /** Wider than it is long, so it normalises to a bigger figure than Cinder. */
     modelLength: 5.2,
     modelYaw: Math.PI,
+    modelTrim: { yaw: 0, roll: 0 },
     nozzles: [
       { x: -0.5, y: 0.0, z: 2.1 },
       { x: 0.5, y: 0.0, z: 2.1 },
@@ -1253,6 +1262,12 @@ export const SHIPS = [
     modelLength: 4.8,
     /** Authored nose toward +X, so it needs a quarter turn rather than a half. */
     modelYaw: Math.PI / 2,
+    /**
+     * The GLB sits about 21 degrees yawed and 2 degrees rolled off its own
+     * centreline, so untrimmed it flew crabwise with one wing low and read
+     * as lopsided in the bay and on the results card.
+     */
+    modelTrim: { yaw: (21.5 * Math.PI) / 180, roll: (-2.25 * Math.PI) / 180 },
     /**
      * Its engine cluster is six rings packed close together, and six plumes
      * at this flame length is a wall of fire with a ship somewhere behind it.
@@ -1482,6 +1497,13 @@ export const EXHAUST = {
   /** Radius of the outer cone at the nozzle. */
   radius: 0.38,
   /**
+   * Opacity of the white-hot inner cone and the orange outer one. Both are
+   * additive, and past about these values they cross the bloom threshold
+   * over most of their length and the blur spreads them across the hull.
+   */
+  coreOpacity: 0.58,
+  outerOpacity: 0.36,
+  /**
    * Downward tilt of the plume, radians. The chase camera sits above the
    * ship, so a plume aimed dead astern is seen end-on and reads as a dot;
    * tilting it drops the tail into view.
@@ -1597,13 +1619,15 @@ export const GLOW = {
   ] as ReadonlyArray<readonly [number, number]>,
   /**
    * Nozzle halo: size at cruise, extra per unit of exhaust pulse, opacity.
-   * Kept small and faint on purpose: at 2.4 and 0.55 the two halos and their
-   * flares merged into one orange wash over the tail and hid the hull. The
-   * fire is the light; the halo is only a trace around it.
+   * Kept small and faint on purpose: at 2.4 and 0.55 (and still at 2.0 and
+   * 0.3) the two halos, their flares and the bloom they fed merged into one
+   * orange wash over the tail that hid the hull. The fire is the light; the
+   * halo is a tight trace around each nozzle and no wider than the hull's
+   * own engine block.
    */
-  nozzleSize: 2.04,
-  nozzlePulse: 1.1,
-  nozzleOpacity: 0.3,
+  nozzleSize: 1.1,
+  nozzlePulse: 0.55,
+  nozzleOpacity: 0.16,
   /** Plasma pod halo, as a multiple of the pod's radius, and its breathing. */
   podScale: 8.5,
   podOpacity: 0.6,
@@ -1615,9 +1639,9 @@ export const GLOW = {
    */
   flareTextureWidth: 256,
   flareTextureHeight: 16,
-  nozzleFlareWidth: 7.65,
-  nozzleFlareHeight: 0.47,
-  nozzleFlareOpacity: 0.32,
+  nozzleFlareWidth: 3.2,
+  nozzleFlareHeight: 0.28,
+  nozzleFlareOpacity: 0.14,
   podFlareWidth: 26,
   podFlareHeight: 1.2,
   podFlareOpacity: 0.75,
@@ -1694,7 +1718,11 @@ export const BLOOM = {
   resolution: 0.5,
   threshold: 0.82,
   strength: 0.8,
-  radius: 0.55,
+  /**
+   * How far the blur spreads. At 0.55 the exhaust bloomed into a disc wider
+   * than the hull and the ship disappeared into it; glow should hug its light.
+   */
+  radius: 0.3,
 } as const;
 
 /**

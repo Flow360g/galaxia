@@ -591,6 +591,7 @@ export class ShipBay {
       spec.modelUrl,
       spec.modelLength,
       spec.modelYaw,
+      spec.modelTrim,
     );
     // Disposed, or the player has already flicked on to another hull.
     if (this.disposed || token !== this.loadToken) {
