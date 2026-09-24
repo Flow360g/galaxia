@@ -809,6 +809,16 @@
   animation: nudgeNodUp 1100ms ease-in-out infinite;
 }
 
+/* The stake, in the damage colour: BOOST doubles a correct answer and costs
+   points on a wrong one, and testers read "if you are sure" as all upside. */
+.boostNudgeWarn {
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #ff6b5c;
+  letter-spacing: var(--track-label);
+}
+
 @keyframes nudgeNodUp {
   0%,
   100% {

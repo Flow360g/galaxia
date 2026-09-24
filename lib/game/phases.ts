@@ -165,10 +165,10 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
     mcq: {
       type: "mcq",
       title: PHASE_TITLE.mcq,
-      oneLiner: "4 answers, 1 is correct. Boost if you are sure.",
+      oneLiner: "4 answers, 1 is correct. Boost doubles your points, but wrong loses points.",
       rules: [
         `${count(n, "question")}4 answers, and 1 is correct.`,
-        "Really sure? Tap BOOST first for double points. Wrong with BOOST on and you lose points.",
+        "Really sure? Tap BOOST first for double points. But if you BOOST and get it wrong, you lose points.",
       ],
       details: [
         `You get ${ENCOUNTER.thrustSeconds + ENCOUNTER.mcqBonusSeconds} seconds. A correct answer scores ${pts(SCORE.laneShare).toLowerCase()}, or ${pts(1).toLowerCase()} with BOOST.`,
@@ -300,7 +300,7 @@ const SOAP: Speaker = {
   height: 320,
 };
 
-/** The mission, before the first flight: why the ship is out here at all. */
+/** The mission, before each day's first run: why the ship is out here at all. */
 export const MISSION_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",
   speaker: SOAP,
@@ -325,7 +325,7 @@ export const SITE_HAIL: Transmission = {
   ],
 };
 
-/** The debrief, after a run that named every landing site. */
+/** The debrief, after a run that named every landing site. See `debriefFor`. */
 export const EARTH_SAVED_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",
   speaker: SOAP,
@@ -335,6 +335,22 @@ export const EARTH_SAVED_TRANSMISSION: Transmission = {
     "You saved Earth today. Same sky tomorrow.",
   ],
 };
+
+/** The debrief, after a run that missed a landing site. Every run gets one. */
+export const EARTH_LOST_TRANSMISSION: Transmission = {
+  from: "EARTH COMMAND",
+  speaker: SOAP,
+  lines: [
+    "Earth Command to pilot. We could not confirm every landing site.",
+    "The invaders are still out there.",
+    "Get some rest. Same sky tomorrow, and we need you back.",
+  ],
+};
+
+/** Sergeant Soap signs off every run: the win if every site was named, else the call-back. */
+export function debriefFor(round: Round, summary: RunSummary): Transmission {
+  return earthSaved(round, summary) ? EARTH_SAVED_TRANSMISSION : EARTH_LOST_TRANSMISSION;
+}
 
 /** Every NAME THE PLACE site was named, and there was at least one. */
 export function earthSaved(round: Round, summary: RunSummary): boolean {

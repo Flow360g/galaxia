@@ -9,19 +9,17 @@ import { preloadFeed } from "@/lib/game/prefetch";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
 import {
   clearRun,
-  loadBriefed,
-  loadFlown,
+  loadMaydayDate,
   loadMuted,
   loadRun,
-  saveBriefed,
+  saveMaydayDate,
   saveMuted,
   saveRun,
 } from "@/lib/game/storage";
 import { selectedShip, shipById } from "@/lib/game/ships";
 import {
-  EARTH_SAVED_TRANSMISSION,
   MISSION_TRANSMISSION,
-  earthSaved,
+  debriefFor,
 } from "@/lib/game/phases";
 import { Ready } from "./Ready";
 import { Transmission } from "./Transmission";
@@ -37,7 +35,7 @@ interface Props {
   debug: boolean;
   /**
    * Skip the stored run and fly again regardless. A dev and QA hatch, so it
-   * also skips the first-flight Mayday: a tester re-flying a round is not a
+   * also skips the daily Mayday: a tester re-flying a round is not a
    * new player.
    */
   replay?: boolean;
@@ -109,11 +107,11 @@ export function GameCanvas({
   const [ship] = useState(() =>
     practice && practiceShip ? shipById(practiceShip) : selectedShip(),
   );
-  /** The first-flight Mayday has been heard (or skipped) this visit. */
+  /** Today's Mayday has been heard (or skipped) this visit. */
   const [briefed, setBriefed] = useState(false);
   /**
-   * The debrief after the tally has been read. Only a run that named every
-   * landing site gets one, and the share card waits behind it.
+   * The debrief after the tally has been read. Every run just flown gets one,
+   * a win or a call-back, and the share card waits behind it.
    */
   const [debriefed, setDebriefed] = useState(false);
   /**
@@ -126,15 +124,14 @@ export function GameCanvas({
     () => undefined,
   );
   /**
-   * Whether this device has never flown and has never heard the Mayday.
-   * `undefined` until hydration, like `stored`, so the engine cannot start
-   * behind a transmission that is about to appear. The storage key is still
-   * `galaxia:briefed` from when a full briefing opened the first flight; a
-   * player who read that one has heard enough and is not called again.
+   * Whether today's Mayday is still owed: Sergeant Soap opens each day's first
+   * run, and only that one. `undefined` until hydration, like `stored`, so the
+   * engine cannot start behind a transmission that is about to appear.
+   * `?replay=1` and practice skip it, as hatches do.
    */
   const unbriefed = useSyncExternalStore(
     subscribeStorage,
-    () => (replay ? false : loadFlown() === 0 && !loadBriefed()),
+    () => (replay ? false : loadMaydayDate() !== round.date),
     () => undefined,
   );
 
@@ -177,7 +174,7 @@ export function GameCanvas({
   );
 
   /**
-   * A first flight opens on Sergeant Soap's Mayday, which says why the ship
+   * Each day's first run opens on Sergeant Soap's Mayday, which says why the ship
    * is out here, and nothing else. The rules are NOT read out up front any
    * more: each phase explains itself in a few lines on its own card, just
    * before it is played, and the whole rulebook is on the title screen for
@@ -201,12 +198,12 @@ export function GameCanvas({
   }, [playing, round]);
 
   const closeMayday = useCallback(() => {
-    saveBriefed(true);
+    saveMaydayDate(round.date);
     setBriefed(true);
-  }, []);
+  }, [round.date]);
   const closeDebrief = useCallback(() => setDebriefed(true), []);
-  /** The debrief is owed only to a run just flown that saved Earth. */
-  const debrief = summary !== null && tallied && !debriefed && earthSaved(round, summary);
+  /** Every run just flown is signed off, saved Earth or not. See `debriefFor`. */
+  const debrief = summary !== null && tallied && !debriefed;
 
   const launch = useCallback(() => setLaunched(true), []);
   // WHERE ON EARTH, played at the station. The engine is parked while docked,
@@ -239,10 +236,20 @@ export function GameCanvas({
     });
   }, []);
 
+  /**
+   * Whether the engine may fly. Read off values that hold still when the run
+   * ends: finishing saves the run and counts the flight, which flips `stored`
+   * to today's summary and `unbriefed` to false, and with either of those as
+   * a dependency the effect below tore the engine down the moment the tally
+   * mounted. That took the sound with it, so a real run's tally and finale
+   * played in silence while `?replay=1`, which never reads storage, was fine.
+   */
+  const hydrated = stored !== undefined && unbriefed !== undefined;
+  const flyable = hydrated && (stored === null || summary !== null) && !mayday && launched;
+
   useEffect(() => {
     const container = containerRef.current;
-    // `undefined` on either of these means storage has not been read yet.
-    if (!container || stored !== null || unbriefed === undefined || mayday || !launched) return;
+    if (!container || !flyable) return;
 
     const engine = new Engine({
       container,
@@ -266,7 +273,7 @@ export function GameCanvas({
       engineRef.current = null;
     };
     // `attempt` is a deliberate dependency: bumping it remounts the engine.
-  }, [round, debug, stored, unbriefed, mayday, ship, attempt, launched, handleState, handleRunEnd]);
+  }, [round, debug, flyable, ship, attempt, handleState, handleRunEnd]);
 
   const replayRun = useCallback(() => {
     // FLY AGAIN off a practice run means a NEW set of questions, not the same
@@ -297,7 +304,7 @@ export function GameCanvas({
     <div className={`${styles.shell} ${maxThrust ? styles.shellShake : ""}`}>
       {/* The engine creates and owns the canvas inside this container; see
           EngineOptions.container for why React must not supply it. */}
-      <div ref={containerRef} className={styles.stage} />
+      <div ref={containerRef} className={styles.stage} data-testid="stage" />
 
       {playing && !docked ? (
         <Hud
@@ -348,7 +355,11 @@ export function GameCanvas({
       ) : null}
 
       {debrief ? (
-        <Transmission script={EARTH_SAVED_TRANSMISSION} kind="debrief" onDone={closeDebrief} />
+        <Transmission
+          script={debriefFor(round, summary)}
+          kind="debrief"
+          onDone={closeDebrief}
+        />
       ) : null}
 
       {shown && !debrief && (tallied || summary === null) ? (

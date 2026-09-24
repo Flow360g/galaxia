@@ -12,7 +12,7 @@ const RUN_PREFIX = "galaxia:run:";
 const BEST_KEY = "galaxia:best";
 const MUTED_KEY = "galaxia:muted";
 const FLOWN_KEY = "galaxia:flown";
-const BRIEFED_KEY = "galaxia:briefed";
+const MAYDAY_KEY = "galaxia:mayday";
 const SHIP_KEY = "galaxia:ship";
 const OWNED_KEY = "galaxia:owned";
 const PRACTICE_KEY = "galaxia:practice";
@@ -161,13 +161,19 @@ export function loadFlown(): number {
     : 0;
 }
 
-/** Whether the pre-flight briefing has been read through to the end. */
-export function loadBriefed(): boolean {
-  return read<boolean>(BRIEFED_KEY) === true;
+/**
+ * The round date Sergeant Soap's Mayday was last heard on. It opens each day's
+ * first run and not the ones after it. It used to be heard once per device,
+ * ever (`galaxia:briefed`), which read as the story sometimes playing and
+ * sometimes not.
+ */
+export function loadMaydayDate(): string | null {
+  const date = read<string>(MAYDAY_KEY);
+  return typeof date === "string" ? date : null;
 }
 
-export function saveBriefed(briefed: boolean): void {
-  write(BRIEFED_KEY, briefed);
+export function saveMaydayDate(date: string): void {
+  write(MAYDAY_KEY, date);
 }
 
 /** The hull the player last chose, or null for the standard issue one. */
