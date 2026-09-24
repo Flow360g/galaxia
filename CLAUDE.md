@@ -149,7 +149,7 @@ The screen has two zones. Respect them:
   the lot. The callout is part of that corner, not a third element, so it is
   drawn off the dial's own `--dial` size, takes no pointer events, and never
   appears again after the first Cluster resolves. Its twin sits in the band, on the run's first
-  PICK ONE only: TAP BOOST FIRST / IF YOU ARE SURE and an arrow onto BOOST,
+  PICK ONE only: TAP BOOST FIRST / IF YOU ARE SURE under BOOST, arrow pointing up,
   gone once BOOST is armed, because testers could not tell whether BOOST went
   before the answer or after it. Both hug `env(safe-area-inset-*)`. Do not read
   them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn

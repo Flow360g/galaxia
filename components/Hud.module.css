@@ -782,9 +782,9 @@
 }
 
 /*
- * The first PICK ONE question: the bank nudge's twin, pointing down at BOOST
- * in the tools row. It sits in the band, right-aligned over the button, and
- * the arrow lands on the middle of BOOST, which is the right half of a row
+ * The first PICK ONE question: the bank nudge's twin, pointing up at BOOST
+ * from under the tools row. It sits in the band, right-aligned under the
+ * button, and the arrow lands on the middle of BOOST, which is the right half of a row
  * split by a 6px gap.
  */
 .boostNudge {
@@ -792,7 +792,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  margin-bottom: -4px;
+  margin-top: -4px;
   pointer-events: none;
   text-align: right;
   animation: cornerIn 260ms ease-out;
@@ -804,9 +804,21 @@
   margin-right: calc(25% - 1.5px - 7px);
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-top: 9px solid #ff8a1f;
+  border-bottom: 9px solid #ff8a1f;
   filter: drop-shadow(0 0 6px rgba(255, 138, 31, 0.6));
-  animation: nudgeNod 1100ms ease-in-out infinite;
+  animation: nudgeNodUp 1100ms ease-in-out infinite;
+}
+
+@keyframes nudgeNodUp {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 0.6;
+  }
 }
 
 .boostOn {

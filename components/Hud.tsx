@@ -385,16 +385,6 @@ export function Hud({
               />
             )}
 
-            {boostNudge ? (
-              <div className={styles.boostNudge} data-testid="boost-nudge" aria-hidden="true">
-                <span className={styles.bankNudgeCall}>
-                  <span className={`${styles.bankNudgeLead} arcade`}>TAP BOOST FIRST</span>
-                  <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
-                </span>
-                <span className={styles.boostNudgeArrow} />
-              </div>
-            ) : null}
-
             {/* No tools on the approach to the station: there is nothing to
                 scan and nothing to boost through. */}
             {!isEarth && !reading ? (
@@ -433,6 +423,16 @@ export function Hud({
                 </button>
               )}
             </div>
+            ) : null}
+
+            {boostNudge ? (
+              <div className={styles.boostNudge} data-testid="boost-nudge" aria-hidden="true">
+                <span className={styles.boostNudgeArrow} />
+                <span className={styles.bankNudgeCall}>
+                  <span className={`${styles.bankNudgeLead} arcade`}>TAP BOOST FIRST</span>
+                  <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
+                </span>
+              </div>
             ) : null}
           </section>
         ) : null}
