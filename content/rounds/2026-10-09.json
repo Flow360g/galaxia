@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How high does a passenger jet usually cruise, in kilometres?",
       "answer": 11,
-      "min": 3,
-      "max": 16,
+      "min": 0,
+      "max": 50,
       "unit": "km",
       "fact": "About 11 km, above most of the weather and in air thin enough to save fuel."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How fast can an ostrich run, in km/h?",
       "answer": 70,
-      "min": 20,
-      "max": 95,
+      "min": 0,
+      "max": 250,
       "unit": "km/h",
       "fact": "About 70 km/h, faster than any other bird on land. One stride can cover 5 m."
     },

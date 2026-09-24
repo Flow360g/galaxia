@@ -33,7 +33,7 @@
       "prompt": "Which of these sculptures are by Michelangelo?",
       "options": [
         "Discobolus",
-        "Piet\u00e0",
+        "Pietà",
         "Moses",
         "Venus de Milo",
         "David",
@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How high is the top Olympic diving platform, in metres?",
       "answer": 10,
-      "min": 2,
-      "max": 14,
+      "min": 0,
+      "max": 25,
       "unit": "m",
       "fact": "Ten metres, and a diver hits the water at about 50 km/h."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "nature",
       "difficulty": 2,
-      "prompt": "How many eyes does a spider usually have?",
-      "answer": 8,
-      "min": 2,
-      "max": 11,
-      "unit": "eyes",
-      "fact": "Most spiders have eight, though many see poorly and feel their way by vibration."
+      "prompt": "How many days does a worker honeybee live in summer?",
+      "answer": 40,
+      "min": 0,
+      "max": 100,
+      "unit": "days",
+      "fact": "About five or six weeks. Bees born in autumn can live through the whole winter."
     },
     {
       "id": "q5",

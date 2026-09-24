@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "How many teeth are in a child's full set of baby teeth?",
-      "answer": 20,
-      "min": 6,
-      "max": 28,
-      "unit": "teeth",
-      "fact": "Twenty, and the adult teeth are already waiting in the jaw underneath them."
+      "prompt": "What percentage of the air we breathe is oxygen?",
+      "answer": 21,
+      "min": 0,
+      "max": 100,
+      "unit": "%",
+      "fact": "About 21%. Most of the rest is nitrogen, at about 78%."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How far is it from London to Paris in a straight line, in kilometres?",
       "answer": 340,
-      "min": 120,
-      "max": 480,
+      "min": 0,
+      "max": 1000,
       "unit": "km",
       "fact": "About 340 km. The Eurostar covers the journey in around two and a quarter hours."
     },

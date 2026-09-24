@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "How wide is Australia from east to west, in kilometres?",
-      "answer": 4000,
-      "min": 1400,
-      "max": 5700,
+      "prompt": "How long is the River Thames, in kilometres?",
+      "answer": 346,
+      "min": 0,
+      "max": 1000,
       "unit": "km",
-      "fact": "About 4,000 km, and it spans three time zones."
+      "fact": "About 346 km, from the Cotswolds to the North Sea."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How many litres of maple sap does it take to make one litre of maple syrup?",
       "answer": 40,
-      "min": 12,
-      "max": 55,
+      "min": 0,
+      "max": 100,
       "unit": "litres",
       "fact": "About 40. The sap is mostly water, and it is boiled for hours to thicken it."
     },

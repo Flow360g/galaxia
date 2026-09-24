@@ -69,13 +69,14 @@
     {
       "id": "q3",
       "type": "vector",
-      "topic": "arts",
+      "topic": "misc",
       "difficulty": 1,
-      "prompt": "How many lines are there in a sonnet?",
-      "answer": 14,
-      "min": 2,
-      "max": 22,
-      "fact": "Fourteen, always. The last two usually turn the argument of the first twelve on its head."
+      "prompt": "How many letters are in the English alphabet?",
+      "answer": 26,
+      "min": 0,
+      "max": 100,
+      "unit": "letters",
+      "fact": "26, and the one used most in English writing is E."
     },
     {
       "id": "q4",
@@ -84,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How long can a giant tortoise live, in years?",
       "answer": 150,
-      "min": 25,
-      "max": 225,
+      "min": 0,
+      "max": 250,
       "fact": "Well past 150. One taken from the Galapagos by Charles Darwin's crew was still alive in a zoo in 2006."
     },
     {

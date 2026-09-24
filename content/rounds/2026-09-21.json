@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many years did the Hundred Years' War actually last?",
       "answer": 116,
-      "min": 40,
-      "max": 160,
+      "min": 0,
+      "max": 200,
       "unit": "years",
       "fact": "116 years, from 1337 to 1453, with long truces in between. The name came later."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How many chromosomes are in most human cells?",
       "answer": 46,
-      "min": 12,
-      "max": 62,
+      "min": 0,
+      "max": 200,
       "unit": "chromosomes",
       "fact": "46, in 23 pairs: one of each pair from your mother and one from your father."
     },

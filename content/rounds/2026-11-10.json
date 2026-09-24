@@ -73,8 +73,8 @@
       "difficulty": 3,
       "prompt": "How many litres of milk does it take to make one kilogram of cheese?",
       "answer": 10,
-      "min": 2,
-      "max": 14,
+      "min": 0,
+      "max": 25,
       "unit": "litres",
       "fact": "About ten litres for a hard cheese. Most of the milk drains away as whey."
     },
@@ -85,9 +85,10 @@
       "difficulty": 1,
       "prompt": "How many teeth does an adult human usually have?",
       "answer": 32,
-      "min": 10,
-      "max": 45,
+      "min": 0,
+      "max": 100,
       "unit": "teeth",
+      "route": "Count your own: 16 along the top and 16 along the bottom.",
       "fact": "32, counting the four wisdom teeth that many people never grow at all."
     },
     {

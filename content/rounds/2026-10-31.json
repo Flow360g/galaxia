@@ -53,10 +53,9 @@
       "difficulty": 3,
       "prompt": "Roughly how many languages are spoken in the world today?",
       "answer": 7000,
-      "min": 2000,
-      "max": 12000,
+      "min": 0,
+      "max": 20000,
       "unit": "languages",
-      "log": true,
       "fact": "About 7,000, and around 40% of them are endangered."
     },
     {
@@ -66,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How long is the Channel Tunnel, in kilometres?",
       "answer": 50,
-      "min": 15,
-      "max": 70,
+      "min": 0,
+      "max": 200,
       "unit": "km",
       "fact": "About 50 km, 38 of them under the sea: the longest undersea stretch of any tunnel."
     },

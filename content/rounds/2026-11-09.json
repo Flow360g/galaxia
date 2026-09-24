@@ -73,8 +73,8 @@
       "difficulty": 2,
       "prompt": "What percentage of the Earth's surface is covered by water?",
       "answer": 71,
-      "min": 25,
-      "max": 100,
+      "min": 0,
+      "max": 250,
       "unit": "%",
       "fact": "About 71%, and almost all of it is salt water in the oceans."
     },
@@ -85,10 +85,9 @@
       "difficulty": 2,
       "prompt": "How heavy is an adult male African elephant, in kilograms?",
       "answer": 6000,
-      "min": 1500,
-      "max": 10000,
+      "min": 0,
+      "max": 20000,
       "unit": "kg",
-      "log": true,
       "fact": "About 6,000 kg. An elephant can eat around 150 kg of plants in a day."
     },
     {

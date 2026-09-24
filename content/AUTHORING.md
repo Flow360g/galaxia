@@ -84,62 +84,77 @@ wrong lanes are.** This is the rule that was broken most.
   unarguably wrong. One debatable lane ruins the encounter, and the player has
   five seconds and no way to argue.
 
-## GUESS THE NUMBER: the slider is not a difficulty knob
+## GUESS THE NUMBER: a ruler, and a range you would believe
 
-The scoring bands are fractions of the **answer** and are the same for every
-question: within 5% is a direct hit, within 10% is half, within 15% is a
-graze that costs nothing. Nothing about closeness is ever authored.
+The slider is a ruler of 100 steps, straight from `min` to `max`. The guess
+and the answer are both read off it to the nearest step, and **the gap between
+them is the score**: every step off costs 5 points, and more than 40 steps off
+is a wild shot that costs 25 points and a shield. What the player sees is what
+they are scored on. This is how Estimatle does it, and it plays well.
 
-What you do author is `min` and `max`, and that quietly decides everything.
-The bands cover a share of the slider track, and that share is the real
-difficulty. The pool once ran from 2.8% to 100%: the Sun's surface
-temperature was unhittable even after a hint, and every date question was a
-direct hit from any position at all.
+It used to be scored against the answer ("33% off"), which made a wide range
+harder rather than more forgiving and made every year a free hit. That is
+gone, and so is most of the old rulebook. What is left:
 
-So the build now checks three things, and the error message names the range to
-use instead:
+- **The range is the band of believable answers.** Both ends should be
+  numbers a sensible person might actually say. Usually that means starting
+  from 0: a CD's diameter on 0 to 200 mm, a waterfall on 0 to 2,000 m.
+- **Where the answer sits is how forgiving it is.** On a ruler from 0, a guess
+  of double the answer lands as many steps away as the answer's own position.
+  At step 25, doubling it still scores 75 points. At step 60, doubling it is
+  a wild shot. `npm run audit:rounds` prints both numbers.
+- **The build checks two things.** Each step must be a round number (1, 2, 2.5
+  or 5 times a power of ten), so the ruler reads 5.8, 6, 6.2 and never 5.88,
+  6, 6.12. And the answer must sit between step 10 and step 90, so a guess
+  in the middle is never a wild shot. The error message names a range that
+  passes.
+- **Small counts do not fit.** A 100-step ruler over 0 to 10 guitar strings
+  reads "6.3 strings". A whole-number answer needs a ruler where one step is
+  at least one of it, which in practice means an answer of 25 or more. Ask
+  something bigger.
+- **Dates are fine.** Set `"year": true` so 1913 never prints as 1,913, and
+  give it a window that stops at the present: 1825 to 2025, not 1850 to 2050,
+  because a ruler that runs into the future says the answer is not there.
 
-1. The close band covers **10% to 20% of the slider**.
-2. The answer sits at least **20% in from either end**.
-3. The slider does not open on the answer. It opens at the midpoint, so an
-   answer parked in the middle scores for touching nothing.
+**A route is the best kind of number question.** A route is one line of
+working that gets someone close without knowing the answer, and it goes in
+`route`, where the reveal shows it in place of the fact:
 
-Run `npm run audit:rounds` and it will print a compliant range for anything
-that fails. In practice this means a linear slider spans **one to two times
-the answer**, whatever the magnitude. Big numbers are completely fine: light
-speed is a good vector at 50,000 to 400,000 km/s. It was a terrible one at
-10,000 to 3,000,000.
+| route | example |
+| --- | --- |
+| Multiply what you know | Minutes in a week: 60 x 24 x 7 = 10,080 |
+| Picture it and count | Piano keys: 7 octaves of 12, plus a few spare = 88 |
+| Anchor and adjust | Laps in a 10,000 m race: a track is 400 m, so 25 |
+| Pure logic | Handshakes between 10 people, once each: 10 x 9 / 2 = 45 |
 
-**No dates.** A relative band needs a magnitude measured from a true zero, and
-a calendar year has an arbitrary one: 5% of 2001 is a century. The build
-rejects the shape by name so nobody "fixes" it by widening the range. Ask for
-a duration or a count instead: how long the Berlin Wall stood, how many people
-were aboard the Titanic.
+The test for a route: write it in one line using only numbers a 12 year old
+anywhere already knows. If you cannot, it is recall. Recall is allowed (the
+scoring makes a rough idea worth plenty) but a route is better, because the
+player who reasons their way close is the player the stage is for.
 
-**Both ends of the slider must be answers somebody might believe.** The
-rules above make a linear slider run from about a fifth of the answer to
-about one and a half times it. That is fine for a quantity people are
-genuinely unsure of, and useless for one with a narrow range everyone
-already knows: a film is never 30 minutes long, so "how long is the first
-Star Wars film" on a 30..165 slider only ever gets guessed between 100 and
-160, and the band covers most of that. If the believable range is narrower
-than the slider, pick another question. Film lengths, and anything else
-everybody knows to within a factor of two, are out for this reason.
+**A range nobody would guess outside is not a range.** The first Star Wars
+film on a 30 to 165 minute ruler only ever gets guessed between 100 and 160:
+nobody thinks a film is half an hour long. Film lengths, and anything else
+everybody already knows to within a factor of two, make a ruler where most of
+the steps are dead. Pick another question.
 
-**Reason, don't recall.** The best numbers are ones a player can work
-towards: minutes in a week, dots on a dice, how deep the Mariana Trench is
-if you know Everest. A number that can only be remembered (the Sun's surface
-temperature, the speed of light, the Moon's distance) is a coin toss for
-everyone who has not memorised it, and the playtest marked every one of them
-too hard. A recall number is at most one per round, and it is a 3.
+**Pure recall is the hard end.** The September playtest marked every number
+that can only be remembered (the Sun's surface temperature, the speed of
+light, the Moon's distance) too hard, from a player who knows a lot. Keep a
+recall-only number to one a round, mark it a 3, and reach for a route first.
 
-Difficulty here is whether the player has an anchor to reason from.
+## The audience is the whole world
 
-- **Level 1:** a number most people have heard. A marathon is 42 km.
-- **Level 2:** a number you can get close to by reasoning. How fast a
-  passenger jet cruises.
-- **Level 3:** a number you have to build up to. How deep an emperor penguin
-  dives.
+A question and its route may lean only on what a player anywhere carries: the
+body, the clock, the calendar, everyday objects, world-famous places and
+people. Nothing that only one country's players have an anchor for: a
+national sport, a local stadium, a law, a census, a currency, a school
+syllabus. A question that is easy in Melbourne and blind in Mumbai makes two
+players' scores mean different things, and comparing scores is the game.
+
+Units are metric and named in the prompt. A question whose best-known figure
+is in another unit (the Moon's distance, which most people know as 239,000
+miles) is out, because knowing it right is not enough.
 
 ## PICK ONE: every distractor is a real temptation
 

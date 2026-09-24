@@ -936,6 +936,65 @@
   color: var(--panel-label);
 }
 
+/*
+ * The ruler under a number verdict: the slider, the guess and the answer. It
+ * carries its labels above and below, so it reserves room for both.
+ */
+.ruler {
+  position: relative;
+  height: 6px;
+  margin: 18px 0 20px;
+  border: 1px solid var(--rule-dark);
+  background: rgba(7, 17, 34, 0.6);
+}
+
+.rulerGap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.rulerGapWild {
+  background: rgba(255, 107, 92, 0.55);
+}
+
+.rulerMark {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  margin-left: -1px;
+}
+
+.rulerAnswer {
+  background: var(--arcade-yellow);
+  box-shadow: 0 0 8px rgba(255, 224, 61, 0.6);
+}
+
+.rulerGuess {
+  background: #ffffff;
+}
+
+.rulerLabel {
+  position: absolute;
+  left: 0;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.rulerLabelAbove {
+  bottom: 100%;
+  margin-bottom: 3px;
+  color: var(--arcade-yellow);
+}
+
+.rulerLabelBelow {
+  top: 100%;
+  margin-top: 3px;
+  color: #ffffff;
+}
+
 .hint {
   margin: 0;
   font-size: 9px;
@@ -1124,6 +1183,26 @@
   white-space: nowrap;
 }
 
+/* The empty slider's readout: what to do, not a number nobody chose. */
+.aimPrompt {
+  font-size: 10px;
+  color: var(--arcade-cyan);
+  flex: 1;
+  animation: aimPromptPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes aimPromptPulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aimPrompt {
+    animation: none;
+  }
+}
+
 .sliderRow {
   display: flex;
   align-items: center;
@@ -1226,6 +1305,15 @@
 .slider:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* No guess yet: the track takes a tap, but there is no thumb on it. */
+.sliderEmpty::-webkit-slider-thumb {
+  opacity: 0;
+}
+
+.sliderEmpty::-moz-range-thumb {
+  opacity: 0;
 }
 
 .lock {

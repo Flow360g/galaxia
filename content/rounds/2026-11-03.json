@@ -53,22 +53,23 @@
       "difficulty": 2,
       "prompt": "At what temperature does water boil, in degrees Fahrenheit?",
       "answer": 212,
-      "min": 80,
-      "max": 300,
-      "unit": "\u00b0F",
-      "fact": "212 \u00b0F at sea level. Water freezes at 32 \u00b0F, so the two are 180 degrees apart."
+      "min": 0,
+      "max": 1000,
+      "unit": "°F",
+      "fact": "212 °F at sea level. Water freezes at 32 °F, so the two are 180 degrees apart."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "sport",
       "difficulty": 3,
-      "prompt": "How many minutes long is an NBA basketball game, not counting stoppages?",
-      "answer": 48,
-      "min": 15,
-      "max": 65,
-      "unit": "minutes",
-      "fact": "Four quarters of 12 minutes, though with the clock stopping it usually takes more than two hours."
+      "prompt": "How far do you travel in an Olympic triathlon, in kilometres?",
+      "answer": 51.5,
+      "min": 0,
+      "max": 100,
+      "unit": "km",
+      "route": "A 1.5 km swim, a 40 km bike ride and a 10 km run.",
+      "fact": "51.5 km in all, and the best finish in well under two hours."
     },
     {
       "id": "q5",

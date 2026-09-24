@@ -71,11 +71,12 @@
       "type": "vector",
       "topic": "history",
       "difficulty": 2,
-      "prompt": "How old was Tutankhamun when he died?",
-      "answer": 19,
-      "min": 4,
-      "max": 28,
-      "fact": "About nineteen. He was a minor pharaoh and was only famous because his tomb was the one nobody had robbed."
+      "prompt": "In what year did the Titanic sink?",
+      "answer": 1912,
+      "min": 1800,
+      "max": 2000,
+      "year": true,
+      "fact": "April 1912, on its first voyage, from Southampton to New York."
     },
     {
       "id": "q4",
@@ -84,10 +85,11 @@
       "difficulty": 3,
       "prompt": "How many episodes of Friends were made?",
       "answer": 236,
-      "min": 50,
-      "max": 350,
-      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States.",
-      "unit": "episodes"
+      "min": 0,
+      "max": 500,
+      "unit": "episodes",
+      "route": "Ten series of about two dozen episodes each.",
+      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States."
     },
     {
       "id": "q5",

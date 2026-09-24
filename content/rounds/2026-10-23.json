@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How long is the Panama Canal, in kilometres?",
       "answer": 82,
-      "min": 25,
-      "max": 110,
+      "min": 0,
+      "max": 200,
       "unit": "km",
       "fact": "About 82 km, and a ship takes around 8 to 10 hours to pass through it."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How old was Mozart when he died?",
       "answer": 35,
-      "min": 10,
-      "max": 50,
+      "min": 0,
+      "max": 100,
       "unit": "years",
       "fact": "35. He wrote more than 600 pieces of music, and started composing at five."
     },

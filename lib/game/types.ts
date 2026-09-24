@@ -150,9 +150,11 @@ export interface ClusterQuestion {
 
 /**
  * A Vector: a numeric answer aimed on a slider. The ship steers to match and
- * a beam fires on lock; the alien decloaks at the truth. The error, as a
- * fraction of the answer, is read against `VECTOR.bands`: direct, close,
- * graze or miss. The same bands for every question, so nothing is authored.
+ * a beam fires on lock; the alien decloaks at the truth. The slider is a
+ * ruler of `VECTOR.notches` steps from `min` to `max`, and the notches
+ * between the guess and the answer are the score. Nothing about closeness is
+ * authored: the range is the band of believable answers, and the same ruler
+ * scores every question.
  */
 export interface VectorQuestion {
   id: string;
@@ -168,8 +170,14 @@ export interface VectorQuestion {
   max: number;
   /** Shown after the value, e.g. "m" or "km". */
   unit?: string;
-  /** Log-scaled slider for wide ranges. Requires min > 0. */
-  log?: boolean;
+  /** The answer is a calendar year: print 1913, never 1,913. */
+  year?: boolean;
+  /**
+   * One line of working that gets you close without knowing the answer, e.g.
+   * "70 beats a minute x 60 x 24 = about 100,000". Shown on the reveal in
+   * place of the fact when there is one. See `content/AUTHORING.md`.
+   */
+  route?: string;
   fact?: string;
 }
 
@@ -244,12 +252,17 @@ export interface Pulse {
 
 /** Live state of a Vector encounter: where the aim is, in slider space 0..1. */
 export interface VectorState {
-  /** Slider position, 0..1. */
+  /** Slider position, 0..1, always on a notch. */
   t: number;
   /** The aimed value in answer units. */
   value: number;
   /** Slider window still open after a NOVA scan, 0..1. */
   window: [number, number];
+  /**
+   * Whether the player has put a guess on the slider yet. It opens empty and
+   * FIRE waits for this, so nobody locks a guess they never made.
+   */
+  placed: boolean;
 }
 
 /** The card shown between stages. */
@@ -322,8 +335,9 @@ export type OutcomeKind =
   /** Thrust ran out before an answer locked. Treated as a collision. */
   | "timeout"
   /**
-   * Vector: inside the graze band. The shot clipped the scout: no points,
-   * no damage, no shield lost, and the streak is left where it was.
+   * Vector: off, but not wild. The shot clipped the scout: points on the
+   * straight line, but no damage, no shield lost, and the streak is left
+   * where it was.
    */
   | "graze"
   /**
@@ -355,8 +369,11 @@ export interface Outcome {
   picks?: number[];
   /** Cluster only: plasma that was in the reactor when the cluster was lost. */
   lost?: number;
-  /** Vector only: |guess - truth| / |truth|, so 0.1 is 10% off. */
-  error?: number;
+  /** Vector only: notches between the guess and the answer on the ruler. */
+  notches?: number;
+  /** Vector only: where the guess and the answer sit, in notches from `min`. */
+  guessNotch?: number;
+  answerNotch?: number;
   /** Vector only: the aimed value. */
   guessValue?: number;
   /** Vector only: what a direct hit salvaged. */
@@ -365,9 +382,9 @@ export interface Outcome {
   earthIntel?: number;
   earthOptics?: number;
   /**
-   * How hard a wrong answer lands, 0..1. A vector miss scales it by HOW wrong
-   * the shot was, so just outside the graze band costs a fraction of what a
-   * wild guess costs. Everything else is a flat 1.
+   * How hard a wrong answer lands, 0..1. A wild vector shot scales it by HOW
+   * wild, so just past `VECTOR.wildBeyond` costs a fraction of what aiming at
+   * the wrong end costs. Everything else is a flat 1.
    */
   severity?: number;
   /** Points earned before the streak multiplier. 0 on a wrong answer. */

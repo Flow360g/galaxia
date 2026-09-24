@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How many ships sailed in the Spanish Armada?",
       "answer": 130,
-      "min": 45,
-      "max": 180,
+      "min": 0,
+      "max": 250,
       "unit": "ships",
       "fact": "About 130 in 1588. Storms off Scotland and Ireland sank more of them than the English navy did."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "misc",
       "difficulty": 2,
-      "prompt": "In Greek myth, how many years did the Trojan War last?",
-      "answer": 10,
-      "min": 2,
-      "max": 14,
+      "prompt": "How many years of marriage does a golden wedding anniversary mark?",
+      "answer": 50,
+      "min": 0,
+      "max": 200,
       "unit": "years",
-      "fact": "Ten years, and it ended with the wooden horse. Odysseus then took another ten to get home."
+      "fact": "Fifty. A silver anniversary is 25 years and a diamond one is 60."
     },
     {
       "id": "q5",

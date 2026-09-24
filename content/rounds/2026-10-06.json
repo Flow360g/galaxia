@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How fast does sound travel through air, in metres per second?",
       "answer": 343,
-      "min": 120,
-      "max": 480,
+      "min": 0,
+      "max": 1000,
       "unit": "m/s",
       "fact": "About 343 m/s, so count the seconds between lightning and thunder and divide by three to get the distance in kilometres."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "Roughly how many people died when the Titanic sank?",
       "answer": 1500,
-      "min": 400,
-      "max": 2200,
+      "min": 0,
+      "max": 5000,
       "unit": "people",
       "fact": "About 1,500 of the roughly 2,200 on board. There were lifeboats for only about half of them."
     },

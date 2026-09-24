@@ -35,7 +35,7 @@
         "Harry Styles",
         "Robbie Williams",
         "Ed Sheeran",
-        "Michael Bubl\u00e9",
+        "Michael Bublé",
         "Justin Timberlake",
         "Bruno Mars"
       ],
@@ -51,24 +51,25 @@
       "type": "vector",
       "topic": "misc",
       "difficulty": 2,
-      "prompt": "How many dots are there on a normal dice, counting all six sides?",
-      "answer": 21,
-      "min": 7,
-      "max": 30,
-      "unit": "dots",
-      "fact": "1 + 2 + 3 + 4 + 5 + 6 makes 21, and opposite faces always add up to seven."
+      "prompt": "How many squares are there on a chessboard?",
+      "answer": 64,
+      "min": 0,
+      "max": 200,
+      "unit": "squares",
+      "route": "8 rows of 8.",
+      "fact": "64, half of them light and half dark, and the bottom right square is always light."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "sport",
       "difficulty": 2,
-      "prompt": "How many players does a netball team have on the court?",
-      "answer": 7,
-      "min": 1,
+      "prompt": "How high is a football goal's crossbar, in metres?",
+      "answer": 2.44,
+      "min": 0,
       "max": 10,
-      "unit": "players",
-      "fact": "Seven, and each wears a bib saying where they are allowed to go, from GS to GK."
+      "unit": "m",
+      "fact": "2.44 m, which is exactly 8 feet. The goal is 7.32 m, or 8 yards, wide."
     },
     {
       "id": "q5",
@@ -84,7 +85,7 @@
       ],
       "answer": 2,
       "hint": "Not the famous city on the Bosphorus. This one is in the middle of the country.",
-      "fact": "Atat\u00fcrk made Ankara the capital in 1923, partly because it was far from the sea and hard to attack."
+      "fact": "Atatürk made Ankara the capital in 1923, partly because it was far from the sea and hard to attack."
     },
     {
       "id": "q6",
@@ -94,13 +95,13 @@
       "prompt": "Which scientist imagined a cat that is both alive and dead?",
       "options": [
         "Heisenberg",
-        "Schr\u00f6dinger",
+        "Schrödinger",
         "Bohr",
         "Planck"
       ],
       "answer": 1,
       "hint": "He was an Austrian physicist.",
-      "fact": "Erwin Schr\u00f6dinger meant the cat as a joke, to show how strange quantum physics sounds."
+      "fact": "Erwin Schrödinger meant the cat as a joke, to show how strange quantum physics sounds."
     },
     {
       "id": "q7",

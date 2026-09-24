@@ -51,12 +51,13 @@
       "type": "vector",
       "topic": "misc",
       "difficulty": 2,
-      "prompt": "How many carats is pure gold?",
-      "answer": 24,
-      "min": 8,
-      "max": 34,
-      "unit": "carats",
-      "fact": "24 carats, so 18 carat gold is 18 parts gold in 24."
+      "prompt": "How many hours are there in a week?",
+      "answer": 168,
+      "min": 0,
+      "max": 500,
+      "unit": "hours",
+      "route": "24 hours a day, times 7 days = 168.",
+      "fact": "A week of seven days goes back to the Babylonians, who named a day for each of the seven lights they saw moving in the sky."
     },
     {
       "id": "q4",
@@ -65,8 +66,8 @@
       "difficulty": 2,
       "prompt": "How many years did Nelson Mandela spend in prison?",
       "answer": 27,
-      "min": 8,
-      "max": 40,
+      "min": 0,
+      "max": 100,
       "unit": "years",
       "fact": "27 years, 18 of them on Robben Island. Four years after his release he was elected president."
     },

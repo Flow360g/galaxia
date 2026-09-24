@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How far do you travel in an Ironman triathlon, in kilometres?",
       "answer": 226,
-      "min": 70,
-      "max": 310,
+      "min": 0,
+      "max": 500,
       "unit": "km",
       "fact": "About 226 km: a 3.8 km swim, a 180 km bike ride and a full marathon."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "arts",
       "difficulty": 2,
-      "prompt": "How many syllables are there in a haiku?",
-      "answer": 17,
-      "min": 5,
-      "max": 24,
-      "unit": "syllables",
-      "fact": "Seventeen, in lines of five, seven and five."
+      "prompt": "In what year did Leonardo da Vinci start painting the Mona Lisa?",
+      "answer": 1503,
+      "min": 1400,
+      "max": 1600,
+      "year": true,
+      "fact": "Around 1503. He kept working on it for more than ten years and never handed it over."
     },
     {
       "id": "q5",

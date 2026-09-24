@@ -34,7 +34,7 @@
       "options": [
         "Picasso",
         "Rembrandt",
-        "Dal\u00ed",
+        "Dalí",
         "Degas",
         "Monet",
         "Renoir"
@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many months is an elephant pregnant for?",
       "answer": 22,
-      "min": 6,
-      "max": 30,
+      "min": 0,
+      "max": 100,
       "unit": "months",
       "fact": "About 22 months, the longest pregnancy of any land animal."
     },
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How many years did the Ottoman Empire last?",
       "answer": 623,
-      "min": 200,
-      "max": 850,
+      "min": 0,
+      "max": 2000,
       "unit": "years",
       "fact": "623 years, from about 1299 until 1922."
     },

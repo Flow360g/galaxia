@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "screen",
       "difficulty": 1,
-      "prompt": "How many films are there in the main Harry Potter series?",
-      "answer": 8,
-      "min": 2,
-      "max": 11,
-      "unit": "films",
-      "fact": "Eight. The last book, Deathly Hallows, was split into two films."
+      "prompt": "In what year did the first Harry Potter film come out?",
+      "answer": 2001,
+      "min": 1925,
+      "max": 2025,
+      "year": true,
+      "fact": "2001. The last of the eight came out ten years later, in 2011."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How long is a cricket pitch, in metres?",
       "answer": 20.12,
-      "min": 6,
-      "max": 28,
+      "min": 0,
+      "max": 50,
       "unit": "m",
       "fact": "22 yards, the length of an old surveyor's chain."
     },

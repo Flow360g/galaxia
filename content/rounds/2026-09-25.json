@@ -50,13 +50,14 @@
       "id": "q3",
       "type": "vector",
       "topic": "sport",
-      "difficulty": 2,
-      "prompt": "How high is a basketball hoop, in centimetres?",
-      "answer": 305,
-      "min": 100,
-      "max": 420,
-      "unit": "cm",
-      "fact": "Ten feet, the height James Naismith nailed his peach baskets at in 1891, and it has never changed."
+      "difficulty": 1,
+      "prompt": "How many minutes does a football (soccer) match last, not counting added time?",
+      "answer": 90,
+      "min": 0,
+      "max": 200,
+      "unit": "minutes",
+      "route": "Two halves of 45 minutes each.",
+      "fact": "90 minutes: two halves of 45, plus whatever the referee adds for stoppages."
     },
     {
       "id": "q4",
@@ -65,8 +66,8 @@
       "difficulty": 3,
       "prompt": "How many strings does a concert harp have?",
       "answer": 47,
-      "min": 12,
-      "max": 60,
+      "min": 0,
+      "max": 100,
       "unit": "strings",
       "fact": "47. The red strings are Cs and the black or blue ones are Fs, so the player can find their place."
     },

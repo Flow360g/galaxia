@@ -44,31 +44,31 @@
         4,
         5
       ],
-      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Moli\u00e8re's, and Beowulf is an Old English poem nobody knows the author of."
+      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Molière's, and Beowulf is an Old English poem nobody knows the author of."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "How many ribs does a person have?",
-      "answer": 24,
-      "min": 8,
-      "max": 34,
-      "unit": "ribs",
-      "fact": "24, in twelve pairs. Men and women have the same number."
+      "prompt": "How many days does a red blood cell live?",
+      "answer": 120,
+      "min": 0,
+      "max": 500,
+      "unit": "days",
+      "fact": "About 120 days. Your bone marrow makes around two million new ones every second to keep up."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "geography",
       "difficulty": 3,
-      "prompt": "How far is it from Perth to Sydney in a straight line, in kilometres?",
-      "answer": 3300,
-      "min": 1200,
-      "max": 4600,
+      "prompt": "How far is it from London to New York in a straight line, in kilometres?",
+      "answer": 5570,
+      "min": 0,
+      "max": 20000,
       "unit": "km",
-      "fact": "About 3,300 km, further than London to Moscow."
+      "fact": "About 5,570 km, roughly seven hours on a plane heading west."
     },
     {
       "id": "q5",

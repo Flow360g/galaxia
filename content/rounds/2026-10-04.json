@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "screen",
       "difficulty": 2,
-      "prompt": "How many Oscars did the film Titanic win?",
-      "answer": 11,
-      "min": 3,
-      "max": 16,
-      "unit": "Oscars",
-      "fact": "Eleven, a record it shares with Ben-Hur and The Return of the King."
+      "prompt": "In what year was the first Star Wars film released?",
+      "answer": 1977,
+      "min": 1825,
+      "max": 2025,
+      "year": true,
+      "fact": "1977. It was later retitled Episode IV: A New Hope."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How long is the pitch at Wembley Stadium, in metres?",
       "answer": 105,
-      "min": 35,
-      "max": 145,
+      "min": 0,
+      "max": 500,
       "unit": "m",
       "fact": "105 m by 68 m, the size FIFA recommends for international matches."
     },

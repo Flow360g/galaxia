@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "history",
       "difficulty": 3,
-      "prompt": "How many passengers sailed to America on the Mayflower?",
-      "answer": 102,
-      "min": 35,
-      "max": 140,
-      "unit": "passengers",
-      "fact": "102 passengers in 1620, crammed below deck for more than two months."
+      "prompt": "In what year did the Great Fire of London happen?",
+      "answer": 1666,
+      "min": 1550,
+      "max": 1750,
+      "year": true,
+      "fact": "1666. It burned for four days and destroyed about 13,000 houses, but only a handful of deaths were recorded."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How long is a giraffe's neck, in metres?",
       "answer": 1.8,
-      "min": 0.3,
-      "max": 2.7,
+      "min": 0,
+      "max": 5,
       "unit": "m",
       "fact": "A giraffe's neck has seven bones in it, the same number as yours. Each one is just much longer."
     },

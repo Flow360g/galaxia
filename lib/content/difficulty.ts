@@ -1,58 +1,46 @@
 import { VECTOR } from "@/lib/game/Tuning";
-import { toSlider } from "@/lib/game/nova";
+import { toNotch } from "@/lib/game/nova";
 import type { VectorQuestion } from "@/lib/game/types";
 
 /**
  * How hard a question is allowed to be.
  *
- * Two separate rules live here, one for each way the pool used to drift.
+ * Two rules live here. The first is the declared level, 1 to 3, on every
+ * quiz question, because a cluster's difficulty lives in its decoys and no
+ * amount of maths can read that off the JSON. `content/AUTHORING.md` is the
+ * rubric; this file holds only the numbers the build enforces.
  *
- * The first is geometry, and it is the one nobody could see. A vector is
- * scored on bands that are fractions of the ANSWER (`VECTOR.bands`), but it is
- * aimed on a slider that runs over an authored `min..max`. So how hard a
- * vector actually is comes down to how much of the slider track those bands
- * happen to cover, and that was never checked. Measured over the pool it ran
- * from 2.8% of the track to 100%: the Sun's surface temperature was a lottery
- * a hint could not rescue, while every "in which year" question covered the
- * whole track and handed out a direct hit for any slider position at all.
+ * The second is the shape of a number question's ruler. A vector is scored on
+ * the notches between the guess and the answer (`VECTOR.notches`), so a range
+ * is the band of believable answers and the score is where inside it the
+ * truth falls. That makes two things worth checking. The answer must not sit
+ * near either end, where one side of the ruler is wasted and a player learns
+ * to aim at it. And every notch must be a round number, so the ruler reads
+ * 5.8, 6, 6.2 and never 5.88, 6, 6.12: a readable step is also the one
+ * objective test of "a range in round numbers".
  *
- * The second is a declared level, 1 to 3, on every quiz question, because a
- * cluster's difficulty lives in its decoys and no amount of maths can read
- * that off the JSON. `content/AUTHORING.md` is the rubric; this file holds
- * only the numbers the build enforces.
+ * An earlier version scored against the answer and policed the range's width
+ * instead. It ran the pool from a lottery (the Sun at 3.2% of the track) to
+ * free points (every calendar year), and no setting of it was fun at both
+ * ends. Scoring on the ruler removes the reason to police the width at all.
  *
- * Both the loader and `scripts/audit-rounds.ts` read this module, so the rule
- * the build enforces and the rule the audit reports can never drift apart.
- * `toSlider` is borrowed from `nova.ts` rather than reimplemented for the same
- * reason: it is the maths the player's slider actually runs on.
+ * Both the loader and `scripts/audit-rounds.ts` read this module, so what the
+ * build enforces and what the audit reports can never drift apart.
  */
 
 /**
- * How much of the slider track the CLOSE band (the answer give or take
- * `VECTOR.bands.close`) has to cover.
- *
- * Below the floor the question stops being knowledge and becomes a lottery.
- * The Sun's surface temperature shipped at 3.2%, so even after a hint narrowed
- * the slider to `VECTOR.novaWindow` the target was under a tenth of what was
- * lit, and a player who knew the answer to within a factor of two still took
- * the hit. Above the ceiling it is free points: at 100% every position on the
- * track scores, which is what five date questions were quietly doing.
- *
- * The floor is the number that matters. At 10% the graze band, which is where
- * damage stops, covers 15% of the track, so being roughly right is safe, and a
- * hint leaves the graze covering nearly half the lit window.
+ * Where the answer may sit on the ruler, in notches. Inside this, a guess
+ * dropped in the middle is never more than `VECTOR.wildBeyond` notches off,
+ * which is what keeps the wild-shot dock for confident guesses in the wrong
+ * direction rather than for somebody who had no idea.
  */
-export const TRACK_SHARE = { min: 0.1, max: 0.2 } as const;
+export const ANSWER_NOTCHES = { min: 10, max: 90 } as const;
 
-/**
- * How far from either end of the slider the answer has to sit.
- *
- * The pool skewed hard to the left: thirteen of thirty-four answers sat in the
- * first third of the track, which wastes most of the slider and tells a player
- * who notices to aim low. It also keeps both ends of the track well outside
- * the graze band, so the extremes are always a real miss.
- */
-export const ANSWER_INSET = 0.2;
+/** The top of any year ruler `rangeFor` suggests. */
+const LATEST_YEAR = 2025;
+
+/** The leading digits a notch may have: 1, 2, 2.5 or 5, times a power of ten. */
+const READABLE = [1, 2, 2.5, 5] as const;
 
 /** Declared difficulty. See `content/AUTHORING.md` for what each one means. */
 export type Level = 1 | 2 | 3;
@@ -75,103 +63,78 @@ export const ROUND_PROFILE = {
   openerMax: 2,
 } as const;
 
-/**
- * The share of the slider track covered by the close band.
- *
- * Deliberately unclamped: a band that runs off the end of the slider is the
- * symptom being looked for, and clamping it to 1 would hide how far off it is.
- */
-export function trackShare(question: VectorQuestion): number {
-  const { min, max, answer, log } = question;
-  const close = VECTOR.bands.close;
-  if (log && min > 0) {
-    return Math.log((1 + close) / (1 - close)) / Math.log(max / min);
-  }
-  return (2 * close * answer) / (max - min);
+/** Whether one notch covers a round amount: 0.2, 1, 2.5, 50, 5,000 and so on. */
+export function isReadableStep(step: number): boolean {
+  if (!(step > 0) || !Number.isFinite(step)) return false;
+  const decade = Math.pow(10, Math.floor(Math.log10(step) + 1e-9));
+  const lead = step / decade;
+  return READABLE.some((digit) => Math.abs(lead - digit) < 1e-6);
 }
 
-/** Where the answer sits along the track, 0 at `min` and 1 at `max`. */
-export function answerAt(question: VectorQuestion): number {
-  return toSlider(question, question.answer);
+/** What one notch of this question's ruler covers. */
+export function stepOf(question: VectorQuestion): number {
+  return (question.max - question.min) / VECTOR.notches;
+}
+
+/** Where the answer sits on the ruler, in notches from `min`. */
+export function answerNotch(question: VectorQuestion): number {
+  return toNotch(question, question.answer);
 }
 
 /**
- * How far the slider's opening position is from the answer, as a share of the
- * track. The slider opens at the midpoint, so an answer parked near the middle
- * is a direct hit for touching nothing at all.
+ * How many notches a guess of twice the answer would land from it: the audit's
+ * reading of how forgiving a range is. A wide range makes a factor of two
+ * cheap; a tight one makes it wild.
  */
-export const SLIDER_OPENS_AT = 0.5;
+export function notchesForDouble(question: VectorQuestion): number {
+  return Math.round((question.answer / stepOf(question)) * 1e6) / 1e6;
+}
 
-/** Every rule this module holds, as pass or fail with a reason. */
+/** Every rule this module holds, as reasons it fails. Empty means it passes. */
 export function checkVector(question: VectorQuestion): string[] {
   const faults: string[] = [];
-  const share = trackShare(question);
-  const at = answerAt(question);
-  if (share < TRACK_SHARE.min) {
+  const step = stepOf(question);
+  if (!isReadableStep(step)) {
     faults.push(
-      `the close band covers ${pct(share)} of the slider, under the ${pct(TRACK_SHARE.min)} floor`,
+      `each of the ${VECTOR.notches} notches covers ${round(step)}, not a round number ` +
+        `(1, 2, 2.5 or 5 times a power of ten)`,
     );
   }
-  if (share > TRACK_SHARE.max) {
+  const at = answerNotch(question);
+  if (at < ANSWER_NOTCHES.min || at > ANSWER_NOTCHES.max) {
     faults.push(
-      `the close band covers ${pct(share)} of the slider, over the ${pct(TRACK_SHARE.max)} ceiling`,
+      `the answer sits at notch ${at}, outside ${ANSWER_NOTCHES.min} to ${ANSWER_NOTCHES.max}`,
     );
-  }
-  if (at < ANSWER_INSET || at > 1 - ANSWER_INSET) {
-    faults.push(`the answer sits at ${pct(at)} along the slider, outside ${pct(ANSWER_INSET)} of either end`);
-  }
-  if (Math.abs(at - SLIDER_OPENS_AT) <= share / 2) {
-    faults.push("the slider opens on the answer, so doing nothing scores");
   }
   return faults;
 }
 
-function pct(v: number): string {
-  return `${Math.round(v * 1000) / 10}%`;
-}
-
 /**
- * A `min..max` that satisfies every rule above, in round numbers.
- *
- * This exists so the validator's error message can name the range to use
- * rather than leaving an author to guess at it, and so a generated question
- * can ask for its range instead of inventing one. It aims at the middle of the
- * allowed band with the answer a little past the midpoint, then walks a short
- * grid of readable endpoints and returns the first pair that passes.
+ * A range that passes every rule above, in round numbers, so the validator's
+ * error can name one and a generated question can ask for one. From 0 where
+ * it can be, which is how most believable ranges start; a year gets a
+ * two-century window around it instead, because nobody guesses year 0.
  */
-export function rangeFor(answer: number): { min: number; max: number } {
-  const close = VECTOR.bands.close;
-  for (const share of [0.15, 0.14, 0.16, 0.13, 0.17, 0.12, 0.18]) {
-    for (const at of [0.6, 0.62, 0.58, 0.65, 0.55, 0.68]) {
-      const span = (2 * close * answer) / share;
-      const min = readable(answer - at * span);
-      const max = readable(min + span);
-      if (min <= 0 || max <= min) continue;
-      const candidate = { ...FAKE, answer, min, max } as VectorQuestion;
-      if (checkVector(candidate).length === 0) return { min, max };
+export function rangeFor(answer: number, year = false): { min: number; max: number } {
+  if (year) {
+    // A ruler that runs past today tells the player the answer is not in the
+    // future, and wastes its top end doing it.
+    const min = Math.min(Math.floor((answer - 100) / 50) * 50, LATEST_YEAR - 200);
+    return { min, max: min + 200 };
+  }
+  const size = Math.abs(answer);
+  for (let exponent = -3; exponent <= 12; exponent += 1) {
+    for (const digit of READABLE) {
+      const step = digit * Math.pow(10, exponent);
+      const at = size / step;
+      if (at <= 70 && at >= ANSWER_NOTCHES.min) {
+        return { min: 0, max: round(step * VECTOR.notches) };
+      }
     }
   }
-  // Nothing readable fit, which takes an answer small enough that rounding
-  // swamps the span. Hand back the exact arithmetic rather than nothing.
-  const span = (2 * close * answer) / 0.15;
-  return { min: answer - 0.6 * span, max: answer + 0.4 * span };
+  return { min: 0, max: round(size * 2) };
 }
 
-/** The fields `checkVector` never reads, so a candidate can be built cheaply. */
-const FAKE = { id: "", type: "vector", prompt: "", topic: "misc", difficulty: 2 } as const;
-
-/**
- * A number an author would actually write on a slider end. One or two
- * significant figures, on the steps a person counts in.
- */
-function readable(value: number): number {
-  if (value <= 0) return 0;
-  const decade = Math.pow(10, Math.floor(Math.log10(value)));
-  const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
-  const scaled = value / decade;
-  let best = steps[0] as number;
-  for (const step of steps) {
-    if (Math.abs(step - scaled) < Math.abs(best - scaled)) best = step;
-  }
-  return Math.round(best * decade * 1000) / 1000;
+function round(value: number): number {
+  return Math.round(value * 1e6) / 1e6;
 }

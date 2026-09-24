@@ -53,8 +53,8 @@
       "difficulty": 1,
       "prompt": "How many days does a human pregnancy last, on average?",
       "answer": 280,
-      "min": 100,
-      "max": 400,
+      "min": 0,
+      "max": 1000,
       "unit": "days",
       "fact": "Forty weeks, counted from the start of the last period, so a baby is really growing for about 38 of them."
     },
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How long is a tennis court, in metres?",
       "answer": 23.77,
-      "min": 8,
-      "max": 32,
+      "min": 0,
+      "max": 50,
       "unit": "m",
       "fact": "78 feet from baseline to baseline, set down in the 1870s."
     },

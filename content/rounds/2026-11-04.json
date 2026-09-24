@@ -53,8 +53,8 @@
       "difficulty": 1,
       "prompt": "How heavy is a newborn baby, on average, in kilograms?",
       "answer": 3.5,
-      "min": 1,
-      "max": 5,
+      "min": 0,
+      "max": 20,
       "unit": "kg",
       "fact": "About 3.5 kg. Most babies lose a little weight in their first few days, then gain it back within a fortnight."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How many characters could a tweet have when Twitter started?",
       "answer": 140,
-      "min": 45,
-      "max": 195,
+      "min": 0,
+      "max": 500,
       "unit": "characters",
       "fact": "140, so a tweet would fit in a text message with room for a username."
     },

@@ -109,8 +109,9 @@ test("how to play: the whole rulebook, end to end, from the title", async ({ pag
 
   // The short rules, the finer print and every table, all read from Tuning.
   expect(everything).toMatch(/ALL 3 FOUND\s+200 POINTS/);
-  expect(everything).toMatch(/WITHIN 5%/);
-  expect(everything).toMatch(/WITHIN 15%\s+0 POINTS · NO HARM/);
+  expect(everything).toMatch(/DEAD ON\s+195 TO 200 POINTS \+ SHIELD/);
+  expect(everything).toMatch(/WITHIN 40%\s+0 TO 70 POINTS · NO HARM/);
+  expect(everything).toMatch(/every step away from the answer costs 5 points/i);
   expect(everything).toMatch(/CORRECT \+ BOOST\s+200 POINTS/);
   expect(everything).toMatch(/a streak of correct answers keeps your ship fast/i);
   expect(everything).toMatch(/You get 2 for the whole run/);

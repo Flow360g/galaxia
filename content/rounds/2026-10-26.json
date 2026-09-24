@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "screen",
       "difficulty": 2,
-      "prompt": "How many seasons of Seinfeld were made?",
-      "answer": 9,
-      "min": 2,
-      "max": 13,
-      "unit": "seasons",
-      "fact": "Nine. NBC offered a reported $5 million an episode for a tenth, and Jerry Seinfeld said no."
+      "prompt": "In what year did The Simpsons first air as a series?",
+      "answer": 1989,
+      "min": 1825,
+      "max": 2025,
+      "year": true,
+      "fact": "December 1989, after starting as short cartoons on another show two years earlier."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "What percentage of an adult's body is water?",
       "answer": 60,
-      "min": 15,
-      "max": 85,
+      "min": 0,
+      "max": 200,
       "unit": "%",
       "fact": "About 60%. A newborn baby is closer to 75% water."
     },

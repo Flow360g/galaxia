@@ -162,26 +162,36 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // so the salvage is a NOVA rather than a shield.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("GUESS THE NUMBER").first()).toBeVisible();
-  await page.getByTestId("aim").fill(String(sliderOf(2)));
-  await expect(page.getByTestId("aim-value")).toContainText("10,9", { timeout: 5_000 });
+  // The slider opens empty, and FIRE waits for a guess to be on it.
+  await expect(page.getByTestId("aim-value")).toHaveText("TAP TO GUESS");
+  await expect(page.getByTestId("lock")).toBeDisabled();
+  await page.getByTestId("aim").fill(String(notchOf(2)));
+  await expect(page.getByTestId("aim-value")).toHaveText(rulerText(2, notchOf(2)), { timeout: 5_000 });
+  await expect(page.getByTestId("lock")).toBeEnabled();
   await shot(page, "07-vector-aim");
   await page.getByTestId("lock").click();
   await expect(toast).toHaveAttribute("data-outcome", "slingshot", { timeout: 10_000 });
+  await expect(toast).toContainText("DEAD ON");
+  await expect(page.getByTestId("toast-points")).toHaveText(/\+200/);
+  await expect(page.getByTestId("ruler")).toHaveAttribute("data-guess", String(notchOf(2)));
   await expect(page.getByTestId("salvage")).toContainText("+1 HINT");
   await shot(page, "08-direct-hit");
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
   await advance(page);
 
-  // Encounter 4: vector, aim at the far end. The ship never fires: the scout
-  // does, and the screen says the hull wore it.
+  // Encounter 4: vector, aim at the far end, more than 40 steps from the
+  // answer. The ship never fires: the scout does, and the screen says the
+  // hull wore it.
   await expect(question).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId("aim").fill("1000");
+  expect(100 - notchOf(3)).toBeGreaterThan(40);
+  await page.getByTestId("aim").fill("100");
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("damage")).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "damage");
   await shot(page, "09-damage");
   await expect(toast).toHaveAttribute("data-outcome", "collision", { timeout: 10_000 });
   await expect(toast).toContainText("WAY OFF");
+  await expect(page.getByTestId("toast-points")).toHaveText(/-25/);
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "2");
   await shot(page, "09-miss");
   await advance(page);
@@ -535,7 +545,7 @@ test("all three lanes: MAXIMUM THRUST", async ({ page }) => {
   await expect(page.getByTestId("streak")).toHaveText("STREAK x1");
 });
 
-test("a vector graze: no points, no damage, and the streak holds", async ({ page }) => {
+test("a vector graze: points on the ruler, no damage, and the streak holds", async ({ page }) => {
   await page.goto("/play?replay=1&round=2026-09-18");
   const toast = page.getByTestId("toast");
 
@@ -553,14 +563,19 @@ test("a vector graze: no points, no damage, and the streak holds", async ({ page
   await expect(page.getByTestId("waypoint")).toBeVisible({ timeout: 15_000 });
   await advance(page);
 
-  // Aim 12% high: inside the graze band, outside the close one.
+  // Aim 18 steps high: past a hit, well short of a wild shot. Every step
+  // costs 5 of the 200, so it pays 110.
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId("aim").fill(String(sliderOf(2, 1.12)));
+  await page.getByTestId("aim").fill(String(notchOf(2) + 18));
   await page.getByTestId("lock").click();
   await expect(toast).toHaveAttribute("data-outcome", "graze", { timeout: 10_000 });
-  await expect(toast).toContainText("NEAR MISS");
-  await expect(page.getByTestId("toast-points")).toHaveText(/^\+0 POINTS$/);
-  await expect(page.getByTestId("wide-by")).toContainText(/1[12](\.\d)?% off/);
+  await expect(toast).toContainText("WITHIN 25%");
+  await expect(page.getByTestId("toast-points")).toHaveText(/^\+110 POINTS$/);
+  // Off by, in the question's own units, not a percentage of the answer.
+  await expect(page.getByTestId("wide-by")).toHaveText(
+    `${rulerText(2, notchOf(2) + 18, answerValueOf(2))} off`,
+  );
+  await expect(page.getByTestId("ruler")).toHaveAttribute("data-answer", String(notchOf(2)));
   await shot(page, "17-graze");
   // Nothing taken: every shield still up, no damage banner, streak as it was.
   await expect(page.getByTestId("shield")).toHaveAttribute("data-shields", "3");
@@ -579,19 +594,35 @@ function answerOf(index: number): number {
   return question.answer as number;
 }
 
-/**
- * Slider position (0..1000) that lands on a vector's answer, or on `scale`
- * times it: 1.12 aims 12% high.
- */
-function sliderOf(index: number, scale = 1): number {
+function vectorAt(index: number): { min: number; max: number; answer: number; unit?: string } {
   const question = round.questions[index];
   if (!question || question.type !== "vector") throw new Error(`no vector at ${index}`);
-  const { min, max } = question as { min: number; max: number; answer: number };
-  const answer = (question as { answer: number }).answer * scale;
-  const t = (question as { log?: boolean }).log
-    ? (Math.log(answer) - Math.log(min)) / (Math.log(max) - Math.log(min))
-    : (answer - min) / (max - min);
-  return Math.round(t * 1000);
+  return question as unknown as { min: number; max: number; answer: number; unit?: string };
+}
+
+/** The ruler notch (0..100) a vector's answer rounds to. */
+function notchOf(index: number): number {
+  const { min, max, answer } = vectorAt(index);
+  return Math.round(((answer - min) / (max - min)) * 100);
+}
+
+function answerValueOf(index: number): number {
+  return vectorAt(index).answer;
+}
+
+/**
+ * What the ruler prints for `notch`, the way the HUD prints it: to as many
+ * decimals as one step needs, with the unit. With `from`, the distance from
+ * that value instead, which is how the "off by" line reads.
+ */
+function rulerText(index: number, notch: number, from?: number): string {
+  const { min, max, unit } = vectorAt(index);
+  const step = (max - min) / 100;
+  const decimals = Math.min(3, (String(Math.round(step * 1e9) / 1e9).split(".")[1] ?? "").length);
+  const value = min + step * notch;
+  const shown = from === undefined ? value : Math.abs(value - from);
+  const text = shown.toLocaleString("en-AU", { maximumFractionDigits: decimals });
+  return unit ? `${text} ${unit}` : text;
 }
 
 function answersOf(index: number): number[] {

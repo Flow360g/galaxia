@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How many calories are in one gram of fat?",
       "answer": 9,
-      "min": 2,
-      "max": 13,
+      "min": 0,
+      "max": 25,
       "unit": "calories",
       "fact": "Nine, more than twice the four in a gram of sugar or protein."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How many years did Michelangelo spend painting the Sistine Chapel ceiling?",
       "answer": 4,
-      "min": 1,
-      "max": 6,
+      "min": 0,
+      "max": 10,
       "unit": "years",
       "fact": "Four years, 1508 to 1512, mostly standing up and painting above his head."
     },

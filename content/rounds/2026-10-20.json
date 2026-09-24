@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "What is the pH of pure water?",
       "answer": 7,
-      "min": 2,
-      "max": 10,
+      "min": 0,
+      "max": 25,
       "fact": "Seven, right in the middle of the scale. Lower is acid and higher is alkaline."
     },
     {
@@ -62,28 +62,28 @@
       "type": "vector",
       "topic": "geography",
       "difficulty": 3,
-      "prompt": "How many provinces does Canada have?",
-      "answer": 10,
-      "min": 3,
-      "max": 14,
-      "unit": "provinces",
-      "fact": "Ten provinces and three territories, and the territories cover about 40% of the country."
+      "prompt": "How high is Mount Kilimanjaro, in metres?",
+      "answer": 5895,
+      "min": 0,
+      "max": 20000,
+      "unit": "m",
+      "fact": "5,895 m, the highest mountain in Africa, with snow near the equator."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "arts",
       "difficulty": 2,
-      "prompt": "Who designed the Sagrada Fam\u00edlia in Barcelona?",
+      "prompt": "Who designed the Sagrada Família in Barcelona?",
       "options": [
         "Gehry",
-        "Gaud\u00ed",
-        "Dal\u00ed",
+        "Gaudí",
+        "Dalí",
         "Le Corbusier"
       ],
       "answer": 1,
       "hint": "He was from Catalonia and loved curves drawn from nature.",
-      "fact": "Building began in 1882, and Antoni Gaud\u00ed worked on it for over 40 years."
+      "fact": "Building began in 1882, and Antoni Gaudí worked on it for over 40 years."
     },
     {
       "id": "q6",

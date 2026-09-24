@@ -73,10 +73,10 @@
       "difficulty": 3,
       "prompt": "How tall is the Great Pyramid of Giza, in metres?",
       "answer": 147,
-      "min": 50,
-      "max": 200,
-      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years.",
-      "unit": "m"
+      "min": 0,
+      "max": 250,
+      "unit": "m",
+      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years."
     },
     {
       "id": "q4",
@@ -85,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How many years ago did the last dinosaurs die out, in millions?",
       "answer": 66,
-      "min": 10,
-      "max": 90,
+      "min": 0,
+      "max": 100,
       "unit": "million years",
       "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
     },
