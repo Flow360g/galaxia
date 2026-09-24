@@ -87,12 +87,17 @@ export interface McqQuestion {
  * zoom, options) are authored now so the round is ready for that; this build
  * flies the approach and the dock.
  */
+/** What a WHERE ON EARTH site asks the player to name. */
+export type SiteKind = "city" | "landmark" | "island";
+
 export interface EarthQuestion {
   id: string;
   type: "earth";
   prompt: string;
   /** The landing site, as shown on reveal. */
   name: string;
+  /** What the answer box asks for: a city unless the site says otherwise. */
+  kind: SiteKind;
   country: string;
   lat: number;
   lon: number;
@@ -281,6 +286,8 @@ export interface WaypointState {
   nextPhase: number;
   rating: Rating;
   plasma: number;
+  /** Correct lanes found across the stage's clusters, for "5 OF 6 FOUND". */
+  found: number;
   shields: number;
   peakVelocity: number;
   /** Seconds into the waypoint. */
@@ -367,6 +374,12 @@ export interface Outcome {
   charge?: number;
   /** Cluster only: lanes picked, in order, including the fatal one on a miss. */
   picks?: number[];
+  /**
+   * Cluster only: correct lanes found, whatever became of their plasma. A
+   * boulder on the cluster's shield wipes what was banked, so `charge` can be
+   * 1 on a cluster where all 3 were found; the verdict says both.
+   */
+  found?: number;
   /** Cluster only: plasma that was in the reactor when the cluster was lost. */
   lost?: number;
   /** Vector only: notches between the guess and the answer on the ruler. */

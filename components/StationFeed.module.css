@@ -516,6 +516,18 @@
   color: #6f7a8c;
   text-align: center;
 }
+/* What the box wants, one line over it. It turns bright, not red, when a
+   country is sent back: nothing was lost, the question was misread. */
+.ask {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  color: #9aa6b8;
+}
+.askNudge {
+  color: #e8ecf3;
+  font-weight: 700;
+}
 .typedRow {
   display: flex;
   gap: 8px;

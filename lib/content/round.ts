@@ -217,6 +217,7 @@ function hydrateEarth(round: Round, seed: string = round.date): Round {
     const filled: EarthQuestion = {
       ...question,
       name: site.name,
+      kind: site.kind ?? "city",
       country: site.country,
       lat: site.lat,
       lon: site.lon,

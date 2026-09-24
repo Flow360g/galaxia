@@ -21,6 +21,8 @@
  * comparable and the whole daily format goes with it.
  */
 
+import type { SiteKind } from "@/lib/game/types";
+
 export type Tier = "easy" | "medium" | "hard";
 
 /** One Commons photograph. `file` is the "File:" name and is never rendered. */
@@ -35,6 +37,12 @@ export interface Site {
   id: string;
   /** The answer, as shown on reveal. */
   name: string;
+  /**
+   * What the player is asked to name. Most sites are cities; the few that are
+   * not say so on the answer box, because "name the city" over Uluru is a
+   * question with no answer. Leave it out for a city.
+   */
+  kind?: SiteKind;
   country: string;
   lat: number;
   lon: number;
@@ -137,6 +145,7 @@ export const SITES: Site[] = [
   {
     id: "uluru",
     name: "Uluru",
+    kind: "landmark",
     country: "Australia",
     lat: -25.345,
     lon: 131.036,
@@ -394,6 +403,7 @@ export const SITES: Site[] = [
   {
     id: "santorini",
     name: "Santorini",
+    kind: "island",
     country: "Greece",
     lat: 36.416,
     lon: 25.432,

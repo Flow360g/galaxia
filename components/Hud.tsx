@@ -897,7 +897,7 @@ function WaypointCard({
               <span className={`${styles.wpRatingText} arcade`}>{RATING_TEXT[waypoint.rating]}</span>
               <ul className={styles.wpTally}>
                 <li>
-                  {waypoint.plasma} OF {foundMax} FOUND
+                  {waypoint.found} OF {foundMax} FOUND
                 </li>
                 <li>{waypoint.shields} SHIELD{waypoint.shields === 1 ? "" : "S"} UP</li>
               </ul>
@@ -1173,10 +1173,19 @@ function OutcomeToast({
         <>
           <span className={styles.toastAnswer}>
             <strong>
-              {outcome.charge} of {FULL_CHARGE} found
+              {outcome.found ?? outcome.charge} of {FULL_CHARGE} found
             </strong>
           </span>
-          {(outcome.charge ?? 0) < FULL_CHARGE ? (
+          {/* A wrong answer on the cluster's shield wipes the plasma collected
+              before it. Without this line a player who found all 3 read the
+              points and thought the game had miscounted. */}
+          {(outcome.found ?? 0) > (outcome.charge ?? 0) ? (
+            <span className={styles.toastAnswer} data-testid="toast-wiped">
+              Your wrong answer wiped the {(outcome.found ?? 0) - (outcome.charge ?? 0)} before it, so{" "}
+              {outcome.charge} counted
+            </span>
+          ) : null}
+          {(outcome.found ?? outcome.charge ?? 0) < FULL_CHARGE ? (
             <span className={styles.toastAnswer}>The {FULL_CHARGE} were: {outcome.answerText}</span>
           ) : null}
         </>

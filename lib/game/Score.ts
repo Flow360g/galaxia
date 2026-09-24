@@ -166,7 +166,12 @@ function detailFor(outcome: Outcome): string {
   if (!outcome.correct) return outcome.kind === "wreck" ? "WRONG · NO SHIELDS" : "WRONG";
   if (outcome.kind === "burn") {
     const charge = outcome.charge ?? 0;
-    return `${charge} OF ${CLUSTER_FIND} FOUND`;
+    const found = outcome.found ?? charge;
+    // A boulder on the cluster's shield wipes what was banked, so what was
+    // found and what was scored can differ. Say both rather than undercount.
+    return found > charge
+      ? `${found} OF ${CLUSTER_FIND} FOUND · ${charge} COUNTED`
+      : `${found} OF ${CLUSTER_FIND} FOUND`;
   }
   return outcome.kind === "slingshot" ? "CORRECT · BOOSTED" : "CORRECT";
 }

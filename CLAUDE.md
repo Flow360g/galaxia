@@ -664,7 +664,11 @@ short version is below; the reasoning is in that file.
   **Every rung must carry something the one before it did not.** The rungs are
   bought with points, and an intel line that restates the free opener is a line
   the player paid for and learned nothing from; it shipped that way once and
-  read as a bug. `sites.ts` now throws at import if a clue repeats a
+  read as a bug. A site is a city unless it declares a `kind` (`landmark`,
+  `island`): the answer box says "Name the city, not the country" off that
+  field, and a guess that is only a country (`lib/game/countries.ts`) is sent
+  back with a word rather than marked wrong. A tester typed "Morocco" for
+  Marrakesh and lost the site before either existed. `sites.ts` now throws at import if a clue repeats a
   distinctive word of its opener, which matters most when this prose is
   generated rather than written. A Commons filename is never rendered: it
   usually names the answer.

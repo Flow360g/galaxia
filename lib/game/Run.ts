@@ -10,6 +10,7 @@ import {
   snapToNotch,
   toNotch,
 } from "./nova";
+import { siteAccepts } from "./countries";
 import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
 import {
   CLUSTER,
@@ -391,6 +392,7 @@ export class Run {
       answerText: clusterAnswerText(question),
       charge: cluster.charge,
       picks: [...cluster.picked],
+      found: foundIn(question, cluster.picked),
     });
   }
 
@@ -608,11 +610,7 @@ export class Run {
     const question = this.question;
     if (this.phase !== "docked" || !question || question.type !== "earth") return;
 
-    const guess = normaliseGuess(text);
-    const correct =
-      !timedOut &&
-      guess.length >= 3 &&
-      question.accept.some((entry) => guess.includes(normaliseGuess(entry)));
+    const correct = !timedOut && siteAccepts(question, text);
 
     const kind = correct ? "thread" : outcomeKind(false, false, timedOut, this.shields > 0);
     if (!correct && this.shields > 0) {
@@ -820,6 +818,7 @@ export class Run {
     if (!stage || !next || !nextQuestion) return false;
 
     const plasma = this.outcomes.reduce((sum, o) => sum + (o.kind === "burn" ? (o.charge ?? 0) : 0), 0);
+    const found = this.outcomes.reduce((sum, o) => sum + (o.found ?? 0), 0);
     const rating = rateStage(plasma, this.shields);
     this.ratings.push(rating);
     const closing = this.events[this.events.length - 1];
@@ -832,6 +831,7 @@ export class Run {
       nextPhase: next.phase ?? stageIndex + 2,
       rating,
       plasma,
+      found,
       shields: this.shields,
       peakVelocity: this.flight.peakVelocity,
       t: 0,
@@ -932,7 +932,10 @@ export class Run {
     if (question.type === "cluster" && cluster) {
       cluster.picked.push(lane);
       cluster.charge += 1;
-      const full = cluster.charge >= question.answers.length;
+      // Full means every correct lane is found, not a full reactor: after a
+      // boulder on the shield the reactor restarts from empty, and the last
+      // find would otherwise leave the clock running on three wrong lanes.
+      const full = foundIn(question, cluster.picked) >= question.answers.length;
       this.flash(
         "plasma",
         full ? `ALL ${question.answers.length} FOUND` : "CORRECT",
@@ -1027,6 +1030,7 @@ export class Run {
         answerText: clusterAnswerText(question),
         charge: 0,
         picks: [...cluster.picked],
+        found: foundIn(question, cluster.picked),
         lost,
       });
       return;
@@ -1134,7 +1138,9 @@ export class Run {
       chosen: null,
       guessText: "No answer",
       answerText,
-      ...(this.cluster ? { charge: 0, picks: [...this.cluster.picked] } : {}),
+      ...(this.cluster && question.type === "cluster"
+        ? { charge: 0, picks: [...this.cluster.picked], found: foundIn(question, this.cluster.picked) }
+        : {}),
     });
   }
 
@@ -1274,18 +1280,6 @@ export class Run {
 }
 
 /**
- * Typed answers are compared on letters and digits only, so punctuation,
- * accents and spacing never decide whether a player got it right.
- */
-function normaliseGuess(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/**
  * How hard a wild vector shot lands, 0..1, from the notches it was off.
  *
  * Just past `VECTOR.wildBeyond` costs `severityFloor` of a full impact. It
@@ -1297,6 +1291,11 @@ export function missSeverity(notches: number): number {
   const span = Math.max(VECTOR.severityFullAt - from, 1e-6);
   const across = clamp01((notches - from) / span);
   return VECTOR.severityFloor + (1 - VECTOR.severityFloor) * across;
+}
+
+/** Correct lanes among a cluster's picks. */
+function foundIn(question: ClusterQuestion, picked: number[]): number {
+  return picked.filter((lane) => question.answers.includes(lane)).length;
 }
 
 /** Stage rating from plasma banked. S also needs every shield still up. */
