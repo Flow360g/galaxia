@@ -552,11 +552,13 @@ export function newShuffleSeed(): string {
 
 /**
  * The address of a practice run: its seed, and the hull to fly it in when one
- * was picked on `/profile?debug=1`.
+ * was picked on `/profile?debug=1`. It does not carry `debug=1` on to the
+ * flight: a practice run is for playing the game, and the FPS panel over the
+ * ship was in the way. Add it by hand to measure a practice round.
  */
 export function practiceUrl(seed: string, ship?: string): string {
   const shipParam = ship ? `&ship=${encodeURIComponent(ship)}` : "";
-  return `/play?shuffle=${seed}&debug=1${shipParam}`;
+  return `/play?shuffle=${seed}${shipParam}`;
 }
 
 /** `<deck>.<n>`: the nth deal from a device's deck. Anything else is a one-off draw. */

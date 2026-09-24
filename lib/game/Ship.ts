@@ -99,6 +99,7 @@ export class Ship {
       url,
       this.spec.modelLength,
       this.spec.modelYaw,
+      this.spec.modelTrim,
     );
     if (!loaded || this.disposed) return;
     const box = new THREE.Box3().setFromObject(loaded.group);
