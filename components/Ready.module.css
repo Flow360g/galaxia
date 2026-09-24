@@ -47,11 +47,15 @@
   color: var(--arcade-yellow);
 }
 
+/* The whole run in one line, over the phase: the hairline under it closes
+   it off so it never reads as a Phase 1 rule. */
 .intro {
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
   color: var(--panel-label);
+  border-bottom: 1px solid var(--rule-dark);
+  padding-bottom: 14px;
 }
 
 .lines {
@@ -61,8 +65,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border-top: 1px solid var(--rule-dark);
-  padding-top: 14px;
 }
 
 .line {
@@ -104,7 +106,10 @@
 
   .lines {
     gap: 10px;
-    padding-top: 12px;
+  }
+
+  .intro {
+    padding-bottom: 12px;
   }
 
   .title {
