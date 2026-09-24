@@ -162,9 +162,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // so the salvage is a NOVA rather than a shield.
   await expect(question).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("GUESS THE NUMBER").first()).toBeVisible();
-  // The slider opens empty, and FIRE waits for a guess to be on it.
-  await expect(page.getByTestId("aim-value")).toHaveText("TAP TO GUESS");
-  await expect(page.getByTestId("lock")).toBeDisabled();
+  // The slider opens in the middle with its figure showing, a point of
+  // reference before the first touch.
+  await expect(page.getByTestId("aim-value")).toHaveText(rulerText(2, 50));
   await page.getByTestId("aim").fill(String(notchOf(2)));
   await expect(page.getByTestId("aim-value")).toHaveText(rulerText(2, notchOf(2)), { timeout: 5_000 });
   await expect(page.getByTestId("lock")).toBeEnabled();
@@ -202,8 +202,13 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(waypoint).toContainText("PHASE 3", { timeout: 6_000 });
   await expect(waypoint).toContainText("OPEN SKY");
   await expect(waypoint).toContainText("PICK ONE");
+  // The card shows the band it is about to open, BOOST pointed at, before
+  // the clock is running.
+  await expect(page.getByTestId("boost-demo")).toContainText("TAP HERE FIRST");
   await shot(page, "09b-waypoint-open-sky");
-  await advance(page);
+  // The sample band makes this card tall enough to cover the middle of the
+  // screen, so it is tapped on the card itself.
+  await advance(page, "banner");
 
   // Encounter 5: NOVA then correct with boost. SLINGSHOT, and full marks:
   // 100 at x1, since the miss before it reset the streak.

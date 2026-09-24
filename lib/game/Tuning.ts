@@ -101,9 +101,10 @@ export const ENCOUNTER = {
   /**
    * Extra seconds for a PICK ONE question. Four answers and a BOOST decision
    * to make before the tap, and testers were running out of clock deciding
-   * whether to arm it.
+   * whether to arm it. The half on top is reading time: at a flat six the
+   * prompt was still being read when the clock was already low.
    */
-  mcqBonusSeconds: 1,
+  mcqBonusSeconds: 1.5,
   /** Asteroid Z at full thrust and at empty thrust. It looms as you think. */
   holdFar: -170,
   holdNear: -48,

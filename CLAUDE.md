@@ -76,8 +76,12 @@ things that make those games sticky:
   thrust draining and a countdown, and it refills for every decision. A
   cluster opens on its question alone (`reading` phase): no lanes, a ten
   second read clock and a READY! button, so nobody is timed on reading. Its
-  first pick then gets two seconds more for the six options. A PICK ONE question gets one second
-  more (`ENCOUNTER.mcqBonusSeconds`), for the BOOST decision. Each cluster
+  first pick then gets two seconds more for the six options. A PICK ONE question gets a second
+  and a half more (`ENCOUNTER.mcqBonusSeconds`), for reading and the BOOST
+  decision. A GUESS THE NUMBER slider opens with its thumb in the middle and
+  that figure showing, so there is a point of reference before the first
+  touch; it used to open empty, and under the clock that gave nothing to aim
+  against. Each cluster
   carries one shield of its own: the first wrong lane costs the shield and the
   banked plasma but lets you keep answering, the second loses the cluster for
   zero, and the run's shields are never touched by a cluster. NOVA puts a second back on the
@@ -156,7 +160,10 @@ The screen has two zones. Respect them:
   appears again after the first Cluster resolves. Its twin sits in the band, on the run's first
   PICK ONE only: TAP BOOST FIRST / IF YOU ARE SURE under BOOST, arrow pointing up,
   gone once BOOST is armed, because testers could not tell whether BOOST went
-  before the answer or after it. Both hug `env(safe-area-inset-*)`. Do not read
+  before the answer or after it. The OPEN SKY phase card says the same thing
+  first, while nothing is timed: a sample of four squares and the tools row
+  with TAP HERE FIRST / IF YOU ARE SURE under BOOST (`BoostDemo` in
+  `Hud.tsx`), a picture with no pointer events so the card's tap still lands. Both hug `env(safe-area-inset-*)`. Do not read
   them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
   nowhere and only exists while the run is parked on a verdict; the visible
   TAP TO CONTINUE prompt lives in the band like everything else.

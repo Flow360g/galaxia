@@ -193,8 +193,11 @@ export class Run {
   private absorbing: number | null = null;
   /**
    * Vector aim in slider space, always on a notch, and the window a NOVA scan
-   * left open. The slider opens empty: `vectorPlaced` stays false until the
-   * player puts a guess on it, and FIRE does nothing until then.
+   * left open. The slider opens with the thumb in the middle and its value
+   * showing, so the player has a figure to reason from the moment the
+   * question lands. It used to open empty, and under a running clock a
+   * slider with no number on it gave nothing to aim against. With every
+   * answer between notch 10 and 90, the middle can never be a wild shot.
    */
   private vectorT = 0.5;
   private vectorPlaced = false;
@@ -527,8 +530,7 @@ export class Run {
       const scan = resolveVectorNova(question, this.random);
       this.vectorWindow = scan.window;
       this.nova = { kind: "narrow", eliminated: [], highlighted: [], clue: null };
-      // Pull a guess already on the slider into the lit window. An empty
-      // slider stays empty: a hint is not a guess.
+      // Pull the guess on the slider into the lit window.
       if (this.vectorPlaced) this.aim(this.vectorT);
     } else if (question.type === "mcq") {
       this.nova = resolveNova(question, this.random);
@@ -880,7 +882,7 @@ export class Run {
     this.burnCharge = 0;
     this.burnDrain = 0;
     this.vectorT = 0.5;
-    this.vectorPlaced = false;
+    this.vectorPlaced = question.type === "vector";
     this.vectorWindow = [0, 1];
     this.vectorStrength = 1;
     const vectorSlot = Math.min(this.vectorsFlown, VECTOR.thrustSeconds.length - 1);
