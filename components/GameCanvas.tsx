@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { newShuffleSeed } from "@/lib/content/round";
+import { newShuffleSeed, practiceUrl } from "@/lib/content/round";
 import { Engine } from "@/lib/game/Engine";
 import { isMaxThrust } from "@/lib/game/Flight";
 import { preloadFeed } from "@/lib/game/prefetch";
@@ -17,7 +17,7 @@ import {
   saveMuted,
   saveRun,
 } from "@/lib/game/storage";
-import { selectedShip } from "@/lib/game/ships";
+import { selectedShip, shipById } from "@/lib/game/ships";
 import {
   EARTH_SAVED_TRANSMISSION,
   MISSION_TRANSMISSION,
@@ -49,6 +49,13 @@ interface Props {
    * or count towards the flight log that unlocks hulls.
    */
   practice?: boolean;
+  /**
+   * The hull to fly on a practice run, by id, locked or not. Off
+   * `/profile?debug=1`, so a tester can see every hull in flight without
+   * earning or buying it. Ignored on the daily run, and never stored: the
+   * player's own selection and unlocks are untouched.
+   */
+  practiceShip?: string;
 }
 
 /**
@@ -59,7 +66,13 @@ interface Props {
  * State flows one way, engine to React, throttled, and only for the HUD.
  * Input flows the other way as plain method calls on the engine.
  */
-export function GameCanvas({ round, debug, replay = false, practice = false }: Props) {
+export function GameCanvas({
+  round,
+  debug,
+  replay = false,
+  practice = false,
+  practiceShip,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const router = useRouter();
@@ -93,7 +106,9 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
    * owns storage, the engine is handed the answer. Changing ships mid-run is
    * not a thing, so this never updates.
    */
-  const [ship] = useState(selectedShip);
+  const [ship] = useState(() =>
+    practice && practiceShip ? shipById(practiceShip) : selectedShip(),
+  );
   /** The first-flight Mayday has been heard (or skipped) this visit. */
   const [briefed, setBriefed] = useState(false);
   /**
@@ -259,7 +274,7 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
     // It must not touch storage on the way: the practice round wears today's
     // date and `clearRun` would wipe the real run of the day.
     if (practice) {
-      router.push(`/play?shuffle=${newShuffleSeed()}&debug=1`);
+      router.push(practiceUrl(newShuffleSeed(), practiceShip));
       return;
     }
     clearRun(round.date);
@@ -270,7 +285,7 @@ export function GameCanvas({ round, debug, replay = false, practice = false }: P
     setState(null);
     setLaunched(false);
     setAttempt((n) => n + 1);
-  }, [round.date, practice, router]);
+  }, [round.date, practice, practiceShip, router]);
 
   const shown = summary ?? stored ?? null;
   // MAXIMUM THRUST shakes the whole surface, canvas and HUD together, so the

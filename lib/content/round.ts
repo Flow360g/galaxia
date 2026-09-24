@@ -463,6 +463,15 @@ export function newShuffleSeed(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/**
+ * The address of a practice run: its seed, and the hull to fly it in when one
+ * was picked on `/profile?debug=1`.
+ */
+export function practiceUrl(seed: string, ship?: string): string {
+  const shipParam = ship ? `&ship=${encodeURIComponent(ship)}` : "";
+  return `/play?shuffle=${seed}&debug=1${shipParam}`;
+}
+
 export function getShuffledRound(seed: string): Round {
   const questions: Question[] = [];
   // Spread the corners as the draw goes. A blind draw from a pool this size
