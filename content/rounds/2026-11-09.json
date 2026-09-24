@@ -3,116 +3,6 @@
   "roundNumber": 52,
   "seed": 20261109,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "Which of these are ancient Egyptian gods?",
-      "options": [
-        "Marduk",
-        "Anubis",
-        "Vishnu",
-        "Ra",
-        "Baal",
-        "Osiris"
-      ],
-      "answers": [
-        1,
-        3,
-        5
-      ],
-      "fact": "Anubis, the god with a jackal's head, watched over mummies and guarded the dead."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these illnesses are caused by a virus?",
-      "options": [
-        "Malaria",
-        "Scurvy",
-        "Chickenpox",
-        "Measles",
-        "Flu",
-        "Tetanus"
-      ],
-      "answers": [
-        2,
-        3,
-        4
-      ],
-      "fact": "Antibiotics kill bacteria but do nothing to viruses, which is why they will not cure a cold."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "How many years apart were Top Gun and Top Gun: Maverick released?",
-      "answer": 36,
-      "min": 12,
-      "max": 50,
-      "unit": "years",
-      "fact": "36 years, from 1986 to 2022, with Tom Cruise flying in both."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "How many players does a baseball team have on the field?",
-      "answer": 9,
-      "min": 2,
-      "max": 13,
-      "unit": "players",
-      "fact": "Nine, and a game runs for nine innings too."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which TV show follows the teacher Walter White?",
-      "options": [
-        "Breaking Bad",
-        "Mad Men",
-        "Ozark",
-        "The Sopranos"
-      ],
-      "answer": 0,
-      "hint": "It is set in Albuquerque, New Mexico.",
-      "fact": "Bryan Cranston was best known for playing the dad in Malcolm in the Middle before Breaking Bad."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who wrote the Discworld novels?",
-      "options": [
-        "Pratchett",
-        "Douglas Adams",
-        "Neil Gaiman",
-        "Tolkien"
-      ],
-      "answer": 0,
-      "hint": "He was knighted, and wore a black hat.",
-      "fact": "Terry Pratchett wrote 41 Discworld novels, set on a flat world carried by four elephants on a turtle."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -131,6 +21,117 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these live in the ocean their whole lives?",
+      "options": [
+        "Octopus",
+        "Blue whale",
+        "Salmon",
+        "Coral",
+        "Sea turtle",
+        "Penguin"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
+      "fact": "Salmon spawn in rivers, sea turtles lay their eggs on beaches and penguins breed on land. None of them spends a whole life at sea."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "Which of these were presidents of the United States?",
+      "options": [
+        "Kennedy",
+        "Lincoln",
+        "Roosevelt",
+        "Franklin",
+        "Hamilton",
+        "Burr"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ],
+      "fact": "Benjamin Franklin, Alexander Hamilton and Aaron Burr never held the office. Burr shot Hamilton dead in a duel."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What percentage of the Earth's surface is covered by water?",
+      "answer": 71,
+      "min": 25,
+      "max": 100,
+      "unit": "%",
+      "fact": "About 71%, and almost all of it is salt water in the oceans."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How heavy is an adult male African elephant, in kilograms?",
+      "answer": 6000,
+      "min": 1500,
+      "max": 10000,
+      "unit": "kg",
+      "log": true,
+      "fact": "About 6,000 kg. An elephant can eat around 150 kg of plants in a day."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these is a prime number?",
+      "options": [
+        "29",
+        "33",
+        "27",
+        "21"
+      ],
+      "answer": 0,
+      "hint": "A prime has no factors but itself and one. Try dividing each by three.",
+      "fact": "A prime divides by nothing but itself and one. 29 is the only one here that manages it."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Which artist cut off part of his own ear?",
+      "options": [
+        "Van Gogh",
+        "Picasso",
+        "Dali",
+        "Monet"
+      ],
+      "answer": 0,
+      "hint": "He painted a night sky full of swirling stars.",
+      "fact": "He painted himself afterwards with the bandage on, and sold almost nothing in his lifetime."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

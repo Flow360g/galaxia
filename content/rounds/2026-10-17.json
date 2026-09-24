@@ -9,98 +9,98 @@
       "type": "cluster",
       "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which of these are James Bond villains?",
+      "prompt": "Which of these are Snow White's seven dwarfs?",
       "options": [
-        "Blofeld",
-        "Moriarty",
-        "Hannibal",
-        "Jaws",
-        "Lex Luthor",
-        "Goldfinger"
+        "Dizzy",
+        "Grouchy",
+        "Sneezy",
+        "Bashful",
+        "Dopey",
+        "Jumpy"
       ],
       "answers": [
-        0,
+        2,
         3,
-        5
+        4
       ],
-      "fact": "Jaws, the giant with steel teeth, changes sides at the end of Moonraker."
+      "fact": "The dwarfs only got names in Disney's 1937 film. In the Grimm fairy tale they have none."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
-      "difficulty": 1,
-      "prompt": "Which of these were invented in ancient China?",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these are poems rather than novels?",
       "options": [
-        "Gunpowder",
-        "Telescope",
-        "Steam engine",
-        "Thermometer",
-        "Compass",
-        "Paper"
+        "Ulysses",
+        "The Odyssey",
+        "Paradise Lost",
+        "Dracula",
+        "Don Quixote",
+        "The Raven"
       ],
       "answers": [
-        0,
-        4,
+        1,
+        2,
         5
       ],
-      "fact": "China counts four great inventions: paper, printing, gunpowder and the compass."
+      "fact": "James Joyce's novel Ulysses borrows its shape from the Odyssey, the poem about the same hero."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
+      "topic": "sport",
       "difficulty": 3,
-      "prompt": "How fast does sound travel through air, in metres per second?",
-      "answer": 343,
-      "min": 120,
-      "max": 480,
-      "unit": "m/s",
-      "fact": "About 343 m/s, so count the seconds between lightning and thunder and divide by three to get the distance in kilometres."
+      "prompt": "How far do you travel in an Ironman triathlon, in kilometres?",
+      "answer": 226,
+      "min": 70,
+      "max": 310,
+      "unit": "km",
+      "fact": "About 226 km: a 3.8 km swim, a 180 km bike ride and a full marathon."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Roughly how many people died when the Titanic sank?",
-      "answer": 1500,
-      "min": 400,
-      "max": 2200,
-      "unit": "people",
-      "fact": "About 1,500 of the roughly 2,200 on board. There were lifeboats for only about half of them."
+      "prompt": "How many syllables are there in a haiku?",
+      "answer": 17,
+      "min": 5,
+      "max": 24,
+      "unit": "syllables",
+      "fact": "Seventeen, in lines of five, seven and five."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "Which novel opens with the line \"Call me Ishmael\"?",
+      "prompt": "Who was the first person to reach the South Pole?",
       "options": [
-        "Robinson Crusoe",
-        "Moby-Dick",
-        "Treasure Island",
-        "Old Man and the Sea"
+        "Shackleton",
+        "Scott",
+        "Hillary",
+        "Amundsen"
       ],
-      "answer": 1,
-      "hint": "It is about a captain hunting a whale.",
-      "fact": "Herman Melville's Moby-Dick flopped when it came out in 1851 and only became a classic after he died."
+      "answer": 3,
+      "hint": "He was Norwegian, and he used dog sleds.",
+      "fact": "Roald Amundsen got there in December 1911, five weeks before Robert Falcon Scott."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "In which sport would you bowl a googly?",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "In which country is Machu Picchu?",
       "options": [
-        "Lawn bowls",
-        "Baseball",
-        "Tenpin",
-        "Cricket"
+        "Chile",
+        "Mexico",
+        "Bolivia",
+        "Peru"
       ],
       "answer": 3,
-      "hint": "It is a ball that spins the opposite way to the one the batter expects.",
-      "fact": "The googly was invented by an English bowler, Bernard Bosanquet, around 1900."
+      "hint": "The nearest big city is Cusco, once the capital of the Inca Empire.",
+      "fact": "Machu Picchu was built for an Inca emperor in the 1400s and was abandoned about a century later."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "Which of these are fielding positions in cricket?",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which of these are dog breeds?",
       "options": [
-        "Scrum-half",
-        "Slip",
-        "Silly point",
-        "Shortstop",
-        "Gully",
-        "Winger"
+        "Shih Tzu",
+        "Ragdoll",
+        "Sphynx",
+        "Vizsla",
+        "Bengal",
+        "Whippet"
       ],
       "answers": [
-        1,
-        2,
-        4
+        0,
+        3,
+        5
       ],
-      "fact": "Silly point stands a few metres from the batter, which is exactly why it is called silly."
+      "fact": "Ragdoll, Bengal and Sphynx are all cat breeds. A Sphynx has almost no fur."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "food",
-      "difficulty": 3,
-      "prompt": "Which of these spices come from a seed?",
+      "difficulty": 1,
+      "prompt": "Which of these are root vegetables?",
       "options": [
-        "Nutmeg",
-        "Saffron",
-        "Cinnamon",
-        "Cumin",
-        "Mustard",
-        "Ginger"
+        "Celery",
+        "Leek",
+        "Beetroot",
+        "Parsnip",
+        "Asparagus",
+        "Carrot"
       ],
       "answers": [
-        0,
+        2,
         3,
-        4
+        5
       ],
-      "fact": "Nutmeg and mace come from the same fruit. Nutmeg is the seed and mace is the red lace wrapped round it."
+      "fact": "Carrots were mostly purple or yellow until orange ones were bred in the Netherlands in the 1600s."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "How long is the Panama Canal, in kilometres?",
-      "answer": 82,
-      "min": 25,
-      "max": 110,
-      "unit": "km",
-      "fact": "About 82 km, and a ship takes around 8 to 10 hours to pass through it."
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "At what temperature does water boil, in degrees Fahrenheit?",
+      "answer": 212,
+      "min": 80,
+      "max": 300,
+      "unit": "\u00b0F",
+      "fact": "212 \u00b0F at sea level. Water freezes at 32 \u00b0F, so the two are 180 degrees apart."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "How old was Mozart when he died?",
-      "answer": 35,
-      "min": 10,
-      "max": 50,
-      "unit": "years",
-      "fact": "35. He wrote more than 600 pieces of music, and started composing at five."
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How many minutes long is an NBA basketball game, not counting stoppages?",
+      "answer": 48,
+      "min": 15,
+      "max": 65,
+      "unit": "minutes",
+      "fact": "Four quarters of 12 minutes, though with the clock stopping it usually takes more than two hours."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "sport",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "In which sport do teams play for the Webb Ellis Cup?",
+      "prompt": "Which mountains are usually taken as the border of Europe and Asia?",
       "options": [
-        "Cricket",
-        "Rugby league",
-        "Football",
-        "Rugby union"
+        "Pyrenees",
+        "Carpathians",
+        "Urals",
+        "Alps"
       ],
-      "answer": 3,
-      "hint": "It is named after a schoolboy said to have picked up the ball and run with it.",
-      "fact": "The story says William Webb Ellis invented rugby at Rugby School in 1823, though there is little proof it happened."
+      "answer": 2,
+      "hint": "They run north to south through Russia.",
+      "fact": "The Urals stretch about 2,500 km from the Arctic Ocean to Kazakhstan."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which kind of music came from Jamaica?",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Who wrote the novel 1984?",
       "options": [
-        "Flamenco",
-        "Samba",
-        "Reggae",
-        "Salsa"
+        "H. G. Wells",
+        "Orwell",
+        "Bradbury",
+        "Huxley"
       ],
-      "answer": 2,
-      "hint": "Bob Marley made it famous.",
-      "fact": "Reggae grew out of ska and rocksteady in the late 1960s."
+      "answer": 1,
+      "hint": "The same author wrote Animal Farm.",
+      "fact": "George Orwell was a pen name. His real name was Eric Blair."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

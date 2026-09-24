@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "history",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these were battles of the First World War?",
+      "prompt": "Which of these are amphibians?",
       "options": [
-        "Stalingrad",
-        "Somme",
-        "Hastings",
-        "Gallipoli",
-        "Waterloo",
-        "Verdun"
+        "Toad",
+        "Iguana",
+        "Gecko",
+        "Axolotl",
+        "Tortoise",
+        "Newt"
       ],
       "answers": [
-        1,
+        0,
         3,
         5
       ],
-      "fact": "The landing at Gallipoli in 1915 is remembered every year on Anzac Day in Australia and New Zealand."
+      "fact": "An axolotl can regrow a lost leg, and even parts of its heart and brain."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which of these countries use the euro?",
+      "prompt": "Which of these US states border Canada?",
       "options": [
-        "Denmark",
-        "Finland",
-        "Ireland",
-        "Portugal",
-        "Poland",
-        "Sweden"
+        "Minnesota",
+        "Montana",
+        "Iowa",
+        "Maine",
+        "Oregon",
+        "Wyoming"
       ],
       "answers": [
+        0,
         1,
-        2,
         3
       ],
-      "fact": "Denmark negotiated an opt-out and keeps its krone. Sweden has simply never joined."
+      "fact": "Thirteen US states touch the Canadian border, counting the ones that meet it across the Great Lakes."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "history",
-      "difficulty": 2,
-      "prompt": "How many stripes are on the flag of the United States?",
-      "answer": 13,
-      "min": 4,
-      "max": 18,
-      "unit": "stripes",
-      "fact": "Thirteen, one for each of the original colonies. The stars count the states."
+      "difficulty": 3,
+      "prompt": "How many passengers sailed to America on the Mayflower?",
+      "answer": 102,
+      "min": 35,
+      "max": 140,
+      "unit": "passengers",
+      "fact": "102 passengers in 1620, crammed below deck for more than two months."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 3,
-      "prompt": "How many bones are there in one human hand, including the wrist?",
-      "answer": 27,
-      "min": 8,
-      "max": 40,
-      "unit": "bones",
-      "fact": "27. Your two hands and wrists hold more than a quarter of all the bones in your body."
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How long is a giraffe's neck, in metres?",
+      "answer": 1.8,
+      "min": 0.3,
+      "max": 2.7,
+      "unit": "m",
+      "fact": "A giraffe's neck has seven bones in it, the same number as yours. Each one is just much longer."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which band sang Wonderwall?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Who discovered penicillin?",
       "options": [
-        "Radiohead",
-        "Pulp",
-        "Blur",
-        "Oasis"
+        "Pasteur",
+        "Jenner",
+        "Lister",
+        "Fleming"
       ],
       "answer": 3,
-      "hint": "The band was led by two brothers from Manchester.",
-      "fact": "Oasis were fronted by Liam and Noel Gallagher, who famously could not stand each other."
+      "hint": "He was a Scottish scientist who noticed mould killing bacteria in a dish he had left out.",
+      "fact": "Alexander Fleming found it in 1928 after coming back from a holiday to a messy lab."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Who invented the World Wide Web?",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "What is the name of Batman's butler?",
       "options": [
-        "Steve Jobs",
-        "Alan Turing",
-        "Bill Gates",
-        "Berners-Lee"
+        "Lucius",
+        "Alfred",
+        "Gordon",
+        "Jarvis"
       ],
-      "answer": 3,
-      "hint": "He was a British scientist working at CERN in Switzerland.",
-      "fact": "Tim Berners-Lee chose not to patent the web, so anyone could use it for free."
+      "answer": 1,
+      "hint": "Jarvis serves a different superhero.",
+      "fact": "Michael Caine played Alfred in all three of Christopher Nolan's Batman films."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

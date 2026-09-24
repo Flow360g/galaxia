@@ -3,117 +3,6 @@
   "roundNumber": 54,
   "seed": 20261111,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "Which of these are letters of the Greek alphabet?",
-      "options": [
-        "Lambda",
-        "Sigma",
-        "Theta",
-        "Umlaut",
-        "Cedilla",
-        "Aleph"
-      ],
-      "answers": [
-        0,
-        1,
-        2
-      ],
-      "fact": "Our word alphabet is just the first two Greek letters stuck together: alpha and beta."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these rivers are in Africa?",
-      "options": [
-        "Congo",
-        "Indus",
-        "Mekong",
-        "Niger",
-        "Zambezi",
-        "Orinoco"
-      ],
-      "answers": [
-        0,
-        3,
-        4
-      ],
-      "fact": "The Zambezi pours over Victoria Falls on the border of Zambia and Zimbabwe."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "Roughly how many languages are spoken in the world today?",
-      "answer": 7000,
-      "min": 2000,
-      "max": 12000,
-      "unit": "languages",
-      "log": true,
-      "fact": "About 7,000, and around 40% of them are endangered."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How long is the Channel Tunnel, in kilometres?",
-      "answer": 50,
-      "min": 15,
-      "max": 70,
-      "unit": "km",
-      "fact": "About 50 km, 38 of them under the sea: the longest undersea stretch of any tunnel."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "history",
-      "difficulty": 1,
-      "prompt": "Which country gave the Statue of Liberty to the United States?",
-      "options": [
-        "Netherlands",
-        "Britain",
-        "Spain",
-        "France"
-      ],
-      "answer": 3,
-      "hint": "The same country later built the Eiffel Tower, whose engineer also designed the statue's frame.",
-      "fact": "Gustave Eiffel designed the iron skeleton inside the statue."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which grain is sake made from?",
-      "options": [
-        "Millet",
-        "Rice",
-        "Barley",
-        "Wheat"
-      ],
-      "answer": 1,
-      "hint": "It is the grain eaten with most Japanese meals.",
-      "fact": "Sake is brewed more like beer than made like wine, even though people call it rice wine."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -132,6 +21,116 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these bands come from Australia?",
+      "options": [
+        "Blur",
+        "AC/DC",
+        "INXS",
+        "Split Enz",
+        "Tame Impala",
+        "The Cure"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "AC/DC formed in Sydney in 1973 around the Young brothers, who were born in Glasgow."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these were written by Charles Dickens?",
+      "options": [
+        "Frankenstein",
+        "Dracula",
+        "Hard Times",
+        "Bleak House",
+        "Jane Eyre",
+        "Oliver Twist"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "Dickens published most of his novels a chapter at a time in magazines, so he could change the plot if readers hated it."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How many years did the Second World War last?",
+      "answer": 6,
+      "min": 3,
+      "max": 13,
+      "fact": "Six, from the invasion of Poland in September 1939 to the surrender of Japan in September 1945.",
+      "unit": "years"
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "How many calories are in one large hen's egg?",
+      "answer": 72,
+      "min": 20,
+      "max": 100,
+      "unit": "kcal",
+      "fact": "About 72, and almost all of the fat sits in the yolk. The white is mostly water and protein."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which band recorded the album The Dark Side of the Moon?",
+      "options": [
+        "Pink Floyd",
+        "The Who",
+        "Led Zeppelin",
+        "Genesis"
+      ],
+      "answer": 0,
+      "hint": "The cover is a prism splitting white light into a rainbow.",
+      "fact": "It stayed on the US album chart for more than fourteen years, which no record has matched."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "In Greek myth, which god ruled the sea?",
+      "options": [
+        "Poseidon",
+        "Hades",
+        "Apollo",
+        "Zeus"
+      ],
+      "answer": 0,
+      "hint": "His brothers took the sky and the underworld.",
+      "fact": "The three brothers drew lots for the world. Zeus got the sky, Hades the underworld, Poseidon the sea."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

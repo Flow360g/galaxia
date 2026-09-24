@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "Which of these words read the same backwards?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are Queen songs?",
       "options": [
-        "Level",
-        "Kayak",
-        "Banana",
-        "Llama",
-        "Salsa",
-        "Radar"
+        "Roxanne",
+        "Radio Ga Ga",
+        "Heroes",
+        "Killer Queen",
+        "Money",
+        "Bicycle Race"
       ],
       "answers": [
-        0,
         1,
+        3,
         5
       ],
-      "fact": "Christopher Nolan's 2020 film Tenet has a palindrome for a title."
+      "fact": "Queen's twenty minutes at Live Aid in 1985 is often voted the greatest live rock performance ever."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these are breads?",
+      "difficulty": 2,
+      "prompt": "Which of these are types of rice?",
       "options": [
-        "Naan",
-        "Focaccia",
-        "Brioche",
-        "Couscous",
-        "Tofu",
-        "Polenta"
+        "Basmati",
+        "Semolina",
+        "Bulgur",
+        "Quinoa",
+        "Jasmine",
+        "Arborio"
       ],
       "answers": [
         0,
-        1,
-        2
+        4,
+        5
       ],
-      "fact": "Brioche is rich with butter and eggs, which sits it halfway between bread and cake."
+      "fact": "Arborio rice is used for risotto because it releases starch and makes the dish creamy."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How many coloured squares does a Rubik's Cube have?",
-      "answer": 54,
-      "min": 20,
-      "max": 75,
-      "unit": "squares",
-      "fact": "Nine on each of six faces makes 54."
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How heavy is a men's Olympic shot put, in kilograms?",
+      "answer": 7.26,
+      "min": 1.5,
+      "max": 10.5,
+      "unit": "kg",
+      "fact": "7.26 kg, which is exactly 16 pounds. The women's shot is 4 kg."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "How many degrees is each corner of a regular hexagon?",
-      "answer": 120,
-      "min": 35,
-      "max": 165,
-      "unit": "degrees",
-      "fact": "120 degrees, which is why hexagons fit together with no gaps, as in a honeycomb."
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many people signed the US Declaration of Independence?",
+      "answer": 56,
+      "min": 20,
+      "max": 80,
+      "unit": "people",
+      "fact": "56. John Hancock signed so large that his name became American slang for a signature."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "nature",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "What is the largest kind of shark?",
+      "prompt": "Which city is home to the headquarters of the United Nations?",
       "options": [
-        "Whale shark",
-        "Hammerhead",
-        "Great white",
-        "Tiger shark"
+        "Vienna",
+        "New York",
+        "Brussels",
+        "Geneva"
       ],
-      "answer": 0,
-      "hint": "It eats only tiny plankton.",
-      "fact": "A whale shark can grow to about 12 m and is completely harmless to people."
+      "answer": 1,
+      "hint": "It is on the East River in the United States.",
+      "fact": "The land for the UN building was bought by John D. Rockefeller Jr. and donated."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Who painted Girl with a Pearl Earring?",
+      "difficulty": 1,
+      "prompt": "Who wrote Matilda?",
       "options": [
-        "Rubens",
-        "Van Eyck",
-        "Vermeer",
-        "Rembrandt"
+        "J. K. Rowling",
+        "Beatrix Potter",
+        "Roald Dahl",
+        "Enid Blyton"
       ],
       "answer": 2,
-      "hint": "He worked in Delft and left fewer than forty paintings.",
-      "fact": "Johannes Vermeer painted it around 1665. Nobody knows who the girl was."
+      "hint": "He also wrote Charlie and the Chocolate Factory.",
+      "fact": "Roald Dahl wrote his books in a shed at the bottom of his garden."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

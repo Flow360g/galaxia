@@ -3,116 +3,6 @@
   "roundNumber": 50,
   "seed": 20261107,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Which of these musicals are by Andrew Lloyd Webber?",
-      "options": [
-        "Evita",
-        "Starlight Express",
-        "Wicked",
-        "Cats",
-        "Chicago",
-        "Les Misérables"
-      ],
-      "answers": [
-        0,
-        1,
-        3
-      ],
-      "fact": "Cats is based on a book of poems about cats by T. S. Eliot."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these are Australian state capitals?",
-      "options": [
-        "Adelaide",
-        "Darwin",
-        "Canberra",
-        "Hobart",
-        "Cairns",
-        "Perth"
-      ],
-      "answers": [
-        0,
-        3,
-        5
-      ],
-      "fact": "Canberra and Darwin are capitals of territories, not states. Canberra was built because Sydney and Melbourne would not let each other be the capital."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How many hearts does an octopus have?",
-      "answer": 3,
-      "min": 1,
-      "max": 6,
-      "unit": "hearts",
-      "fact": "Two hearts pump blood through the gills and the third sends it round the body. Its blood is blue."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "How many volts does a normal AA battery give?",
-      "answer": 1.5,
-      "min": 0.4,
-      "max": 2.2,
-      "unit": "volts",
-      "fact": "1.5 volts. The plug socket in an Australian or British home gives about 230."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who wrote The Great Gatsby?",
-      "options": [
-        "Hemingway",
-        "Faulkner",
-        "Fitzgerald",
-        "Steinbeck"
-      ],
-      "answer": 2,
-      "hint": "His first names were Francis Scott, and his wife Zelda was a writer too.",
-      "fact": "The Great Gatsby sold poorly when it came out in 1925. Fitzgerald died thinking it had failed."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which vegetable makes borscht red?",
-      "options": [
-        "Radish",
-        "Red onion",
-        "Red pepper",
-        "Beetroot"
-      ],
-      "answer": 3,
-      "hint": "It is a root vegetable that stains everything it touches.",
-      "fact": "Borscht is a soup from Ukraine, eaten across Eastern Europe."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -131,6 +21,116 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are woodwind instruments?",
+      "options": [
+        "Cornet",
+        "French horn",
+        "Trumpet",
+        "Flute",
+        "Saxophone",
+        "Bassoon"
+      ],
+      "answers": [
+        3,
+        4,
+        5
+      ],
+      "fact": "A saxophone is made of brass but counts as woodwind, because a reed makes its sound."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "Which of these are fruits, to a botanist?",
+      "options": [
+        "Carrot",
+        "Pumpkin",
+        "Cucumber",
+        "Celery",
+        "Tomato",
+        "Lettuce"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "A fruit is the part that holds the seeds, which is why a tomato counts and a carrot does not."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "How many pieces does each player start a game of chess with?",
+      "answer": 16,
+      "min": 4,
+      "max": 22,
+      "unit": "pieces",
+      "fact": "Sixteen: eight pawns, two rooks, two knights, two bishops, a queen and a king."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "How deep can an emperor penguin dive, in metres?",
+      "answer": 550,
+      "min": 150,
+      "max": 750,
+      "unit": "m",
+      "fact": "Over 500 metres, and it can hold its breath for more than twenty minutes doing it."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which empire built the Taj Mahal?",
+      "options": [
+        "Persian",
+        "Ottoman",
+        "Mughal",
+        "Maratha"
+      ],
+      "answer": 2,
+      "hint": "The same empire ruled most of the Indian subcontinent for three centuries.",
+      "fact": "Shah Jahan built it as a tomb for his wife Mumtaz Mahal. It took about twenty years."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "What does a Geiger counter measure?",
+      "options": [
+        "Pressure",
+        "Sound",
+        "Wind speed",
+        "Radiation"
+      ],
+      "answer": 3,
+      "hint": "The clicking sound is the giveaway.",
+      "fact": "Each click is one particle striking the tube, so a faster clicking means a stronger source."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

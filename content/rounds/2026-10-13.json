@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which of these mountains are in the Himalayas?",
+      "prompt": "Which of these films did Steven Spielberg direct?",
       "options": [
-        "Mont Blanc",
-        "Aconcagua",
-        "Everest",
-        "Kangchenjunga",
-        "Annapurna",
-        "Kilimanjaro"
+        "Titanic",
+        "Jaws",
+        "E.T.",
+        "Jurassic Park",
+        "Star Wars",
+        "Back to the Future"
       ],
       "answers": [
+        1,
         2,
-        3,
-        4
+        3
       ],
-      "fact": "Kangchenjunga, on the border of Nepal and India, is the third highest mountain in the world."
+      "fact": "Spielberg produced Back to the Future but did not direct it. Robert Zemeckis did."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "Which of these animals are primates?",
+      "prompt": "Which of these monarchs were Tudors?",
       "options": [
-        "Lemur",
-        "Raccoon",
-        "Meerkat",
-        "Gibbon",
-        "Tarsier",
-        "Sloth"
+        "Anne",
+        "Victoria",
+        "Mary I",
+        "Charles I",
+        "Elizabeth I",
+        "Henry VIII"
       ],
       "answers": [
-        0,
-        3,
-        4
+        2,
+        4,
+        5
       ],
-      "fact": "A tarsier's eyes are each as big as its brain, and they cannot move in their sockets."
+      "fact": "The Tudors ruled England for 118 years, from 1485 to 1603, when Elizabeth I died without children."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "history",
+      "topic": "misc",
       "difficulty": 3,
-      "prompt": "How many seconds did the Wright brothers' first powered flight last?",
-      "answer": 12,
-      "min": 2,
-      "max": 18,
-      "unit": "seconds",
-      "fact": "Twelve seconds, covering 37 m. That is shorter than the wingspan of a jumbo jet."
+      "prompt": "How many squares are there on a Scrabble board?",
+      "answer": 225,
+      "min": 70,
+      "max": 310,
+      "unit": "squares",
+      "fact": "225, on a grid 15 squares wide and 15 tall."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "How many players does an ice hockey team have on the ice?",
-      "answer": 6,
-      "min": 1,
-      "max": 9,
-      "unit": "players",
-      "fact": "Six, including the goalie, and players swap on and off every minute or so."
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "How many teeth does an adult dog have?",
+      "answer": 42,
+      "min": 12,
+      "max": 56,
+      "unit": "teeth",
+      "fact": "42, ten more than an adult human."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "What colour is an aircraft's black box flight recorder?",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which blood cells fight infection?",
       "options": [
-        "Orange",
-        "Yellow",
-        "Black",
-        "Red"
+        "White cells",
+        "Red cells",
+        "Platelets",
+        "Plasma"
       ],
       "answer": 0,
-      "hint": "It has to be easy to spot in wreckage.",
-      "fact": "Nobody is quite sure why it is called a black box. It has always been painted bright orange."
+      "hint": "They are named after their colour.",
+      "fact": "Red blood cells carry oxygen and platelets help blood clot."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which sauce is made from egg yolks, butter and lemon?",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Which dance comes from Argentina?",
       "options": [
-        "Béchamel",
-        "Hollandaise",
-        "Mornay",
-        "Aioli"
+        "Flamenco",
+        "Salsa",
+        "Tango",
+        "Samba"
       ],
-      "answer": 1,
-      "hint": "It is the sauce on eggs Benedict.",
-      "fact": "Béchamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
+      "answer": 2,
+      "hint": "It was born in the dance halls of Buenos Aires.",
+      "fact": "The tango began in the 1880s in the working-class districts of Buenos Aires and Montevideo."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

@@ -3,6 +3,116 @@
   "roundNumber": 16,
   "seed": 20261004,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these organs are part of the digestive system?",
+      "options": [
+        "Stomach",
+        "Kidney",
+        "Liver",
+        "Spleen",
+        "Lungs",
+        "Pancreas"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "The liver makes bile, which the gallbladder stores and squeezes into the gut to break down fat."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Which of these English words come from Arabic?",
+      "options": [
+        "Algebra",
+        "Sofa",
+        "Kindergarten",
+        "Tsunami",
+        "Coffee",
+        "Ballet"
+      ],
+      "answers": [
+        0,
+        1,
+        4
+      ],
+      "fact": "Algebra comes from al-jabr, a word in the title of a maths book written in Baghdad in the 800s."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "How many Oscars did the film Titanic win?",
+      "answer": 11,
+      "min": 3,
+      "max": 16,
+      "unit": "Oscars",
+      "fact": "Eleven, a record it shares with Ben-Hur and The Return of the King."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How long is the pitch at Wembley Stadium, in metres?",
+      "answer": 105,
+      "min": 35,
+      "max": 145,
+      "unit": "m",
+      "fact": "105 m by 68 m, the size FIFA recommends for international matches."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "In Greek myth, Athena was the goddess of what?",
+      "options": [
+        "Love",
+        "Wisdom",
+        "The hunt",
+        "The harvest"
+      ],
+      "answer": 1,
+      "hint": "Her bird was the owl.",
+      "fact": "Athens is named after her, and the Parthenon was built as her temple."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What is the capital of Canada?",
+      "options": [
+        "Montreal",
+        "Toronto",
+        "Ottawa",
+        "Vancouver"
+      ],
+      "answer": 2,
+      "hint": "It is not the biggest city. It sits on the river between Ontario and Quebec.",
+      "fact": "Queen Victoria picked Ottawa in 1857, partly as a compromise between English and French speaking Canada."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,115 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Which of these are kinds of poem?",
-      "options": [
-        "Fresco",
-        "Sonata",
-        "Limerick",
-        "Sonnet",
-        "Mural",
-        "Haiku"
-      ],
-      "answers": [
-        2,
-        3,
-        5
-      ],
-      "fact": "A haiku is seventeen sounds long. A fresco is painted into wet plaster and a sonata is played, not written down as verse."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "Which of these are gods in Norse myth?",
-      "options": [
-        "Odin",
-        "Anubis",
-        "Marduk",
-        "Loki",
-        "Perun",
-        "Thor"
-      ],
-      "answers": [
-        0,
-        3,
-        5
-      ],
-      "fact": "Anubis is Egyptian, Marduk Babylonian and Perun Slavic. Every mythology has a thunder god; only one of them has Thor."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "How old was Tutankhamun when he died?",
-      "answer": 19,
-      "min": 4,
-      "max": 28,
-      "fact": "About nineteen. He was a minor pharaoh and was only famous because his tomb was the one nobody had robbed."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "screen",
-      "difficulty": 3,
-      "prompt": "How many episodes of Friends were made?",
-      "answer": 236,
-      "min": 50,
-      "max": 350,
-      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States.",
-      "unit": "episodes"
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "In which sport would you use a foil?",
-      "options": [
-        "Boxing",
-        "Archery",
-        "Fencing",
-        "Rowing"
-      ],
-      "answer": 2,
-      "hint": "There are three blades in the sport, and this is the lightest.",
-      "fact": "Fencing has three weapons: foil, epee and sabre. The foil is the lightest and only counts hits to the torso."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which nut is marzipan made from?",
-      "options": [
-        "Peanut",
-        "Walnut",
-        "Hazelnut",
-        "Almond"
-      ],
-      "answer": 3,
-      "hint": "The same nut as amaretto and frangipane.",
-      "fact": "Ground almonds and sugar, and nothing else in the traditional recipe. It is older than the sugar trade in Europe."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

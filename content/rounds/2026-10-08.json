@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "history",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Which of these countries stayed neutral in the Second World War?",
+      "prompt": "Which of these novels did Jane Austen write?",
       "options": [
-        "Ireland",
-        "Sweden",
-        "Greece",
-        "Norway",
-        "Switzerland",
-        "Belgium"
+        "Middlemarch",
+        "Jane Eyre",
+        "Persuasion",
+        "Rebecca",
+        "Emma",
+        "Mansfield Park"
       ],
       "answers": [
-        0,
-        1,
-        4
+        2,
+        4,
+        5
       ],
-      "fact": "Norway and Belgium both declared themselves neutral and were invaded anyway in 1940."
+      "fact": "Austen's books came out without her name. The first was credited only to 'A Lady'."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "screen",
       "difficulty": 1,
-      "prompt": "Which of these countries are in South America?",
+      "prompt": "Which of these characters are in The Simpsons?",
       "options": [
-        "Panama",
-        "Chile",
-        "Uruguay",
-        "Peru",
-        "Guatemala",
-        "Honduras"
+        "Kenny",
+        "Moe",
+        "Hank Hill",
+        "Apu",
+        "Milhouse",
+        "Stewie"
       ],
       "answers": [
         1,
-        2,
-        3
+        3,
+        4
       ],
-      "fact": "Panama is the narrow join between the two continents and counts as Central America."
+      "fact": "Stewie is from Family Guy, Kenny from South Park, and Hank Hill from King of the Hill."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How many carats is pure gold?",
-      "answer": 24,
-      "min": 8,
-      "max": 34,
-      "unit": "carats",
-      "fact": "24 carats, so 18 carat gold is 18 parts gold in 24."
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many ships sailed in the Spanish Armada?",
+      "answer": 130,
+      "min": 45,
+      "max": 180,
+      "unit": "ships",
+      "fact": "About 130 in 1588. Storms off Scotland and Ireland sank more of them than the English navy did."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "How many years did Nelson Mandela spend in prison?",
-      "answer": 27,
-      "min": 8,
-      "max": 40,
+      "prompt": "In Greek myth, how many years did the Trojan War last?",
+      "answer": 10,
+      "min": 2,
+      "max": 14,
       "unit": "years",
-      "fact": "27 years, 18 of them on Robben Island. Four years after his release he was elected president."
+      "fact": "Ten years, and it ended with the wooden horse. Odysseus then took another ten to get home."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which fictional detective is Belgian?",
+      "prompt": "Which country hosted the first modern Olympics, in 1896?",
       "options": [
-        "Poirot",
-        "Clouseau",
-        "Maigret",
-        "Miss Marple"
+        "Greece",
+        "France",
+        "Britain",
+        "USA"
       ],
       "answer": 0,
-      "hint": "Agatha Christie created him, and he is proud of his moustache.",
-      "fact": "Maigret's author was Belgian, but the detective himself is French."
+      "hint": "It was chosen to honour the ancient Games.",
+      "fact": "The 1896 Games in Athens had 241 athletes, all of them men."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "sport",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "In which sport do teams play for the Stanley Cup?",
+      "prompt": "Which bird is the fastest in a dive?",
       "options": [
-        "Basketball",
-        "American football",
-        "Baseball",
-        "Ice hockey"
+        "Albatross",
+        "Peregrine falcon",
+        "Swift",
+        "Golden eagle"
       ],
-      "answer": 3,
-      "hint": "It is played on ice.",
-      "fact": "The Stanley Cup was first awarded in 1893 and is named after a Governor General of Canada."
+      "answer": 1,
+      "hint": "It hunts other birds by dropping on them from above.",
+      "fact": "A peregrine falcon can pass 300 km/h in a dive, faster than any other animal."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

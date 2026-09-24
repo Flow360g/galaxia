@@ -3,6 +3,116 @@
   "roundNumber": 13,
   "seed": 20261001,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these were battles of the First World War?",
+      "options": [
+        "Stalingrad",
+        "Somme",
+        "Hastings",
+        "Gallipoli",
+        "Waterloo",
+        "Verdun"
+      ],
+      "answers": [
+        1,
+        3,
+        5
+      ],
+      "fact": "The landing at Gallipoli in 1915 is remembered every year on Anzac Day in Australia and New Zealand."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these countries use the euro?",
+      "options": [
+        "Denmark",
+        "Finland",
+        "Ireland",
+        "Portugal",
+        "Poland",
+        "Sweden"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "Denmark negotiated an opt-out and keeps its krone. Sweden has simply never joined."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How many stripes are on the flag of the United States?",
+      "answer": 13,
+      "min": 4,
+      "max": 18,
+      "unit": "stripes",
+      "fact": "Thirteen, one for each of the original colonies. The stars count the states."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "How many bones are there in one human hand, including the wrist?",
+      "answer": 27,
+      "min": 8,
+      "max": 40,
+      "unit": "bones",
+      "fact": "27. Your two hands and wrists hold more than a quarter of all the bones in your body."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which band sang Wonderwall?",
+      "options": [
+        "Radiohead",
+        "Pulp",
+        "Blur",
+        "Oasis"
+      ],
+      "answer": 3,
+      "hint": "The band was led by two brothers from Manchester.",
+      "fact": "Oasis were fronted by Liam and Noel Gallagher, who famously could not stand each other."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Who invented the World Wide Web?",
+      "options": [
+        "Steve Jobs",
+        "Alan Turing",
+        "Bill Gates",
+        "Berners-Lee"
+      ],
+      "answer": 3,
+      "hint": "He was a British scientist working at CERN in Switzerland.",
+      "fact": "Tim Berners-Lee chose not to patent the web, so anyone could use it for free."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,116 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these bands come from Australia?",
-      "options": [
-        "Blur",
-        "AC/DC",
-        "INXS",
-        "Split Enz",
-        "Tame Impala",
-        "The Cure"
-      ],
-      "answers": [
-        1,
-        2,
-        4
-      ],
-      "fact": "AC/DC formed in Sydney in 1973 around the Young brothers, who were born in Glasgow."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Which of these were written by Charles Dickens?",
-      "options": [
-        "Frankenstein",
-        "Dracula",
-        "Hard Times",
-        "Bleak House",
-        "Jane Eyre",
-        "Oliver Twist"
-      ],
-      "answers": [
-        2,
-        3,
-        5
-      ],
-      "fact": "Dickens published most of his novels a chapter at a time in magazines, so he could change the plot if readers hated it."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "How many years did the Second World War last?",
-      "answer": 6,
-      "min": 3,
-      "max": 13,
-      "fact": "Six, from the invasion of Poland in September 1939 to the surrender of Japan in September 1945.",
-      "unit": "years"
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "How many calories are in one large hen's egg?",
-      "answer": 72,
-      "min": 20,
-      "max": 100,
-      "unit": "kcal",
-      "fact": "About 72, and almost all of the fat sits in the yolk. The white is mostly water and protein."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which band recorded the album The Dark Side of the Moon?",
-      "options": [
-        "Pink Floyd",
-        "The Who",
-        "Led Zeppelin",
-        "Genesis"
-      ],
-      "answer": 0,
-      "hint": "The cover is a prism splitting white light into a rainbow.",
-      "fact": "It stayed on the US album chart for more than fourteen years, which no record has matched."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "In Greek myth, which god ruled the sea?",
-      "options": [
-        "Poseidon",
-        "Hades",
-        "Apollo",
-        "Zeus"
-      ],
-      "answer": 0,
-      "hint": "His brothers took the sky and the underworld.",
-      "fact": "The three brothers drew lots for the world. Zeus got the sky, Hades the underworld, Poseidon the sea."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

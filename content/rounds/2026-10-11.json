@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "Which of these are elements on the periodic table?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these films are set in space?",
       "options": [
-        "Brass",
-        "Steel",
-        "Cobalt",
-        "Neon",
-        "Bronze",
-        "Tin"
+        "Dunkirk",
+        "Tenet",
+        "Alien",
+        "Interstellar",
+        "Inception",
+        "Gravity"
       ],
       "answers": [
         2,
         3,
         5
       ],
-      "fact": "Bronze, steel and brass are all alloys: metals mixed together. Bronze is mostly copper with a little tin."
+      "fact": "Christopher Nolan directed Interstellar, Inception, Tenet and Dunkirk. Only one of them leaves Earth."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Which of these painters were Impressionists?",
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "Which of these cocktails are made with gin?",
       "options": [
-        "Picasso",
-        "Rembrandt",
-        "Dalí",
-        "Degas",
-        "Monet",
-        "Renoir"
+        "Daiquiri",
+        "Margarita",
+        "Mojito",
+        "Negroni",
+        "Gimlet",
+        "Tom Collins"
       ],
       "answers": [
         3,
         4,
         5
       ],
-      "fact": "The movement got its name from a critic mocking Monet's painting Impression, Sunrise."
+      "fact": "A Negroni is equal parts gin, Campari and sweet vermouth, stirred over ice."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How many months is an elephant pregnant for?",
-      "answer": 22,
-      "min": 6,
-      "max": 30,
-      "unit": "months",
-      "fact": "About 22 months, the longest pregnancy of any land animal."
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "How many seasons of Game of Thrones were made?",
+      "answer": 8,
+      "min": 2,
+      "max": 11,
+      "unit": "seasons",
+      "fact": "Eight, from 2011 to 2019. The last season has only six episodes."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
+      "topic": "sport",
       "difficulty": 3,
-      "prompt": "How many years did the Ottoman Empire last?",
-      "answer": 623,
-      "min": 200,
-      "max": 850,
-      "unit": "years",
-      "fact": "623 years, from about 1299 until 1922."
+      "prompt": "How long is a Formula 1 Grand Prix, in kilometres?",
+      "answer": 305,
+      "min": 100,
+      "max": 420,
+      "unit": "km",
+      "fact": "The fewest laps that take a car past 305 km. Monaco is the exception, at about 260 km."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Who directed Pulp Fiction?",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which vitamin does sunlight help your body make?",
       "options": [
-        "Tarantino",
-        "Coppola",
-        "Fincher",
-        "Scorsese"
+        "Vitamin B12",
+        "Vitamin A",
+        "Vitamin C",
+        "Vitamin D"
       ],
-      "answer": 0,
-      "hint": "He also made Reservoir Dogs and Kill Bill.",
-      "fact": "Pulp Fiction won the top prize at the Cannes Film Festival in 1994."
+      "answer": 3,
+      "hint": "It helps you build strong bones.",
+      "fact": "Your skin makes vitamin D when sunlight hits it, which is why people in cloudy countries often run short in winter."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which country does kimchi come from?",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Who was the first emperor of Rome?",
       "options": [
-        "Japan",
-        "Korea",
-        "China",
-        "Vietnam"
+        "Caligula",
+        "Julius Caesar",
+        "Augustus",
+        "Nero"
       ],
-      "answer": 1,
-      "hint": "It is served with almost every meal in Seoul.",
-      "fact": "Kimchi is fermented cabbage, and Korean homes often have a second fridge just for it."
+      "answer": 2,
+      "hint": "He was Julius Caesar's adopted son.",
+      "fact": "Julius Caesar was never emperor. Augustus took the title in 27 BC, after Caesar had been murdered."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

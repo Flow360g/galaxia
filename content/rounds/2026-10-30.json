@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these are parts of the human ear?",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these dishes come from Spain?",
       "options": [
-        "Anvil",
-        "Larynx",
-        "Retina",
-        "Eardrum",
-        "Cochlea",
-        "Tonsil"
+        "Paella",
+        "Chorizo",
+        "Moussaka",
+        "Ratatouille",
+        "Risotto",
+        "Gazpacho"
       ],
       "answers": [
         0,
-        3,
-        4
+        1,
+        5
       ],
-      "fact": "The anvil is one of three tiny bones in the middle ear. With the hammer and stirrup, they are the smallest bones in your body."
+      "fact": "Gazpacho is a tomato soup served cold, from Andalusia in the hot south of Spain."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "misc",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which of these are types of knot?",
+      "prompt": "Which of these singers started out in a boy band?",
       "options": [
-        "Reef",
-        "Spinnaker",
-        "Keel",
-        "Tiller",
-        "Bowline",
-        "Clove hitch"
+        "Harry Styles",
+        "Robbie Williams",
+        "Ed Sheeran",
+        "Michael Bubl\u00e9",
+        "Justin Timberlake",
+        "Bruno Mars"
       ],
       "answers": [
         0,
-        4,
-        5
+        1,
+        4
       ],
-      "fact": "Spinnaker, keel and tiller are parts of a sailing boat, where knots like the bowline get used most."
+      "fact": "Justin Timberlake was in NSYNC, Harry Styles in One Direction and Robbie Williams in Take That."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "How long is Bohemian Rhapsody, in minutes?",
-      "answer": 5.9,
-      "min": 2,
-      "max": 8,
-      "unit": "minutes",
-      "fact": "Just under six minutes. The record company said it was far too long for radio."
+      "prompt": "How many dots are there on a normal dice, counting all six sides?",
+      "answer": 21,
+      "min": 7,
+      "max": 30,
+      "unit": "dots",
+      "fact": "1 + 2 + 3 + 4 + 5 + 6 makes 21, and opposite faces always add up to seven."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "geography",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "How tall is the Burj Khalifa, in metres?",
-      "answer": 828,
-      "min": 250,
-      "max": 1100,
-      "unit": "m",
-      "fact": "828 m, more than twice the height of the Empire State Building."
+      "prompt": "How many players does a netball team have on the court?",
+      "answer": 7,
+      "min": 1,
+      "max": 10,
+      "unit": "players",
+      "fact": "Seven, and each wears a bib saying where they are allowed to go, from GS to GK."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which artist is famous for paintings of soup cans?",
+      "prompt": "What is the capital of Turkey?",
       "options": [
-        "Warhol",
-        "Pollock",
-        "Lichtenstein",
-        "Hockney"
+        "Izmir",
+        "Istanbul",
+        "Ankara",
+        "Antalya"
       ],
-      "answer": 0,
-      "hint": "He also made a famous print of Marilyn Monroe, repeated in bright colours.",
-      "fact": "Andy Warhol painted 32 Campbell's soup cans, one for every flavour on sale in 1962."
+      "answer": 2,
+      "hint": "Not the famous city on the Bosphorus. This one is in the middle of the country.",
+      "fact": "Atat\u00fcrk made Ankara the capital in 1923, partly because it was far from the sea and hard to attack."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which spirit goes into a margarita?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which scientist imagined a cat that is both alive and dead?",
       "options": [
-        "Gin",
-        "Rum",
-        "Tequila",
-        "Vodka"
+        "Heisenberg",
+        "Schr\u00f6dinger",
+        "Bohr",
+        "Planck"
       ],
-      "answer": 2,
-      "hint": "It is made from the agave plant in Mexico.",
-      "fact": "A classic margarita is tequila, orange liqueur and lime, with salt on the rim."
+      "answer": 1,
+      "hint": "He was an Austrian physicist.",
+      "fact": "Erwin Schr\u00f6dinger meant the cat as a joke, to show how strange quantum physics sounds."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

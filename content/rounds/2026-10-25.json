@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these TV shows are set in a hospital?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these countries are in Asia?",
       "options": [
-        "Scrubs",
-        "Grey's Anatomy",
-        "Mad Men",
-        "Suits",
-        "ER",
-        "The Wire"
+        "Belize",
+        "Chad",
+        "Malta",
+        "Laos",
+        "Nepal",
+        "Oman"
       ],
       "answers": [
-        0,
-        1,
-        4
+        3,
+        4,
+        5
       ],
-      "fact": "ER ran for fifteen seasons and made a star of George Clooney."
+      "fact": "Oman sits on the Arabian Peninsula, which counts as part of Asia."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "Which of these were civilisations of ancient Mesopotamia?",
+      "topic": "sport",
+      "difficulty": 1,
+      "prompt": "Which of these are positions in football?",
       "options": [
-        "Minoans",
-        "Assyria",
-        "Sumer",
-        "Carthage",
-        "Babylon",
-        "Etruscans"
+        "Hooker",
+        "Goal attack",
+        "Winger",
+        "Sweeper",
+        "Pitcher",
+        "Striker"
       ],
       "answers": [
-        1,
         2,
-        4
+        3,
+        5
       ],
-      "fact": "Sumer gave the world some of its earliest writing, pressed into wet clay with a reed."
+      "fact": "A pitcher plays baseball, a hooker plays rugby and goal attack plays netball."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "arts",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "How many years did it take to build the Sydney Opera House?",
-      "answer": 14,
-      "min": 3,
-      "max": 20,
-      "unit": "years",
-      "fact": "Fourteen, from 1959 to 1973: ten years late and around fourteen times over budget."
+      "prompt": "How high is Mount Kosciuszko, Australia's highest mountain, in metres?",
+      "answer": 2228,
+      "min": 800,
+      "max": 3100,
+      "unit": "m",
+      "fact": "2,228 m. There is a walking track to the top, and in summer people do it in trainers."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How far is it from Sydney to Melbourne by road, in kilometres?",
-      "answer": 880,
-      "min": 300,
-      "max": 1200,
-      "unit": "km",
-      "fact": "The Hume Highway covers about 880 km, and the flight between the two is one of the busiest in the world."
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "How many years did Rip Van Winkle sleep?",
+      "answer": 20,
+      "min": 6,
+      "max": 28,
+      "unit": "years",
+      "fact": "Twenty years. He fell asleep a subject of King George and woke up in the United States."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
+      "topic": "food",
       "difficulty": 2,
-      "prompt": "Which film is set on the moon Pandora?",
+      "prompt": "Which continent did the tomato originally come from?",
       "options": [
-        "Dune",
-        "Prometheus",
-        "Interstellar",
-        "Avatar"
+        "Asia",
+        "South America",
+        "Africa",
+        "Europe"
       ],
-      "answer": 3,
-      "hint": "Its people are tall and blue.",
-      "fact": "James Cameron waited more than ten years for film technology to catch up with his idea for Avatar."
+      "answer": 1,
+      "hint": "Italy only got them in the 1500s.",
+      "fact": "Tomatoes were grown in Europe for years as decoration, because people thought they were poisonous."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "geography",
+      "topic": "sport",
       "difficulty": 3,
-      "prompt": "Which country has the longest coastline?",
+      "prompt": "Which country won the first football World Cup, in 1930?",
       "options": [
-        "Russia",
-        "Canada",
-        "Indonesia",
-        "Australia"
+        "Brazil",
+        "Italy",
+        "Argentina",
+        "Uruguay"
       ],
-      "answer": 1,
-      "hint": "Thousands of Arctic islands add to its total.",
-      "fact": "Canada's coast is about 243,000 km long, enough to go round the Earth six times."
+      "answer": 3,
+      "hint": "The winners were also the hosts.",
+      "fact": "Uruguay beat neighbours Argentina 4-2 in the final in Montevideo."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

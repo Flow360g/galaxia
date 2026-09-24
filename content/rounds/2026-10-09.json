@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which of these are Taylor Swift albums?",
+      "prompt": "Which of these scientists won a Nobel Prize?",
       "options": [
-        "Reputation",
-        "Folklore",
-        "Rumours",
-        "Lover",
-        "Lemonade",
-        "Melodrama"
+        "Edison",
+        "Curie",
+        "Einstein",
+        "Newton",
+        "Feynman",
+        "Darwin"
       ],
       "answers": [
-        0,
         1,
-        3
+        2,
+        4
       ],
-      "fact": "Folklore was written and recorded at a distance during the 2020 lockdowns, with files swapped over the internet."
+      "fact": "The first Nobel Prizes were given in 1901. Darwin died in 1882, and Newton almost two hundred years before that."
     },
     {
       "id": "q2",
       "type": "cluster",
       "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these animals are native to Australia?",
+      "difficulty": 3,
+      "prompt": "Which of these animals live wild only in Africa?",
       "options": [
-        "Armadillo",
-        "Lemur",
-        "Quokka",
-        "Okapi",
-        "Echidna",
-        "Wombat"
+        "Hippo",
+        "Leopard",
+        "Zebra",
+        "Giraffe",
+        "Lion",
+        "Cheetah"
       ],
       "answers": [
+        0,
         2,
-        4,
-        5
+        3
       ],
-      "fact": "The echidna is one of only two kinds of mammal that lay eggs. The other is the platypus."
+      "fact": "A few hundred wild lions still live in India, in the Gir Forest in Gujarat."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "How many numbers are there on a European roulette wheel?",
-      "answer": 37,
-      "min": 12,
-      "max": 52,
-      "unit": "numbers",
-      "fact": "37: 1 to 36 plus a single green zero. American wheels add a double zero."
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How high does a passenger jet usually cruise, in kilometres?",
+      "answer": 11,
+      "min": 3,
+      "max": 16,
+      "unit": "km",
+      "fact": "About 11 km, above most of the weather and in air thin enough to save fuel."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "nature",
       "difficulty": 2,
-      "prompt": "How long is the Great Barrier Reef, in kilometres?",
-      "answer": 2300,
-      "min": 700,
-      "max": 3200,
-      "unit": "km",
-      "fact": "About 2,300 km, made of nearly 3,000 separate reefs."
+      "prompt": "How fast can an ostrich run, in km/h?",
+      "answer": 70,
+      "min": 20,
+      "max": 95,
+      "unit": "km/h",
+      "fact": "About 70 km/h, faster than any other bird on land. One stride can cover 5 m."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "Which river flows through Baghdad?",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "What is the Japanese art of folding paper called?",
       "options": [
-        "Nile",
-        "Tigris",
-        "Jordan",
-        "Euphrates"
+        "Bonsai",
+        "Haiku",
+        "Ikebana",
+        "Origami"
       ],
-      "answer": 1,
-      "hint": "It is one of the two rivers of Mesopotamia, but the eastern one.",
-      "fact": "The Tigris and Euphrates run side by side, and the land between them is where some of the first cities were built."
+      "answer": 3,
+      "hint": "The word means folding paper.",
+      "fact": "Ikebana is flower arranging, and bonsai is growing tiny trees in pots."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "Who was given the first patent for the telephone?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which strait separates Spain from Morocco?",
       "options": [
-        "Bell",
-        "Tesla",
-        "Edison",
-        "Marconi"
+        "Bosphorus",
+        "Messina",
+        "Gibraltar",
+        "Hormuz"
       ],
-      "answer": 0,
-      "hint": "He was born in Edinburgh and worked with deaf children.",
-      "fact": "Alexander Graham Bell's first words on the phone were \"Mr. Watson, come here, I want to see you.\""
+      "answer": 2,
+      "hint": "A famous rock stands at its northern end.",
+      "fact": "At its narrowest the strait is about 14 km wide, and on a clear day you can see Africa from Europe."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

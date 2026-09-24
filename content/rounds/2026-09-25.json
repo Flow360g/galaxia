@@ -3,6 +3,116 @@
   "roundNumber": 7,
   "seed": 20260925,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which of these are bones in the human body?",
+      "options": [
+        "Ulna",
+        "Deltoid",
+        "Aorta",
+        "Cornea",
+        "Tibia",
+        "Femur"
+      ],
+      "answers": [
+        0,
+        4,
+        5
+      ],
+      "fact": "The femur, in your thigh, is the longest bone in the body: about a quarter of your height."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which of these countries share a land border with China?",
+      "options": [
+        "Vietnam",
+        "Cambodia",
+        "Bangladesh",
+        "Mongolia",
+        "Thailand",
+        "India"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "China borders fourteen countries, tied with Russia for the most in the world."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How high is a basketball hoop, in centimetres?",
+      "answer": 305,
+      "min": 100,
+      "max": 420,
+      "unit": "cm",
+      "fact": "Ten feet, the height James Naismith nailed his peach baskets at in 1891, and it has never changed."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 3,
+      "prompt": "How many strings does a concert harp have?",
+      "answer": 47,
+      "min": 12,
+      "max": 60,
+      "unit": "strings",
+      "fact": "47. The red strings are Cs and the black or blue ones are Fs, so the player can find their place."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What is the largest lake in Africa?",
+      "options": [
+        "Chad",
+        "Victoria",
+        "Malawi",
+        "Tanganyika"
+      ],
+      "answer": 1,
+      "hint": "It is named after a British queen.",
+      "fact": "Lake Victoria is shared by Uganda, Kenya and Tanzania, and the White Nile flows out of it."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which studio made Spirited Away?",
+      "options": [
+        "DreamWorks",
+        "Pixar",
+        "Aardman",
+        "Studio Ghibli"
+      ],
+      "answer": 3,
+      "hint": "It is a Japanese studio founded by Hayao Miyazaki.",
+      "fact": "Spirited Away won the Oscar for Best Animated Feature in 2003."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,116 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these dishes come from Japan?",
-      "options": [
-        "Kimchi",
-        "Sushi",
-        "Tempura",
-        "Dim sum",
-        "Pho",
-        "Udon"
-      ],
-      "answers": [
-        1,
-        2,
-        5
-      ],
-      "fact": "Tempura is thought to have been brought to Japan by Portuguese traders and missionaries in the 1500s."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these instruments do you play with a bow?",
-      "options": [
-        "Cello",
-        "Violin",
-        "Trumpet",
-        "Double bass",
-        "Harp",
-        "Flute"
-      ],
-      "answers": [
-        0,
-        1,
-        3
-      ],
-      "fact": "A harp is plucked, not bowed, even though it is a string instrument like the other three."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "How many years did the Berlin Wall stand?",
-      "answer": 28,
-      "min": 5,
-      "max": 40,
-      "fact": "Twenty-eight. It went up overnight in August 1961 and came down in November 1989.",
-      "unit": "years"
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How tall is the Eiffel Tower, in metres?",
-      "answer": 330,
-      "min": 50,
-      "max": 450,
-      "unit": "m",
-      "fact": "330 metres to the tip. It was the tallest building in the world for 41 years."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "In which event would you see a Fosbury flop?",
-      "options": [
-        "Pole vault",
-        "High jump",
-        "Diving",
-        "Gymnastics"
-      ],
-      "answer": 1,
-      "hint": "Dick Fosbury changed how one event is cleared, by going over backwards.",
-      "fact": "Dick Fosbury went over the bar backwards at the 1968 Olympics and won. Every high jumper does it his way now."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "screen",
-      "difficulty": 3,
-      "prompt": "Who composed the music for Star Wars?",
-      "options": [
-        "Ennio Morricone",
-        "John Williams",
-        "Danny Elfman",
-        "Hans Zimmer"
-      ],
-      "answer": 1,
-      "hint": "The same composer wrote the themes for Jaws and Indiana Jones.",
-      "fact": "John Williams wrote it in 1977 for a full orchestra, at a time when film scores were going electronic."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

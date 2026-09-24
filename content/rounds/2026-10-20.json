@@ -9,98 +9,97 @@
       "type": "cluster",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "Which of these scientists won a Nobel Prize?",
+      "prompt": "Which of these metals does a magnet pick up?",
       "options": [
-        "Edison",
-        "Curie",
-        "Einstein",
-        "Newton",
-        "Feynman",
-        "Darwin"
+        "Aluminium",
+        "Copper",
+        "Cobalt",
+        "Gold",
+        "Nickel",
+        "Iron"
       ],
       "answers": [
-        1,
         2,
-        4
+        4,
+        5
       ],
-      "fact": "The first Nobel Prizes were given in 1901. Darwin died in 1882, and Newton almost two hundred years before that."
+      "fact": "Only a handful of metals are strongly magnetic at room temperature. A drinks can is aluminium, so a magnet slides off it."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
-      "difficulty": 3,
-      "prompt": "Which of these animals live wild only in Africa?",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which of these superheroes are from Marvel?",
       "options": [
-        "Hippo",
-        "Leopard",
-        "Zebra",
-        "Giraffe",
-        "Lion",
-        "Cheetah"
+        "Batman",
+        "Aquaman",
+        "Hulk",
+        "Thor",
+        "Black Panther",
+        "The Flash"
       ],
       "answers": [
-        0,
         2,
-        3
+        3,
+        4
       ],
-      "fact": "A few hundred wild lions still live in India, in the Gir Forest in Gujarat."
+      "fact": "Batman, Aquaman and The Flash belong to DC, Marvel's great rival."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "How high does a passenger jet usually cruise, in kilometres?",
-      "answer": 11,
-      "min": 3,
-      "max": 16,
-      "unit": "km",
-      "fact": "About 11 km, above most of the weather and in air thin enough to save fuel."
+      "prompt": "What is the pH of pure water?",
+      "answer": 7,
+      "min": 2,
+      "max": 10,
+      "fact": "Seven, right in the middle of the scale. Lower is acid and higher is alkaline."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How fast can an ostrich run, in km/h?",
-      "answer": 70,
-      "min": 20,
-      "max": 95,
-      "unit": "km/h",
-      "fact": "About 70 km/h, faster than any other bird on land. One stride can cover 5 m."
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "How many provinces does Canada have?",
+      "answer": 10,
+      "min": 3,
+      "max": 14,
+      "unit": "provinces",
+      "fact": "Ten provinces and three territories, and the territories cover about 40% of the country."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "arts",
-      "difficulty": 1,
-      "prompt": "What is the Japanese art of folding paper called?",
+      "difficulty": 2,
+      "prompt": "Who designed the Sagrada Fam\u00edlia in Barcelona?",
       "options": [
-        "Bonsai",
-        "Haiku",
-        "Ikebana",
-        "Origami"
+        "Gehry",
+        "Gaud\u00ed",
+        "Dal\u00ed",
+        "Le Corbusier"
       ],
-      "answer": 3,
-      "hint": "The word means folding paper.",
-      "fact": "Ikebana is flower arranging, and bonsai is growing tiny trees in pots."
+      "answer": 1,
+      "hint": "He was from Catalonia and loved curves drawn from nature.",
+      "fact": "Building began in 1882, and Antoni Gaud\u00ed worked on it for over 40 years."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which strait separates Spain from Morocco?",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "What is a group of lions called?",
       "options": [
-        "Bosphorus",
-        "Messina",
-        "Gibraltar",
-        "Hormuz"
+        "A troop",
+        "A herd",
+        "A pack",
+        "A pride"
       ],
-      "answer": 2,
-      "hint": "A famous rock stands at its northern end.",
-      "fact": "At its narrowest the strait is about 14 km wide, and on a clear day you can see Africa from Europe."
+      "answer": 3,
+      "hint": "It is also a word for feeling good about yourself.",
+      "fact": "The lionesses in a pride do most of the hunting, and they are usually all related."
     },
     {
       "id": "q7",
@@ -110,7 +109,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

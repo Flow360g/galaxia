@@ -3,6 +3,116 @@
   "roundNumber": 8,
   "seed": 20260926,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which of these did Leonardo da Vinci create?",
+      "options": [
+        "The Kiss",
+        "Night Watch",
+        "Mona Lisa",
+        "Vitruvian Man",
+        "Birth of Venus",
+        "Last Supper"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "The Last Supper is painted on a monastery wall in Milan, and began flaking within Leonardo's lifetime."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 3,
+      "prompt": "Which of these operas did Mozart write?",
+      "options": [
+        "Aida",
+        "Figaro",
+        "La Traviata",
+        "Magic Flute",
+        "Don Giovanni",
+        "Carmen"
+      ],
+      "answers": [
+        1,
+        3,
+        4
+      ],
+      "fact": "Carmen is by Bizet, and La Traviata and Aida are both by Verdi."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many minutes are there in a week?",
+      "answer": 10080,
+      "min": 3000,
+      "max": 14000,
+      "unit": "minutes",
+      "fact": "60 times 24 times 7 makes 10,080."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many litres of blood are in an adult's body?",
+      "answer": 5,
+      "min": 1,
+      "max": 7.5,
+      "unit": "litres",
+      "fact": "About five litres, and your heart pumps all of it round your body roughly once a minute."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Which country was the painter Frida Kahlo from?",
+      "options": [
+        "Spain",
+        "Mexico",
+        "Cuba",
+        "Argentina"
+      ],
+      "answer": 1,
+      "hint": "Her house, the Blue House, is in its capital.",
+      "fact": "Frida Kahlo painted around 55 self-portraits, many from her bed after a bus crash."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "What is the study of earthquakes called?",
+      "options": [
+        "Oceanography",
+        "Meteorology",
+        "Seismology",
+        "Volcanology"
+      ],
+      "answer": 2,
+      "hint": "The machine that records earthquakes shares the start of the word.",
+      "fact": "Seismology comes from the Greek word for shaking."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,116 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
-      "options": [
-        "Romania",
-        "Portugal",
-        "Greece",
-        "Turkey",
-        "Egypt",
-        "Austria"
-      ],
-      "answers": [
-        2,
-        3,
-        4
-      ],
-      "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these birds cannot fly?",
-      "options": [
-        "Kiwi",
-        "Albatross",
-        "Ostrich",
-        "Penguin",
-        "Swan",
-        "Pelican"
-      ],
-      "answers": [
-        0,
-        2,
-        3
-      ],
-      "fact": "An ostrich cannot get off the ground but can outrun a racehorse. A penguin flies, just underwater."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "How tall is the Great Pyramid of Giza, in metres?",
-      "answer": 147,
-      "min": 50,
-      "max": 200,
-      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years.",
-      "unit": "m"
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How many years ago did the last dinosaurs die out, in millions?",
-      "answer": 66,
-      "min": 10,
-      "max": 90,
-      "unit": "million years",
-      "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "Which metal is liquid at room temperature?",
-      "options": [
-        "Zinc",
-        "Tin",
-        "Lead",
-        "Mercury"
-      ],
-      "answer": 3,
-      "hint": "It is the one that was used in old thermometers.",
-      "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Who composed The Four Seasons?",
-      "options": [
-        "Mozart",
-        "Handel",
-        "Vivaldi",
-        "Bach"
-      ],
-      "answer": 2,
-      "hint": "He was a priest from Venice, nicknamed the Red Priest for his hair.",
-      "fact": "The Four Seasons is four violin concertos, one for each season, written around 1720."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

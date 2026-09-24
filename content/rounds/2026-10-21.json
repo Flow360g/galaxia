@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Which of these books did Roald Dahl write?",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these are star signs?",
       "options": [
-        "Matilda",
-        "Stig of the Dump",
-        "The Twits",
-        "The Hobbit",
-        "Peter Pan",
-        "The BFG"
+        "Libra",
+        "Aries",
+        "Pegasus",
+        "Orion",
+        "Ursa",
+        "Pisces"
+      ],
+      "answers": [
+        0,
+        1,
+        5
+      ],
+      "fact": "Orion and Pegasus are constellations too, but the Sun never passes in front of them, so they are not signs of the zodiac."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which of these are Grand Slam tennis tournaments?",
+      "options": [
+        "Wimbledon",
+        "Indian Wells",
+        "US Open",
+        "Queen's",
+        "Davis Cup",
+        "Roland Garros"
       ],
       "answers": [
         0,
         2,
         5
       ],
-      "fact": "The BFG speaks his own language, gobblefunk, which Dahl made up."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "Which of these currencies are used in Asia?",
-      "options": [
-        "Baht",
-        "Yen",
-        "Won",
-        "Rand",
-        "Zloty",
-        "Krona"
-      ],
-      "answers": [
-        0,
-        1,
-        2
-      ],
-      "fact": "The baht began as a weight for silver, and in Thailand gold is still sold by the baht."
+      "fact": "Wimbledon is the only Grand Slam still played on grass."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How many hours a day does a koala sleep?",
-      "answer": 20,
-      "min": 6,
-      "max": 28,
-      "unit": "hours",
-      "fact": "Around 20. Gum leaves give it very little energy, so it saves what it can."
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "How many days does a human pregnancy last, on average?",
+      "answer": 280,
+      "min": 100,
+      "max": 400,
+      "unit": "days",
+      "fact": "Forty weeks, counted from the start of the last period, so a baby is really growing for about 38 of them."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "How tall is the Statue of Liberty from the ground to the tip of the torch, in metres?",
-      "answer": 93,
-      "min": 30,
-      "max": 130,
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How long is a tennis court, in metres?",
+      "answer": 23.77,
+      "min": 8,
+      "max": 32,
       "unit": "m",
-      "fact": "About 93 m with its pedestal. The copper skin is thinner than two coins stacked together."
+      "fact": "78 feet from baseline to baseline, set down in the 1870s."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "What is the largest organ of the human body?",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which Shakespeare play features the moneylender Shylock?",
       "options": [
-        "Skin",
-        "Liver",
-        "Lungs",
-        "Brain"
+        "Merchant of Venice",
+        "Macbeth",
+        "King Lear",
+        "Othello"
       ],
       "answer": 0,
-      "hint": "It is on the outside.",
-      "fact": "An adult's skin weighs around four kilograms."
+      "hint": "It is set in an Italian city of canals.",
+      "fact": "Shylock demands a pound of flesh as his price for an unpaid loan."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which Pixar film is set mostly in Paris?",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which philosopher taught Alexander the Great?",
       "options": [
-        "Up",
-        "Ratatouille",
-        "Coco",
-        "Luca"
+        "Socrates",
+        "Aristotle",
+        "Pythagoras",
+        "Plato"
       ],
       "answer": 1,
-      "hint": "It is about a rat who wants to be a chef.",
-      "fact": "Pixar's team ate at top Paris restaurants and took a cooking class to get the kitchen scenes right."
+      "hint": "He was Plato's student.",
+      "fact": "Aristotle taught the young Alexander for about three years."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

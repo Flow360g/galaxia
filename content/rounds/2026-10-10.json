@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Which of these capital cities are in Africa?",
+      "prompt": "Which of these books did Roald Dahl write?",
       "options": [
-        "Nairobi",
-        "Beirut",
-        "Baku",
-        "Accra",
-        "Dakar",
-        "Muscat"
+        "Matilda",
+        "Stig of the Dump",
+        "The Twits",
+        "The Hobbit",
+        "Peter Pan",
+        "The BFG"
       ],
       "answers": [
         0,
-        3,
-        4
+        2,
+        5
       ],
-      "fact": "Dakar, the capital of Senegal, stands on the westernmost point of mainland Africa."
+      "fact": "The BFG speaks his own language, gobblefunk, which Dahl made up."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Which of these characters did Shakespeare create?",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "Which of these currencies are used in Asia?",
       "options": [
-        "Beowulf",
-        "Ophelia",
-        "Faustus",
-        "Tartuffe",
-        "Puck",
-        "Hamlet"
+        "Baht",
+        "Yen",
+        "Won",
+        "Rand",
+        "Zloty",
+        "Krona"
       ],
       "answers": [
+        0,
         1,
-        4,
-        5
+        2
       ],
-      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Molière's, and Beowulf is an Old English poem nobody knows the author of."
+      "fact": "The baht began as a weight for silver, and in Thailand gold is still sold by the baht."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "How many ribs does a person have?",
-      "answer": 24,
-      "min": 8,
-      "max": 34,
-      "unit": "ribs",
-      "fact": "24, in twelve pairs. Men and women have the same number."
+      "prompt": "How many hours a day does a koala sleep?",
+      "answer": 20,
+      "min": 6,
+      "max": 28,
+      "unit": "hours",
+      "fact": "Around 20. Gum leaves give it very little energy, so it saves what it can."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "How far is it from Perth to Sydney in a straight line, in kilometres?",
-      "answer": 3300,
-      "min": 1200,
-      "max": 4600,
-      "unit": "km",
-      "fact": "About 3,300 km, further than London to Moscow."
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "How tall is the Statue of Liberty from the ground to the tip of the torch, in metres?",
+      "answer": 93,
+      "min": 30,
+      "max": 130,
+      "unit": "m",
+      "fact": "About 93 m with its pedestal. The copper skin is thinner than two coins stacked together."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Who created the detective Sherlock Holmes?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "What is the largest organ of the human body?",
       "options": [
-        "Agatha Christie",
-        "Dickens",
-        "Conan Doyle",
-        "Edgar Allan Poe"
+        "Skin",
+        "Liver",
+        "Lungs",
+        "Brain"
       ],
-      "answer": 2,
-      "hint": "He was a doctor from Edinburgh.",
-      "fact": "Arthur Conan Doyle killed Holmes off in 1893 and had to bring him back ten years later because readers were furious."
+      "answer": 0,
+      "hint": "It is on the outside.",
+      "fact": "An adult's skin weighs around four kilograms."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
+      "topic": "screen",
       "difficulty": 1,
-      "prompt": "Which fruit is dried to make a prune?",
+      "prompt": "Which Pixar film is set mostly in Paris?",
       "options": [
-        "Date",
-        "Grape",
-        "Plum",
-        "Fig"
+        "Up",
+        "Ratatouille",
+        "Coco",
+        "Luca"
       ],
-      "answer": 2,
-      "hint": "It is small and purple, with a stone inside.",
-      "fact": "A dried grape is a raisin, sultana or currant, depending on the grape."
+      "answer": 1,
+      "hint": "It is about a rat who wants to be a chef.",
+      "fact": "Pixar's team ate at top Paris restaurants and took a cooking class to get the kitchen scenes right."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

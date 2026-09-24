@@ -3,6 +3,116 @@
   "roundNumber": 17,
   "seed": 20261005,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these words read the same backwards?",
+      "options": [
+        "Level",
+        "Kayak",
+        "Banana",
+        "Llama",
+        "Salsa",
+        "Radar"
+      ],
+      "answers": [
+        0,
+        1,
+        5
+      ],
+      "fact": "Christopher Nolan's 2020 film Tenet has a palindrome for a title."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these are breads?",
+      "options": [
+        "Naan",
+        "Focaccia",
+        "Brioche",
+        "Couscous",
+        "Tofu",
+        "Polenta"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ],
+      "fact": "Brioche is rich with butter and eggs, which sits it halfway between bread and cake."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many coloured squares does a Rubik's Cube have?",
+      "answer": 54,
+      "min": 20,
+      "max": 75,
+      "unit": "squares",
+      "fact": "Nine on each of six faces makes 54."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many degrees is each corner of a regular hexagon?",
+      "answer": 120,
+      "min": 35,
+      "max": 165,
+      "unit": "degrees",
+      "fact": "120 degrees, which is why hexagons fit together with no gaps, as in a honeycomb."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "What is the largest kind of shark?",
+      "options": [
+        "Whale shark",
+        "Hammerhead",
+        "Great white",
+        "Tiger shark"
+      ],
+      "answer": 0,
+      "hint": "It eats only tiny plankton.",
+      "fact": "A whale shark can grow to about 12 m and is completely harmless to people."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Who painted Girl with a Pearl Earring?",
+      "options": [
+        "Rubens",
+        "Van Eyck",
+        "Vermeer",
+        "Rembrandt"
+      ],
+      "answer": 2,
+      "hint": "He worked in Delft and left fewer than forty paintings.",
+      "fact": "Johannes Vermeer painted it around 1665. Nobody knows who the girl was."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,114 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these actors have played James Bond?",
-      "options": [
-        "Grant",
-        "Hanks",
-        "Connery",
-        "Ford",
-        "Moore",
-        "Craig"
-      ],
-      "answers": [
-        2,
-        4,
-        5
-      ],
-      "fact": "Seven actors have played him on film. Sean Connery was the first and almost turned it down."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these are deserts?",
-      "options": [
-        "Kalahari",
-        "Atacama",
-        "Serengeti",
-        "Taiga",
-        "Pampas",
-        "Gobi"
-      ],
-      "answers": [
-        0,
-        1,
-        5
-      ],
-      "fact": "Some weather stations in Chile's Atacama have gone years without recording any rain."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "How many lines are there in a sonnet?",
-      "answer": 14,
-      "min": 2,
-      "max": 22,
-      "fact": "Fourteen, always. The last two usually turn the argument of the first twelve on its head."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How long can a giant tortoise live, in years?",
-      "answer": 150,
-      "min": 25,
-      "max": 225,
-      "fact": "Well past 150. One taken from the Galapagos by Charles Darwin's crew was still alive in a zoo in 2006."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which spice gives a curry its yellow colour?",
-      "options": [
-        "Cumin",
-        "Turmeric",
-        "Paprika",
-        "Coriander"
-      ],
-      "answer": 1,
-      "hint": "It is a root, sold ground to a bright powder, and it stains everything.",
-      "fact": "Turmeric. The colour comes from curcumin, and it will stain a chopping board for good."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "Which country has a flag that is not a rectangle?",
-      "options": [
-        "Switzerland",
-        "Sri Lanka",
-        "Nepal",
-        "Bhutan"
-      ],
-      "answer": 2,
-      "hint": "Its flag is two stacked triangles, one carrying a moon and one a sun.",
-      "fact": "Nepal's flag is two stacked pennants. Every other national flag in the world is four-sided."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "food",
       "difficulty": 2,
-      "prompt": "Which of these films are set in space?",
+      "prompt": "Which of these are types of bean?",
       "options": [
-        "Dunkirk",
-        "Tenet",
-        "Alien",
-        "Interstellar",
-        "Inception",
-        "Gravity"
+        "Cannellini",
+        "Kidney",
+        "Pinto",
+        "Spelt",
+        "Barley",
+        "Quinoa"
       ],
       "answers": [
-        2,
-        3,
-        5
+        0,
+        1,
+        2
       ],
-      "fact": "Christopher Nolan directed Interstellar, Inception, Tenet and Dunkirk. Only one of them leaves Earth."
+      "fact": "Baked beans in a tin are usually haricot beans, also called navy beans."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "food",
-      "difficulty": 3,
-      "prompt": "Which of these cocktails are made with gin?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these are found inside a cell?",
       "options": [
-        "Daiquiri",
-        "Margarita",
-        "Mojito",
-        "Negroni",
-        "Gimlet",
-        "Tom Collins"
+        "Artery",
+        "Nucleus",
+        "Alveolus",
+        "Neuron",
+        "Ribosome",
+        "Mitochondria"
       ],
       "answers": [
-        3,
+        1,
         4,
         5
       ],
-      "fact": "A Negroni is equal parts gin, Campari and sweet vermouth, stirred over ice."
+      "fact": "Mitochondria have DNA of their own, and you inherit it only from your mother."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "How many seasons of Game of Thrones were made?",
-      "answer": 8,
-      "min": 2,
-      "max": 11,
-      "unit": "seasons",
-      "fact": "Eight, from 2011 to 2019. The last season has only six episodes."
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "How many different first moves can White make in chess?",
+      "answer": 20,
+      "min": 6,
+      "max": 28,
+      "unit": "moves",
+      "fact": "Twenty: each of the eight pawns can move one or two squares, and each knight has two choices."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
+      "topic": "arts",
       "difficulty": 3,
-      "prompt": "How long is a Formula 1 Grand Prix, in kilometres?",
-      "answer": 305,
-      "min": 100,
-      "max": 420,
-      "unit": "km",
-      "fact": "The fewest laps that take a car past 305 km. Monaco is the exception, at about 260 km."
+      "prompt": "How tall is Michelangelo's statue of David, in metres?",
+      "answer": 5.17,
+      "min": 1.5,
+      "max": 7,
+      "unit": "m",
+      "fact": "5.17 m, about three times the height of a real man."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "science",
+      "topic": "screen",
       "difficulty": 1,
-      "prompt": "Which vitamin does sunlight help your body make?",
+      "prompt": "Which film has the line \"I'll be back\"?",
       "options": [
-        "Vitamin B12",
-        "Vitamin A",
-        "Vitamin C",
-        "Vitamin D"
+        "The Terminator",
+        "Predator",
+        "Die Hard",
+        "Rambo"
       ],
-      "answer": 3,
-      "hint": "It helps you build strong bones.",
-      "fact": "Your skin makes vitamin D when sunlight hits it, which is why people in cloudy countries often run short in winter."
+      "answer": 0,
+      "hint": "It is said by a robot sent back in time.",
+      "fact": "Arnold Schwarzenegger wanted to say \"I will be back\", but the director made him keep the shorter line."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "history",
-      "difficulty": 2,
-      "prompt": "Who was the first emperor of Rome?",
+      "difficulty": 1,
+      "prompt": "Which Roman city was buried when Vesuvius erupted in AD 79?",
       "options": [
-        "Caligula",
-        "Julius Caesar",
-        "Augustus",
-        "Nero"
+        "Troy",
+        "Ostia",
+        "Pompeii",
+        "Carthage"
       ],
       "answer": 2,
-      "hint": "He was Julius Caesar's adopted son.",
-      "fact": "Julius Caesar was never emperor. Augustus took the title in 27 BC, after Caesar had been murdered."
+      "hint": "It is near Naples.",
+      "fact": "The ash that buried Pompeii preserved bread in ovens and graffiti on the walls."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [
