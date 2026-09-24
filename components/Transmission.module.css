@@ -19,6 +19,31 @@
   animation: fadeIn 240ms ease-out;
 }
 
+/* The Mayday: a banner across the top band with the ship flying underneath.
+   No dim and no full-screen catcher; only the panel takes taps, so the lower
+   half stays the ship's. */
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 29;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  animation: dropIn 320ms ease-out;
+}
+
+.banner .panel {
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  max-width: 460px;
+  animation: none;
+}
+
 .panel {
   width: 100%;
   max-width: 400px;
@@ -213,6 +238,17 @@
   }
 }
 
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -240,6 +276,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .banner,
   .overlay,
   .panel,
   .signal i,

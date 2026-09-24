@@ -245,7 +245,10 @@ export function GameCanvas({
    * played in silence while `?replay=1`, which never reads storage, was fine.
    */
   const hydrated = stored !== undefined && unbriefed !== undefined;
-  const flyable = hydrated && (stored === null || summary !== null) && !mayday && launched;
+  // Not gated on the Mayday or the launch card any more: the ship is already
+  // flying behind both, in standby, and READY launches the run on the live
+  // engine rather than mounting a new one.
+  const flyable = hydrated && (stored === null || summary !== null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -264,6 +267,7 @@ export function GameCanvas({
       // `?tier=0|1|2` pins the quality tier, under `?debug=1` only: headless
       // browsers detect as low-end phones, and bloom is tier-gated.
       tier: debug ? pinnedTier() : undefined,
+      standby: true,
     });
     engineRef.current = engine;
     engine.start();
@@ -274,6 +278,13 @@ export function GameCanvas({
     };
     // `attempt` is a deliberate dependency: bumping it remounts the engine.
   }, [round, debug, flyable, ship, attempt, handleState, handleRunEnd]);
+
+  // READY: the engine is already flying in standby; start the run on it.
+  // Declared after the effect above so a remount is launched too, and keyed
+  // on everything that remounts it. `launch` is idempotent.
+  useEffect(() => {
+    if (launched) engineRef.current?.launch();
+  }, [launched, round, debug, flyable, ship, attempt]);
 
   const replayRun = useCallback(() => {
     // FLY AGAIN off a practice run means a NEW set of questions, not the same
@@ -341,7 +352,12 @@ export function GameCanvas({
       ) : null}
 
       {mayday && stored === null && summary === null ? (
-        <Transmission script={MISSION_TRANSMISSION} kind="incoming" onDone={closeMayday} />
+        <Transmission
+          script={MISSION_TRANSMISSION}
+          kind="incoming"
+          banner
+          onDone={closeMayday}
+        />
       ) : null}
 
       {readying ? <Ready round={round} onReady={launch} /> : null}

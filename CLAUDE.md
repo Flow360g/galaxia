@@ -467,7 +467,10 @@ path from a shared link to flying.
 - **Rules arrive a phase at a time.** Each day's first run opens on the **mission
   transmission** (a Mayday from Earth Command, `components/Transmission.tsx`,
   remembered by date in `galaxia:mayday`) and then the launch card, and
-  nothing else: no rulebook up front. It used to play once per device, ever,
+  nothing else: no rulebook up front. The ship is already flying behind both:
+  the engine mounts in standby (`Run.standby`, nothing stepped, no clock, no
+  distance), the Mayday drops in as a banner across the top band, and READY
+  launches the run on the live engine rather than mounting one. It used to play once per device, ever,
   which testers read as Sergeant Soap sometimes turning up and sometimes not. Six pages
   of rules before the first question was what testers called too much text.
   Each phase explains itself on its own card just before it is played, in

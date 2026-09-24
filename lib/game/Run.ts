@@ -152,6 +152,12 @@ export class Run {
    * says when they are done with it.
    */
   awaitingTap = false;
+  /**
+   * The ship is flying but the run has not been launched: Sergeant Soap's
+   * Mayday and the launch card are up over it. Nothing is stepped, so the
+   * countdown, the clock and the distance all start from zero on READY.
+   */
+  standby = false;
 
   elapsed = 0;
   private timer: number = ENCOUNTER.introSeconds;
@@ -702,7 +708,13 @@ export class Run {
     // trace, and a docked ship has no velocity or distance worth recording.
   }
 
+  /** READY: out of standby, and the countdown starts. */
+  launch(): void {
+    this.standby = false;
+  }
+
   update(dt: number): void {
+    if (this.standby) return;
     this.elapsed += dt;
     this.flight.update(dt);
 
