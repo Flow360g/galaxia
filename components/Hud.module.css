@@ -782,10 +782,10 @@
 }
 
 /*
- * The first PICK ONE question: the bank nudge's twin, pointing up at BOOST
- * from under the tools row. It sits in the band, right-aligned under the
- * button, and the arrow lands on the middle of BOOST, which is the right half of a row
- * split by a 6px gap.
+ * The OPEN SKY card's sample band: the bank nudge's twin, pointing up at
+ * BOOST from under the tools row. Right-aligned under the button, and the
+ * arrow lands on the middle of BOOST, which is the right half of a row
+ * split by a 6px gap. It is drawn on the card only, never in flight.
  */
 .boostNudge {
   display: flex;
