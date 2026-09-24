@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-02",
+  "roundNumber": 45,
+  "seed": 20261102,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which of these are types of bean?",
+      "options": [
+        "Cannellini",
+        "Kidney",
+        "Pinto",
+        "Spelt",
+        "Barley",
+        "Quinoa"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ],
+      "fact": "Baked beans in a tin are usually haricot beans, also called navy beans."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these are found inside a cell?",
+      "options": [
+        "Artery",
+        "Nucleus",
+        "Alveolus",
+        "Neuron",
+        "Ribosome",
+        "Mitochondria"
+      ],
+      "answers": [
+        1,
+        4,
+        5
+      ],
+      "fact": "Mitochondria have DNA of their own, and you inherit it only from your mother."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "How many different first moves can White make in chess?",
+      "answer": 20,
+      "min": 6,
+      "max": 28,
+      "unit": "moves",
+      "fact": "Twenty: each of the eight pawns can move one or two squares, and each knight has two choices."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "How tall is Michelangelo's statue of David, in metres?",
+      "answer": 5.17,
+      "min": 1.5,
+      "max": 7,
+      "unit": "m",
+      "fact": "5.17 m, about three times the height of a real man."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which film has the line \"I'll be back\"?",
+      "options": [
+        "The Terminator",
+        "Predator",
+        "Die Hard",
+        "Rambo"
+      ],
+      "answer": 0,
+      "hint": "It is said by a robot sent back in time.",
+      "fact": "Arnold Schwarzenegger wanted to say \"I will be back\", but the director made him keep the shorter line."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "history",
+      "difficulty": 1,
+      "prompt": "Which Roman city was buried when Vesuvius erupted in AD 79?",
+      "options": [
+        "Troy",
+        "Ostia",
+        "Pompeii",
+        "Carthage"
+      ],
+      "answer": 2,
+      "hint": "It is near Naples.",
+      "fact": "The ash that buried Pompeii preserved bread in ovens and graffiti on the walls."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

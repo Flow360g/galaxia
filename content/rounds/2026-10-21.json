@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-21",
+  "roundNumber": 33,
+  "seed": 20261021,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which of these books did Roald Dahl write?",
+      "options": [
+        "Matilda",
+        "Stig of the Dump",
+        "The Twits",
+        "The Hobbit",
+        "Peter Pan",
+        "The BFG"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "The BFG speaks his own language, gobblefunk, which Dahl made up."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "Which of these currencies are used in Asia?",
+      "options": [
+        "Baht",
+        "Yen",
+        "Won",
+        "Rand",
+        "Zloty",
+        "Krona"
+      ],
+      "answers": [
+        0,
+        1,
+        2
+      ],
+      "fact": "The baht began as a weight for silver, and in Thailand gold is still sold by the baht."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many hours a day does a koala sleep?",
+      "answer": 20,
+      "min": 6,
+      "max": 28,
+      "unit": "hours",
+      "fact": "Around 20. Gum leaves give it very little energy, so it saves what it can."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "How tall is the Statue of Liberty from the ground to the tip of the torch, in metres?",
+      "answer": 93,
+      "min": 30,
+      "max": 130,
+      "unit": "m",
+      "fact": "About 93 m with its pedestal. The copper skin is thinner than two coins stacked together."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "What is the largest organ of the human body?",
+      "options": [
+        "Skin",
+        "Liver",
+        "Lungs",
+        "Brain"
+      ],
+      "answer": 0,
+      "hint": "It is on the outside.",
+      "fact": "An adult's skin weighs around four kilograms."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which Pixar film is set mostly in Paris?",
+      "options": [
+        "Up",
+        "Ratatouille",
+        "Coco",
+        "Luca"
+      ],
+      "answer": 1,
+      "hint": "It is about a rat who wants to be a chef.",
+      "fact": "Pixar's team ate at top Paris restaurants and took a cooking class to get the kitchen scenes right."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

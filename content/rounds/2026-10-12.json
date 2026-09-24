@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-12",
+  "roundNumber": 24,
+  "seed": 20261012,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these were battles of the First World War?",
+      "options": [
+        "Stalingrad",
+        "Somme",
+        "Hastings",
+        "Gallipoli",
+        "Waterloo",
+        "Verdun"
+      ],
+      "answers": [
+        1,
+        3,
+        5
+      ],
+      "fact": "The landing at Gallipoli in 1915 is remembered every year on Anzac Day in Australia and New Zealand."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these countries use the euro?",
+      "options": [
+        "Denmark",
+        "Finland",
+        "Ireland",
+        "Portugal",
+        "Poland",
+        "Sweden"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "Denmark negotiated an opt-out and keeps its krone. Sweden has simply never joined."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How many stripes are on the flag of the United States?",
+      "answer": 13,
+      "min": 4,
+      "max": 18,
+      "unit": "stripes",
+      "fact": "Thirteen, one for each of the original colonies. The stars count the states."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "How many bones are there in one human hand, including the wrist?",
+      "answer": 27,
+      "min": 8,
+      "max": 40,
+      "unit": "bones",
+      "fact": "27. Your two hands and wrists hold more than a quarter of all the bones in your body."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which band sang Wonderwall?",
+      "options": [
+        "Radiohead",
+        "Pulp",
+        "Blur",
+        "Oasis"
+      ],
+      "answer": 3,
+      "hint": "The band was led by two brothers from Manchester.",
+      "fact": "Oasis were fronted by Liam and Noel Gallagher, who famously could not stand each other."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Who invented the World Wide Web?",
+      "options": [
+        "Steve Jobs",
+        "Alan Turing",
+        "Bill Gates",
+        "Berners-Lee"
+      ],
+      "answer": 3,
+      "hint": "He was a British scientist working at CERN in Switzerland.",
+      "fact": "Tim Berners-Lee chose not to patent the web, so anyone could use it for free."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

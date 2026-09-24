@@ -28,23 +28,23 @@
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "Which of these are dwarf planets?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these films won the Oscar for Best Picture?",
       "options": [
-        "Pluto",
-        "Io",
-        "Ceres",
-        "Titan",
-        "Eris",
-        "Europa"
+        "Parasite",
+        "Inception",
+        "Titanic",
+        "Jaws",
+        "Avatar",
+        "Gladiator"
       ],
       "answers": [
         0,
         2,
-        4
+        5
       ],
-      "fact": "Ceres sits in the asteroid belt and is the only dwarf planet inside Neptune's orbit. The others are moons."
+      "fact": "Parasite, in 2020, was the first film not in English to win Best Picture."
     },
     {
       "id": "q3",

@@ -61,30 +61,30 @@
     {
       "id": "q4",
       "type": "vector",
-      "topic": "misc",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "How long does sunlight take to reach Earth, in minutes?",
-      "answer": 8.3,
-      "min": 1,
-      "max": 13,
-      "unit": "min",
-      "fact": "About 8 minutes 20 seconds. From the next nearest star it takes more than four years."
+      "prompt": "How many chromosomes are in most human cells?",
+      "answer": 46,
+      "min": 12,
+      "max": 62,
+      "unit": "chromosomes",
+      "fact": "46, in 23 pairs: one of each pair from your mother and one from your father."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who painted the ceiling of the Sistine Chapel?",
+      "topic": "screen",
+      "difficulty": 3,
+      "prompt": "Which film won the first ever Oscar for Best Animated Feature?",
       "options": [
-        "Leonardo",
-        "Raphael",
-        "Donatello",
-        "Michelangelo"
+        "Toy Story",
+        "Monsters, Inc.",
+        "Ice Age",
+        "Shrek"
       ],
       "answer": 3,
-      "hint": "He considered himself a sculptor, not a painter.",
-      "fact": "Michelangelo painted it standing on scaffolding, craning upward, over four years from 1508."
+      "hint": "The award was first given in 2002, for a film from 2001.",
+      "fact": "Shrek beat Monsters, Inc. to the award, which the Academy had only just created."
     },
     {
       "id": "q6",

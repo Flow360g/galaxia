@@ -15,6 +15,7 @@ const FLOWN_KEY = "galaxia:flown";
 const BRIEFED_KEY = "galaxia:briefed";
 const SHIP_KEY = "galaxia:ship";
 const OWNED_KEY = "galaxia:owned";
+const PRACTICE_KEY = "galaxia:practice";
 
 export interface BestRecord {
   /**
@@ -201,4 +202,23 @@ export function clearRun(date: string): void {
   } catch {
     // Nothing to clear, or nowhere to clear it from.
   }
+}
+
+/**
+ * The next practice deal on this device, as a `<deck>.<n>` seed for
+ * `/play?shuffle=` (see `dealFromDeck` in `lib/content/round.ts`).
+ *
+ * One deck per device, made up on the first practice run, and a counter that
+ * moves on one deal per run, so a tester sees every question in the pool
+ * before any comes round again. It is a hatch's bookmark and nothing more: it
+ * never touches the flight log, the best or a stored run. Without storage it
+ * still hands back a fresh one-off deck, which is the old behaviour.
+ */
+export function nextPracticeDeal(): string {
+  const last = read<{ deck?: unknown; n?: unknown }>(PRACTICE_KEY);
+  const known = typeof last?.deck === "string" && /^[a-z0-9]+$/.test(last.deck) && Number.isInteger(last.n);
+  const deck = known ? (last.deck as string) : Math.random().toString(36).slice(2, 10);
+  const n = known ? (last.n as number) + 1 : 0;
+  write(PRACTICE_KEY, { deck, n });
+  return `${deck}.${n}`;
 }

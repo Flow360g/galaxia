@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-13",
+  "roundNumber": 25,
+  "seed": 20261013,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these mountains are in the Himalayas?",
+      "options": [
+        "Mont Blanc",
+        "Aconcagua",
+        "Everest",
+        "Kangchenjunga",
+        "Annapurna",
+        "Kilimanjaro"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
+      "fact": "Kangchenjunga, on the border of Nepal and India, is the third highest mountain in the world."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these animals are primates?",
+      "options": [
+        "Lemur",
+        "Raccoon",
+        "Meerkat",
+        "Gibbon",
+        "Tarsier",
+        "Sloth"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "A tarsier's eyes are each as big as its brain, and they cannot move in their sockets."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many seconds did the Wright brothers' first powered flight last?",
+      "answer": 12,
+      "min": 2,
+      "max": 18,
+      "unit": "seconds",
+      "fact": "Twelve seconds, covering 37 m. That is shorter than the wingspan of a jumbo jet."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How many players does an ice hockey team have on the ice?",
+      "answer": 6,
+      "min": 1,
+      "max": 9,
+      "unit": "players",
+      "fact": "Six, including the goalie, and players swap on and off every minute or so."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "What colour is an aircraft's black box flight recorder?",
+      "options": [
+        "Orange",
+        "Yellow",
+        "Black",
+        "Red"
+      ],
+      "answer": 0,
+      "hint": "It has to be easy to spot in wreckage.",
+      "fact": "Nobody is quite sure why it is called a black box. It has always been painted bright orange."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which sauce is made from egg yolks, butter and lemon?",
+      "options": [
+        "Béchamel",
+        "Hollandaise",
+        "Mornay",
+        "Aioli"
+      ],
+      "answer": 1,
+      "hint": "It is the sauce on eggs Benedict.",
+      "fact": "Béchamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

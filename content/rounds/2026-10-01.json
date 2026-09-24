@@ -27,23 +27,23 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "sport",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which of these sports are played over a net?",
+      "prompt": "Which of these bands come from Australia?",
       "options": [
-        "Water polo",
-        "Tennis",
-        "Volleyball",
-        "Badminton",
-        "Handball",
-        "Squash"
+        "Blur",
+        "AC/DC",
+        "INXS",
+        "Split Enz",
+        "Tame Impala",
+        "The Cure"
       ],
       "answers": [
         1,
         2,
-        3
+        4
       ],
-      "fact": "Squash is played off a front wall, and handball and water polo are both played into a goal. None of the three has a net between the sides."
+      "fact": "AC/DC formed in Sydney in 1973 around the Young brothers, who were born in Glasgow."
     },
     {
       "id": "q2",

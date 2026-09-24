@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-19",
+  "roundNumber": 31,
+  "seed": 20261019,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which of these novels did Jane Austen write?",
+      "options": [
+        "Middlemarch",
+        "Jane Eyre",
+        "Persuasion",
+        "Rebecca",
+        "Emma",
+        "Mansfield Park"
+      ],
+      "answers": [
+        2,
+        4,
+        5
+      ],
+      "fact": "Austen's books came out without her name. The first was credited only to 'A Lady'."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which of these characters are in The Simpsons?",
+      "options": [
+        "Kenny",
+        "Moe",
+        "Hank Hill",
+        "Apu",
+        "Milhouse",
+        "Stewie"
+      ],
+      "answers": [
+        1,
+        3,
+        4
+      ],
+      "fact": "Stewie is from Family Guy, Kenny from South Park, and Hank Hill from King of the Hill."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many ships sailed in the Spanish Armada?",
+      "answer": 130,
+      "min": 45,
+      "max": 180,
+      "unit": "ships",
+      "fact": "About 130 in 1588. Storms off Scotland and Ireland sank more of them than the English navy did."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "In Greek myth, how many years did the Trojan War last?",
+      "answer": 10,
+      "min": 2,
+      "max": 14,
+      "unit": "years",
+      "fact": "Ten years, and it ended with the wooden horse. Odysseus then took another ten to get home."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which country hosted the first modern Olympics, in 1896?",
+      "options": [
+        "Greece",
+        "France",
+        "Britain",
+        "USA"
+      ],
+      "answer": 0,
+      "hint": "It was chosen to honour the ancient Games.",
+      "fact": "The 1896 Games in Athens had 241 athletes, all of them men."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which bird is the fastest in a dive?",
+      "options": [
+        "Albatross",
+        "Peregrine falcon",
+        "Swift",
+        "Golden eagle"
+      ],
+      "answer": 1,
+      "hint": "It hunts other birds by dropping on them from above.",
+      "fact": "A peregrine falcon can pass 300 km/h in a dive, faster than any other animal."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

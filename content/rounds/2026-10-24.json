@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-24",
+  "roundNumber": 36,
+  "seed": 20261024,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these films did Steven Spielberg direct?",
+      "options": [
+        "Titanic",
+        "Jaws",
+        "E.T.",
+        "Jurassic Park",
+        "Star Wars",
+        "Back to the Future"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "Spielberg produced Back to the Future but did not direct it. Robert Zemeckis did."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these monarchs were Tudors?",
+      "options": [
+        "Anne",
+        "Victoria",
+        "Mary I",
+        "Charles I",
+        "Elizabeth I",
+        "Henry VIII"
+      ],
+      "answers": [
+        2,
+        4,
+        5
+      ],
+      "fact": "The Tudors ruled England for 118 years, from 1485 to 1603, when Elizabeth I died without children."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "How many squares are there on a Scrabble board?",
+      "answer": 225,
+      "min": 70,
+      "max": 310,
+      "unit": "squares",
+      "fact": "225, on a grid 15 squares wide and 15 tall."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "How many teeth does an adult dog have?",
+      "answer": 42,
+      "min": 12,
+      "max": 56,
+      "unit": "teeth",
+      "fact": "42, ten more than an adult human."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which blood cells fight infection?",
+      "options": [
+        "White cells",
+        "Red cells",
+        "Platelets",
+        "Plasma"
+      ],
+      "answer": 0,
+      "hint": "They are named after their colour.",
+      "fact": "Red blood cells carry oxygen and platelets help blood clot."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Which dance comes from Argentina?",
+      "options": [
+        "Flamenco",
+        "Salsa",
+        "Tango",
+        "Samba"
+      ],
+      "answer": 2,
+      "hint": "It was born in the dance halls of Buenos Aires.",
+      "fact": "The tango began in the 1880s in the working-class districts of Buenos Aires and Montevideo."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

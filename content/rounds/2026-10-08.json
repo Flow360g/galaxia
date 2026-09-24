@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-08",
+  "roundNumber": 20,
+  "seed": 20261008,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these countries stayed neutral in the Second World War?",
+      "options": [
+        "Ireland",
+        "Sweden",
+        "Greece",
+        "Norway",
+        "Switzerland",
+        "Belgium"
+      ],
+      "answers": [
+        0,
+        1,
+        4
+      ],
+      "fact": "Norway and Belgium both declared themselves neutral and were invaded anyway in 1940."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "Which of these countries are in South America?",
+      "options": [
+        "Panama",
+        "Chile",
+        "Uruguay",
+        "Peru",
+        "Guatemala",
+        "Honduras"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "Panama is the narrow join between the two continents and counts as Central America."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many carats is pure gold?",
+      "answer": 24,
+      "min": 8,
+      "max": 34,
+      "unit": "carats",
+      "fact": "24 carats, so 18 carat gold is 18 parts gold in 24."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How many years did Nelson Mandela spend in prison?",
+      "answer": 27,
+      "min": 8,
+      "max": 40,
+      "unit": "years",
+      "fact": "27 years, 18 of them on Robben Island. Four years after his release he was elected president."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which fictional detective is Belgian?",
+      "options": [
+        "Poirot",
+        "Clouseau",
+        "Maigret",
+        "Miss Marple"
+      ],
+      "answer": 0,
+      "hint": "Agatha Christie created him, and he is proud of his moustache.",
+      "fact": "Maigret's author was Belgian, but the detective himself is French."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which sport do teams play for the Stanley Cup?",
+      "options": [
+        "Basketball",
+        "American football",
+        "Baseball",
+        "Ice hockey"
+      ],
+      "answer": 3,
+      "hint": "It is played on ice.",
+      "fact": "The Stanley Cup was first awarded in 1893 and is named after a Governor General of Canada."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

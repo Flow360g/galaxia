@@ -687,7 +687,14 @@ short version is below; the reasoning is in that file.
   question pool never once came out in a draw of two. That, not the size of
   the pool, is what made practice runs feel like the same eight questions
   forever. If a draw ever looks lopsided again, check the stream before
-  blaming the content.
+  blaming the content. The practice button deals from a deck rather than
+  drawing blind: its seed is `<deck>.<n>`, the deck made up once per device
+  and the counter moved on one deal per run (`nextPracticeDeal` in
+  `storage.ts`, `galaxia:practice`), and `dealFromDeck` replays deals 0..n so
+  no question comes round again until its whole kind has been dealt. A blind
+  draw of two a kind repeats within a handful of runs whatever the pool size,
+  and testers read that as a small pool. Any other seed is still a one-off
+  draw, so `?shuffle=alpha` rebuilds exactly as before.
 
 ## Deliberately not done
 

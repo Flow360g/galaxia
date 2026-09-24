@@ -48,23 +48,23 @@
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "Which of these were wonders of the ancient world?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these are deserts?",
       "options": [
-        "Great Pyramid",
-        "Hanging Gardens",
-        "Parthenon",
-        "Great Wall",
-        "Colossus",
-        "Colosseum"
+        "Kalahari",
+        "Atacama",
+        "Serengeti",
+        "Taiga",
+        "Pampas",
+        "Gobi"
       ],
       "answers": [
         0,
         1,
-        4
+        5
       ],
-      "fact": "Only the Great Pyramid still stands. The other six were listed by Greek writers and are all long gone."
+      "fact": "Some weather stations in Chile's Atacama have gone years without recording any rain."
     },
     {
       "id": "q3",

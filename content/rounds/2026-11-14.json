@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-14",
+  "roundNumber": 57,
+  "seed": 20261114,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which of these are dog breeds?",
+      "options": [
+        "Shih Tzu",
+        "Ragdoll",
+        "Sphynx",
+        "Vizsla",
+        "Bengal",
+        "Whippet"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "Ragdoll, Bengal and Sphynx are all cat breeds. A Sphynx has almost no fur."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these are root vegetables?",
+      "options": [
+        "Celery",
+        "Leek",
+        "Beetroot",
+        "Parsnip",
+        "Asparagus",
+        "Carrot"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "Carrots were mostly purple or yellow until orange ones were bred in the Netherlands in the 1600s."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "At what temperature does water boil, in degrees Fahrenheit?",
+      "answer": 212,
+      "min": 80,
+      "max": 300,
+      "unit": "°F",
+      "fact": "212 °F at sea level. Water freezes at 32 °F, so the two are 180 degrees apart."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How many minutes long is an NBA basketball game, not counting stoppages?",
+      "answer": 48,
+      "min": 15,
+      "max": 65,
+      "unit": "minutes",
+      "fact": "Four quarters of 12 minutes, though with the clock stopping it usually takes more than two hours."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which mountains are usually taken as the border of Europe and Asia?",
+      "options": [
+        "Pyrenees",
+        "Carpathians",
+        "Urals",
+        "Alps"
+      ],
+      "answer": 2,
+      "hint": "They run north to south through Russia.",
+      "fact": "The Urals stretch about 2,500 km from the Arctic Ocean to Kazakhstan."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Who wrote the novel 1984?",
+      "options": [
+        "H. G. Wells",
+        "Orwell",
+        "Bradbury",
+        "Huxley"
+      ],
+      "answer": 1,
+      "hint": "The same author wrote Animal Farm.",
+      "fact": "George Orwell was a pen name. His real name was Eric Blair."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

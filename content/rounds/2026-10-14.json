@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-14",
+  "roundNumber": 26,
+  "seed": 20261014,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are Beatles songs?",
+      "options": [
+        "Yesterday",
+        "Let It Be",
+        "My Generation",
+        "Hey Jude",
+        "Imagine",
+        "Waterloo"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
+      "fact": "Paul McCartney woke up with the tune of Yesterday in his head and called it Scrambled Eggs until the real words came."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "Which of these are names for a baby animal?",
+      "options": [
+        "Cygnet",
+        "Boar",
+        "Leveret",
+        "Joey",
+        "Jenny",
+        "Drake"
+      ],
+      "answers": [
+        0,
+        2,
+        3
+      ],
+      "fact": "A leveret is a young hare. Unlike a baby rabbit, it is born with fur and its eyes open."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many teeth are in a child's full set of baby teeth?",
+      "answer": 20,
+      "min": 6,
+      "max": 28,
+      "unit": "teeth",
+      "fact": "Twenty, and the adult teeth are already waiting in the jaw underneath them."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How far is it from London to Paris in a straight line, in kilometres?",
+      "answer": 340,
+      "min": 120,
+      "max": 480,
+      "unit": "km",
+      "fact": "About 340 km. The Eurostar covers the journey in around two and a quarter hours."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "What colour is a polar bear's skin?",
+      "options": [
+        "Pink",
+        "White",
+        "Black",
+        "Grey"
+      ],
+      "answer": 2,
+      "hint": "It helps soak up heat from the sun.",
+      "fact": "A polar bear's fur is not white either. Each hair is clear and hollow, and scatters light."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which country did ABBA come from?",
+      "options": [
+        "Norway",
+        "Netherlands",
+        "Denmark",
+        "Sweden"
+      ],
+      "answer": 3,
+      "hint": "They won Eurovision in 1974 singing Waterloo, for their home country.",
+      "fact": "ABBA's name is made from the first letters of the four members' first names."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

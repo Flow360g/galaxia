@@ -69,26 +69,27 @@
     {
       "id": "q3",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 1,
-      "prompt": "How many players are on the field for one football team?",
-      "answer": 11,
-      "min": 2,
-      "max": 16,
-      "unit": "players",
-      "fact": "Eleven, including the goalkeeper. It has been eleven since the rules were written down in 1863."
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What percentage of the Earth's surface is covered by water?",
+      "answer": 71,
+      "min": 25,
+      "max": 100,
+      "unit": "%",
+      "fact": "About 71%, and almost all of it is salt water in the oceans."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "How hot is the surface of the Sun, in degrees Celsius?",
-      "answer": 5500,
-      "min": 1000,
-      "max": 8000,
-      "unit": "C",
-      "fact": "About 5,500 degrees at the surface, and around 15 million at the core."
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How heavy is an adult male African elephant, in kilograms?",
+      "answer": 6000,
+      "min": 1500,
+      "max": 10000,
+      "unit": "kg",
+      "log": true,
+      "fact": "About 6,000 kg. An elephant can eat around 150 kg of plants in a day."
     },
     {
       "id": "q5",

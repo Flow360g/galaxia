@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-15",
+  "roundNumber": 27,
+  "seed": 20261015,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these organs are part of the digestive system?",
+      "options": [
+        "Stomach",
+        "Kidney",
+        "Liver",
+        "Spleen",
+        "Lungs",
+        "Pancreas"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "The liver makes bile, which the gallbladder stores and squeezes into the gut to break down fat."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Which of these English words come from Arabic?",
+      "options": [
+        "Algebra",
+        "Sofa",
+        "Kindergarten",
+        "Tsunami",
+        "Coffee",
+        "Ballet"
+      ],
+      "answers": [
+        0,
+        1,
+        4
+      ],
+      "fact": "Algebra comes from al-jabr, a word in the title of a maths book written in Baghdad in the 800s."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "How many Oscars did the film Titanic win?",
+      "answer": 11,
+      "min": 3,
+      "max": 16,
+      "unit": "Oscars",
+      "fact": "Eleven, a record it shares with Ben-Hur and The Return of the King."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How long is the pitch at Wembley Stadium, in metres?",
+      "answer": 105,
+      "min": 35,
+      "max": 145,
+      "unit": "m",
+      "fact": "105 m by 68 m, the size FIFA recommends for international matches."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "In Greek myth, Athena was the goddess of what?",
+      "options": [
+        "Love",
+        "Wisdom",
+        "The hunt",
+        "The harvest"
+      ],
+      "answer": 1,
+      "hint": "Her bird was the owl.",
+      "fact": "Athens is named after her, and the Parthenon was built as her temple."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What is the capital of Canada?",
+      "options": [
+        "Montreal",
+        "Toronto",
+        "Ottawa",
+        "Vancouver"
+      ],
+      "answer": 2,
+      "hint": "It is not the biggest city. It sits on the river between Ontario and Quebec.",
+      "fact": "Queen Victoria picked Ottawa in 1857, partly as a compromise between English and French speaking Canada."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

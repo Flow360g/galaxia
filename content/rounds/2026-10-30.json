@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-30",
+  "roundNumber": 42,
+  "seed": 20261030,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these are parts of the human ear?",
+      "options": [
+        "Anvil",
+        "Larynx",
+        "Retina",
+        "Eardrum",
+        "Cochlea",
+        "Tonsil"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "The anvil is one of three tiny bones in the middle ear. With the hammer and stirrup, they are the smallest bones in your body."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "Which of these are types of knot?",
+      "options": [
+        "Reef",
+        "Spinnaker",
+        "Keel",
+        "Tiller",
+        "Bowline",
+        "Clove hitch"
+      ],
+      "answers": [
+        0,
+        4,
+        5
+      ],
+      "fact": "Spinnaker, keel and tiller are parts of a sailing boat, where knots like the bowline get used most."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "How long is Bohemian Rhapsody, in minutes?",
+      "answer": 5.9,
+      "min": 2,
+      "max": 8,
+      "unit": "minutes",
+      "fact": "Just under six minutes. The record company said it was far too long for radio."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How tall is the Burj Khalifa, in metres?",
+      "answer": 828,
+      "min": 250,
+      "max": 1100,
+      "unit": "m",
+      "fact": "828 m, more than twice the height of the Empire State Building."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which artist is famous for paintings of soup cans?",
+      "options": [
+        "Warhol",
+        "Pollock",
+        "Lichtenstein",
+        "Hockney"
+      ],
+      "answer": 0,
+      "hint": "He also made a famous print of Marilyn Monroe, repeated in bright colours.",
+      "fact": "Andy Warhol painted 32 Campbell's soup cans, one for every flavour on sale in 1962."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which spirit goes into a margarita?",
+      "options": [
+        "Gin",
+        "Rum",
+        "Tequila",
+        "Vodka"
+      ],
+      "answer": 2,
+      "hint": "It is made from the agave plant in Mexico.",
+      "fact": "A classic margarita is tequila, orange liqueur and lime, with salt on the rim."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

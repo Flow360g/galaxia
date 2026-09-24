@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-03",
+  "roundNumber": 46,
+  "seed": 20261103,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which of these are fielding positions in cricket?",
+      "options": [
+        "Scrum-half",
+        "Slip",
+        "Silly point",
+        "Shortstop",
+        "Gully",
+        "Winger"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "Silly point stands a few metres from the batter, which is exactly why it is called silly."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "Which of these spices come from a seed?",
+      "options": [
+        "Nutmeg",
+        "Saffron",
+        "Cinnamon",
+        "Cumin",
+        "Mustard",
+        "Ginger"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "Nutmeg and mace come from the same fruit. Nutmeg is the seed and mace is the red lace wrapped round it."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "How long is the Panama Canal, in kilometres?",
+      "answer": 82,
+      "min": 25,
+      "max": 110,
+      "unit": "km",
+      "fact": "About 82 km, and a ship takes around 8 to 10 hours to pass through it."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "How old was Mozart when he died?",
+      "answer": 35,
+      "min": 10,
+      "max": 50,
+      "unit": "years",
+      "fact": "35. He wrote more than 600 pieces of music, and started composing at five."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which sport do teams play for the Webb Ellis Cup?",
+      "options": [
+        "Cricket",
+        "Rugby league",
+        "Football",
+        "Rugby union"
+      ],
+      "answer": 3,
+      "hint": "It is named after a schoolboy said to have picked up the ball and run with it.",
+      "fact": "The story says William Webb Ellis invented rugby at Rugby School in 1823, though there is little proof it happened."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which kind of music came from Jamaica?",
+      "options": [
+        "Flamenco",
+        "Samba",
+        "Reggae",
+        "Salsa"
+      ],
+      "answer": 2,
+      "hint": "Bob Marley made it famous.",
+      "fact": "Reggae grew out of ska and rocksteady in the late 1960s."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

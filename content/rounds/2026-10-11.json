@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-11",
+  "roundNumber": 23,
+  "seed": 20261011,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which of these are elements on the periodic table?",
+      "options": [
+        "Brass",
+        "Steel",
+        "Cobalt",
+        "Neon",
+        "Bronze",
+        "Tin"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "Bronze, steel and brass are all alloys: metals mixed together. Bronze is mostly copper with a little tin."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which of these painters were Impressionists?",
+      "options": [
+        "Picasso",
+        "Rembrandt",
+        "Dalí",
+        "Degas",
+        "Monet",
+        "Renoir"
+      ],
+      "answers": [
+        3,
+        4,
+        5
+      ],
+      "fact": "The movement got its name from a critic mocking Monet's painting Impression, Sunrise."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many months is an elephant pregnant for?",
+      "answer": 22,
+      "min": 6,
+      "max": 30,
+      "unit": "months",
+      "fact": "About 22 months, the longest pregnancy of any land animal."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many years did the Ottoman Empire last?",
+      "answer": 623,
+      "min": 200,
+      "max": 850,
+      "unit": "years",
+      "fact": "623 years, from about 1299 until 1922."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Who directed Pulp Fiction?",
+      "options": [
+        "Tarantino",
+        "Coppola",
+        "Fincher",
+        "Scorsese"
+      ],
+      "answer": 0,
+      "hint": "He also made Reservoir Dogs and Kill Bill.",
+      "fact": "Pulp Fiction won the top prize at the Cannes Film Festival in 1994."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which country does kimchi come from?",
+      "options": [
+        "Japan",
+        "Korea",
+        "China",
+        "Vietnam"
+      ],
+      "answer": 1,
+      "hint": "It is served with almost every meal in Seoul.",
+      "fact": "Kimchi is fermented cabbage, and Korean homes often have a second fridge just for it."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

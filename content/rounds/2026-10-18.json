@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-18",
+  "roundNumber": 30,
+  "seed": 20261018,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which of these drinks are made from grapes?",
+      "options": [
+        "Cider",
+        "Champagne",
+        "Grappa",
+        "Whisky",
+        "Sake",
+        "Brandy"
+      ],
+      "answers": [
+        1,
+        2,
+        5
+      ],
+      "fact": "Grappa is made from the skins and seeds left over after the grapes have been pressed for wine."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these are insects?",
+      "options": [
+        "Beetle",
+        "Scorpion",
+        "Earwig",
+        "Woodlouse",
+        "Ant",
+        "Spider"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Insects have six legs. Spiders and scorpions have eight, and a woodlouse is a crustacean, like a crab."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many days did the Cuban Missile Crisis last?",
+      "answer": 13,
+      "min": 4,
+      "max": 18,
+      "unit": "days",
+      "fact": "Thirteen days in October 1962, the closest the Cold War came to nuclear war."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How much does an adult human brain weigh, in kilograms?",
+      "answer": 1.4,
+      "min": 0.4,
+      "max": 1.9,
+      "unit": "kg",
+      "fact": "About 1.4 kg, yet it uses around a fifth of the body's energy."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "What is a group of crows called?",
+      "options": [
+        "A murder",
+        "A parliament",
+        "A pod",
+        "A gaggle"
+      ],
+      "answer": 0,
+      "hint": "It is the darkest name of the four.",
+      "fact": "A parliament is owls, a gaggle is geese on the ground, and a pod is whales or dolphins."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which organ makes insulin?",
+      "options": [
+        "Spleen",
+        "Kidney",
+        "Pancreas",
+        "Liver"
+      ],
+      "answer": 2,
+      "hint": "It sits behind the stomach.",
+      "fact": "Insulin was first used to treat diabetes in 1922, on a 14-year-old boy in Toronto."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

@@ -27,23 +27,23 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "Which of these are planets in our solar system?",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these dishes come from Japan?",
       "options": [
-        "Europa",
-        "Uranus",
-        "Mercury",
-        "Titan",
-        "Ceres",
-        "Neptune"
+        "Kimchi",
+        "Sushi",
+        "Tempura",
+        "Dim sum",
+        "Pho",
+        "Udon"
       ],
       "answers": [
         1,
         2,
         5
       ],
-      "fact": "Europa and Titan are moons, and Ceres is a dwarf planet in the asteroid belt."
+      "fact": "Tempura is thought to have been brought to Japan by Portuguese traders and missionaries in the 1500s."
     },
     {
       "id": "q2",

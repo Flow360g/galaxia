@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-04",
+  "roundNumber": 47,
+  "seed": 20261104,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which of these are the primary colours of light?",
+      "options": [
+        "Green",
+        "Magenta",
+        "Blue",
+        "Red",
+        "Cyan",
+        "Yellow"
+      ],
+      "answers": [
+        0,
+        2,
+        3
+      ],
+      "fact": "Screens make every colour from red, green and blue dots. Printers use cyan, magenta and yellow ink instead."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these were dinosaurs?",
+      "options": [
+        "Triceratops",
+        "Velociraptor",
+        "Mammoth",
+        "Plesiosaur",
+        "Stegosaurus",
+        "Pterodactyl"
+      ],
+      "answers": [
+        0,
+        1,
+        4
+      ],
+      "fact": "Pterosaurs flew and plesiosaurs swam alongside the dinosaurs, but neither was a dinosaur."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How far is it around the Earth at the equator, in kilometres?",
+      "answer": 40075,
+      "min": 12000,
+      "max": 55000,
+      "unit": "km",
+      "fact": "About 40,075 km. The metre was first defined as a ten-millionth of the distance from the North Pole to the equator, which is why the answer is so close to 40,000."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "How many symphonies did Beethoven write?",
+      "answer": 9,
+      "min": 2,
+      "max": 13,
+      "unit": "symphonies",
+      "fact": "Nine. He was almost completely deaf when he wrote the last one."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "Which ocean lies between Africa and Australia?",
+      "options": [
+        "Atlantic",
+        "Pacific",
+        "Southern",
+        "Indian"
+      ],
+      "answer": 3,
+      "hint": "It is named after a country on its northern shore.",
+      "fact": "The Indian Ocean is the warmest of the world's oceans."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "What does \"al dente\" mean in Italian?",
+      "options": [
+        "To the tooth",
+        "Soft",
+        "With sauce",
+        "Well cooked"
+      ],
+      "answer": 0,
+      "hint": "It tells you the pasta should still have a little bite.",
+      "fact": "Pasta cooked al dente is firm in the middle when you bite it."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

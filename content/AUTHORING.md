@@ -36,7 +36,12 @@ Two rejects, and they matter more than the three levels:
 
 - **Above 90% is trivial.** "Which of these are made from milk", answered by
   butter, yoghurt and cheese against honey, olive oil and vinegar. Nobody
-  learns anything and the round has wasted a slot.
+  learns anything and the round has wasted a slot. The September playtest
+  pulled nineteen of these out of the pool, and they had a shape: a category
+  a five year old owns (cheeses, sports played over a net, citrus fruit), or
+  a PICK ONE whose answer is the most famous name in its field (who painted
+  the Sistine Chapel, who wrote Pride and Prejudice, which band made Abbey
+  Road). Both were marked 2, and both were free.
 - **Below 20% is obscure.** The player does not feel beaten, they feel the
   game is unfair, and they do not come back tomorrow.
 
@@ -69,7 +74,9 @@ wrong lanes are.** This is the rule that was broken most.
 - **Reject:** milk products against honey, olive oil and vinegar. The decoys
   are not even foods of the same kind.
 - **Level 1:** a category everyone knows, decoys that are the right shape.
-  Noble gases, with nitrogen, oxygen and hydrogen as the wrong lanes.
+  Birds of prey, with heron, pelican and albatross as the wrong lanes. (This
+  used to be noble gases, and a playtester who knows a lot found that one too
+  hard. It is a 3 now. Science vocabulary is not everyday knowledge.)
 - **Level 3:** decoys that are near misses. US presidents, with Franklin,
   Hamilton and Burr in the wrong lanes: all founding-era, all on the money or
   in the musical, none of them president.
@@ -109,6 +116,23 @@ rejects the shape by name so nobody "fixes" it by widening the range. Ask for
 a duration or a count instead: how long the Berlin Wall stood, how many people
 were aboard the Titanic.
 
+**Both ends of the slider must be answers somebody might believe.** The
+rules above make a linear slider run from about a fifth of the answer to
+about one and a half times it. That is fine for a quantity people are
+genuinely unsure of, and useless for one with a narrow range everyone
+already knows: a film is never 30 minutes long, so "how long is the first
+Star Wars film" on a 30..165 slider only ever gets guessed between 100 and
+160, and the band covers most of that. If the believable range is narrower
+than the slider, pick another question. Film lengths, and anything else
+everybody knows to within a factor of two, are out for this reason.
+
+**Reason, don't recall.** The best numbers are ones a player can work
+towards: minutes in a week, dots on a dice, how deep the Mariana Trench is
+if you know Everest. A number that can only be remembered (the Sun's surface
+temperature, the speed of light, the Moon's distance) is a coin toss for
+everyone who has not memorised it, and the playtest marked every one of them
+too hard. A recall number is at most one per round, and it is a 3.
+
 Difficulty here is whether the player has an anchor to reason from.
 
 - **Level 1:** a number most people have heard. A marathon is 42 km.
@@ -130,6 +154,16 @@ Four options, one right.
 - A question whose answer is counterintuitive is a fine level 3 (the country
   with the most time zones is France). A question whose answer is a trick is
   not.
+
+## Space is a fringe, not a subject
+
+Space lives in `misc` for a reason: questions about planets, moons and light
+years read as specialist knowledge to most players, however famous the facts
+feel to the person writing them. The playtest flagged nearly every space
+question as obscure, including ones marked 2. Keep it to one space question
+a day at most, prefer the ones everybody half knows (which planet spins on
+its side), and reach for film, music, history, food, sport and the body
+first.
 
 ## WHERE ON EARTH
 

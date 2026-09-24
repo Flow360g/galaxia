@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-06",
+  "roundNumber": 18,
+  "seed": 20261006,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which of these are bones in the human body?",
+      "options": [
+        "Ulna",
+        "Deltoid",
+        "Aorta",
+        "Cornea",
+        "Tibia",
+        "Femur"
+      ],
+      "answers": [
+        0,
+        4,
+        5
+      ],
+      "fact": "The femur, in your thigh, is the longest bone in the body: about a quarter of your height."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which of these countries share a land border with China?",
+      "options": [
+        "Vietnam",
+        "Cambodia",
+        "Bangladesh",
+        "Mongolia",
+        "Thailand",
+        "India"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "China borders fourteen countries, tied with Russia for the most in the world."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How high is a basketball hoop, in centimetres?",
+      "answer": 305,
+      "min": 100,
+      "max": 420,
+      "unit": "cm",
+      "fact": "Ten feet, the height James Naismith nailed his peach baskets at in 1891, and it has never changed."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 3,
+      "prompt": "How many strings does a concert harp have?",
+      "answer": 47,
+      "min": 12,
+      "max": 60,
+      "unit": "strings",
+      "fact": "47. The red strings are Cs and the black or blue ones are Fs, so the player can find their place."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What is the largest lake in Africa?",
+      "options": [
+        "Chad",
+        "Victoria",
+        "Malawi",
+        "Tanganyika"
+      ],
+      "answer": 1,
+      "hint": "It is named after a British queen.",
+      "fact": "Lake Victoria is shared by Uganda, Kenya and Tanzania, and the White Nile flows out of it."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which studio made Spirited Away?",
+      "options": [
+        "DreamWorks",
+        "Pixar",
+        "Aardman",
+        "Studio Ghibli"
+      ],
+      "answer": 3,
+      "hint": "It is a Japanese studio founded by Hayao Miyazaki.",
+      "fact": "Spirited Away won the Oscar for Best Animated Feature in 2003."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

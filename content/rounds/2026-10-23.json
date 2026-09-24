@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-23",
+  "roundNumber": 35,
+  "seed": 20261023,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these are amphibians?",
+      "options": [
+        "Toad",
+        "Iguana",
+        "Gecko",
+        "Axolotl",
+        "Tortoise",
+        "Newt"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "An axolotl can regrow a lost leg, and even parts of its heart and brain."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these US states border Canada?",
+      "options": [
+        "Minnesota",
+        "Montana",
+        "Iowa",
+        "Maine",
+        "Oregon",
+        "Wyoming"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
+      "fact": "Thirteen US states touch the Canadian border, counting the ones that meet it across the Great Lakes."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many passengers sailed to America on the Mayflower?",
+      "answer": 102,
+      "min": 35,
+      "max": 140,
+      "unit": "passengers",
+      "fact": "102 passengers in 1620, crammed below deck for more than two months."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How long is a giraffe's neck, in metres?",
+      "answer": 1.8,
+      "min": 0.3,
+      "max": 2.7,
+      "unit": "m",
+      "fact": "A giraffe's neck has seven bones in it, the same number as yours. Each one is just much longer."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Who discovered penicillin?",
+      "options": [
+        "Pasteur",
+        "Jenner",
+        "Lister",
+        "Fleming"
+      ],
+      "answer": 3,
+      "hint": "He was a Scottish scientist who noticed mould killing bacteria in a dish he had left out.",
+      "fact": "Alexander Fleming found it in 1928 after coming back from a holiday to a messy lab."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "What is the name of Batman's butler?",
+      "options": [
+        "Lucius",
+        "Alfred",
+        "Gordon",
+        "Jarvis"
+      ],
+      "answer": 1,
+      "hint": "Jarvis serves a different superhero.",
+      "fact": "Michael Caine played Alfred in all three of Christopher Nolan's Batman films."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}

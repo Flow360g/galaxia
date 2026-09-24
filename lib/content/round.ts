@@ -15,6 +15,47 @@ import round20261002 from "@/content/rounds/2026-10-02.json";
 import round20261003 from "@/content/rounds/2026-10-03.json";
 import round20261004 from "@/content/rounds/2026-10-04.json";
 import round20261005 from "@/content/rounds/2026-10-05.json";
+import round20261006 from "@/content/rounds/2026-10-06.json";
+import round20261007 from "@/content/rounds/2026-10-07.json";
+import round20261008 from "@/content/rounds/2026-10-08.json";
+import round20261009 from "@/content/rounds/2026-10-09.json";
+import round20261010 from "@/content/rounds/2026-10-10.json";
+import round20261011 from "@/content/rounds/2026-10-11.json";
+import round20261012 from "@/content/rounds/2026-10-12.json";
+import round20261013 from "@/content/rounds/2026-10-13.json";
+import round20261014 from "@/content/rounds/2026-10-14.json";
+import round20261015 from "@/content/rounds/2026-10-15.json";
+import round20261016 from "@/content/rounds/2026-10-16.json";
+import round20261017 from "@/content/rounds/2026-10-17.json";
+import round20261018 from "@/content/rounds/2026-10-18.json";
+import round20261019 from "@/content/rounds/2026-10-19.json";
+import round20261020 from "@/content/rounds/2026-10-20.json";
+import round20261021 from "@/content/rounds/2026-10-21.json";
+import round20261022 from "@/content/rounds/2026-10-22.json";
+import round20261023 from "@/content/rounds/2026-10-23.json";
+import round20261024 from "@/content/rounds/2026-10-24.json";
+import round20261025 from "@/content/rounds/2026-10-25.json";
+import round20261026 from "@/content/rounds/2026-10-26.json";
+import round20261027 from "@/content/rounds/2026-10-27.json";
+import round20261028 from "@/content/rounds/2026-10-28.json";
+import round20261029 from "@/content/rounds/2026-10-29.json";
+import round20261030 from "@/content/rounds/2026-10-30.json";
+import round20261031 from "@/content/rounds/2026-10-31.json";
+import round20261101 from "@/content/rounds/2026-11-01.json";
+import round20261102 from "@/content/rounds/2026-11-02.json";
+import round20261103 from "@/content/rounds/2026-11-03.json";
+import round20261104 from "@/content/rounds/2026-11-04.json";
+import round20261105 from "@/content/rounds/2026-11-05.json";
+import round20261106 from "@/content/rounds/2026-11-06.json";
+import round20261107 from "@/content/rounds/2026-11-07.json";
+import round20261108 from "@/content/rounds/2026-11-08.json";
+import round20261109 from "@/content/rounds/2026-11-09.json";
+import round20261110 from "@/content/rounds/2026-11-10.json";
+import round20261111 from "@/content/rounds/2026-11-11.json";
+import round20261112 from "@/content/rounds/2026-11-12.json";
+import round20261113 from "@/content/rounds/2026-11-13.json";
+import round20261114 from "@/content/rounds/2026-11-14.json";
+import round20261115 from "@/content/rounds/2026-11-15.json";
 import { pickSites } from "@/lib/content/sites";
 import {
   ROUND_PROFILE,
@@ -22,6 +63,7 @@ import {
   rangeFor,
   trackShare,
 } from "@/lib/content/difficulty";
+import { nextPracticeDeal } from "@/lib/game/storage";
 import { TOPICS } from "@/lib/game/types";
 import type { EarthQuestion, Question, Round, Topic } from "@/lib/game/types";
 
@@ -75,6 +117,47 @@ const POOL: Round[] = [
   round20261003,
   round20261004,
   round20261005,
+  round20261006,
+  round20261007,
+  round20261008,
+  round20261009,
+  round20261010,
+  round20261011,
+  round20261012,
+  round20261013,
+  round20261014,
+  round20261015,
+  round20261016,
+  round20261017,
+  round20261018,
+  round20261019,
+  round20261020,
+  round20261021,
+  round20261022,
+  round20261023,
+  round20261024,
+  round20261025,
+  round20261026,
+  round20261027,
+  round20261028,
+  round20261029,
+  round20261030,
+  round20261031,
+  round20261101,
+  round20261102,
+  round20261103,
+  round20261104,
+  round20261105,
+  round20261106,
+  round20261107,
+  round20261108,
+  round20261109,
+  round20261110,
+  round20261111,
+  round20261112,
+  round20261113,
+  round20261114,
+  round20261115,
 ]
   // Hydrate before validating: the earth slots carry no site of their own, so
   // validation has nothing to check until the pool has filled them in.
@@ -458,9 +541,13 @@ const MIX: ReadonlyArray<{ type: Question["type"]; count: number }> = [
  * A fresh seed for a practice run. Called from a click handler, never during
  * a render: the seed goes in the URL so the round it builds can be opened
  * again, which a seed made up on the server could not be.
+ *
+ * It is a deal from this device's deck (`<deck>.<n>`, see `nextPracticeDeal`)
+ * rather than a random string, so a tester works through the whole pool
+ * before any question comes round again.
  */
 export function newShuffleSeed(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return nextPracticeDeal();
 }
 
 /**
@@ -472,7 +559,65 @@ export function practiceUrl(seed: string, ship?: string): string {
   return `/play?shuffle=${seed}&debug=1${shipParam}`;
 }
 
+/** `<deck>.<n>`: the nth deal from a device's deck. Anything else is a one-off draw. */
+const DEAL = /^([a-z0-9]+)\.(\d{1,5})$/;
+
 export function getShuffledRound(seed: string): Round {
+  const deal = DEAL.exec(seed);
+  const questions = deal
+    ? dealFromDeck(deal[1] ?? "", Number(deal[2]))
+    : draw((type) => seededShuffle(quizOf(type), `${seed}:${type}`));
+  return practiceRound(questions, seed);
+}
+
+/** Every question of one kind in the pool, in pool order. */
+function quizOf(type: Question["type"]): Question[] {
+  return POOL.flatMap((round) => round.questions).filter((q) => q.type === type);
+}
+
+/**
+ * The nth deal from a deck: no question comes round twice until every
+ * question of its kind has been dealt.
+ *
+ * A one-off draw of two from the pool looks fresh on paper, but a tester
+ * flies dozens of practice runs, and with any pool the birthday problem does
+ * the rest: the repeats start within a handful of runs and never stop. So a
+ * device keeps one deck per kind, shuffled on its own seed, and each run
+ * deals from the top. When a kind runs short the rest of its deck goes first
+ * and a fresh shuffle follows it.
+ *
+ * Replayed from deal 0 on every call rather than stored, so a `<deck>.<n>`
+ * seed still rebuilds the identical round anywhere it is opened. The steering
+ * in `draw` may pass over a question to keep a round's corners and difficulty
+ * in shape; it stays in the deck and comes up on a later deal.
+ */
+function dealFromDeck(deck: string, n: number): Question[] {
+  const kinds = MIX.map(({ type }) => type);
+  const cycle = new Map(kinds.map((type) => [type, 0]));
+  const left = new Map(kinds.map((type) => [type, seededShuffle(quizOf(type), `${deck}:${type}:0`)]));
+  let dealt: Question[] = [];
+  for (let i = 0; i <= n; i += 1) {
+    for (const { type, count } of MIX) {
+      const rest = left.get(type) ?? [];
+      if (rest.length >= count) continue;
+      const next = (cycle.get(type) ?? 0) + 1;
+      cycle.set(type, next);
+      const fresh = seededShuffle(quizOf(type), `${deck}:${type}:${next}`).filter((q) => !rest.includes(q));
+      left.set(type, [...rest, ...fresh]);
+    }
+    // `draw` splices what it takes out of the arrays it is handed, which is
+    // exactly how the deck is used up.
+    dealt = draw((type) => left.get(type) ?? []);
+  }
+  return dealt;
+}
+
+/**
+ * Pick a round's six quiz questions from per-kind orderings, steering the
+ * corners and the difficulty as it goes. Takes each question by splicing it
+ * out of the array `order` returned for its kind.
+ */
+function draw(order: (type: Question["type"]) => Question[]): Question[] {
   const questions: Question[] = [];
   // Spread the corners as the draw goes. A blind draw from a pool this size
   // handed testers three space questions often enough to be the reason the
@@ -488,8 +633,7 @@ export function getShuffledRound(seed: string): Round {
   let levels = 0;
 
   for (const { type, count } of MIX) {
-    const pool = POOL.flatMap((round) => round.questions).filter((q) => q.type === type);
-    const shuffled = seededShuffle(pool, `${seed}:${type}`);
+    const shuffled = order(type);
     for (let taken = 0; taken < count; taken += 1) {
       const room = (q: Question) => q.type !== "earth" && (corners.get(q.topic) ?? 0) < TOPIC_CAP;
       // After this pick, can the remaining slots still land inside the band?
@@ -512,6 +656,12 @@ export function getShuffledRound(seed: string): Round {
       questions.push(picked);
     }
   }
+  return questions;
+}
+
+/** A practice round around six drawn quiz questions. */
+function practiceRound(drawn: Question[], seed: string): Round {
+  const questions = [...drawn];
   // The earth slots carry only an id and a prompt wherever they come from, so
   // any round's will do; the sites come from `pickSites`, seeded here rather
   // than on a date so two shuffles are two different pairs.

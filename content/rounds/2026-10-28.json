@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-28",
+  "roundNumber": 40,
+  "seed": 20261028,
+  "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are Snow White's seven dwarfs?",
+      "options": [
+        "Dizzy",
+        "Grouchy",
+        "Sneezy",
+        "Bashful",
+        "Dopey",
+        "Jumpy"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
+      "fact": "The dwarfs only got names in Disney's 1937 film. In the Grimm fairy tale they have none."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these are poems rather than novels?",
+      "options": [
+        "Ulysses",
+        "The Odyssey",
+        "Paradise Lost",
+        "Dracula",
+        "Don Quixote",
+        "The Raven"
+      ],
+      "answers": [
+        1,
+        2,
+        5
+      ],
+      "fact": "James Joyce's novel Ulysses borrows its shape from the Odyssey, the poem about the same hero."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How far do you travel in an Ironman triathlon, in kilometres?",
+      "answer": 226,
+      "min": 70,
+      "max": 310,
+      "unit": "km",
+      "fact": "About 226 km: a 3.8 km swim, a 180 km bike ride and a full marathon."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "How many syllables are there in a haiku?",
+      "answer": 17,
+      "min": 5,
+      "max": 24,
+      "unit": "syllables",
+      "fact": "Seventeen, in lines of five, seven and five."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Who was the first person to reach the South Pole?",
+      "options": [
+        "Shackleton",
+        "Scott",
+        "Hillary",
+        "Amundsen"
+      ],
+      "answer": 3,
+      "hint": "He was Norwegian, and he used dog sleds.",
+      "fact": "Roald Amundsen got there in December 1911, five weeks before Robert Falcon Scott."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "In which country is Machu Picchu?",
+      "options": [
+        "Chile",
+        "Mexico",
+        "Bolivia",
+        "Peru"
+      ],
+      "answer": 3,
+      "hint": "The nearest big city is Cusco, once the capital of the Inca Empire.",
+      "fact": "Machu Picchu was built for an Inca emperor in the 1400s and was abandoned about a century later."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ]
+}
