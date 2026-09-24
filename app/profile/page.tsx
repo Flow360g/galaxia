@@ -97,8 +97,9 @@ export default async function ProfilePage({
           <>
             <PracticeLink className={`${styles.practice} arcade`} />
             <span className={styles.practiceNote}>
-              A practice run picks new questions every time. It is not saved
-              and does not count towards your record.
+              A practice run picks new questions every time. Any ship can fly
+              it, locked or not. It is not saved and does not count towards
+              your record.
             </span>
           </>
         ) : null}

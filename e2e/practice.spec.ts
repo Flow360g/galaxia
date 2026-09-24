@@ -51,6 +51,20 @@ test("the practice run is behind ?debug=1, and nowhere else", async ({ page }) =
   await expect(page).toHaveURL(/\/play\?shuffle=[^&]+&debug=1/, { timeout: 20_000 });
 });
 
+test("practice can fly any hull, locked ones included, and stores none", async ({ page }) => {
+  await seedFlown(page, 0);
+  await page.goto("/profile?debug=1");
+  await expect(page.getByTestId("profile-shuffle")).toBeVisible({ timeout: 20_000 });
+
+  // The limited edition is never unlocked on a fresh device, and still flies.
+  await page.getByTestId("practice-ship-seraph").click();
+  await page.getByTestId("profile-shuffle").click();
+  await expect(page).toHaveURL(/\/play\?shuffle=[^&]+&debug=1&ship=seraph/, {
+    timeout: 20_000,
+  });
+  expect(await page.evaluate(() => localStorage.getItem("galaxia:ship"))).toBeNull();
+});
+
 test("a seed rebuilds its round, and two seeds are two rounds", async ({ page }) => {
   await seedFlown(page);
 
