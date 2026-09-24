@@ -348,11 +348,16 @@
 }
 
 .laneText {
+  display: block;
+  width: 100%;
   font-size: 12px;
   line-height: 1.15;
-  /* Long labels in a sixth of a phone are the normal case, not the edge. */
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  /* Long labels in a sixth of a phone are the normal case, not the edge.
+     Words wrap only at spaces; a word too long for the square is shrunk to
+     fit by `fitLabels` in Hud.tsx, never split across two lines. */
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
 }
 
 .lane:not(:disabled):hover,
@@ -774,6 +779,34 @@
     transform: translateY(3px);
     opacity: 0.6;
   }
+}
+
+/*
+ * The first PICK ONE question: the bank nudge's twin, pointing down at BOOST
+ * in the tools row. It sits in the band, right-aligned over the button, and
+ * the arrow lands on the middle of BOOST, which is the right half of a row
+ * split by a 6px gap.
+ */
+.boostNudge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-bottom: -4px;
+  pointer-events: none;
+  text-align: right;
+  animation: cornerIn 260ms ease-out;
+}
+
+.boostNudgeArrow {
+  width: 0;
+  height: 0;
+  margin-right: calc(25% - 1.5px - 7px);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid #ff8a1f;
+  filter: drop-shadow(0 0 6px rgba(255, 138, 31, 0.6));
+  animation: nudgeNod 1100ms ease-in-out infinite;
 }
 
 .boostOn {
@@ -1725,6 +1758,8 @@
   .bankNudge,
   .bankNudgeCall,
   .bankNudgeArrow,
+  .boostNudge,
+  .boostNudgeArrow,
   .gaugeFull,
   .burnFull:not(:disabled),
   .burnHot:not(:disabled),
@@ -1796,9 +1831,10 @@
     gap: 4px;
   }
 
+  /* Every pixel of width here goes to the longest word in the row. */
   .lane {
     min-height: 50px;
-    padding: 5px 2px;
+    padding: 5px 1px;
   }
 
   .laneText {

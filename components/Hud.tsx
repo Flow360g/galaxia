@@ -164,6 +164,16 @@ export function Hud({
     state?.encounter === 0 &&
     state?.phase === "approach" &&
     (state?.cluster?.charge ?? 0) > 0;
+  /*
+   * The same nudge for BOOST, on the run's first PICK ONE question only.
+   * Testers could not tell whether BOOST was pressed before the answer or
+   * after it, so until it is armed a callout over the button says: first.
+   */
+  const boostNudge =
+    question?.type === "mcq" &&
+    state?.encounter === round.questions.findIndex((q) => q.type === "mcq") &&
+    answering &&
+    !state?.boostArmed;
   const isEarth = question?.type === "earth";
   const isVector = question?.type === "vector";
   const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
@@ -374,6 +384,16 @@ export function Hud({
                 onLanes={onLanes}
               />
             )}
+
+            {boostNudge ? (
+              <div className={styles.boostNudge} data-testid="boost-nudge" aria-hidden="true">
+                <span className={styles.bankNudgeCall}>
+                  <span className={`${styles.bankNudgeLead} arcade`}>TAP BOOST FIRST</span>
+                  <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
+                </span>
+                <span className={styles.boostNudgeArrow} />
+              </div>
+            ) : null}
 
             {/* No tools on the approach to the station: there is nothing to
                 scan and nothing to boost through. */}
@@ -603,6 +623,7 @@ function LaneRow({
       return (box.left + box.width / 2) / width;
     });
     if (fractions.length) report.current(fractions);
+    fitLabels(row);
   }, []);
 
   useLayoutEffect(() => {
@@ -615,6 +636,8 @@ function LaneRow({
     const observer = new ResizeObserver(measure);
     observer.observe(row);
     window.addEventListener("resize", measure);
+    // A late web font changes every word's width; fit again once it lands.
+    document.fonts?.ready.then(measure).catch(() => {});
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", measure);
@@ -642,12 +665,41 @@ function LaneRow({
             data-struck={hit}
           >
             <span className={`${styles.laneKey} arcade`}>{index + 1}</span>
-            <span className={styles.laneText}>{option}</span>
+            <span className={styles.laneText} data-lane-text>
+              {option}
+            </span>
           </button>
         );
       })}
     </div>
   );
+}
+
+/** Smallest a lane label may shrink to before a word is allowed to break. */
+const LANE_TEXT_MIN_PX = 7;
+
+/**
+ * Shrink each lane label until its longest word fits the square. A word must
+ * never start on one line and finish on the next ("Kangchenju / nga"), and a
+ * sixth of a phone is narrow, so a long word takes a smaller size instead.
+ * Only if even the floor cannot hold it is the word allowed to break.
+ */
+function fitLabels(row: HTMLElement): void {
+  row.querySelectorAll<HTMLElement>("[data-lane-text]").forEach((label) => {
+    label.style.fontSize = "";
+    label.style.letterSpacing = "";
+    label.style.overflowWrap = "";
+    const width = label.clientWidth;
+    if (!width || label.scrollWidth <= width) return;
+    // Squeezed labels also close up a touch, which buys a size or two back.
+    label.style.letterSpacing = "-0.03em";
+    let size = parseFloat(getComputedStyle(label).fontSize);
+    while (size > LANE_TEXT_MIN_PX && label.scrollWidth > width) {
+      size -= 0.5;
+      label.style.fontSize = `${size}px`;
+    }
+    if (label.scrollWidth > width) label.style.overflowWrap = "anywhere";
+  });
 }
 
 /**

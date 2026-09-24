@@ -155,7 +155,7 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
         "Really sure? Tap BOOST first for double points. Wrong with BOOST on and you lose points.",
       ],
       details: [
-        `You get ${ENCOUNTER.thrustSeconds} seconds. A correct answer scores ${pts(SCORE.laneShare).toLowerCase()}, or ${pts(1).toLowerCase()} with BOOST.`,
+        `You get ${ENCOUNTER.thrustSeconds + ENCOUNTER.mcqBonusSeconds} seconds. A correct answer scores ${pts(SCORE.laneShare).toLowerCase()}, or ${pts(1).toLowerCase()} with BOOST.`,
         `A wrong answer scores ${SCORE.penalty.lane} points and uses one of your ${SHIELDS.perRun} shields. Wrong with BOOST on loses ${SCORE.penalty.laneBoosted} points as well.`,
         HINT_LINE,
       ],
