@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "How many countries are there in South America?",
-      "answer": 12,
-      "min": 4,
-      "max": 17,
-      "unit": "countries",
-      "fact": "Twelve. French Guiana is part of France, and so counts as part of the European Union."
+      "prompt": "How long is the Suez Canal, in kilometres?",
+      "answer": 193,
+      "min": 0,
+      "max": 500,
+      "unit": "km",
+      "fact": "About 193 km, joining the Mediterranean to the Red Sea with no locks at all."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How many years did Queen Victoria reign?",
       "answer": 63,
-      "min": 20,
-      "max": 90,
+      "min": 0,
+      "max": 200,
       "unit": "years",
       "fact": "63 years, from 1837 to 1901. Elizabeth II passed her record in 2015."
     },
@@ -75,7 +75,7 @@
       "type": "mcq",
       "topic": "screen",
       "difficulty": 1,
-      "prompt": "Which group was Beyonc\u00e9 a member of?",
+      "prompt": "Which group was Beyoncé a member of?",
       "options": [
         "TLC",
         "Destiny's Child",

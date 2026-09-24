@@ -53,9 +53,10 @@
       "difficulty": 2,
       "prompt": "How many minutes are there in a week?",
       "answer": 10080,
-      "min": 3000,
-      "max": 14000,
+      "min": 0,
+      "max": 20000,
       "unit": "minutes",
+      "route": "60 minutes an hour, times 24 hours, times 7 days = 10,080.",
       "fact": "60 times 24 times 7 makes 10,080."
     },
     {
@@ -65,8 +66,8 @@
       "difficulty": 2,
       "prompt": "How many litres of blood are in an adult's body?",
       "answer": 5,
-      "min": 1,
-      "max": 7.5,
+      "min": 0,
+      "max": 20,
       "unit": "litres",
       "fact": "About five litres, and your heart pumps all of it round your body roughly once a minute."
     },

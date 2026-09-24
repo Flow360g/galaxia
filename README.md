@@ -78,15 +78,16 @@ asteroid called -> thrust drains while you think -> answer locks -> the rock str
   warps in and cloaks ahead of you.
 - **Vector.** Encounters three and four. A numeric question with a slider.
   Drag to aim: the ship slides across the corridor to match and a faint aim
-  line points ahead. LOCK & FIRE sends the beam and the alien decloaks at the
-  truth. Error is a fraction of the true answer, the same bands for every
-  question (`VECTOR.bands`). Within 5% is a DIRECT HIT: 100 points, slingshot
-  burst, the alien shatters and a salvage capsule flies back, restoring a
-  shield or, with all three up, adding a NOVA. Within 10% is a CLOSE hit: 50
-  points and a graded burst. Within 15% is a GRAZE: nothing earned, nothing
-  taken, streak untouched. Beyond it the alien returns fire: minus 25, a
-  shield down and a collision, or a wreck with none left. NOVA narrows the
-  slider to a window around the truth. Boost is off.
+  line points ahead. The slider is a ruler of 100 steps and opens empty; FIRE
+  waits until a guess is on it, then sends the beam and the alien decloaks at
+  the truth. Every step between the guess and the answer costs 5 of the 200
+  points. Within one step is DEAD ON: slingshot burst, the alien shatters and
+  a salvage capsule flies back, restoring a shield or, with all three up,
+  adding a hint. Within 10 steps is a hit that lifts the streak. Up to 40
+  steps is a graze: still points, nothing taken, streak untouched. Beyond 40
+  the alien returns fire: minus 25, a shield down and a collision, or a wreck
+  with none left. The hint narrows the slider to a window around the truth.
+  Boost is off.
 - **Shields.** Three per run, shown as pips in the top readout. Every wrong
   lane costs one; at zero, every miss is a wreck. A direct hit on a Vector
   salvages one back.

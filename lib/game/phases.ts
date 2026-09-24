@@ -1,4 +1,4 @@
-import { maxPointsAt } from "./Score";
+import { maxPointsAt, vectorShare } from "./Score";
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
 import { CLUSTER, ENCOUNTER, NOVA, SCORE, SHIELDS, STATION, VECTOR } from "./Tuning";
 import type { Question, Round, RunSummary } from "./types";
@@ -66,8 +66,37 @@ function lose(points: number): string {
   return `LOSE ${Math.round(points)} POINTS`;
 }
 
-function percent(fraction: number): string {
-  return `${Math.round(fraction * 100)}%`;
+/** Points one step on the slider costs, at the base every question shares. */
+function stepCost(): number {
+  return Math.round(SCORE.perEncounter / VECTOR.zeroAt);
+}
+
+/**
+ * GUESS THE NUMBER's table, one row per verdict, each quoting what that band
+ * of steps is worth. Built from `VECTOR.verdicts` and the straight line in
+ * `vectorShare`, so the card cannot disagree with what the run pays.
+ */
+function vectorRows(): ScoringRow[] {
+  const rows: ScoringRow[] = [];
+  let from = 0;
+  for (const { within, label } of VECTOR.verdicts) {
+    const best = Math.round(SCORE.perEncounter * vectorShare(from));
+    const worst = Math.round(SCORE.perEncounter * vectorShare(within));
+    const figure = best === worst ? `${best} POINTS` : `${worst} TO ${best} POINTS`;
+    const graze = from > VECTOR.hitWithin;
+    rows.push({
+      label,
+      worth: from === 0 ? `${figure} + SHIELD` : graze ? `${figure} · NO HARM` : figure,
+      tone: graze ? "neutral" : "good",
+    });
+    from = within + 1;
+  }
+  rows.push({
+    label: "WAY OFF",
+    worth: `-${SCORE.penalty.collision} POINTS · SHIELD USED`,
+    tone: "bad",
+  });
+  return rows;
 }
 
 const FULL_CHARGE = CLUSTER.chargeMultiplier.length - 1;
@@ -124,27 +153,14 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
       oneLiner: "Guess a number. The closer, the better.",
       rules: [
         `${count(n, "question")}The answer is always a number.`,
-        "Slide to your guess and tap FIRE. The closer you are, the more points you get.",
+        "Tap the slider where you think the answer is, then tap FIRE. The closer you are, the more points you get.",
       ],
       details: [
-        `Within ${percent(VECTOR.bands.direct)} of the answer scores full points and wins back a shield. Within ${percent(VECTOR.bands.close)} scores half. Within ${percent(VECTOR.bands.graze)} is a near miss: no points, no harm.`,
-        `Any further out is way off: you lose ${SCORE.penalty.collision} points and a shield. You have ${SHIELDS.perRun} shields for the whole run, and each one saves you from a wrong answer. With none left, a miss costs more.`,
+        `The slider has ${VECTOR.notches} steps. Tap it to put your guess on it, then tap FIRE. Every step away from the answer costs ${stepCost()} points. Land within ${VECTOR.deadOnWithin} step${VECTOR.deadOnWithin === 1 ? "" : "s"} of it and you are dead on, which wins back a shield.`,
+        `More than ${VECTOR.wildBeyond} steps away is way off: you lose ${SCORE.penalty.collision} points and a shield. You have ${SHIELDS.perRun} shields for the whole run, and each one saves you from a wrong answer. With none left, a miss costs more.`,
         HINT_LINE,
       ],
-      scoring: [
-        {
-          label: `WITHIN ${percent(VECTOR.bands.direct)}`,
-          worth: `${pts(SCORE.vectorDirect)} + SHIELD`,
-          tone: "good",
-        },
-        { label: `WITHIN ${percent(VECTOR.bands.close)}`, worth: pts(SCORE.vectorGlance), tone: "good" },
-        {
-          label: `WITHIN ${percent(VECTOR.bands.graze)}`,
-          worth: "0 POINTS · NO HARM",
-          tone: "neutral",
-        },
-        { label: "WAY OFF", worth: `-${SCORE.penalty.collision} POINTS · SHIELD USED`, tone: "bad" },
-      ],
+      scoring: vectorRows(),
     },
     mcq: {
       type: "mcq",

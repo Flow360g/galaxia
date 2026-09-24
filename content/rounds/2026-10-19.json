@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How long is Bohemian Rhapsody, in minutes?",
       "answer": 5.9,
-      "min": 2,
-      "max": 8,
+      "min": 0,
+      "max": 20,
       "unit": "minutes",
       "fact": "Just under six minutes. The record company said it was far too long for radio."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How tall is the Burj Khalifa, in metres?",
       "answer": 828,
-      "min": 250,
-      "max": 1100,
+      "min": 0,
+      "max": 2500,
       "unit": "m",
       "fact": "828 m, more than twice the height of the Empire State Building."
     },

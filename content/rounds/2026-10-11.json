@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "screen",
       "difficulty": 1,
-      "prompt": "How many seasons of Game of Thrones were made?",
-      "answer": 8,
-      "min": 2,
-      "max": 11,
-      "unit": "seasons",
-      "fact": "Eight, from 2011 to 2019. The last season has only six episodes."
+      "prompt": "In what year was the film Titanic released?",
+      "answer": 1997,
+      "min": 1825,
+      "max": 2025,
+      "year": true,
+      "fact": "December 1997. It became the first film to take more than a billion dollars at the box office."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How long is a Formula 1 Grand Prix, in kilometres?",
       "answer": 305,
-      "min": 100,
-      "max": 420,
+      "min": 0,
+      "max": 1000,
       "unit": "km",
       "fact": "The fewest laps that take a car past 305 km. Monaco is the exception, at about 260 km."
     },

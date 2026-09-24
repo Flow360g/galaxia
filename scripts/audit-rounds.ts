@@ -18,12 +18,12 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { pickSites } from "@/lib/content/sites";
 import {
+  ANSWER_NOTCHES,
   ROUND_PROFILE,
-  TRACK_SHARE,
-  answerAt,
+  answerNotch,
   checkVector,
+  notchesForDouble,
   rangeFor,
-  trackShare,
 } from "@/lib/content/difficulty";
 import type { Question, Round, Topic, VectorQuestion } from "@/lib/game/types";
 
@@ -82,22 +82,32 @@ for (const type of ["cluster", "vector", "mcq"] as const) {
   );
 }
 
-// ------------------------------------------------------ vector geometry
-head("GUESS THE NUMBER", `close band must cover ${pct(TRACK_SHARE.min)}..${pct(TRACK_SHARE.max)} of the slider`);
-console.log("  round       id    answer         range                 band    at    ");
+// ------------------------------------------------------ vector rulers
+head(
+  "GUESS THE NUMBER",
+  `round-number ruler, answer between notch ${ANSWER_NOTCHES.min} and ${ANSWER_NOTCHES.max}`,
+);
+// "x2" is how many notches a guess of double the answer lands from it: how
+// forgiving the range is. Under 10 and a factor of two is nearly free; past
+// the wild line and it costs a shield.
+console.log("  round       id    answer         range                 notch   x2   route");
 for (const round of rounds) {
   for (const q of round.questions) {
     if (q.type !== "vector") continue;
     const v = q as VectorQuestion;
     const bad = checkVector(v);
-    const range = `${fmt(v.min)}..${fmt(v.max)}${v.log ? " log" : ""}`;
+    // A year has no "double"; a calendar is not a quantity.
+    const show = (value: number) => (v.year ? String(value) : fmt(value));
+    const double = v.year ? "-" : String(Math.round(notchesForDouble(v)));
     console.log(
-      `  ${round.date}  ${v.id.padEnd(4)}  ${fmt(v.answer).padStart(10)}  ${range.padEnd(20)}  ` +
-        `${pct(trackShare(v)).padStart(6)}  ${answerAt(v).toFixed(2)}  ${bad.length ? "FAIL" : "ok"}`,
+      `  ${round.date}  ${v.id.padEnd(4)}  ${show(v.answer).padStart(10)}  ` +
+        `${`${show(v.min)}..${show(v.max)}`.padEnd(20)}  ${String(answerNotch(v)).padStart(5)}  ` +
+        `${double.padStart(4)}   ${v.route ? "yes" : "-"}` +
+        `${bad.length ? "   FAIL" : ""}`,
     );
     for (const fault of bad) console.log(flag(fault));
     if (bad.length) {
-      const fix = rangeFor(v.answer);
+      const fix = rangeFor(v.answer, v.year === true);
       console.log(`     try min ${fmt(fix.min)}, max ${fmt(fix.max)}`);
     }
   }
@@ -159,10 +169,6 @@ process.exit(faults === 0 ? 0 : 1);
 
 function head(title: string, note: string): void {
   console.log(`\n${title}  ${note}\n${"-".repeat(72)}`);
-}
-
-function pct(v: number): string {
-  return `${Math.round(v * 1000) / 10}%`;
 }
 
 function fmt(v: number): string {

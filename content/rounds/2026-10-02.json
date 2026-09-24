@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How many seconds did the Wright brothers' first powered flight last?",
       "answer": 12,
-      "min": 2,
-      "max": 18,
+      "min": 0,
+      "max": 25,
       "unit": "seconds",
       "fact": "Twelve seconds, covering 37 m. That is shorter than the wingspan of a jumbo jet."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "sport",
       "difficulty": 2,
-      "prompt": "How many players does an ice hockey team have on the ice?",
-      "answer": 6,
-      "min": 1,
-      "max": 9,
-      "unit": "players",
-      "fact": "Six, including the goalie, and players swap on and off every minute or so."
+      "prompt": "How much does a tennis ball weigh, in grams?",
+      "answer": 58,
+      "min": 0,
+      "max": 200,
+      "unit": "g",
+      "fact": "Between 56 and 59.4 g by the rules, so about the weight of an egg."
     },
     {
       "id": "q5",
@@ -93,14 +93,14 @@
       "difficulty": 2,
       "prompt": "Which sauce is made from egg yolks, butter and lemon?",
       "options": [
-        "B\u00e9chamel",
+        "Béchamel",
         "Hollandaise",
         "Mornay",
         "Aioli"
       ],
       "answer": 1,
       "hint": "It is the sauce on eggs Benedict.",
-      "fact": "B\u00e9chamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
+      "fact": "Béchamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
     },
     {
       "id": "q7",

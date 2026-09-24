@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How many numbers are there on a European roulette wheel?",
       "answer": 37,
-      "min": 12,
-      "max": 52,
+      "min": 0,
+      "max": 100,
       "unit": "numbers",
       "fact": "37: 1 to 36 plus a single green zero. American wheels add a double zero."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How long is the Great Barrier Reef, in kilometres?",
       "answer": 2300,
-      "min": 700,
-      "max": 3200,
+      "min": 0,
+      "max": 10000,
       "unit": "km",
       "fact": "About 2,300 km, made of nearly 3,000 separate reefs."
     },

@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How many squares are there on a Scrabble board?",
       "answer": 225,
-      "min": 70,
-      "max": 310,
+      "min": 0,
+      "max": 500,
       "unit": "squares",
       "fact": "225, on a grid 15 squares wide and 15 tall."
     },
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How many teeth does an adult dog have?",
       "answer": 42,
-      "min": 12,
-      "max": 56,
+      "min": 0,
+      "max": 100,
       "unit": "teeth",
       "fact": "42, ten more than an adult human."
     },

@@ -73,8 +73,8 @@
       "difficulty": 2,
       "prompt": "How many countries are there in Africa?",
       "answer": 54,
-      "min": 10,
-      "max": 80,
+      "min": 0,
+      "max": 100,
       "unit": "countries",
       "fact": "54, more than any other continent. Nigeria alone has more people than Germany, France and Spain put together."
     },
@@ -85,8 +85,8 @@
       "difficulty": 1,
       "prompt": "In the Jules Verne novel, how many days does it take Phileas Fogg to go around the world?",
       "answer": 80,
-      "min": 25,
-      "max": 110,
+      "min": 0,
+      "max": 250,
       "unit": "days",
       "fact": "Eighty days, and he wins his bet only because travelling east has gained him a day."
     },

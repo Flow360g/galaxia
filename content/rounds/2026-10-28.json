@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "sport",
       "difficulty": 2,
-      "prompt": "How many minutes does a rugby union match last, not counting stoppages?",
-      "answer": 80,
-      "min": 25,
-      "max": 110,
-      "unit": "minutes",
-      "fact": "Two halves of 40 minutes, and the ball has to go dead before the referee can end a half."
+      "prompt": "How high is a basketball hoop, in centimetres?",
+      "answer": 305,
+      "min": 0,
+      "max": 1000,
+      "unit": "cm",
+      "fact": "Ten feet, the height James Naismith nailed his peach baskets at in 1891, and it has never changed."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 3,
       "prompt": "How old was Alexander the Great when he died?",
       "answer": 32,
-      "min": 8,
-      "max": 46,
+      "min": 0,
+      "max": 100,
       "unit": "years",
       "fact": "32, and by then he ruled an empire stretching from Greece to what is now Pakistan."
     },

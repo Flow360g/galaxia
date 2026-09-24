@@ -59,10 +59,15 @@ things that make those games sticky:
   the game lying about itself. Two rules worth knowing when tuning: a
   general knowledge answer is worth the full base only with Boost pressed
   first (the perfect run assumes it was; unboosted it is half, and a wrong
-  boosted answer is the one lane that docks points), and a Vector is scored on bands
-  that are fractions of the true answer (`VECTOR.bands`), never on anything
-  authored per question. Inside the widest band a shot is a `graze`: no
-  points, no damage, streak untouched.
+  boosted answer is the one lane that docks points), and a Vector is scored on
+  a ruler: the slider is `VECTOR.notches` steps from `min` to `max`, and every
+  step between the guess and the answer costs the same (200 - 5 a step as
+  tuned, see `vectorShare`). Past `VECTOR.wildBeyond` steps it is a wild
+  shot, the flat dock and a shield. Between a hit and a wild shot it is a
+  `graze`: still points, but no damage and the streak untouched. It used to
+  score against the ANSWER ("33% off"), which made a wide range harder
+  instead of more forgiving and made every calendar year a free hit; do not
+  bring that back.
 - **The player says when to move on.** Nothing advances on a timer once a
   verdict is up. The outcome toast and the waypoint card carry the right
   answer and a fact, and they sit there until the screen is tapped. Only the
@@ -225,7 +230,7 @@ one to check before any other when writing or changing copy.
   identifiers (`nova`, `novaLeft`, `useNova`, the `NOVA` constants, the
   `nova` test ids) keep their names. An answer is "correct" or "wrong",
   never "right", because "right" is also a side of the lane row. Intel is a
-  hint, optics is zoom, a graze is a near miss, a wild shot is way off, an
+  hint, optics is zoom, a notch is a step, a wild shot is way off, an
   encounter is a question, a sector is a topic.
 - **Every score figure says POINTS.** The run also counts speed and
   distance, so a bare +100 could be either. The toast, the tally and every
@@ -241,8 +246,9 @@ one to check before any other when writing or changing copy.
   and the FIRE dial quote points, never km or km/h. Distance comes back on
   the tally, the share card and the profile, where it is a fun extra.
 - **Plain verdict first, flavour second.** The headline of a toast or a
-  pulse is CORRECT, WRONG, TOO SLOW, NEAR MISS, WAY OFF, SPOT ON or ALL 3
-  FOUND. The arcade line (+1 PLASMA · SPEED UP, SHIELD USED · 2 LEFT, the
+  pulse is CORRECT, WRONG, TOO SLOW, WAY OFF or ALL 3 FOUND, and for a
+  number the step verdict: DEAD ON, WITHIN 5%, 10%, 25% or 40%, each a share
+  of the ruler, with the ruler itself drawn under it (`VECTOR.verdicts`). The arcade line (+1 PLASMA · SPEED UP, SHIELD USED · 2 LEFT, the
   MAXIMUM THRUST overlay) is the second line or the celebration, never the
   thing that explains what happened.
 - **One fact per line.** A verdict lists the correct answer, the guess, the
@@ -618,19 +624,26 @@ short version is below; the reasoning is in that file.
   encounter.
 - MCQ: four `options`, one `answer` index, optional `hint` (what a NOVA
   clue reveals), a `fact`.
-- Vector: a numeric `answer` (never zero), `min` and `max` for the slider,
-  optional `unit` and `log`, a `fact`. Nothing about closeness is authored:
-  the bands are fractions of the answer and live in `VECTOR.bands`.
-- **A vector's difficulty is its `min..max`, not its question.** The bands are
-  fractions of the answer but the slider runs over the authored range, so the
-  range decides what share of the track scores, and for a long time nothing
-  checked it. The pool ran from 2.8% of the track to 100%: the Sun's surface
-  temperature could not be hit even with a hint, while every "in which year"
-  question scored a direct hit from any position at all. The close band must
-  now cover 10% to 20% of the slider, the answer must sit 20% in from either
-  end, and the slider must not open on the answer. Dates are rejected by name:
-  5% of 2001 is a century, and widening the range is not the fix. See
-  `lib/content/difficulty.ts`, which the build and the audit both read.
+- Vector: a numeric `answer`, `min` and `max` for the ruler, optional `unit`,
+  `year` (prints 1913, never 1,913) and `route`, a `fact`. Nothing about
+  closeness is authored: every question is scored on the same 100-step ruler.
+- **A range is the band of believable answers, in round numbers.** Usually
+  from 0: a CD on 0 to 200 mm, a waterfall on 0 to 2,000 m. The build checks
+  two things (`lib/content/difficulty.ts`): each step is a round number (1, 2,
+  2.5 or 5 times a power of ten), so the ruler never reads 5.88; and the
+  answer sits between step 10 and 90, so a guess in the middle is never a
+  wild shot. Where the answer sits is how forgiving it is: from 0, doubling
+  the answer lands as many steps off as the answer's own position. A year
+  ruler stops at the present. Small counts do not fit (6.3 strings); ask
+  something with an answer of 25 or more.
+- **A route beats a fact.** A `route` is one line of working that gets
+  someone close without knowing the answer ("60 x 24 x 7 = 10,080"), and the
+  reveal shows it in place of the fact. Recall is allowed, because a rough
+  idea scores well, but a route is better.
+- **The audience is the whole world.** No question or route may lean on one
+  country: its sport, stadium, law, census or school syllabus. Units are
+  metric and named in the prompt, and a question whose best-known figure is in
+  another unit (the Moon in miles) is out.
 - **Every quiz question declares a `difficulty`**, 1 to 3, and an authored day
   sums to 11..13 with at most two of each extreme and never a 3 in the opening
   slot. Like `topic` it is authoring metadata: never rendered, never scored,

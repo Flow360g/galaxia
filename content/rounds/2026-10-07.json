@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "history",
       "difficulty": 3,
-      "prompt": "How many days did the Cuban Missile Crisis last?",
-      "answer": 13,
-      "min": 4,
-      "max": 18,
-      "unit": "days",
-      "fact": "Thirteen days in October 1962, the closest the Cold War came to nuclear war."
+      "prompt": "In what year did Gutenberg start printing with movable type in Europe?",
+      "answer": 1440,
+      "min": 1300,
+      "max": 1500,
+      "year": true,
+      "fact": "Around 1440 in Mainz. His Bible, finished around 1455, was the first major book printed in Europe."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How much does an adult human brain weigh, in kilograms?",
       "answer": 1.4,
-      "min": 0.4,
-      "max": 1.9,
+      "min": 0,
+      "max": 5,
       "unit": "kg",
       "fact": "About 1.4 kg, yet it uses around a fifth of the body's energy."
     },

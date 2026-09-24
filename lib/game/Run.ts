@@ -1,6 +1,15 @@
 import { earthLadder } from "./feed";
 import { Flight, clamp01, outcomeKind } from "./Flight";
-import { fromSlider, resolveClusterNova, resolveNova, resolveVectorNova, toSlider } from "./nova";
+import {
+  formatAnswer,
+  formatOnRuler,
+  fromSlider,
+  resolveClusterNova,
+  resolveNova,
+  resolveVectorNova,
+  snapToNotch,
+  toNotch,
+} from "./nova";
 import { maxScoreFor, scoreLines, scoreOutcome } from "./Score";
 import {
   CLUSTER,
@@ -182,8 +191,13 @@ export class Run {
    * its final run plays out, or null. Sits in `collecting` like a pick does.
    */
   private absorbing: number | null = null;
-  /** Vector aim in slider space, and the window a NOVA scan left open. */
+  /**
+   * Vector aim in slider space, always on a notch, and the window a NOVA scan
+   * left open. The slider opens empty: `vectorPlaced` stays false until the
+   * player puts a guess on it, and FIRE does nothing until then.
+   */
   private vectorT = 0.5;
+  private vectorPlaced = false;
   private vectorWindow: [number, number] = [0, 1];
   private vectorsFlown = 0;
   /** Strength of the pending vector lock's burst (glancing hits are partial). */
@@ -291,6 +305,7 @@ export class Run {
       t: this.vectorT,
       value: fromSlider(question, this.vectorT),
       window: this.vectorWindow,
+      placed: this.vectorPlaced,
     };
   }
 
@@ -379,49 +394,56 @@ export class Run {
     });
   }
 
-  /** Vector: move the aim. Clamped to the NOVA window. Never changes phase. */
+  /**
+   * Vector: move the aim, onto the nearest notch and inside the NOVA window.
+   * The first call is what puts a guess on the slider. Never changes phase.
+   */
   aim(t: number): void {
     const question = this.question;
     if (!this.answering || !question || question.type !== "vector") return;
     const [lo, hi] = this.vectorWindow;
-    this.vectorT = Math.min(hi, Math.max(lo, Number.isFinite(t) ? t : this.vectorT));
+    const wanted = Number.isFinite(t) ? t : this.vectorT;
+    this.vectorT = snapToNotch(Math.min(hi, Math.max(lo, wanted)));
+    this.vectorPlaced = true;
     this.hooks.onAim(this.vectorT);
   }
 
-  /** Vector: fire on the current aim. */
+  /** Vector: fire on the current aim. Nothing happens until a guess is placed. */
   lockVector(): void {
     const question = this.question;
-    if (!this.answering || !question || question.type !== "vector") return;
+    if (!this.answering || !question || question.type !== "vector" || !this.vectorPlaced) return;
 
-    const guess = fromSlider(question, this.vectorT);
-    const truthT = toSlider(question, question.answer);
-    // How far off, as a fraction of the truth. The same bands for every
-    // question, log-scaled or not: "within 10%" means one thing in the game.
-    const error = Math.abs(guess - question.answer) / Math.max(Math.abs(question.answer), 1e-9);
-    const { direct, close, graze } = VECTOR.bands;
+    // Both read off the same ruler, to the nearest notch. The gap between
+    // them is the whole verdict: what the player sees is what they score.
+    const guessNotch = Math.round(this.vectorT * VECTOR.notches);
+    const answerNotch = toNotch(question, question.answer);
+    const notches = Math.abs(guessNotch - answerNotch);
+    const guess = fromSlider(question, guessNotch / VECTOR.notches);
+    const truthT = answerNotch / VECTOR.notches;
 
     let kind: Outcome["kind"];
     let strength = 1;
     let severity = 1;
     let salvage: Outcome["salvage"];
-    if (error <= direct) {
+    if (notches <= VECTOR.deadOnWithin) {
       kind = "slingshot";
       salvage = this.shields < SHIELDS.perRun ? "shield" : "nova";
-    } else if (error <= close) {
+    } else if (notches <= VECTOR.hitWithin) {
       kind = "thread";
-      const across = (error - direct) / Math.max(close - direct, 1e-6);
+      const across =
+        (notches - VECTOR.deadOnWithin) / Math.max(VECTOR.hitWithin - VECTOR.deadOnWithin, 1);
       strength = 1 - across * (1 - VECTOR.glanceFloor);
-    } else if (error <= graze) {
-      // Clipped the scout. Nothing is earned and nothing is taken: the shot
-      // was good enough not to be punished, and not good enough to pay.
+    } else if (notches <= VECTOR.wildBeyond) {
+      // Clipped the scout. It still scores on the ruler, but nothing is
+      // taken: no damage, no shield, and the streak is left where it was.
       kind = "graze";
       strength = 0;
       severity = 0;
     } else {
       kind = outcomeKind(false, false, false, this.shields > 0);
-      // How wrong, not just wrong: a shot that grazed the tolerance costs a
-      // fraction of what a wild one does.
-      severity = missSeverity(error);
+      // How wild, not just wild: just past the line costs a fraction of what
+      // aiming at the wrong end does.
+      severity = missSeverity(notches);
       if (this.shields > 0) {
         this.shields -= 1;
         this.shieldLost = true;
@@ -434,7 +456,7 @@ export class Run {
     this.vectorStrength = strength;
     const outcome: Outcome = {
       kind,
-      correct: error <= close,
+      correct: notches <= VECTOR.hitWithin,
       boosted: false,
       timedOut: false,
       thrustLeft: this.thrust,
@@ -443,9 +465,11 @@ export class Run {
       streakBefore: this.flight.streak,
       streakAfter: this.flight.streak,
       chosen: null,
-      guessText: formatValue(guess, question.unit),
-      answerText: formatValue(question.answer, question.unit),
-      error,
+      guessText: formatOnRuler(question, guess),
+      answerText: formatAnswer(question),
+      notches,
+      guessNotch,
+      answerNotch,
       guessValue: guess,
       severity,
       ...(salvage ? { salvage } : {}),
@@ -453,7 +477,8 @@ export class Run {
     // A shot that is taken resolves almost instantly: the bolt crosses and
     // the scout goes up in one event. A shot that is not taken leaves a beat
     // of silence before the scout fires back. A graze is a shot taken.
-    this.lock(outcome, error <= graze ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
+    const taken = notches <= VECTOR.wildBeyond;
+    this.lock(outcome, taken ? VECTOR.strikeSeconds : VECTOR.returnDelaySeconds);
     this.hooks.onVectorLock(outcome, truthT);
   }
 
@@ -502,7 +527,9 @@ export class Run {
       const scan = resolveVectorNova(question, this.random);
       this.vectorWindow = scan.window;
       this.nova = { kind: "narrow", eliminated: [], highlighted: [], clue: null };
-      this.aim(this.vectorT);
+      // Pull a guess already on the slider into the lit window. An empty
+      // slider stays empty: a hint is not a guess.
+      if (this.vectorPlaced) this.aim(this.vectorT);
     } else if (question.type === "mcq") {
       this.nova = resolveNova(question, this.random);
     }
@@ -853,6 +880,7 @@ export class Run {
     this.burnCharge = 0;
     this.burnDrain = 0;
     this.vectorT = 0.5;
+    this.vectorPlaced = false;
     this.vectorWindow = [0, 1];
     this.vectorStrength = 1;
     const vectorSlot = Math.min(this.vectorsFlown, VECTOR.thrustSeconds.length - 1);
@@ -1125,7 +1153,7 @@ export class Run {
     if (!outcome) return;
     this.struck = true;
 
-    const strength = outcome.error !== undefined ? this.vectorStrength : 1;
+    const strength = outcome.notches !== undefined ? this.vectorStrength : 1;
     const multiplier =
       outcome.kind === "burn" ? (CLUSTER.chargeMultiplier[outcome.charge ?? 0] ?? 0) : 1;
     outcome.velocityBefore = this.flight.velocity;
@@ -1256,16 +1284,16 @@ function normaliseGuess(text: string): string {
 }
 
 /**
- * How hard a vector miss lands, 0..1, from its relative error.
+ * How hard a wild vector shot lands, 0..1, from the notches it was off.
  *
- * The edge of the graze band is where a miss begins: a shot that only just
- * missed costs `severityFloor` of a full impact. It ramps to a full impact at
- * `severityFullAt` and stays there, so a wild guess is the worst it gets.
+ * Just past `VECTOR.wildBeyond` costs `severityFloor` of a full impact. It
+ * ramps to a full impact at `severityFullAt` notches and stays there, so
+ * aiming at the wrong end is the worst it gets.
  */
-export function missSeverity(error: number): number {
-  const from = VECTOR.bands.graze;
+export function missSeverity(notches: number): number {
+  const from = VECTOR.wildBeyond;
   const span = Math.max(VECTOR.severityFullAt - from, 1e-6);
-  const across = clamp01((error - from) / span);
+  const across = clamp01((notches - from) / span);
   return VECTOR.severityFloor + (1 - VECTOR.severityFloor) * across;
 }
 
@@ -1275,13 +1303,6 @@ export function rateStage(plasma: number, shields: number): Rating {
   if (plasma >= WAYPOINT.ratings.A) return "A";
   if (plasma >= WAYPOINT.ratings.B) return "B";
   return "C";
-}
-
-/** A number with grouping and its unit, for toasts and the share record. */
-export function formatValue(value: number, unit: string | undefined): string {
-  const rounded = Math.abs(value) >= 100 ? Math.round(value) : Math.round(value * 10) / 10;
-  const text = rounded.toLocaleString("en-AU");
-  return unit ? `${text} ${unit}` : text;
 }
 
 /** The three right answers, for the toast and the share record. */
@@ -1298,7 +1319,7 @@ function answerTextFor(question: Question): string {
     case "cluster":
       return clusterAnswerText(question);
     case "vector":
-      return formatValue(question.answer, question.unit);
+      return formatAnswer(question);
   }
 }
 

@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many years apart were Top Gun and Top Gun: Maverick released?",
       "answer": 36,
-      "min": 12,
-      "max": 50,
+      "min": 0,
+      "max": 100,
       "unit": "years",
       "fact": "36 years, from 1986 to 2022, with Tom Cruise flying in both."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "sport",
       "difficulty": 2,
-      "prompt": "How many players does a baseball team have on the field?",
-      "answer": 9,
-      "min": 2,
-      "max": 13,
-      "unit": "players",
-      "fact": "Nine, and a game runs for nine innings too."
+      "prompt": "How long is a basketball court, in metres?",
+      "answer": 28,
+      "min": 0,
+      "max": 100,
+      "unit": "m",
+      "fact": "28 m by 15 m under the international rules. The NBA's court is a little longer."
     },
     {
       "id": "q5",

@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many hours a day does a koala sleep?",
       "answer": 20,
-      "min": 6,
-      "max": 28,
+      "min": 0,
+      "max": 50,
       "unit": "hours",
       "fact": "Around 20. Gum leaves give it very little energy, so it saves what it can."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How tall is the Statue of Liberty from the ground to the tip of the torch, in metres?",
       "answer": 93,
-      "min": 30,
-      "max": 130,
+      "min": 0,
+      "max": 250,
       "unit": "m",
       "fact": "About 93 m with its pedestal. The copper skin is thinner than two coins stacked together."
     },

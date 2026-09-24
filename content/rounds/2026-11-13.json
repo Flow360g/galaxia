@@ -73,10 +73,9 @@
       "difficulty": 3,
       "prompt": "Roughly how many hairs are on a person's head?",
       "answer": 100000,
-      "min": 30000,
-      "max": 200000,
+      "min": 0,
+      "max": 250000,
       "unit": "hairs",
-      "log": true,
       "fact": "About 100,000, and you lose 50 to 100 of them every day."
     },
     {
@@ -86,8 +85,8 @@
       "difficulty": 2,
       "prompt": "How many teaspoons of sugar are in a can of cola?",
       "answer": 9,
-      "min": 2,
-      "max": 18,
+      "min": 0,
+      "max": 20,
       "fact": "About nine. You cannot taste how sweet it is because the acid in it hides the sugar."
     },
     {

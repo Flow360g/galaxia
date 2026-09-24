@@ -57,12 +57,7 @@ import round20261113 from "@/content/rounds/2026-11-13.json";
 import round20261114 from "@/content/rounds/2026-11-14.json";
 import round20261115 from "@/content/rounds/2026-11-15.json";
 import { pickSites } from "@/lib/content/sites";
-import {
-  ROUND_PROFILE,
-  checkVector,
-  rangeFor,
-  trackShare,
-} from "@/lib/content/difficulty";
+import { ROUND_PROFILE, checkVector, rangeFor } from "@/lib/content/difficulty";
 import { nextPracticeDeal } from "@/lib/game/storage";
 import { TOPICS } from "@/lib/game/types";
 import type { EarthQuestion, Question, Round, Topic } from "@/lib/game/types";
@@ -86,18 +81,6 @@ const KNOWN_TOPICS = new Set<string>(TOPICS);
 
 /** No round leans more than this many questions on one corner. */
 const TOPIC_CAP = 2;
-
-/**
- * A vector asks for a magnitude, never a date.
- *
- * The scoring bands are fractions of the answer, and a calendar year has no
- * true zero to take a fraction of: five percent of 2001 is a century, so every
- * "in which year" question in the pool covered the whole slider and handed out
- * a direct hit for any position at all. The geometry rule below would let an
- * author "fix" that by widening the range to 200..3000, which passes the maths
- * and is a worse question, so the shape is rejected by name instead.
- */
-const DATE_PROMPT = /\b(what|which)\s+year\b/i;
 
 const POOL: Round[] = [
   round20260918,
@@ -296,9 +279,9 @@ function seededShuffle<T>(items: readonly T[], seed: string): T[] {
  *
  * It also holds the two difficulty rules, because how hard a round is turned
  * out to be just as malformable as its shape and nothing was watching. Every
- * quiz question declares a level, and every vector's slider has to put the
- * scoring bands within reach: see `lib/content/difficulty.ts` for why that is
- * a property of `min..max` rather than of the question.
+ * quiz question declares a level, and every vector's ruler has to read in
+ * round numbers with the answer well inside it: see
+ * `lib/content/difficulty.ts`.
  *
  * `authored` marks a round somebody wrote as a day, which is held to the two
  * rules a random draw cannot be: no more than two questions from any one
@@ -381,34 +364,18 @@ function validate(round: Round, authored = false): Round {
       continue;
     }
     if (question.type === "vector") {
-      const { min, max, answer, log } = question;
+      const { min, max, answer } = question;
       if (!(min < answer && answer < max)) {
         throw new Error(`Round ${round.date} vector ${question.id}: answer must sit inside min..max`);
       }
-      // The scoring bands are fractions of the answer, so zero has no bands.
-      if (!(Math.abs(answer) > 0)) {
-        throw new Error(`Round ${round.date} vector ${question.id}: answer must not be zero`);
-      }
-      if (log && !(min > 0)) {
-        throw new Error(`Round ${round.date} vector ${question.id}: log scale needs min > 0`);
-      }
-      if (DATE_PROMPT.test(question.prompt)) {
-        throw new Error(
-          `Round ${round.date} vector ${question.id}: a slider asks for a magnitude, not a date. ` +
-            `The bands are fractions of the answer and a calendar year has no zero to take a ` +
-            `fraction of, so every position scores. Ask for a duration or a count instead.`,
-        );
-      }
-      // How hard a vector is comes down to how much of the slider the scoring
-      // bands cover, which nothing checked until this existed. See
-      // `lib/content/difficulty.ts` for what the numbers mean.
+      // The ruler has to read in round numbers with the answer well inside
+      // it. See `lib/content/difficulty.ts` for why those are the two rules.
       const faults = checkVector(question);
       if (faults.length > 0) {
-        const fixed = rangeFor(question.answer);
+        const fixed = rangeFor(answer, question.year === true);
         throw new Error(
           `Round ${round.date} vector ${question.id} ("${question.prompt}"): ${faults.join("; ")}. ` +
-            `Try min ${fixed.min}, max ${fixed.max}, which puts the close band at ` +
-            `${Math.round(trackShare({ ...question, ...fixed, log: false }) * 1000) / 10}% of the slider.`,
+            `Try min ${fixed.min}, max ${fixed.max}.`,
         );
       }
       continue;

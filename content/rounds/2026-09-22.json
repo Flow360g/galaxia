@@ -53,7 +53,7 @@
       "difficulty": 2,
       "prompt": "How long is the Nile?",
       "answer": 6650,
-      "min": 1500,
+      "min": 0,
       "max": 10000,
       "unit": "km",
       "fact": "About 6,650 km. The Amazon runs it close, and some surveys put the Amazon ahead."
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How fast can a cheetah run, in km/h?",
       "answer": 110,
-      "min": 20,
-      "max": 170,
+      "min": 0,
+      "max": 200,
       "unit": "km/h",
       "fact": "Around 110 km/h in a short burst, and 0 to 100 in about three seconds, quicker than most sports cars."
     },

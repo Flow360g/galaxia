@@ -71,12 +71,13 @@
       "type": "vector",
       "topic": "misc",
       "difficulty": 1,
-      "prompt": "How many pieces does each player start a game of chess with?",
-      "answer": 16,
-      "min": 4,
-      "max": 22,
-      "unit": "pieces",
-      "fact": "Sixteen: eight pawns, two rooks, two knights, two bishops, a queen and a king."
+      "prompt": "How many cards are in a standard deck, without the jokers?",
+      "answer": 52,
+      "min": 0,
+      "max": 200,
+      "unit": "cards",
+      "route": "4 suits of 13 cards.",
+      "fact": "52, the same as the number of weeks in a year."
     },
     {
       "id": "q4",
@@ -85,8 +86,8 @@
       "difficulty": 3,
       "prompt": "How deep can an emperor penguin dive, in metres?",
       "answer": 550,
-      "min": 150,
-      "max": 750,
+      "min": 0,
+      "max": 1000,
       "unit": "m",
       "fact": "Over 500 metres, and it can hold its breath for more than twenty minutes doing it."
     },

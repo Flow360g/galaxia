@@ -51,24 +51,24 @@
       "type": "vector",
       "topic": "arts",
       "difficulty": 2,
-      "prompt": "How many years did it take to build the Sydney Opera House?",
-      "answer": 14,
-      "min": 3,
-      "max": 20,
-      "unit": "years",
-      "fact": "Fourteen, from 1959 to 1973: ten years late and around fourteen times over budget."
+      "prompt": "How tall is the Leaning Tower of Pisa, in metres?",
+      "answer": 56,
+      "min": 0,
+      "max": 200,
+      "unit": "m",
+      "fact": "About 56 m, leaning around four degrees. It began tilting while it was still being built."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "How far is it from Sydney to Melbourne by road, in kilometres?",
-      "answer": 880,
-      "min": 300,
-      "max": 1200,
+      "prompt": "How far is it from Paris to Rome in a straight line, in kilometres?",
+      "answer": 1105,
+      "min": 0,
+      "max": 5000,
       "unit": "km",
-      "fact": "The Hume Highway covers about 880 km, and the flight between the two is one of the busiest in the world."
+      "fact": "About 1,100 km, a two-hour flight."
     },
     {
       "id": "q5",

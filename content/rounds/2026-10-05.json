@@ -53,8 +53,8 @@
       "difficulty": 2,
       "prompt": "How many coloured squares does a Rubik's Cube have?",
       "answer": 54,
-      "min": 20,
-      "max": 75,
+      "min": 0,
+      "max": 200,
       "unit": "squares",
       "fact": "Nine on each of six faces makes 54."
     },
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How many degrees is each corner of a regular hexagon?",
       "answer": 120,
-      "min": 35,
-      "max": 165,
+      "min": 0,
+      "max": 500,
       "unit": "degrees",
       "fact": "120 degrees, which is why hexagons fit together with no gaps, as in a honeycomb."
     },

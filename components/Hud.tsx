@@ -18,10 +18,10 @@ import type {
   VectorState,
   WaypointState,
 } from "@/lib/game/types";
-import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, SCORE, WAYPOINT } from "@/lib/game/Tuning";
+import { CLUSTER, COUNTDOWN, ENCOUNTER, NOVA, SCORE, VECTOR, WAYPOINT } from "@/lib/game/Tuning";
 import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
-import { formatValue } from "@/lib/game/Run";
-import { multiplierFor } from "@/lib/game/Score";
+import { formatOnRuler, fromSlider } from "@/lib/game/nova";
+import { multiplierFor, vectorVerdict } from "@/lib/game/Score";
 import { phaseGuide } from "@/lib/game/phases";
 import { ScoringDisclosure } from "./ScoringTable";
 import { formatPoints, formatScore, formatVelocity } from "@/lib/game/format";
@@ -89,8 +89,8 @@ function bankPoints(charge: number, streak: number): number {
   return Math.round(SCORE.perEncounter * share) * multiplierFor(streak);
 }
 
-/** Slider step for a nudge button or an arrow key. */
-const NUDGE = 0.01;
+/** Slider step for a nudge button or an arrow key: one notch of the ruler. */
+const NUDGE = 1 / VECTOR.notches;
 
 const RATING_TEXT: Record<Rating, string> = {
   S: "FLAWLESS",
@@ -392,7 +392,7 @@ export function Hud({
                 <button
                   type="button"
                   className={`${styles.tool} ${styles.lock} arcade`}
-                  disabled={!answering}
+                  disabled={!answering || !state?.vector?.placed}
                   onClick={onLockVector}
                   data-testid="lock"
                 >
@@ -420,7 +420,8 @@ export function Hud({
         {outcome ? (
           <OutcomeToast
             outcome={outcome}
-            fact={question?.fact}
+            vector={question?.type === "vector" ? question : undefined}
+            fact={question?.type === "vector" ? (question.route ?? question.fact) : question?.fact}
             awaitingTap={awaitingTap}
             onConfirm={onConfirm}
           />
@@ -651,9 +652,12 @@ function LaneRow({
 }
 
 /**
- * The vector panel: aim on a slider, the ship follows. The value is shown
- * live in answer units; the track shows the window a NOVA scan left open.
- * LOCK & FIRE lives in the tools row below, where BANK and BOOST sit.
+ * The vector panel: a ruler of `VECTOR.notches` steps, the ship following the
+ * aim. It opens empty: no thumb and no figure until the player touches it,
+ * because a guess sitting on the slider before anyone chose it is a free
+ * guess, and FIRE (in the tools row, where BANK and BOOST sit) waits for one.
+ * The value is shown live in answer units; the track shows the window a hint
+ * left lit.
  */
 function VectorPanel({
   question,
@@ -668,20 +672,26 @@ function VectorPanel({
   onAim: (t: number) => void;
   onLock: () => void;
 }) {
+  const notches = VECTOR.notches;
+  const placed = vector?.placed ?? false;
   const t = vector?.t ?? 0.5;
   const [lo, hi] = vector?.window ?? [0, 1];
-  const value = vector?.value ?? (question.min + question.max) / 2;
+  const value = vector?.value ?? fromSlider(question, t);
   const nudge = (direction: -1 | 1) => onAim(t + direction * NUDGE);
+  const aimText = formatOnRuler(question, value);
 
   return (
     <div className={styles.vector}>
       <div className={styles.aimReadout}>
         <span className={`${styles.aimLabel} arcade`}>AIM</span>
-        <span className={`${styles.aimValue} arcade`} data-testid="aim-value">
-          {formatValue(value, question.unit)}
+        <span
+          className={`${placed ? styles.aimValue : styles.aimPrompt} arcade`}
+          data-testid="aim-value"
+        >
+          {placed ? aimText : "TAP TO GUESS"}
         </span>
         <span className={styles.aimEnds}>
-          {formatValue(question.min, question.unit)} to {formatValue(question.max, question.unit)}
+          {formatOnRuler(question, question.min)} to {formatOnRuler(question, question.max)}
         </span>
       </div>
       <div className={styles.sliderRow}>
@@ -700,21 +710,26 @@ function VectorPanel({
             style={{ left: `${lo * 100}%`, width: `${(hi - lo) * 100}%` }}
           />
           <input
-            className={styles.slider}
+            className={`${styles.slider} ${placed ? "" : styles.sliderEmpty}`}
             type="range"
             min={0}
-            max={1000}
+            max={notches}
             step={1}
-            value={Math.round(t * 1000)}
+            value={Math.round(t * notches)}
             disabled={!answering}
-            onChange={(event) => onAim(Number(event.target.value) / 1000)}
+            onChange={(event) => onAim(Number(event.target.value) / notches)}
+            // A tap that lands where the hidden thumb already sits changes
+            // nothing, so no change event fires; the click still places it.
+            onClick={(event) => {
+              if (!placed) onAim(Number(event.currentTarget.value) / notches);
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
                 onLock();
               }
             }}
-            aria-label={`Aim, ${formatValue(value, question.unit)}`}
+            aria-label={placed ? `Aim, ${aimText}` : "Aim, no guess yet"}
             data-testid="aim"
           />
         </div>
@@ -728,6 +743,45 @@ function VectorPanel({
           {"\u203a"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The ruler under a number verdict: the whole slider, where the guess landed
+ * and where the answer was. The gap between the two marks IS the score, so
+ * this is the explanation of it, drawn rather than written. YOU hangs under
+ * the line and ANSWER over it, so the two labels never sit on each other.
+ */
+function Ruler({ guess, answer, wild }: { guess: number; answer: number; wild: boolean }) {
+  const at = (notch: number) => (notch / VECTOR.notches) * 100;
+  const g = at(guess);
+  const a = at(answer);
+  // Slide each label by its own position, so one at either end stays inside
+  // the toast rather than hanging off its edge.
+  const label = (position: number): CSSProperties => ({ transform: `translateX(-${position}%)` });
+  return (
+    <div
+      className={styles.ruler}
+      data-testid="ruler"
+      data-guess={guess}
+      data-answer={answer}
+      aria-hidden
+    >
+      <span
+        className={`${styles.rulerGap} ${wild ? styles.rulerGapWild : ""}`}
+        style={{ left: `${Math.min(g, a)}%`, width: `${Math.abs(g - a)}%` }}
+      />
+      <span className={`${styles.rulerMark} ${styles.rulerAnswer}`} style={{ left: `${a}%` }}>
+        <span className={`${styles.rulerLabel} ${styles.rulerLabelAbove} arcade`} style={label(a)}>
+          ANSWER
+        </span>
+      </span>
+      <span className={`${styles.rulerMark} ${styles.rulerGuess}`} style={{ left: `${g}%` }}>
+        <span className={`${styles.rulerLabel} ${styles.rulerLabelBelow} arcade`} style={label(g)}>
+          YOU
+        </span>
+      </span>
     </div>
   );
 }
@@ -979,42 +1033,37 @@ function PulseOverlay({ pulse }: { pulse: Pulse }) {
   );
 }
 
-/**
- * How wide a vector shot was, as a percentage of the truth. The number the
- * bands are read against, so the player can see which one they landed in.
- */
-function formatError(error: number): string {
-  const percent = error * 100;
-  return percent >= 10 ? `${Math.round(percent)}%` : `${(Math.round(percent * 10) / 10).toFixed(1)}%`;
-}
-
 function OutcomeToast({
   outcome,
+  vector,
   fact,
   awaitingTap,
   onConfirm,
 }: {
   outcome: Outcome;
+  /** The question, when the verdict is a number: the ruler needs its scale. */
+  vector: VectorQuestion | undefined;
   fact: string | undefined;
   awaitingTap: boolean;
   onConfirm: () => void;
 }) {
   const points = outcome.points ?? 0;
   const full = isMaxThrust(outcome);
-  const vector = outcome.error !== undefined;
+  const notches = outcome.notches;
+  const aimed = vector !== undefined && notches !== undefined;
   const label = full
     ? `ALL ${FULL_CHARGE} FOUND!`
-    : vector
+    : aimed
       ? outcome.kind === "slingshot"
-        ? "SPOT ON!"
-        : outcome.kind === "thread"
-          ? "CLOSE"
-          : outcome.kind === "graze"
-            ? "NEAR MISS · NOTHING LOST"
-            : outcome.timedOut
-              ? "TOO SLOW"
-              : "WAY OFF"
+        ? `${vectorVerdict(notches)}!`
+        : vectorVerdict(notches)
       : OUTCOME_LABEL[outcome.kind];
+  // How far off, in the question's own units: "3 teaspoons off" says what a
+  // percentage of the answer never did.
+  const offBy =
+    aimed && outcome.guessValue !== undefined
+      ? formatOnRuler(vector, Math.abs(outcome.guessValue - vector.answer))
+      : null;
   const picked = !outcome.correct && outcome.chosen !== null;
   return (
     <section
@@ -1046,21 +1095,26 @@ function OutcomeToast({
       {/* One fact per line. The toast used to chain the answer, the guess,
           the error, the bonus and a km/h delta with middle dots, and a first
           time player read it as an equation. */}
-      {vector ? (
+      {aimed ? (
         <>
           <span className={styles.toastAnswer}>
             Correct answer: <strong>{outcome.answerText}</strong>
           </span>
-          {!outcome.timedOut ? (
-            <span className={styles.toastAnswer}>
-              Your guess: {outcome.guessText}
-              {outcome.error !== undefined ? (
-                <>
-                  {" "}
-                  (<strong data-testid="wide-by">{formatError(outcome.error)} off</strong>)
-                </>
-              ) : null}
-            </span>
+          <span className={styles.toastAnswer}>
+            Your guess: {outcome.guessText}
+            {offBy !== null && notches > 0 ? (
+              <>
+                {" "}
+                (<strong data-testid="wide-by">{offBy} off</strong>)
+              </>
+            ) : null}
+          </span>
+          {outcome.guessNotch !== undefined && outcome.answerNotch !== undefined ? (
+            <Ruler
+              guess={outcome.guessNotch}
+              answer={outcome.answerNotch}
+              wild={notches > VECTOR.wildBeyond}
+            />
           ) : null}
         </>
       ) : outcome.kind === "burn" ? (

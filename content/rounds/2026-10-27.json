@@ -16,7 +16,7 @@
         "Wicked",
         "Cats",
         "Chicago",
-        "Les Mis\u00e9rables"
+        "Les Misérables"
       ],
       "answers": [
         0,
@@ -51,12 +51,12 @@
       "type": "vector",
       "topic": "nature",
       "difficulty": 2,
-      "prompt": "How many hearts does an octopus have?",
-      "answer": 3,
-      "min": 1,
-      "max": 6,
-      "unit": "hearts",
-      "fact": "Two hearts pump blood through the gills and the third sends it round the body. Its blood is blue."
+      "prompt": "How heavy is a newborn elephant, in kilograms?",
+      "answer": 100,
+      "min": 0,
+      "max": 250,
+      "unit": "kg",
+      "fact": "Around 100 kg, and it can stand within an hour of being born."
     },
     {
       "id": "q4",
@@ -65,8 +65,8 @@
       "difficulty": 2,
       "prompt": "How many volts does a normal AA battery give?",
       "answer": 1.5,
-      "min": 0.4,
-      "max": 2.2,
+      "min": 0,
+      "max": 5,
       "unit": "volts",
       "fact": "1.5 volts. The plug socket in an Australian or British home gives about 230."
     },

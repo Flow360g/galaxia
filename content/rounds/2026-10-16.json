@@ -53,8 +53,8 @@
       "difficulty": 3,
       "prompt": "How heavy is a men's Olympic shot put, in kilograms?",
       "answer": 7.26,
-      "min": 1.5,
-      "max": 10.5,
+      "min": 0,
+      "max": 20,
       "unit": "kg",
       "fact": "7.26 kg, which is exactly 16 pounds. The women's shot is 4 kg."
     },
@@ -63,12 +63,12 @@
       "type": "vector",
       "topic": "history",
       "difficulty": 3,
-      "prompt": "How many people signed the US Declaration of Independence?",
-      "answer": 56,
-      "min": 20,
-      "max": 80,
-      "unit": "people",
-      "fact": "56. John Hancock signed so large that his name became American slang for a signature."
+      "prompt": "In what year did the Black Death reach Europe?",
+      "answer": 1347,
+      "min": 1200,
+      "max": 1400,
+      "year": true,
+      "fact": "1347, on ships arriving in Sicily. It killed perhaps a third of Europe's people in five years."
     },
     {
       "id": "q5",

@@ -51,24 +51,24 @@
       "type": "vector",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "How high is Mount Kosciuszko, Australia's highest mountain, in metres?",
-      "answer": 2228,
-      "min": 800,
-      "max": 3100,
+      "prompt": "How high is Mount Fuji, in metres?",
+      "answer": 3776,
+      "min": 0,
+      "max": 10000,
       "unit": "m",
-      "fact": "2,228 m. There is a walking track to the top, and in summer people do it in trainers."
+      "fact": "3,776 m, the highest mountain in Japan. Its last eruption was in 1707."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "arts",
       "difficulty": 3,
-      "prompt": "How many years did Rip Van Winkle sleep?",
-      "answer": 20,
-      "min": 6,
-      "max": 28,
-      "unit": "years",
-      "fact": "Twenty years. He fell asleep a subject of King George and woke up in the United States."
+      "prompt": "In what year was the first part of Don Quixote published?",
+      "answer": 1605,
+      "min": 1500,
+      "max": 1700,
+      "year": true,
+      "fact": "1605. Cervantes and Shakespeare both died in 1616."
     },
     {
       "id": "q5",
