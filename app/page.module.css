@@ -123,3 +123,18 @@
     font-size: 13px;
   }
 }
+
+/* Short phones are the binding constraint: the page never scrolls, and the
+   next-run countdown under the menu is the row that tips a 640px screen
+   over. Tighter gaps win the room back before anything is cut. */
+@media (max-height: 700px) {
+  .main {
+    gap: 20px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .body {
+    gap: 20px;
+  }
+}

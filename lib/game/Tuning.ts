@@ -1254,6 +1254,27 @@ export const AUDIO = {
   warning: { from: 0.34, minInterval: 0.3, maxInterval: 1.0, gain: 0.14, hz: 860 },
 } as const;
 
+/**
+ * When the daily round turns over. One clock for the whole world, so every
+ * player on the planet is on the same round at the same moment and a group
+ * chat spanning time zones compares like with like.
+ *
+ * It runs on Melbourne's wall clock, daylight saving included, because that
+ * is where the players are: for them the round turns over at midnight, the
+ * way Wordle's does, and the date on the share card is the date on their
+ * phone. Everywhere else it lands at a fixed daytime hour (2pm or so in
+ * London, 9am or so in New York).
+ *
+ * `resetHour` is the hour on that clock the new round goes live, 0 to 23.
+ * Anything but 0 goes live the evening before its date: at 18 the round
+ * dated the 25th opens at 6pm on the 24th, so the file name and the card
+ * still carry the day most of its play happens on.
+ */
+export const DAILY = {
+  zone: "Australia/Melbourne",
+  resetHour: 0,
+} as const;
+
 export const SHARE = {
   width: 1080,
   height: 1350,

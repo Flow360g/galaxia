@@ -1,0 +1,34 @@
+/* The next round's countdown, under the menu. Quiet on purpose: it answers
+   "when is the next one" without competing with Press Start. */
+
+.line {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-size: 9px;
+  color: var(--panel-label);
+}
+
+.clock {
+  font-size: 16px;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #d5dbe6;
+  text-shadow: 0 1px 8px rgba(7, 17, 34, 0.9);
+}
+
+@media (max-width: 720px) {
+  .clock {
+    font-size: 14px;
+  }
+}

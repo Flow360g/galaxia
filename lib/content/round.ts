@@ -61,6 +61,7 @@ import { ROUND_PROFILE, checkVector, rangeFor } from "@/lib/content/difficulty";
 import { nextPracticeDeal } from "@/lib/game/storage";
 import { TOPICS } from "@/lib/game/types";
 import type { EarthQuestion, Question, Round, Topic } from "@/lib/game/types";
+import { roundKey } from "./clock";
 
 /**
  * Round loading.
@@ -442,12 +443,12 @@ function checkProfile(round: Round): void {
   }
 }
 
-/** Local calendar date as YYYY-MM-DD. Rounds turn over at the player's midnight. */
+/**
+ * Today's round date as YYYY-MM-DD, on the one clock the whole world shares
+ * (`DAILY` in `Tuning.ts`, worked out in `clock.ts`).
+ */
 export function todayKey(now: Date = new Date()): string {
-  const year = now.getFullYear();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return roundKey(now);
 }
 
 /**

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { NextRun } from "@/components/NextRun";
 import { TitleMenu } from "@/components/TitleMenu";
 import { getRound } from "@/lib/content/round";
 import { formatRoundNumber } from "@/lib/game/format";
@@ -17,7 +18,7 @@ export default async function Home({
   searchParams: Promise<{ round?: string; debug?: string }>;
 }) {
   // Read per request rather than prerendered, so the title screen turns
-  // over at midnight with the round. `?round=` and `?debug=1` are the same QA
+  // over with the round (see `DAILY` in `Tuning.ts`). `?round=` and `?debug=1` are the same QA
   // hatches as on /play, and Press Start and the menu carry them through, so
   // `/?debug=1` is one bookmark to the profile's practice run.
   const params = await searchParams;
@@ -68,6 +69,8 @@ export default async function Home({
         </Link>
 
         <TitleMenu round={round} query={suffix} />
+
+        <NextRun />
       </div>
 
     </main>
