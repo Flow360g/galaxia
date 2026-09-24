@@ -157,13 +157,13 @@ The screen has two zones. Respect them:
   as a readout rather than a control and kept picking until a boulder took
   the lot. The callout is part of that corner, not a third element, so it is
   drawn off the dial's own `--dial` size, takes no pointer events, and never
-  appears again after the first Cluster resolves. Its twin sits in the band, on the run's first
-  PICK ONE only: TAP BOOST FIRST / IF YOU ARE SURE / WRONG LOSES POINTS under BOOST, arrow pointing up,
-  gone once BOOST is armed, because testers could not tell whether BOOST went
-  before the answer or after it. The OPEN SKY phase card says the same thing
-  first, while nothing is timed: a sample of four squares and the tools row
+  appears again after the first Cluster resolves. Testers also could not tell
+  whether BOOST went before the answer or after it; the OPEN SKY phase card
+  answers that, while nothing is timed: a sample of four squares and the tools row
   with TAP HERE FIRST / IF YOU ARE SURE / WRONG LOSES POINTS under BOOST (`BoostDemo` in
-  `Hud.tsx`), a picture with no pointer events so the card's tap still lands. Both hug `env(safe-area-inset-*)`. Do not read
+  `Hud.tsx`), a picture with no pointer events so the card's tap still lands. It is not
+  repeated in flight: a callout under BOOST on the first PICK ONE was tried and
+  read as clutter over the question. The corners hug `env(safe-area-inset-*)`. Do not read
   them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
   nowhere and only exists while the run is parked on a verdict; the visible
   TAP TO CONTINUE prompt lives in the band like everything else.

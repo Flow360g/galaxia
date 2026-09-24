@@ -164,16 +164,6 @@ export function Hud({
     state?.encounter === 0 &&
     state?.phase === "approach" &&
     (state?.cluster?.charge ?? 0) > 0;
-  /*
-   * The same nudge for BOOST, on the run's first PICK ONE question only.
-   * Testers could not tell whether BOOST was pressed before the answer or
-   * after it, so until it is armed a callout over the button says: first.
-   */
-  const boostNudge =
-    question?.type === "mcq" &&
-    state?.encounter === round.questions.findIndex((q) => q.type === "mcq") &&
-    answering &&
-    !state?.boostArmed;
   const isEarth = question?.type === "earth";
   const isVector = question?.type === "vector";
   const waypoint = state?.phase === "waypoint" ? state.waypoint : null;
@@ -425,16 +415,6 @@ export function Hud({
             </div>
             ) : null}
 
-            {boostNudge ? (
-              <div className={styles.boostNudge} data-testid="boost-nudge" aria-hidden="true">
-                <span className={styles.boostNudgeArrow} />
-                <span className={styles.bankNudgeCall}>
-                  <span className={`${styles.bankNudgeLead} arcade`}>TAP BOOST FIRST</span>
-                  <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
-                  <span className={`${styles.boostNudgeWarn} arcade`}>WRONG LOSES POINTS</span>
-                </span>
-              </div>
-            ) : null}
           </section>
         ) : null}
 
