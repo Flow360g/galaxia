@@ -208,6 +208,10 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   // Encounter 5: NOVA then correct with boost. SLINGSHOT, and full marks:
   // 100 at x1, since the miss before it reset the streak.
   await expect(question).toBeVisible({ timeout: 15_000 });
+  // The first PICK ONE of the run points at BOOST and says it goes first.
+  await expect(page.getByTestId("boost-nudge")).toBeVisible();
+  await expect(page.getByTestId("boost-nudge")).toContainText("TAP BOOST FIRST");
+  await shot(page, "10a-boost-nudge");
   const clockBefore = Number((await page.getByTestId("clock").innerText()).replace(/\D/g, ""));
   await page.getByTestId("nova").click();
   await expect(page.getByTestId("nova-result")).toBeVisible();
@@ -220,6 +224,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   );
   await page.getByTestId("boost").click();
   await expect(page.getByTestId("boost")).toHaveAttribute("aria-pressed", "true");
+  // Armed: the callout has done its job.
+  await expect(page.getByTestId("boost-nudge")).toHaveCount(0);
   await page.getByTestId(`option-${answerOf(4)}`).click();
   await expect(page.getByTestId("pulse")).toHaveAttribute("data-kind", "plasma", {
     timeout: 5_000,
@@ -229,8 +235,10 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "10-slingshot");
   await advance(page);
 
-  // Encounter 6: let the five seconds run out. TOO SLOW.
+  // Encounter 6: let the six seconds run out. TOO SLOW. The BOOST callout
+  // was for the first PICK ONE only.
   await expect(question).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("boost-nudge")).toHaveCount(0);
   await expect(toast).toHaveAttribute("data-outcome", "timeout", { timeout: 30_000 });
   await shot(page, "11-timeout");
   await advance(page);

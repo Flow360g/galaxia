@@ -892,7 +892,9 @@ export class Run {
           ? // Six options and a prompt to read before the first tap. Every
             // pick after it drops back to the plain five.
             ENCOUNTER.thrustSeconds + CLUSTER.firstPickBonusSeconds
-          : ENCOUNTER.thrustSeconds;
+          : question.type === "mcq"
+            ? ENCOUNTER.thrustSeconds + ENCOUNTER.mcqBonusSeconds
+            : ENCOUNTER.thrustSeconds;
     this.grace = 0;
 
     this.hooks.onEncounterStart(index, question);

@@ -98,6 +98,12 @@ export const ENCOUNTER = {
    * decisions rather than one long one.
    */
   thrustSeconds: 5,
+  /**
+   * Extra seconds for a PICK ONE question. Four answers and a BOOST decision
+   * to make before the tap, and testers were running out of clock deciding
+   * whether to arm it.
+   */
+  mcqBonusSeconds: 1,
   /** Asteroid Z at full thrust and at empty thrust. It looms as you think. */
   holdFar: -170,
   holdNear: -48,
