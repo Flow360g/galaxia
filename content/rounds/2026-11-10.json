@@ -3,116 +3,6 @@
   "roundNumber": 53,
   "seed": 20261110,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these dishes come from Spain?",
-      "options": [
-        "Paella",
-        "Chorizo",
-        "Moussaka",
-        "Ratatouille",
-        "Risotto",
-        "Gazpacho"
-      ],
-      "answers": [
-        0,
-        1,
-        5
-      ],
-      "fact": "Gazpacho is a tomato soup served cold, from Andalusia in the hot south of Spain."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these singers started out in a boy band?",
-      "options": [
-        "Harry Styles",
-        "Robbie Williams",
-        "Ed Sheeran",
-        "Michael Bublé",
-        "Justin Timberlake",
-        "Bruno Mars"
-      ],
-      "answers": [
-        0,
-        1,
-        4
-      ],
-      "fact": "Justin Timberlake was in NSYNC, Harry Styles in One Direction and Robbie Williams in Take That."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How many dots are there on a normal dice, counting all six sides?",
-      "answer": 21,
-      "min": 7,
-      "max": 30,
-      "unit": "dots",
-      "fact": "1 + 2 + 3 + 4 + 5 + 6 makes 21, and opposite faces always add up to seven."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "How many players does a netball team have on the court?",
-      "answer": 7,
-      "min": 1,
-      "max": 10,
-      "unit": "players",
-      "fact": "Seven, and each wears a bib saying where they are allowed to go, from GS to GK."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "What is the capital of Turkey?",
-      "options": [
-        "Izmir",
-        "Istanbul",
-        "Ankara",
-        "Antalya"
-      ],
-      "answer": 2,
-      "hint": "Not the famous city on the Bosphorus. This one is in the middle of the country.",
-      "fact": "Atatürk made Ankara the capital in 1923, partly because it was far from the sea and hard to attack."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which scientist imagined a cat that is both alive and dead?",
-      "options": [
-        "Heisenberg",
-        "Schrödinger",
-        "Bohr",
-        "Planck"
-      ],
-      "answer": 1,
-      "hint": "He was an Austrian physicist.",
-      "fact": "Erwin Schrödinger meant the cat as a joke, to show how strange quantum physics sounds."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -131,6 +21,116 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "Which of these rivers flow through Europe?",
+      "options": [
+        "Danube",
+        "Ganges",
+        "Rhine",
+        "Amazon",
+        "Nile",
+        "Seine"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "The Danube passes through ten countries, more than any other river in the world."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "Which of these are gases at room temperature?",
+      "options": [
+        "Oxygen",
+        "Iron",
+        "Helium",
+        "Bromine",
+        "Mercury",
+        "Neon"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "How many litres of milk does it take to make one kilogram of cheese?",
+      "answer": 10,
+      "min": 2,
+      "max": 14,
+      "unit": "litres",
+      "fact": "About ten litres for a hard cheese. Most of the milk drains away as whey."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "How many teeth does an adult human usually have?",
+      "answer": 32,
+      "min": 10,
+      "max": 45,
+      "unit": "teeth",
+      "fact": "32, counting the four wisdom teeth that many people never grow at all."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which part of the plant is cinnamon?",
+      "options": [
+        "Leaf",
+        "Seed",
+        "Root",
+        "Bark"
+      ],
+      "answer": 3,
+      "hint": "It is peeled off in strips and curls up as it dries.",
+      "fact": "Cinnamon is the inner bark of a tree. The strips curl into quills as they dry out."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "What is the chemical symbol for gold?",
+      "options": [
+        "Au",
+        "Gd",
+        "Ag",
+        "Go"
+      ],
+      "answer": 0,
+      "hint": "It comes from the Latin word for gold, aurum.",
+      "fact": "Ag, silver, comes from the Latin argentum, which is also where Argentina got its name."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

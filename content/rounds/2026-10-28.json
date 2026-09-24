@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these are Snow White's seven dwarfs?",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these are types of pasta?",
       "options": [
-        "Dizzy",
-        "Grouchy",
-        "Sneezy",
-        "Bashful",
-        "Dopey",
-        "Jumpy"
+        "Risotto",
+        "Farfalle",
+        "Focaccia",
+        "Fusilli",
+        "Penne",
+        "Polenta"
       ],
       "answers": [
-        2,
+        1,
         3,
         4
       ],
-      "fact": "The dwarfs only got names in Disney's 1937 film. In the Grimm fairy tale they have none."
+      "fact": "Farfalle means butterflies in Italian, and fusilli comes from the word for a spindle."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Which of these are poems rather than novels?",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which of these are birds of prey?",
       "options": [
-        "Ulysses",
-        "The Odyssey",
-        "Paradise Lost",
-        "Dracula",
-        "Don Quixote",
-        "The Raven"
+        "Albatross",
+        "Osprey",
+        "Eagle",
+        "Kestrel",
+        "Heron",
+        "Pelican"
       ],
       "answers": [
         1,
         2,
-        5
+        3
       ],
-      "fact": "James Joyce's novel Ulysses borrows its shape from the Odyssey, the poem about the same hero."
+      "fact": "A kestrel can hang still in the air against the wind while it watches the grass for mice."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "sport",
-      "difficulty": 3,
-      "prompt": "How far do you travel in an Ironman triathlon, in kilometres?",
-      "answer": 226,
-      "min": 70,
-      "max": 310,
-      "unit": "km",
-      "fact": "About 226 km: a 3.8 km swim, a 180 km bike ride and a full marathon."
+      "difficulty": 2,
+      "prompt": "How many minutes does a rugby union match last, not counting stoppages?",
+      "answer": 80,
+      "min": 25,
+      "max": 110,
+      "unit": "minutes",
+      "fact": "Two halves of 40 minutes, and the ball has to go dead before the referee can end a half."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "How many syllables are there in a haiku?",
-      "answer": 17,
-      "min": 5,
-      "max": 24,
-      "unit": "syllables",
-      "fact": "Seventeen, in lines of five, seven and five."
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How old was Alexander the Great when he died?",
+      "answer": 32,
+      "min": 8,
+      "max": 46,
+      "unit": "years",
+      "fact": "32, and by then he ruled an empire stretching from Greece to what is now Pakistan."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "history",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Who was the first person to reach the South Pole?",
+      "prompt": "Which part of the eye controls how much light gets in?",
       "options": [
-        "Shackleton",
-        "Scott",
-        "Hillary",
-        "Amundsen"
+        "Cornea",
+        "Lens",
+        "Iris",
+        "Retina"
       ],
-      "answer": 3,
-      "hint": "He was Norwegian, and he used dog sleds.",
-      "fact": "Roald Amundsen got there in December 1911, five weeks before Robert Falcon Scott."
+      "answer": 2,
+      "hint": "It is the coloured part.",
+      "fact": "The iris is a ring of muscle that opens and closes the pupil like a camera shutter."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 1,
-      "prompt": "In which country is Machu Picchu?",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "What is a male bee called?",
       "options": [
-        "Chile",
-        "Mexico",
-        "Bolivia",
-        "Peru"
+        "A worker",
+        "A drone",
+        "A buck",
+        "A soldier"
       ],
-      "answer": 3,
-      "hint": "The nearest big city is Cusco, once the capital of the Inca Empire.",
-      "fact": "Machu Picchu was built for an Inca emperor in the 1400s and was abandoned about a century later."
+      "answer": 1,
+      "hint": "It is also a word for a flying robot.",
+      "fact": "Drones do no work in the hive. Their only job is to mate with a queen."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

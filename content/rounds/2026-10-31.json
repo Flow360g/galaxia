@@ -7,99 +7,101 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "Which of these metals does a magnet pick up?",
+      "prompt": "Which of these are letters of the Greek alphabet?",
       "options": [
-        "Aluminium",
-        "Copper",
-        "Cobalt",
-        "Gold",
-        "Nickel",
-        "Iron"
+        "Lambda",
+        "Sigma",
+        "Theta",
+        "Umlaut",
+        "Cedilla",
+        "Aleph"
       ],
       "answers": [
-        2,
-        4,
-        5
+        0,
+        1,
+        2
       ],
-      "fact": "Only a handful of metals are strongly magnetic at room temperature. A drinks can is aluminium, so a magnet slides off it."
+      "fact": "Our word alphabet is just the first two Greek letters stuck together: alpha and beta."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these superheroes are from Marvel?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these rivers are in Africa?",
       "options": [
-        "Batman",
-        "Aquaman",
-        "Hulk",
-        "Thor",
-        "Black Panther",
-        "The Flash"
+        "Congo",
+        "Indus",
+        "Mekong",
+        "Niger",
+        "Zambezi",
+        "Orinoco"
       ],
       "answers": [
-        2,
+        0,
         3,
         4
       ],
-      "fact": "Batman, Aquaman and The Flash belong to DC, Marvel's great rival."
+      "fact": "The Zambezi pours over Victoria Falls on the border of Zambia and Zimbabwe."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "What is the pH of pure water?",
-      "answer": 7,
-      "min": 2,
-      "max": 10,
-      "fact": "Seven, right in the middle of the scale. Lower is acid and higher is alkaline."
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Roughly how many languages are spoken in the world today?",
+      "answer": 7000,
+      "min": 2000,
+      "max": 12000,
+      "unit": "languages",
+      "log": true,
+      "fact": "About 7,000, and around 40% of them are endangered."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "geography",
-      "difficulty": 3,
-      "prompt": "How many provinces does Canada have?",
-      "answer": 10,
-      "min": 3,
-      "max": 14,
-      "unit": "provinces",
-      "fact": "Ten provinces and three territories, and the territories cover about 40% of the country."
+      "difficulty": 2,
+      "prompt": "How long is the Channel Tunnel, in kilometres?",
+      "answer": 50,
+      "min": 15,
+      "max": 70,
+      "unit": "km",
+      "fact": "About 50 km, 38 of them under the sea: the longest undersea stretch of any tunnel."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who designed the Sagrada Família in Barcelona?",
+      "topic": "history",
+      "difficulty": 1,
+      "prompt": "Which country gave the Statue of Liberty to the United States?",
       "options": [
-        "Gehry",
-        "Gaudí",
-        "Dalí",
-        "Le Corbusier"
+        "Netherlands",
+        "Britain",
+        "Spain",
+        "France"
       ],
-      "answer": 1,
-      "hint": "He was from Catalonia and loved curves drawn from nature.",
-      "fact": "Building began in 1882, and Antoni Gaudí worked on it for over 40 years."
+      "answer": 3,
+      "hint": "The same country later built the Eiffel Tower, whose engineer also designed the statue's frame.",
+      "fact": "Gustave Eiffel designed the iron skeleton inside the statue."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "nature",
+      "topic": "food",
       "difficulty": 1,
-      "prompt": "What is a group of lions called?",
+      "prompt": "Which grain is sake made from?",
       "options": [
-        "A troop",
-        "A herd",
-        "A pack",
-        "A pride"
+        "Millet",
+        "Rice",
+        "Barley",
+        "Wheat"
       ],
-      "answer": 3,
-      "hint": "It is also a word for feeling good about yourself.",
-      "fact": "The lionesses in a pride do most of the hunting, and they are usually all related."
+      "answer": 1,
+      "hint": "It is the grain eaten with most Japanese meals.",
+      "fact": "Sake is brewed more like beer than made like wine, even though people call it rice wine."
     },
     {
       "id": "q7",
@@ -109,7 +111,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

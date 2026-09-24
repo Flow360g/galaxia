@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "Which of these organs are part of the digestive system?",
+      "prompt": "Which of these are Greek gods, not Roman ones?",
       "options": [
-        "Stomach",
-        "Kidney",
-        "Liver",
-        "Spleen",
-        "Lungs",
-        "Pancreas"
+        "Jupiter",
+        "Athena",
+        "Mars",
+        "Venus",
+        "Hermes",
+        "Ares"
       ],
       "answers": [
-        0,
-        2,
+        1,
+        4,
         5
       ],
-      "fact": "The liver makes bile, which the gallbladder stores and squeezes into the gut to break down fat."
+      "fact": "The Romans took over most of the Greek gods and renamed them. Hermes became Mercury and Ares became Mars."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "Which of these English words come from Arabic?",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these were Viking homelands?",
       "options": [
-        "Algebra",
-        "Sofa",
-        "Kindergarten",
-        "Tsunami",
-        "Coffee",
-        "Ballet"
+        "Scotland",
+        "Norway",
+        "Finland",
+        "Sweden",
+        "Denmark",
+        "Iceland"
       ],
       "answers": [
-        0,
         1,
+        3,
         4
       ],
-      "fact": "Algebra comes from al-jabr, a word in the title of a maths book written in Baghdad in the 800s."
+      "fact": "Iceland was settled by Vikings from Norway in the 870s, but the raids set out from Scandinavia itself."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "How many Oscars did the film Titanic win?",
-      "answer": 11,
-      "min": 3,
-      "max": 16,
-      "unit": "Oscars",
-      "fact": "Eleven, a record it shares with Ben-Hur and The Return of the King."
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "How many calories are in one gram of fat?",
+      "answer": 9,
+      "min": 2,
+      "max": 13,
+      "unit": "calories",
+      "fact": "Nine, more than twice the four in a gram of sugar or protein."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "How long is the pitch at Wembley Stadium, in metres?",
-      "answer": 105,
-      "min": 35,
-      "max": 145,
-      "unit": "m",
-      "fact": "105 m by 68 m, the size FIFA recommends for international matches."
+      "prompt": "How many years did Michelangelo spend painting the Sistine Chapel ceiling?",
+      "answer": 4,
+      "min": 1,
+      "max": 6,
+      "unit": "years",
+      "fact": "Four years, 1508 to 1512, mostly standing up and painting above his head."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "In Greek myth, Athena was the goddess of what?",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "What is the smallest country in the world?",
       "options": [
-        "Love",
-        "Wisdom",
-        "The hunt",
-        "The harvest"
+        "Vatican City",
+        "Monaco",
+        "Malta",
+        "San Marino"
       ],
-      "answer": 1,
-      "hint": "Her bird was the owl.",
-      "fact": "Athens is named after her, and the Parthenon was built as her temple."
+      "answer": 0,
+      "hint": "It sits entirely inside a capital city.",
+      "fact": "Vatican City covers less than half a square kilometre, smaller than many city parks."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "geography",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "What is the capital of Canada?",
+      "prompt": "Which band made the album Rumours?",
       "options": [
-        "Montreal",
-        "Toronto",
-        "Ottawa",
-        "Vancouver"
+        "Fleetwood Mac",
+        "Led Zeppelin",
+        "The Doors",
+        "Eagles"
       ],
-      "answer": 2,
-      "hint": "It is not the biggest city. It sits on the river between Ontario and Quebec.",
-      "fact": "Queen Victoria picked Ottawa in 1857, partly as a compromise between English and French speaking Canada."
+      "answer": 0,
+      "hint": "Stevie Nicks sang for them.",
+      "fact": "Rumours was made in 1976 while two couples in the band were breaking up."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

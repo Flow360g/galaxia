@@ -3,6 +3,116 @@
   "roundNumber": 12,
   "seed": 20260930,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which of these are elements on the periodic table?",
+      "options": [
+        "Brass",
+        "Steel",
+        "Cobalt",
+        "Neon",
+        "Bronze",
+        "Tin"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "Bronze, steel and brass are all alloys: metals mixed together. Bronze is mostly copper with a little tin."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which of these painters were Impressionists?",
+      "options": [
+        "Picasso",
+        "Rembrandt",
+        "Dal\u00ed",
+        "Degas",
+        "Monet",
+        "Renoir"
+      ],
+      "answers": [
+        3,
+        4,
+        5
+      ],
+      "fact": "The movement got its name from a critic mocking Monet's painting Impression, Sunrise."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many months is an elephant pregnant for?",
+      "answer": 22,
+      "min": 6,
+      "max": 30,
+      "unit": "months",
+      "fact": "About 22 months, the longest pregnancy of any land animal."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many years did the Ottoman Empire last?",
+      "answer": 623,
+      "min": 200,
+      "max": 850,
+      "unit": "years",
+      "fact": "623 years, from about 1299 until 1922."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Who directed Pulp Fiction?",
+      "options": [
+        "Tarantino",
+        "Coppola",
+        "Fincher",
+        "Scorsese"
+      ],
+      "answer": 0,
+      "hint": "He also made Reservoir Dogs and Kill Bill.",
+      "fact": "Pulp Fiction won the top prize at the Cannes Film Festival in 1994."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which country does kimchi come from?",
+      "options": [
+        "Japan",
+        "Korea",
+        "China",
+        "Vietnam"
+      ],
+      "answer": 1,
+      "hint": "It is served with almost every meal in Seoul.",
+      "fact": "Kimchi is fermented cabbage, and Korean homes often have a second fridge just for it."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,116 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 1,
-      "prompt": "Which of these rivers flow through Europe?",
-      "options": [
-        "Danube",
-        "Ganges",
-        "Rhine",
-        "Amazon",
-        "Nile",
-        "Seine"
-      ],
-      "answers": [
-        0,
-        2,
-        5
-      ],
-      "fact": "The Danube passes through ten countries, more than any other river in the world."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "science",
-      "difficulty": 3,
-      "prompt": "Which of these are gases at room temperature?",
-      "options": [
-        "Oxygen",
-        "Iron",
-        "Helium",
-        "Bromine",
-        "Mercury",
-        "Neon"
-      ],
-      "answers": [
-        0,
-        2,
-        5
-      ],
-      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "food",
-      "difficulty": 3,
-      "prompt": "How many litres of milk does it take to make one kilogram of cheese?",
-      "answer": 10,
-      "min": 2,
-      "max": 14,
-      "unit": "litres",
-      "fact": "About ten litres for a hard cheese. Most of the milk drains away as whey."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 1,
-      "prompt": "How many teeth does an adult human usually have?",
-      "answer": 32,
-      "min": 10,
-      "max": 45,
-      "unit": "teeth",
-      "fact": "32, counting the four wisdom teeth that many people never grow at all."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which part of the plant is cinnamon?",
-      "options": [
-        "Leaf",
-        "Seed",
-        "Root",
-        "Bark"
-      ],
-      "answer": 3,
-      "hint": "It is peeled off in strips and curls up as it dries.",
-      "fact": "Cinnamon is the inner bark of a tree. The strips curl into quills as they dry out."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "What is the chemical symbol for gold?",
-      "options": [
-        "Au",
-        "Gd",
-        "Ag",
-        "Go"
-      ],
-      "answer": 0,
-      "hint": "It comes from the Latin word for gold, aurum.",
-      "fact": "Ag, silver, comes from the Latin argentum, which is also where Argentina got its name."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

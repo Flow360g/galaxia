@@ -3,6 +3,116 @@
   "roundNumber": 11,
   "seed": 20260929,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these capital cities are in Africa?",
+      "options": [
+        "Nairobi",
+        "Beirut",
+        "Baku",
+        "Accra",
+        "Dakar",
+        "Muscat"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "Dakar, the capital of Senegal, stands on the westernmost point of mainland Africa."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these characters did Shakespeare create?",
+      "options": [
+        "Beowulf",
+        "Ophelia",
+        "Faustus",
+        "Tartuffe",
+        "Puck",
+        "Hamlet"
+      ],
+      "answers": [
+        1,
+        4,
+        5
+      ],
+      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Moli\u00e8re's, and Beowulf is an Old English poem nobody knows the author of."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many ribs does a person have?",
+      "answer": 24,
+      "min": 8,
+      "max": 34,
+      "unit": "ribs",
+      "fact": "24, in twelve pairs. Men and women have the same number."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "How far is it from Perth to Sydney in a straight line, in kilometres?",
+      "answer": 3300,
+      "min": 1200,
+      "max": 4600,
+      "unit": "km",
+      "fact": "About 3,300 km, further than London to Moscow."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Who created the detective Sherlock Holmes?",
+      "options": [
+        "Agatha Christie",
+        "Dickens",
+        "Conan Doyle",
+        "Edgar Allan Poe"
+      ],
+      "answer": 2,
+      "hint": "He was a doctor from Edinburgh.",
+      "fact": "Arthur Conan Doyle killed Holmes off in 1893 and had to bring him back ten years later because readers were furious."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which fruit is dried to make a prune?",
+      "options": [
+        "Date",
+        "Grape",
+        "Plum",
+        "Fig"
+      ],
+      "answer": 2,
+      "hint": "It is small and purple, with a stone inside.",
+      "fact": "A dried grape is a raisin, sultana or currant, depending on the grape."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,117 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these live in the ocean their whole lives?",
-      "options": [
-        "Octopus",
-        "Blue whale",
-        "Salmon",
-        "Coral",
-        "Sea turtle",
-        "Penguin"
-      ],
-      "answers": [
-        0,
-        1,
-        3
-      ],
-      "fact": "Salmon spawn in rivers, sea turtles lay their eggs on beaches and penguins breed on land. None of them spends a whole life at sea."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "Which of these were presidents of the United States?",
-      "options": [
-        "Kennedy",
-        "Lincoln",
-        "Roosevelt",
-        "Franklin",
-        "Hamilton",
-        "Burr"
-      ],
-      "answers": [
-        0,
-        1,
-        2
-      ],
-      "fact": "Benjamin Franklin, Alexander Hamilton and Aaron Burr never held the office. Burr shot Hamilton dead in a duel."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "What percentage of the Earth's surface is covered by water?",
-      "answer": 71,
-      "min": 25,
-      "max": 100,
-      "unit": "%",
-      "fact": "About 71%, and almost all of it is salt water in the oceans."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How heavy is an adult male African elephant, in kilograms?",
-      "answer": 6000,
-      "min": 1500,
-      "max": 10000,
-      "unit": "kg",
-      "log": true,
-      "fact": "About 6,000 kg. An elephant can eat around 150 kg of plants in a day."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these is a prime number?",
-      "options": [
-        "29",
-        "33",
-        "27",
-        "21"
-      ],
-      "answer": 0,
-      "hint": "A prime has no factors but itself and one. Try dividing each by three.",
-      "fact": "A prime divides by nothing but itself and one. 29 is the only one here that manages it."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Which artist cut off part of his own ear?",
-      "options": [
-        "Van Gogh",
-        "Picasso",
-        "Dali",
-        "Monet"
-      ],
-      "answer": 0,
-      "hint": "He painted a night sky full of swirling stars.",
-      "fact": "He painted himself afterwards with the bandage on, and sold almost nothing in his lifetime."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

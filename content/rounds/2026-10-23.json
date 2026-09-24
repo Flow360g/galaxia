@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "nature",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which of these are amphibians?",
+      "prompt": "Which of these are fielding positions in cricket?",
       "options": [
-        "Toad",
-        "Iguana",
-        "Gecko",
-        "Axolotl",
-        "Tortoise",
-        "Newt"
+        "Scrum-half",
+        "Slip",
+        "Silly point",
+        "Shortstop",
+        "Gully",
+        "Winger"
       ],
       "answers": [
-        0,
-        3,
-        5
+        1,
+        2,
+        4
       ],
-      "fact": "An axolotl can regrow a lost leg, and even parts of its heart and brain."
+      "fact": "Silly point stands a few metres from the batter, which is exactly why it is called silly."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these US states border Canada?",
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "Which of these spices come from a seed?",
       "options": [
-        "Minnesota",
-        "Montana",
-        "Iowa",
-        "Maine",
-        "Oregon",
-        "Wyoming"
+        "Nutmeg",
+        "Saffron",
+        "Cinnamon",
+        "Cumin",
+        "Mustard",
+        "Ginger"
       ],
       "answers": [
         0,
-        1,
-        3
+        3,
+        4
       ],
-      "fact": "Thirteen US states touch the Canadian border, counting the ones that meet it across the Great Lakes."
+      "fact": "Nutmeg and mace come from the same fruit. Nutmeg is the seed and mace is the red lace wrapped round it."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "history",
+      "topic": "geography",
       "difficulty": 3,
-      "prompt": "How many passengers sailed to America on the Mayflower?",
-      "answer": 102,
-      "min": 35,
-      "max": 140,
-      "unit": "passengers",
-      "fact": "102 passengers in 1620, crammed below deck for more than two months."
+      "prompt": "How long is the Panama Canal, in kilometres?",
+      "answer": 82,
+      "min": 25,
+      "max": 110,
+      "unit": "km",
+      "fact": "About 82 km, and a ship takes around 8 to 10 hours to pass through it."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "nature",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "How long is a giraffe's neck, in metres?",
-      "answer": 1.8,
-      "min": 0.3,
-      "max": 2.7,
-      "unit": "m",
-      "fact": "A giraffe's neck has seven bones in it, the same number as yours. Each one is just much longer."
+      "prompt": "How old was Mozart when he died?",
+      "answer": 35,
+      "min": 10,
+      "max": 50,
+      "unit": "years",
+      "fact": "35. He wrote more than 600 pieces of music, and started composing at five."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "science",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Who discovered penicillin?",
+      "prompt": "In which sport do teams play for the Webb Ellis Cup?",
       "options": [
-        "Pasteur",
-        "Jenner",
-        "Lister",
-        "Fleming"
+        "Cricket",
+        "Rugby league",
+        "Football",
+        "Rugby union"
       ],
       "answer": 3,
-      "hint": "He was a Scottish scientist who noticed mould killing bacteria in a dish he had left out.",
-      "fact": "Alexander Fleming found it in 1928 after coming back from a holiday to a messy lab."
+      "hint": "It is named after a schoolboy said to have picked up the ball and run with it.",
+      "fact": "The story says William Webb Ellis invented rugby at Rugby School in 1823, though there is little proof it happened."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "screen",
       "difficulty": 1,
-      "prompt": "What is the name of Batman's butler?",
+      "prompt": "Which kind of music came from Jamaica?",
       "options": [
-        "Lucius",
-        "Alfred",
-        "Gordon",
-        "Jarvis"
+        "Flamenco",
+        "Samba",
+        "Reggae",
+        "Salsa"
       ],
-      "answer": 1,
-      "hint": "Jarvis serves a different superhero.",
-      "fact": "Michael Caine played Alfred in all three of Christopher Nolan's Batman films."
+      "answer": 2,
+      "hint": "Bob Marley made it famous.",
+      "fact": "Reggae grew out of ska and rocksteady in the late 1960s."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

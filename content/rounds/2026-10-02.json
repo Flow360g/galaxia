@@ -3,6 +3,116 @@
   "roundNumber": 14,
   "seed": 20261002,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these mountains are in the Himalayas?",
+      "options": [
+        "Mont Blanc",
+        "Aconcagua",
+        "Everest",
+        "Kangchenjunga",
+        "Annapurna",
+        "Kilimanjaro"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
+      "fact": "Kangchenjunga, on the border of Nepal and India, is the third highest mountain in the world."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these animals are primates?",
+      "options": [
+        "Lemur",
+        "Raccoon",
+        "Meerkat",
+        "Gibbon",
+        "Tarsier",
+        "Sloth"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "A tarsier's eyes are each as big as its brain, and they cannot move in their sockets."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many seconds did the Wright brothers' first powered flight last?",
+      "answer": 12,
+      "min": 2,
+      "max": 18,
+      "unit": "seconds",
+      "fact": "Twelve seconds, covering 37 m. That is shorter than the wingspan of a jumbo jet."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How many players does an ice hockey team have on the ice?",
+      "answer": 6,
+      "min": 1,
+      "max": 9,
+      "unit": "players",
+      "fact": "Six, including the goalie, and players swap on and off every minute or so."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "What colour is an aircraft's black box flight recorder?",
+      "options": [
+        "Orange",
+        "Yellow",
+        "Black",
+        "Red"
+      ],
+      "answer": 0,
+      "hint": "It has to be easy to spot in wreckage.",
+      "fact": "Nobody is quite sure why it is called a black box. It has always been painted bright orange."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which sauce is made from egg yolks, butter and lemon?",
+      "options": [
+        "B\u00e9chamel",
+        "Hollandaise",
+        "Mornay",
+        "Aioli"
+      ],
+      "answer": 1,
+      "hint": "It is the sauce on eggs Benedict.",
+      "fact": "B\u00e9chamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,116 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these are Pixar films?",
-      "options": [
-        "Toy Story",
-        "Madagascar",
-        "Shrek",
-        "Frozen",
-        "Coco",
-        "Up"
-      ],
-      "answers": [
-        0,
-        4,
-        5
-      ],
-      "fact": "Pixar started out selling computers. The films were made to show off what the hardware could draw."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "sport",
-      "difficulty": 1,
-      "prompt": "Which of these are golf scores?",
-      "options": [
-        "Birdie",
-        "Let",
-        "Bogey",
-        "Deuce",
-        "Eagle",
-        "Love"
-      ],
-      "answers": [
-        0,
-        2,
-        4
-      ],
-      "fact": "An albatross is three under par on one hole, rarer than a hole in one."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "science",
-      "difficulty": 3,
-      "prompt": "How long is the human small intestine, in metres?",
-      "answer": 6,
-      "min": 1.5,
-      "max": 8.5,
-      "unit": "m",
-      "fact": "About six metres, folded up to fit inside your belly."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How fast does a passenger jet cruise, in km/h?",
-      "answer": 900,
-      "min": 300,
-      "max": 1300,
-      "unit": "km/h",
-      "fact": "About 900 km/h, which is roughly three quarters of the speed of sound at that height."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which unit measures electrical resistance?",
-      "options": [
-        "Amp",
-        "Watt",
-        "Ohm",
-        "Volt"
-      ],
-      "answer": 2,
-      "hint": "Its symbol is the Greek letter omega.",
-      "fact": "The ohm is named after Georg Ohm, a German teacher."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Who painted The Persistence of Memory, with the melting clocks?",
-      "options": [
-        "Max Ernst",
-        "Rene Magritte",
-        "Joan Miro",
-        "Salvador Dali"
-      ],
-      "answer": 3,
-      "hint": "The painter of this one is as famous for his moustache as for his work.",
-      "fact": "Salvador Dali painted it in 1931. He said the soft watches came to him while looking at a ripe camembert."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

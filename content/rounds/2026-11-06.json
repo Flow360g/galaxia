@@ -3,116 +3,6 @@
   "roundNumber": 49,
   "seed": 20261106,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these countries still have a king or queen?",
-      "options": [
-        "Norway",
-        "Greece",
-        "Thailand",
-        "France",
-        "Spain",
-        "Italy"
-      ],
-      "answers": [
-        0,
-        2,
-        4
-      ],
-      "fact": "Greece voted to abolish its monarchy in 1974, after a military government fell."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "Which of these were rulers of ancient Egypt?",
-      "options": [
-        "Hannibal",
-        "Cleopatra",
-        "Ramesses",
-        "Xerxes",
-        "Nebuchadnezzar",
-        "Akhenaten"
-      ],
-      "answers": [
-        1,
-        2,
-        5
-      ],
-      "fact": "Cleopatra lived closer in time to the Moon landing than to the building of the Great Pyramid."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "How many seasons of Seinfeld were made?",
-      "answer": 9,
-      "min": 2,
-      "max": 13,
-      "unit": "seasons",
-      "fact": "Nine. NBC offered a reported $5 million an episode for a tenth, and Jerry Seinfeld said no."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "What percentage of an adult's body is water?",
-      "answer": 60,
-      "min": 15,
-      "max": 85,
-      "unit": "%",
-      "fact": "About 60%. A newborn baby is closer to 75% water."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "In which country is Timbuktu?",
-      "options": [
-        "Morocco",
-        "Mali",
-        "Chad",
-        "Niger"
-      ],
-      "answer": 1,
-      "hint": "It is on the edge of the Sahara, near the Niger River.",
-      "fact": "Timbuktu was a great centre of learning in the 1400s, with libraries of handwritten books."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "Who captained the Endeavour on its voyage to Australia?",
-      "options": [
-        "James Cook",
-        "Tasman",
-        "Drake",
-        "Magellan"
-      ],
-      "answer": 0,
-      "hint": "He was a British navy officer who landed at Botany Bay.",
-      "fact": "Cook reached the east coast of Australia in 1770."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -131,6 +21,116 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
+      "options": [
+        "Romania",
+        "Portugal",
+        "Greece",
+        "Turkey",
+        "Egypt",
+        "Austria"
+      ],
+      "answers": [
+        2,
+        3,
+        4
+      ],
+      "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these birds cannot fly?",
+      "options": [
+        "Kiwi",
+        "Albatross",
+        "Ostrich",
+        "Penguin",
+        "Swan",
+        "Pelican"
+      ],
+      "answers": [
+        0,
+        2,
+        3
+      ],
+      "fact": "An ostrich cannot get off the ground but can outrun a racehorse. A penguin flies, just underwater."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How tall is the Great Pyramid of Giza, in metres?",
+      "answer": 147,
+      "min": 50,
+      "max": 200,
+      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years.",
+      "unit": "m"
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many years ago did the last dinosaurs die out, in millions?",
+      "answer": 66,
+      "min": 10,
+      "max": 90,
+      "unit": "million years",
+      "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which metal is liquid at room temperature?",
+      "options": [
+        "Zinc",
+        "Tin",
+        "Lead",
+        "Mercury"
+      ],
+      "answer": 3,
+      "hint": "It is the one that was used in old thermometers.",
+      "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Who composed The Four Seasons?",
+      "options": [
+        "Mozart",
+        "Handel",
+        "Vivaldi",
+        "Bach"
+      ],
+      "answer": 2,
+      "hint": "He was a priest from Venice, nicknamed the Red Priest for his hair.",
+      "fact": "The Four Seasons is four violin concertos, one for each season, written around 1720."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

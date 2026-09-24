@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Which of these are Queen songs?",
+      "prompt": "Which of these musicals are by Andrew Lloyd Webber?",
       "options": [
-        "Roxanne",
-        "Radio Ga Ga",
-        "Heroes",
-        "Killer Queen",
-        "Money",
-        "Bicycle Race"
+        "Evita",
+        "Starlight Express",
+        "Wicked",
+        "Cats",
+        "Chicago",
+        "Les Mis\u00e9rables"
       ],
       "answers": [
+        0,
         1,
-        3,
-        5
+        3
       ],
-      "fact": "Queen's twenty minutes at Live Aid in 1985 is often voted the greatest live rock performance ever."
+      "fact": "Cats is based on a book of poems about cats by T. S. Eliot."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "food",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which of these are types of rice?",
+      "prompt": "Which of these are Australian state capitals?",
       "options": [
-        "Basmati",
-        "Semolina",
-        "Bulgur",
-        "Quinoa",
-        "Jasmine",
-        "Arborio"
+        "Adelaide",
+        "Darwin",
+        "Canberra",
+        "Hobart",
+        "Cairns",
+        "Perth"
       ],
       "answers": [
         0,
-        4,
+        3,
         5
       ],
-      "fact": "Arborio rice is used for risotto because it releases starch and makes the dish creamy."
+      "fact": "Canberra and Darwin are capitals of territories, not states. Canberra was built because Sydney and Melbourne would not let each other be the capital."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 3,
-      "prompt": "How heavy is a men's Olympic shot put, in kilograms?",
-      "answer": 7.26,
-      "min": 1.5,
-      "max": 10.5,
-      "unit": "kg",
-      "fact": "7.26 kg, which is exactly 16 pounds. The women's shot is 4 kg."
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many hearts does an octopus have?",
+      "answer": 3,
+      "min": 1,
+      "max": 6,
+      "unit": "hearts",
+      "fact": "Two hearts pump blood through the gills and the third sends it round the body. Its blood is blue."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "How many people signed the US Declaration of Independence?",
-      "answer": 56,
-      "min": 20,
-      "max": 80,
-      "unit": "people",
-      "fact": "56. John Hancock signed so large that his name became American slang for a signature."
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many volts does a normal AA battery give?",
+      "answer": 1.5,
+      "min": 0.4,
+      "max": 2.2,
+      "unit": "volts",
+      "fact": "1.5 volts. The plug socket in an Australian or British home gives about 230."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "misc",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Which city is home to the headquarters of the United Nations?",
+      "prompt": "Who wrote The Great Gatsby?",
       "options": [
-        "Vienna",
-        "New York",
-        "Brussels",
-        "Geneva"
+        "Hemingway",
+        "Faulkner",
+        "Fitzgerald",
+        "Steinbeck"
       ],
-      "answer": 1,
-      "hint": "It is on the East River in the United States.",
-      "fact": "The land for the UN building was bought by John D. Rockefeller Jr. and donated."
+      "answer": 2,
+      "hint": "His first names were Francis Scott, and his wife Zelda was a writer too.",
+      "fact": "The Great Gatsby sold poorly when it came out in 1925. Fitzgerald died thinking it had failed."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Who wrote Matilda?",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which vegetable makes borscht red?",
       "options": [
-        "J. K. Rowling",
-        "Beatrix Potter",
-        "Roald Dahl",
-        "Enid Blyton"
+        "Radish",
+        "Red onion",
+        "Red pepper",
+        "Beetroot"
       ],
-      "answer": 2,
-      "hint": "He also wrote Charlie and the Chocolate Factory.",
-      "fact": "Roald Dahl wrote his books in a shed at the bottom of his garden."
+      "answer": 3,
+      "hint": "It is a root vegetable that stains everything it touches.",
+      "fact": "Borscht is a soup from Ukraine, eaten across Eastern Europe."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

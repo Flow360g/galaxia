@@ -3,116 +3,6 @@
   "roundNumber": 57,
   "seed": 20261114,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 1,
-      "prompt": "Which of these are dog breeds?",
-      "options": [
-        "Shih Tzu",
-        "Ragdoll",
-        "Sphynx",
-        "Vizsla",
-        "Bengal",
-        "Whippet"
-      ],
-      "answers": [
-        0,
-        3,
-        5
-      ],
-      "fact": "Ragdoll, Bengal and Sphynx are all cat breeds. A Sphynx has almost no fur."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these are root vegetables?",
-      "options": [
-        "Celery",
-        "Leek",
-        "Beetroot",
-        "Parsnip",
-        "Asparagus",
-        "Carrot"
-      ],
-      "answers": [
-        2,
-        3,
-        5
-      ],
-      "fact": "Carrots were mostly purple or yellow until orange ones were bred in the Netherlands in the 1600s."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "At what temperature does water boil, in degrees Fahrenheit?",
-      "answer": 212,
-      "min": 80,
-      "max": 300,
-      "unit": "°F",
-      "fact": "212 °F at sea level. Water freezes at 32 °F, so the two are 180 degrees apart."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "sport",
-      "difficulty": 3,
-      "prompt": "How many minutes long is an NBA basketball game, not counting stoppages?",
-      "answer": 48,
-      "min": 15,
-      "max": 65,
-      "unit": "minutes",
-      "fact": "Four quarters of 12 minutes, though with the clock stopping it usually takes more than two hours."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which mountains are usually taken as the border of Europe and Asia?",
-      "options": [
-        "Pyrenees",
-        "Carpathians",
-        "Urals",
-        "Alps"
-      ],
-      "answer": 2,
-      "hint": "They run north to south through Russia.",
-      "fact": "The Urals stretch about 2,500 km from the Arctic Ocean to Kazakhstan."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who wrote the novel 1984?",
-      "options": [
-        "H. G. Wells",
-        "Orwell",
-        "Bradbury",
-        "Huxley"
-      ],
-      "answer": 1,
-      "hint": "The same author wrote Animal Farm.",
-      "fact": "George Orwell was a pen name. His real name was Eric Blair."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -131,6 +21,115 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "Which of these are kinds of poem?",
+      "options": [
+        "Fresco",
+        "Sonata",
+        "Limerick",
+        "Sonnet",
+        "Mural",
+        "Haiku"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "A haiku is seventeen sounds long. A fresco is painted into wet plaster and a sonata is played, not written down as verse."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "Which of these are gods in Norse myth?",
+      "options": [
+        "Odin",
+        "Anubis",
+        "Marduk",
+        "Loki",
+        "Perun",
+        "Thor"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "Anubis is Egyptian, Marduk Babylonian and Perun Slavic. Every mythology has a thunder god; only one of them has Thor."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How old was Tutankhamun when he died?",
+      "answer": 19,
+      "min": 4,
+      "max": 28,
+      "fact": "About nineteen. He was a minor pharaoh and was only famous because his tomb was the one nobody had robbed."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "screen",
+      "difficulty": 3,
+      "prompt": "How many episodes of Friends were made?",
+      "answer": 236,
+      "min": 50,
+      "max": 350,
+      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States.",
+      "unit": "episodes"
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which sport would you use a foil?",
+      "options": [
+        "Boxing",
+        "Archery",
+        "Fencing",
+        "Rowing"
+      ],
+      "answer": 2,
+      "hint": "There are three blades in the sport, and this is the lightest.",
+      "fact": "Fencing has three weapons: foil, epee and sabre. The foil is the lightest and only counts hits to the torso."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which nut is marzipan made from?",
+      "options": [
+        "Peanut",
+        "Walnut",
+        "Hazelnut",
+        "Almond"
+      ],
+      "answer": 3,
+      "hint": "The same nut as amaretto and frangipane.",
+      "fact": "Ground almonds and sugar, and nothing else in the traditional recipe. It is older than the sugar trade in Europe."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

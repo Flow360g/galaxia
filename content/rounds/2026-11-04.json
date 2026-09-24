@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which of these are the primary colours of light?",
+      "prompt": "Which of these cities have hosted the Summer Olympics?",
       "options": [
-        "Green",
-        "Magenta",
-        "Blue",
-        "Red",
-        "Cyan",
-        "Yellow"
+        "Barcelona",
+        "Cape Town",
+        "Sydney",
+        "Istanbul",
+        "Seoul",
+        "Toronto"
       ],
       "answers": [
         0,
         2,
-        3
+        4
       ],
-      "fact": "Screens make every colour from red, green and blue dots. Printers use cyan, magenta and yellow ink instead."
+      "fact": "Triathlon made its Olympic debut at Sydney 2000, starting with a swim beside the Opera House."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these were dinosaurs?",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which of these cities stand on the Danube?",
       "options": [
-        "Triceratops",
-        "Velociraptor",
-        "Mammoth",
-        "Plesiosaur",
-        "Stegosaurus",
-        "Pterodactyl"
+        "Warsaw",
+        "Budapest",
+        "Vienna",
+        "Belgrade",
+        "Prague",
+        "Munich"
       ],
       "answers": [
-        0,
         1,
-        4
+        2,
+        3
       ],
-      "fact": "Pterosaurs flew and plesiosaurs swam alongside the dinosaurs, but neither was a dinosaur."
+      "fact": "The Danube runs through or along ten countries, more than any other river on Earth."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How far is it around the Earth at the equator, in kilometres?",
-      "answer": 40075,
-      "min": 12000,
-      "max": 55000,
-      "unit": "km",
-      "fact": "About 40,075 km. The metre was first defined as a ten-millionth of the distance from the North Pole to the equator, which is why the answer is so close to 40,000."
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "How heavy is a newborn baby, on average, in kilograms?",
+      "answer": 3.5,
+      "min": 1,
+      "max": 5,
+      "unit": "kg",
+      "fact": "About 3.5 kg. Most babies lose a little weight in their first few days, then gain it back within a fortnight."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "screen",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "How many symphonies did Beethoven write?",
-      "answer": 9,
-      "min": 2,
-      "max": 13,
-      "unit": "symphonies",
-      "fact": "Nine. He was almost completely deaf when he wrote the last one."
+      "prompt": "How many characters could a tweet have when Twitter started?",
+      "answer": 140,
+      "min": 45,
+      "max": 195,
+      "unit": "characters",
+      "fact": "140, so a tweet would fit in a text message with room for a username."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
+      "topic": "nature",
       "difficulty": 1,
-      "prompt": "Which ocean lies between Africa and Australia?",
+      "prompt": "Which bird lays the biggest egg?",
       "options": [
-        "Atlantic",
-        "Pacific",
-        "Southern",
-        "Indian"
+        "Emu",
+        "Condor",
+        "Albatross",
+        "Ostrich"
       ],
       "answer": 3,
-      "hint": "It is named after a country on its northern shore.",
-      "fact": "The Indian Ocean is the warmest of the world's oceans."
+      "hint": "It is also the biggest bird alive.",
+      "fact": "One ostrich egg holds as much as about two dozen hen's eggs."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "food",
       "difficulty": 2,
-      "prompt": "What does \"al dente\" mean in Italian?",
+      "prompt": "Which pastry are profiteroles made from?",
       "options": [
-        "To the tooth",
-        "Soft",
-        "With sauce",
-        "Well cooked"
+        "Filo",
+        "Shortcrust",
+        "Puff",
+        "Choux"
       ],
-      "answer": 0,
-      "hint": "It tells you the pasta should still have a little bite.",
-      "fact": "Pasta cooked al dente is firm in the middle when you bite it."
+      "answer": 3,
+      "hint": "It is also used for eclairs.",
+      "fact": "Choux pastry puffs up in the oven because the water in it turns to steam."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

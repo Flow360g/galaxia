@@ -8,99 +8,99 @@
       "id": "q1",
       "type": "cluster",
       "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these are Beatles songs?",
+      "difficulty": 1,
+      "prompt": "Which of these TV shows are set in a hospital?",
       "options": [
-        "Yesterday",
-        "Let It Be",
-        "My Generation",
-        "Hey Jude",
-        "Imagine",
-        "Waterloo"
+        "Scrubs",
+        "Grey's Anatomy",
+        "Mad Men",
+        "Suits",
+        "ER",
+        "The Wire"
       ],
       "answers": [
         0,
         1,
-        3
+        4
       ],
-      "fact": "Paul McCartney woke up with the tune of Yesterday in his head and called it Scrambled Eggs until the real words came."
+      "fact": "ER ran for fifteen seasons and made a star of George Clooney."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
+      "topic": "history",
       "difficulty": 3,
-      "prompt": "Which of these are names for a baby animal?",
+      "prompt": "Which of these were civilisations of ancient Mesopotamia?",
       "options": [
-        "Cygnet",
-        "Boar",
-        "Leveret",
-        "Joey",
-        "Jenny",
-        "Drake"
+        "Minoans",
+        "Assyria",
+        "Sumer",
+        "Carthage",
+        "Babylon",
+        "Etruscans"
       ],
       "answers": [
-        0,
+        1,
         2,
-        3
+        4
       ],
-      "fact": "A leveret is a young hare. Unlike a baby rabbit, it is born with fur and its eyes open."
+      "fact": "Sumer gave the world some of its earliest writing, pressed into wet clay with a reed."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "How many teeth are in a child's full set of baby teeth?",
-      "answer": 20,
-      "min": 6,
-      "max": 28,
-      "unit": "teeth",
-      "fact": "Twenty, and the adult teeth are already waiting in the jaw underneath them."
+      "prompt": "How many years did it take to build the Sydney Opera House?",
+      "answer": 14,
+      "min": 3,
+      "max": 20,
+      "unit": "years",
+      "fact": "Fourteen, from 1959 to 1973: ten years late and around fourteen times over budget."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "How far is it from London to Paris in a straight line, in kilometres?",
-      "answer": 340,
-      "min": 120,
-      "max": 480,
+      "prompt": "How far is it from Sydney to Melbourne by road, in kilometres?",
+      "answer": 880,
+      "min": 300,
+      "max": 1200,
       "unit": "km",
-      "fact": "About 340 km. The Eurostar covers the journey in around two and a quarter hours."
+      "fact": "The Hume Highway covers about 880 km, and the flight between the two is one of the busiest in the world."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "nature",
-      "difficulty": 3,
-      "prompt": "What colour is a polar bear's skin?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which film is set on the moon Pandora?",
       "options": [
-        "Pink",
-        "White",
-        "Black",
-        "Grey"
+        "Dune",
+        "Prometheus",
+        "Interstellar",
+        "Avatar"
       ],
-      "answer": 2,
-      "hint": "It helps soak up heat from the sun.",
-      "fact": "A polar bear's fur is not white either. Each hair is clear and hollow, and scatters light."
+      "answer": 3,
+      "hint": "Its people are tall and blue.",
+      "fact": "James Cameron waited more than ten years for film technology to catch up with his idea for Avatar."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which country did ABBA come from?",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which country has the longest coastline?",
       "options": [
-        "Norway",
-        "Netherlands",
-        "Denmark",
-        "Sweden"
+        "Russia",
+        "Canada",
+        "Indonesia",
+        "Australia"
       ],
-      "answer": 3,
-      "hint": "They won Eurovision in 1974 singing Waterloo, for their home country.",
-      "fact": "ABBA's name is made from the first letters of the four members' first names."
+      "answer": 1,
+      "hint": "Thousands of Arctic islands add to its total.",
+      "fact": "Canada's coast is about 243,000 km long, enough to go round the Earth six times."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

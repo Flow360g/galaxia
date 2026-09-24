@@ -3,116 +3,6 @@
   "roundNumber": 48,
   "seed": 20261105,
   "theme": "General knowledge",
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these countries are in Asia?",
-      "options": [
-        "Belize",
-        "Chad",
-        "Malta",
-        "Laos",
-        "Nepal",
-        "Oman"
-      ],
-      "answers": [
-        3,
-        4,
-        5
-      ],
-      "fact": "Oman sits on the Arabian Peninsula, which counts as part of Asia."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "sport",
-      "difficulty": 1,
-      "prompt": "Which of these are positions in football?",
-      "options": [
-        "Hooker",
-        "Goal attack",
-        "Winger",
-        "Sweeper",
-        "Pitcher",
-        "Striker"
-      ],
-      "answers": [
-        2,
-        3,
-        5
-      ],
-      "fact": "A pitcher plays baseball, a hooker plays rugby and goal attack plays netball."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How high is Mount Kosciuszko, Australia's highest mountain, in metres?",
-      "answer": 2228,
-      "min": 800,
-      "max": 3100,
-      "unit": "m",
-      "fact": "2,228 m. There is a walking track to the top, and in summer people do it in trainers."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "How many years did Rip Van Winkle sleep?",
-      "answer": 20,
-      "min": 6,
-      "max": 28,
-      "unit": "years",
-      "fact": "Twenty years. He fell asleep a subject of King George and woke up in the United States."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which continent did the tomato originally come from?",
-      "options": [
-        "Asia",
-        "South America",
-        "Africa",
-        "Europe"
-      ],
-      "answer": 1,
-      "hint": "Italy only got them in the 1500s.",
-      "fact": "Tomatoes were grown in Europe for years as decoration, because people thought they were poisonous."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "sport",
-      "difficulty": 3,
-      "prompt": "Which country won the first football World Cup, in 1930?",
-      "options": [
-        "Brazil",
-        "Italy",
-        "Argentina",
-        "Uruguay"
-      ],
-      "answer": 3,
-      "hint": "The winners were also the hosts.",
-      "fact": "Uruguay beat neighbours Argentina 4-2 in the final in Montevideo."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
-    }
-  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -131,6 +21,116 @@
     {
       "name": "Where on Earth",
       "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these dishes come from Japan?",
+      "options": [
+        "Kimchi",
+        "Sushi",
+        "Tempura",
+        "Dim sum",
+        "Pho",
+        "Udon"
+      ],
+      "answers": [
+        1,
+        2,
+        5
+      ],
+      "fact": "Tempura is thought to have been brought to Japan by Portuguese traders and missionaries in the 1500s."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which of these instruments do you play with a bow?",
+      "options": [
+        "Cello",
+        "Violin",
+        "Trumpet",
+        "Double bass",
+        "Harp",
+        "Flute"
+      ],
+      "answers": [
+        0,
+        1,
+        3
+      ],
+      "fact": "A harp is plucked, not bowed, even though it is a string instrument like the other three."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many years did the Berlin Wall stand?",
+      "answer": 28,
+      "min": 5,
+      "max": 40,
+      "fact": "Twenty-eight. It went up overnight in August 1961 and came down in November 1989.",
+      "unit": "years"
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How tall is the Eiffel Tower, in metres?",
+      "answer": 330,
+      "min": 50,
+      "max": 450,
+      "unit": "m",
+      "fact": "330 metres to the tip. It was the tallest building in the world for 41 years."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which event would you see a Fosbury flop?",
+      "options": [
+        "Pole vault",
+        "High jump",
+        "Diving",
+        "Gymnastics"
+      ],
+      "answer": 1,
+      "hint": "Dick Fosbury changed how one event is cleared, by going over backwards.",
+      "fact": "Dick Fosbury went over the bar backwards at the 1968 Olympics and won. Every high jumper does it his way now."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "screen",
+      "difficulty": 3,
+      "prompt": "Who composed the music for Star Wars?",
+      "options": [
+        "Ennio Morricone",
+        "John Williams",
+        "Danny Elfman",
+        "Hans Zimmer"
+      ],
+      "answer": 1,
+      "hint": "The same composer wrote the themes for Jaws and Indiana Jones.",
+      "fact": "John Williams wrote it in 1977 for a full orchestra, at a time when film scores were going electronic."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

@@ -7,100 +7,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these are types of bean?",
+      "prompt": "Which of these animals hibernate?",
       "options": [
-        "Cannellini",
-        "Kidney",
-        "Pinto",
-        "Spelt",
-        "Barley",
-        "Quinoa"
+        "Hedgehog",
+        "Deer",
+        "Brown bear",
+        "Rabbit",
+        "Fox",
+        "Dormouse"
       ],
       "answers": [
         0,
-        1,
-        2
+        2,
+        5
       ],
-      "fact": "Baked beans in a tin are usually haricot beans, also called navy beans."
+      "fact": "A dormouse can spend six months or more asleep, which is how it got a name from the French for sleep."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these are found inside a cell?",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these sculptures are by Michelangelo?",
       "options": [
-        "Artery",
-        "Nucleus",
-        "Alveolus",
-        "Neuron",
-        "Ribosome",
-        "Mitochondria"
+        "Discobolus",
+        "Piet\u00e0",
+        "Moses",
+        "Venus de Milo",
+        "David",
+        "The Thinker"
       ],
       "answers": [
         1,
-        4,
-        5
+        2,
+        4
       ],
-      "fact": "Mitochondria have DNA of their own, and you inherit it only from your mother."
+      "fact": "Michelangelo carved David from a block of marble that another sculptor had given up on."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "How many different first moves can White make in chess?",
-      "answer": 20,
-      "min": 6,
-      "max": 28,
-      "unit": "moves",
-      "fact": "Twenty: each of the eight pawns can move one or two squares, and each knight has two choices."
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "How high is the top Olympic diving platform, in metres?",
+      "answer": 10,
+      "min": 2,
+      "max": 14,
+      "unit": "m",
+      "fact": "Ten metres, and a diver hits the water at about 50 km/h."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "How tall is Michelangelo's statue of David, in metres?",
-      "answer": 5.17,
-      "min": 1.5,
-      "max": 7,
-      "unit": "m",
-      "fact": "5.17 m, about three times the height of a real man."
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many eyes does a spider usually have?",
+      "answer": 8,
+      "min": 2,
+      "max": 11,
+      "unit": "eyes",
+      "fact": "Most spiders have eight, though many see poorly and feel their way by vibration."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
+      "topic": "food",
       "difficulty": 1,
-      "prompt": "Which film has the line \"I'll be back\"?",
+      "prompt": "What is the main ingredient of hummus?",
       "options": [
-        "The Terminator",
-        "Predator",
-        "Die Hard",
-        "Rambo"
+        "Chickpeas",
+        "Broad beans",
+        "Lentils",
+        "Peas"
       ],
       "answer": 0,
-      "hint": "It is said by a robot sent back in time.",
-      "fact": "Arnold Schwarzenegger wanted to say \"I will be back\", but the director made him keep the shorter line."
+      "hint": "They are also used to make falafel.",
+      "fact": "Hummus is simply the Arabic word for chickpeas."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "history",
-      "difficulty": 1,
-      "prompt": "Which Roman city was buried when Vesuvius erupted in AD 79?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which was Daniel Craig's first James Bond film?",
       "options": [
-        "Troy",
-        "Ostia",
-        "Pompeii",
-        "Carthage"
+        "Casino Royale",
+        "Spectre",
+        "Skyfall",
+        "Quantum of Solace"
       ],
-      "answer": 2,
-      "hint": "It is near Naples.",
-      "fact": "The ash that buried Pompeii preserved bread in ovens and graffiti on the walls."
+      "answer": 0,
+      "hint": "It was based on the very first Bond novel.",
+      "fact": "Casino Royale (2006) went back to Ian Fleming's first book, from 1953."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [
