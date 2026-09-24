@@ -665,7 +665,10 @@ short version is below; the reasoning is in that file.
 - Earth: the slot in the round file carries only `id`, `type` and `prompt`.
   The site itself comes from `lib/content/sites.ts`, seeded on the round's own
   date, so two sites a day are drawn without anyone authoring them and every
-  player on that date gets the same pair. Adding a site is one entry there:
+  player on that date gets the same pair. No site comes round again within
+  `DAILY.siteGapDays` of itself (from `DAILY.siteGapFrom` on): a blind draw
+  that would repeat is redrawn from the sites still fresh, and any other day
+  keeps the pair it always had. Adding a site is one entry there:
   `lat`, `lon`, a slippy-map `zoom` that frames the giveaway, an `opener`, a
   `clue`, a landmark, two Commons photographs, decoys, `accept` and a `fact`.
   **Every rung must carry something the one before it did not.** The rungs are

@@ -50,14 +50,13 @@
       "id": "q3",
       "type": "vector",
       "topic": "sport",
-      "difficulty": 1,
-      "prompt": "How many minutes does a football (soccer) match last, not counting added time?",
-      "answer": 90,
+      "difficulty": 2,
+      "prompt": "How heavy is a full-size football (soccer ball), in grams?",
+      "answer": 430,
       "min": 0,
-      "max": 200,
-      "unit": "minutes",
-      "route": "Two halves of 45 minutes each.",
-      "fact": "90 minutes: two halves of 45, plus whatever the referee adds for stoppages."
+      "max": 1000,
+      "unit": "g",
+      "fact": "Between 410 and 450 grams at the start of a match. The laws of the game set it."
     },
     {
       "id": "q4",
@@ -92,7 +91,7 @@
       "type": "mcq",
       "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which studio made Spirited Away?",
+      "prompt": "Which studio made the animated film Spirited Away?",
       "options": [
         "DreamWorks",
         "Pixar",

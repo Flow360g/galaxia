@@ -51,12 +51,13 @@
       "type": "vector",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "How many days does a red blood cell live?",
-      "answer": 120,
+      "prompt": "How many times a minute does a resting adult's heart beat, on average?",
+      "answer": 70,
       "min": 0,
-      "max": 500,
-      "unit": "days",
-      "fact": "About 120 days. Your bone marrow makes around two million new ones every second to keep up."
+      "max": 200,
+      "unit": "beats",
+      "route": "Count your own pulse for 15 seconds and multiply by 4.",
+      "fact": "Anywhere from 60 to 100 is normal, and about 70 is typical. Trained athletes can sit below 50."
     },
     {
       "id": "q4",
@@ -73,18 +74,18 @@
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "science",
       "difficulty": 1,
-      "prompt": "Who created the detective Sherlock Holmes?",
+      "prompt": "Which gas do plants take in from the air to make their food?",
       "options": [
-        "Agatha Christie",
-        "Dickens",
-        "Conan Doyle",
-        "Edgar Allan Poe"
+        "Oxygen",
+        "Nitrogen",
+        "Carbon dioxide",
+        "Hydrogen"
       ],
       "answer": 2,
-      "hint": "He was a doctor from Edinburgh.",
-      "fact": "Arthur Conan Doyle killed Holmes off in 1893 and had to bring him back ten years later because readers were furious."
+      "hint": "It is the gas you breathe out.",
+      "fact": "Plants use sunlight to turn it and water into sugar, and give off oxygen as they do it."
     },
     {
       "id": "q6",
