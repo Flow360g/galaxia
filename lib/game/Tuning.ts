@@ -1280,6 +1280,18 @@ export const AUDIO = {
 export const DAILY = {
   zone: "Australia/Melbourne",
   resetHour: 0,
+  /**
+   * No landing site comes round again within this many days, in either slot.
+   * The pair used to be drawn blind each day, and Cairo opened the finale on
+   * the 27th and again on the 29th: two days apart reads as a small pool.
+   */
+  siteGapDays: 7,
+  /**
+   * The first date the gap holds. Rounds before it keep the pair they were
+   * flown with, so a stored run and its share card never change under a
+   * player; this was the live round when the rule went in.
+   */
+  siteGapFrom: "2026-09-25",
 } as const;
 
 export const SHARE = {

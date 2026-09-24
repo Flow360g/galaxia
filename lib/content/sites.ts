@@ -21,6 +21,7 @@
  * comparable and the whole daily format goes with it.
  */
 
+import { DAILY } from "@/lib/game/Tuning";
 import type { SiteKind } from "@/lib/game/types";
 
 export type Tier = "easy" | "medium" | "hard";
@@ -689,26 +690,63 @@ const CLOSING_SITES = SITES.filter((site) => site.tier !== "easy");
  * of comparing two runs.
  *
  * The pair is always two different sites, and the second is never easier than
- * the first. Twenty-eight sites is two weeks of pairs before one comes round
- * again; topping it up is the only thing needed to run longer, and nothing
- * else has to change.
+ * the first. From `DAILY.siteGapFrom` on, neither site has been flown in the
+ * `DAILY.siteGapDays` before it: the blind draw is kept wherever it is already
+ * fresh, and only a repeat is redrawn, so a day with no clash is the pair it
+ * always was. Anything that is not a date (a practice seed) is a blind draw.
  */
 export function pickSites(dateKey: string): [Site, Site] {
+  if (!DATE_KEY.test(dateKey) || dateKey <= DAILY.siteGapFrom) return drawSites(dateKey, new Set());
+  const cached = WALKED.get(dateKey);
+  if (cached) return cached;
+  // Each day's pair depends on the week before it, so walk forward from the
+  // first date the rule holds rather than recursing a chain of lookups.
+  let day: string = DAILY.siteGapFrom;
+  while (day < dateKey) {
+    day = shiftDay(day, 1);
+    if (WALKED.has(day)) continue;
+    const recent = new Set<string>();
+    for (let back = 1; back <= DAILY.siteGapDays; back += 1) {
+      for (const site of pickSites(shiftDay(day, -back))) recent.add(site.id);
+    }
+    WALKED.set(day, drawSites(day, recent));
+  }
+  return WALKED.get(dateKey) as [Site, Site];
+}
+
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+const WALKED = new Map<string, [Site, Site]>();
+
+function shiftDay(key: string, days: number): string {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, (day ?? 1) + days)).toISOString().slice(0, 10);
+}
+
+function drawSites(seedKey: string, recent: ReadonlySet<string>): [Site, Site] {
   let hash = 0;
-  for (let i = 0; i < dateKey.length; i += 1) {
-    hash = (hash * 31 + dateKey.charCodeAt(i)) | 0;
+  for (let i = 0; i < seedKey.length; i += 1) {
+    hash = (hash * 31 + seedKey.charCodeAt(i)) | 0;
   }
   // Two consecutive dates differ by one character, so the raw fold lands in
   // nearby places and `% span` clusters: over a year some sites came up fifty
   // times and others nine, against an even twenty-six. Mix the fold properly
   // and read the top bits, the same fix `seededShuffle` needed.
-  const first = OPENING_SITES[Math.floor(spread(hash) * OPENING_SITES.length)] as Site;
+  const first = fresh(OPENING_SITES, hash, recent);
   // A second, independent draw. The pools overlap on medium, so the first site
   // is taken out by hand rather than by a stride: a run must never name the
   // same place twice.
   const rest = CLOSING_SITES.filter((site) => site.id !== first.id);
-  const second = rest[Math.floor(spread(hash ^ 0x5bf03635) * rest.length)] as Site;
+  const second = fresh(rest, hash ^ 0x5bf03635, recent);
   return [first, second];
+}
+
+/** The blind draw if it is fresh, else a draw from the sites that are. */
+function fresh(pool: readonly Site[], seed: number, recent: ReadonlySet<string>): Site {
+  const blind = pool[Math.floor(spread(seed) * pool.length)] as Site;
+  if (!recent.has(blind.id)) return blind;
+  const unused = pool.filter((site) => !recent.has(site.id));
+  if (unused.length === 0) return blind;
+  return unused[Math.floor(spread(seed ^ 0x2545f491) * unused.length)] as Site;
 }
 
 /** A 32-bit fold to a well spread 0..1, so a modulo of it does not clump. */

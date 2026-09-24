@@ -28,23 +28,23 @@
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "geography",
       "difficulty": 3,
-      "prompt": "Which of these operas did Mozart write?",
+      "prompt": "Which of these cities are further north than London?",
       "options": [
-        "Aida",
-        "Figaro",
-        "La Traviata",
-        "Magic Flute",
-        "Don Giovanni",
-        "Carmen"
+        "Moscow",
+        "Paris",
+        "Oslo",
+        "Vancouver",
+        "Calgary",
+        "Dublin"
       ],
       "answers": [
-        1,
-        3,
-        4
+        0,
+        2,
+        5
       ],
-      "fact": "Carmen is by Bizet, and La Traviata and Aida are both by Verdi."
+      "fact": "Calgary only just misses. It sits about 50 kilometres further south than London."
     },
     {
       "id": "q3",
@@ -92,16 +92,16 @@
       "type": "mcq",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "What is the study of earthquakes called?",
+      "prompt": "Which part of the body makes red blood cells?",
       "options": [
-        "Oceanography",
-        "Meteorology",
-        "Seismology",
-        "Volcanology"
+        "Liver",
+        "Bone marrow",
+        "Spleen",
+        "Heart"
       ],
-      "answer": 2,
-      "hint": "The machine that records earthquakes shares the start of the word.",
-      "fact": "Seismology comes from the Greek word for shaking."
+      "answer": 1,
+      "hint": "It is inside something hard.",
+      "fact": "Bone marrow makes about two million red blood cells every second."
     },
     {
       "id": "q7",
