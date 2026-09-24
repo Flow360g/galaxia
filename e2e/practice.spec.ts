@@ -84,7 +84,7 @@ test("the practice button deals from one deck, a run at a time", async ({ page }
   const deal = async () => {
     await page.goto("/profile?debug=1");
     await page.getByTestId("profile-shuffle").click();
-    await expect(page).toHaveURL(/\/play\?shuffle=[a-z0-9]+\.\d+&debug=1/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/play\?shuffle=[a-z0-9]+\.\d+$/, { timeout: 20_000 });
     return new URL(page.url()).searchParams.get("shuffle") ?? "";
   };
   const [deck, first] = (await deal()).split(".");
