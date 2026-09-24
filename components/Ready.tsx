@@ -23,8 +23,9 @@ interface Props {
  * else advances on a timer either.
  *
  * Kept to a few lines. On a first flight this is the only rules a player is
- * shown before the first question: the round in one line, then Phase 1 the
- * way you would text it to your mum. The finer print and the scoring sit
+ * shown before the first question: the round in one line, above and apart
+ * from Phase 1 so it is not read as a Phase 1 rule, then Phase 1 the way you
+ * would text it to your mum. The finer print and the scoring sit
  * behind MORE DETAIL, collapsed, like they do on every phase card in the
  * run. The copy is the same `phaseGuide` the rulebook and the waypoint card
  * read.
@@ -56,17 +57,17 @@ export function Ready({ round, onReady }: Props) {
       aria-label="Launch"
     >
       <div className={styles.panel}>
-        <span className={`${styles.tag} arcade`}>
-          Phase {phase} &middot; {stage?.name ?? guide.title}
-        </span>
-        <h2 className={`${styles.title} arcade`}>{guide.title}</h2>
-
         {phases > 1 ? (
           <p className={styles.intro}>
             {round.questions.length} questions in {phases} phases. Same questions for everyone
             today.
           </p>
         ) : null}
+
+        <span className={`${styles.tag} arcade`}>
+          Phase {phase} &middot; {stage?.name ?? guide.title}
+        </span>
+        <h2 className={`${styles.title} arcade`}>{guide.title}</h2>
 
         <ul className={styles.lines}>
           {guide.rules.map((line) => (
