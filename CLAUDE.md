@@ -670,7 +670,12 @@ short version is below; the reasoning is in that file.
 - Options are read in five seconds inside a square one sixth of the screen
   wide. Keep them to one or two short words. Prompts must fit two lines at
   14px on a 360px phone without pushing the lane row down.
-- Rounds roll over at the player's local midnight (`todayKey`). The
+- Rounds roll over on one clock for the whole world: midnight in Melbourne,
+  daylight saving included (`DAILY` in `Tuning.ts`, worked out in
+  `lib/content/clock.ts`). Everyone is on the same round at the same moment,
+  which is what makes a group chat across time zones comparable, and the
+  server and the title screen's NEXT RUN IN countdown read the same clock.
+  It used to be the host's own midnight, which on a server is UTC. The
   authored rounds form a pool: a date with its own file gets it, any other
   date rotates through the pool by day number, so every day is a round and a
   shared link never lands on a blank screen. `?round=YYYY-MM-DD` on `/` or
