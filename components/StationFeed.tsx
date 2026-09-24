@@ -155,7 +155,6 @@ export function StationFeed({
             <span className={`${styles.opticsLabel} arcade`}>Zoom</span>
             <div className={styles.opticsDial}>
               {STATION.zoomSteps.map((value) => {
-                const free = value === 0 || state.earthOptics.includes(value);
                 return (
                   <button
                     key={value}
@@ -166,12 +165,6 @@ export function StationFeed({
                     data-testid="zoom-step"
                   >
                     {value === -1 ? "Out" : value === 0 ? "Normal" : "In"}
-                    {free ? null : (
-                      <span className={styles.opticsCost}>
-                        -{Math.round(SCORE.earthBase * SCORE.earthOpticsCost)}{" "}
-                        PTS
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -234,8 +227,6 @@ export function StationFeed({
                 there is not the full 300. */}
             <p className={`${styles.gained} mono`}>
               {state.earthIntel} hint{state.earthIntel === 1 ? "" : "s"} used
-              &middot; {state.earthOptics.length} zoom
-              {state.earthOptics.length === 1 ? "" : "s"} used
             </p>
             {question.fact ? (
               <p className={styles.fact}>{question.fact}</p>

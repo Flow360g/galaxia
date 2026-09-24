@@ -116,10 +116,9 @@ function shareOf(outcome: Outcome): number {
   // WHERE ON EARTH: a right call, less whatever was bought to get there. The
   // floor keeps a fully assisted call worth having, so a player who needs the
   // help is not better off guessing blind.
-  if (outcome.earthIntel !== undefined || outcome.earthOptics !== undefined) {
-    const spent =
-      SCORE.earthIntelCost * (outcome.earthIntel ?? 0) +
-      SCORE.earthOpticsCost * (outcome.earthOptics ?? 0);
+  // Zooming is free, so only hints count against it.
+  if (outcome.earthIntel !== undefined) {
+    const spent = SCORE.earthIntelCost * outcome.earthIntel;
     return Math.max(SCORE.earthFloor, 1 - spent);
   }
 

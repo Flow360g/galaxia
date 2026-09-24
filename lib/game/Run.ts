@@ -591,9 +591,8 @@ export class Run {
   }
 
   /**
-   * Work the optics. Charged once per level per site, so stepping back to a
-   * level already paid for is free and the dial can be worked without being
-   * punished for changing your mind.
+   * Work the optics. Free: the levels visited are recorded for the record
+   * only and cost nothing.
    */
   setOptics(step: number): void {
     if (this.phase !== "docked" || !this.feedReady) return;

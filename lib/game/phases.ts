@@ -192,22 +192,17 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
       oneLiner: "Look at the satellite view. Name the city.",
       rules: [
         `${count(n, "place")}You get a satellite photo of somewhere on Earth. Type the name of the city, not the country. A few are a famous landmark or island instead, and the answer box says so.`,
-        "Stuck? Get a hint or zoom out. Each one costs a few points.",
+        "Zoom in or out as much as you like, for free. Stuck? Get a hint. Each one costs a few points.",
       ],
       details: [
         `You have ${STATION.answerSeconds} seconds for each place, and the clock waits until the photo has loaded.`,
-        `A correct answer with no help scores ${pts(1, SCORE.earthBase).toLowerCase()}. Each hint costs ${pts(SCORE.earthIntelCost, SCORE.earthBase).toLowerCase()} and each zoom ${pts(SCORE.earthOpticsCost, SCORE.earthBase).toLowerCase()}, so a correct answer with help still beats a wrong one.`,
+        `A correct answer with no help scores ${pts(1, SCORE.earthBase).toLowerCase()}. Each hint costs ${pts(SCORE.earthIntelCost, SCORE.earthBase).toLowerCase()}, so a correct answer with help still beats a wrong one. Zooming is free.`,
       ],
       scoring: [
         { label: "CORRECT", worth: pts(1, SCORE.earthBase), tone: "good" },
         {
           label: "EACH HINT",
           worth: `-${pts(SCORE.earthIntelCost, SCORE.earthBase)}`,
-          tone: "neutral",
-        },
-        {
-          label: "EACH ZOOM",
-          worth: `-${pts(SCORE.earthOpticsCost, SCORE.earthBase)}`,
           tone: "neutral",
         },
         { label: "WRONG", worth: lose(SCORE.penalty.collision), tone: "bad" },
@@ -321,7 +316,7 @@ export const SITE_HAIL: Transmission = {
   from: "EARTH COMMAND",
   speaker: SOAP,
   lines: [
-    "Tell me which city is on the satellite image. The name of the city, not just the country, so we can send reinforcements!",
+    "Tell me which city is on the satellite image, so we can send reinforcements!",
   ],
 };
 
