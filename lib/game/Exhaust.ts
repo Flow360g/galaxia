@@ -62,8 +62,8 @@ export class Exhaust {
     cone.translate(0, 0, 0.5);
     this.disposables.push(cone);
 
-    const outerMaterial = flameMaterial(EXHAUST.outer, 0.55);
-    const coreMaterial = flameMaterial(EXHAUST.core, 0.9);
+    const outerMaterial = flameMaterial(EXHAUST.outer, EXHAUST.outerOpacity);
+    const coreMaterial = flameMaterial(EXHAUST.core, EXHAUST.coreOpacity);
     this.disposables.push(outerMaterial, coreMaterial);
 
     this.outer = new THREE.Mesh(cone, outerMaterial);
@@ -181,7 +181,7 @@ export class Exhaust {
    */
   private tint(over: number): void {
     const outer = this.outer.material as THREE.MeshBasicMaterial;
-    outer.opacity = 0.55 + 0.25 * over;
+    outer.opacity = EXHAUST.outerOpacity + 0.25 * over;
   }
 
   private updateParticles(

@@ -48,7 +48,7 @@ test("the practice run is behind ?debug=1, and nowhere else", async ({ page }) =
 
   // It carries a seed of its own, so the round it opens can be opened again.
   await practice.click();
-  await expect(page).toHaveURL(/\/play\?shuffle=[^&]+&debug=1/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/play\?shuffle=[^&]+$/, { timeout: 20_000 });
 });
 
 test("practice can fly any hull, locked ones included, and stores none", async ({ page }) => {
@@ -59,7 +59,7 @@ test("practice can fly any hull, locked ones included, and stores none", async (
   // The limited edition is never unlocked on a fresh device, and still flies.
   await page.getByTestId("practice-ship-seraph").click();
   await page.getByTestId("profile-shuffle").click();
-  await expect(page).toHaveURL(/\/play\?shuffle=[^&]+&debug=1&ship=seraph/, {
+  await expect(page).toHaveURL(/\/play\?shuffle=[^&]+&ship=seraph$/, {
     timeout: 20_000,
   });
   expect(await page.evaluate(() => localStorage.getItem("galaxia:ship"))).toBeNull();
@@ -84,7 +84,7 @@ test("the practice button deals from one deck, a run at a time", async ({ page }
   const deal = async () => {
     await page.goto("/profile?debug=1");
     await page.getByTestId("profile-shuffle").click();
-    await expect(page).toHaveURL(/\/play\?shuffle=[a-z0-9]+\.\d+&debug=1/, { timeout: 20_000 });
+    await expect(page).toHaveURL(/\/play\?shuffle=[a-z0-9]+\.\d+$/, { timeout: 20_000 });
     return new URL(page.url()).searchParams.get("shuffle") ?? "";
   };
   const [deck, first] = (await deal()).split(".");

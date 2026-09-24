@@ -26,6 +26,7 @@ export async function loadLambertModel(
   url: string,
   length: number,
   yaw = 0,
+  trim: { yaw: number; roll: number } = { yaw: 0, roll: 0 },
 ): Promise<LoadedModel | null> {
   let gltf: Awaited<ReturnType<GLTFLoader["loadAsync"]>>;
   try {
@@ -60,6 +61,10 @@ export async function loadLambertModel(
     });
   }
 
+  // Square an off-axis model up on its own centreline before it is measured,
+  // so the centring and the scale are taken on the corrected pose.
+  model.rotation.set(trim.roll, trim.yaw, 0, "YXZ");
+  model.updateMatrixWorld(true);
   const bounds = new THREE.Box3().setFromObject(model);
   const size = bounds.getSize(new THREE.Vector3());
   const centre = bounds.getCenter(new THREE.Vector3());
