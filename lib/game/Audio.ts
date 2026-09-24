@@ -1,5 +1,6 @@
-import { AUDIO } from "./Tuning";
-import type { OutcomeKind, Question } from "./types";
+import { tierStrength } from "./Score";
+import { AUDIO, FINALE } from "./Tuning";
+import type { FinaleTier, OutcomeKind, Question } from "./types";
 
 /**
  * The sound of Galaxia. Every cue is synthesised at runtime through the Web
@@ -1187,22 +1188,282 @@ export class AudioEngine {
     }
   }
 
-  /** The run is over. A short cadence under the share card. */
-  finish(): void {
-    for (const [i, semitones] of [0, 7, 12, 16].entries()) {
-      this.tone(110 * Math.pow(2, semitones / 12), 0, {
-        duration: 2.6,
-        gain: 0.1,
-        type: "triangle",
-        attack: 0.1,
-        delay: i * 0.13,
-        filterHz: 2600,
-        send: 0.55,
+  /**
+   * The run is over: the last answer is in and the tally is coming up.
+   *
+   * It used to be four quiet notes, which is a shrug for the moment the whole
+   * run was played towards. Now it is a riser that winds up for exactly as
+   * long as the tally takes to slam RUN COMPLETE in (`FINALE.introMs`), an
+   * impact under the heading, and a chord that swells open behind it. The
+   * tier decides how big: a scrape home still gets a proper ending, full
+   * marks gets the widest chord, a second one an octave up and a sparkle run.
+   */
+  finish(tier: FinaleTier = "complete"): void {
+    const cfg = AUDIO.finale;
+    const strength = tierStrength(tier);
+    const rise = FINALE.introMs / 1000;
+
+    // 1. The wind-up: air and a resonant saw, both climbing into the hit.
+    this.noiseVoice(0, {
+      duration: rise + 0.08,
+      gain: cfg.riser.noiseGain * (0.7 + 0.3 * strength),
+      type: "bandpass",
+      from: cfg.riser.noiseHz[0],
+      to: cfg.riser.noiseHz[1],
+      q: 1.4,
+      attack: rise * 0.92,
+      pan: [-0.6, 0.6],
+      send: cfg.send,
+    });
+    for (const detune of [-cfg.detuneCents, cfg.detuneCents]) {
+      this.tone(cfg.riser.hz[0], 0, {
+        duration: rise + 0.06,
+        gain: cfg.riser.gain * 0.5,
+        type: "sawtooth",
+        sweepTo: cfg.riser.hz[1],
+        filterHz: 2400,
+        filterQ: cfg.riser.q,
+        attack: rise * 0.9,
+        detune,
+        send: cfg.send,
       });
     }
+
+    // 2. The hit, as the heading lands. The bed ducks on the same beat so the
+    //    impact has a hole to land in.
+    this.impactAt(rise, 0.8 + 0.2 * strength);
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => this.duck(cfg.duck), rise * 1000);
+    }
+
+    // 3. The chord, and on the top tiers everything that rides on it.
+    this.fanfare(rise, strength);
+  }
+
+  /**
+   * One line of the tally lands. The note climbs a major scale by line, so
+   * the read-out builds; what the line scored decides the timbre.
+   */
+  tallyLine(index: number, points: number, max: number): void {
+    const cfg = AUDIO.tally;
+    const step = cfg.scale[Math.min(Math.max(index, 0), cfg.scale.length - 1)]!;
+    const hz = cfg.rootHz * Math.pow(2, step / 12);
+
+    if (points < 0) {
+      this.tone(cfg.down.hz[0], 0, {
+        duration: cfg.down.seconds,
+        gain: cfg.down.gain,
+        type: "sawtooth",
+        sweepTo: cfg.down.hz[1],
+        filterHz: 1200,
+        filterQ: 3,
+        send: cfg.send * 0.6,
+      });
+      return;
+    }
+    if (points === 0) {
+      this.tone(cfg.nil.hz[0], 0, {
+        duration: cfg.nil.seconds,
+        gain: cfg.nil.gain,
+        type: "sine",
+        sweepTo: cfg.nil.hz[1],
+        send: cfg.send * 0.3,
+      });
+      this.noiseVoice(0, {
+        duration: 0.08,
+        gain: cfg.nil.gain * 0.4,
+        type: "lowpass",
+        from: 900,
+        to: 200,
+        send: cfg.send * 0.3,
+      });
+      return;
+    }
+    if (points >= max) {
+      // Full marks: a chime, the note and its fifth, struck like a coin.
+      for (const [i, ratio] of [1, 1.5].entries()) {
+        this.bell(hz * ratio, {
+          duration: cfg.full.seconds,
+          gain: cfg.full.gain * (i === 0 ? 1 : 0.8),
+          delay: i * 0.06,
+          ratio: cfg.full.ratio,
+          index: cfg.full.index,
+        });
+      }
+      return;
+    }
+    this.tone(hz, 0, {
+      duration: cfg.part.seconds,
+      gain: cfg.part.gain,
+      type: "triangle",
+      attack: 0.006,
+      send: cfg.send,
+    });
+  }
+
+  /** The running total ticking up. Rate-limited by the caller. */
+  tallyTick(): void {
+    const cfg = AUDIO.tally.tick;
+    this.tone(cfg.hz, 0, {
+      duration: cfg.seconds,
+      gain: cfg.gain,
+      type: "square",
+      filterHz: 4200,
+      attack: 0.002,
+    });
+  }
+
+  /** A stage's subtotal stamps in: a major chord hit, brighter the better it went. */
+  tallyStage(share: number): void {
+    const cfg = AUDIO.tally.stage;
+    const t = clamp01(share);
+    for (const [i, ratio] of [1, 1.26, 1.5, 2].entries()) {
+      // A stage that scored nothing gets the bare root and fifth.
+      if (t <= 0 && (i === 1 || i === 3)) continue;
+      this.tone(cfg.hz * ratio, 0, {
+        duration: cfg.seconds,
+        gain: cfg.gain * (0.6 + 0.4 * t),
+        type: "sawtooth",
+        filterHz: lerp(cfg.filterHz[0], cfg.filterHz[1], t),
+        attack: 0.008,
+        detune: i % 2 === 0 ? 5 : -5,
+        send: AUDIO.tally.send,
+      });
+    }
+    this.noiseVoice(0, {
+      duration: 0.12,
+      gain: 0.1,
+      type: "highpass",
+      from: 5200,
+      to: 2600,
+      send: AUDIO.tally.send * 0.6,
+    });
+  }
+
+  /**
+   * The total stamps. The climax of the tally, and like `finish` it is sized
+   * by the tier: a thump and a clean chord at the bottom, the whole fanfare
+   * with its sparkle and cymbal wash at the top.
+   */
+  tallyTotal(tier: FinaleTier): void {
+    const strength = tierStrength(tier);
+    this.duck(AUDIO.finale.duck);
+    this.impactAt(0, 0.7 + 0.3 * strength);
+    const cfg = AUDIO.tally.total;
+    this.tone(cfg.subHz[0], 0, {
+      duration: cfg.seconds,
+      gain: cfg.subGain * (0.7 + 0.3 * strength),
+      type: "sine",
+      sweepTo: cfg.subHz[1],
+      drive: true,
+      send: AUDIO.tally.send * 0.4,
+    });
+    this.fanfare(0.04, strength);
+    this.pulseEngine(0.6 + 0.8 * strength);
   }
 
   // ------------------------------------------------------------ composites
+
+  /** The finale's hit: a driven noise slam, a sub drop and a crash on top. */
+  private impactAt(delay: number, scale: number): void {
+    const cfg = AUDIO.finale.impact;
+    this.noiseVoice(0, {
+      duration: cfg.seconds * 0.5,
+      gain: cfg.gain * scale,
+      type: "lowpass",
+      from: 3200,
+      to: 120,
+      q: 1.2,
+      drive: true,
+      delay,
+      send: AUDIO.finale.send,
+    });
+    this.tone(cfg.subHz[0], 0, {
+      duration: cfg.seconds,
+      gain: cfg.subGain * scale,
+      type: "sine",
+      sweepTo: cfg.subHz[1],
+      drive: true,
+      delay,
+      send: AUDIO.finale.send * 0.4,
+    });
+    // The crash cymbal: bright noise that rings off slowly and wide.
+    this.noiseVoice(0, {
+      duration: cfg.seconds * 1.6,
+      gain: cfg.gain * 0.45 * scale,
+      type: "highpass",
+      from: cfg.crash[0],
+      to: cfg.crash[1] * 4,
+      delay: delay + 0.01,
+      pan: [-0.5, 0.5],
+      send: AUDIO.finale.send,
+    });
+  }
+
+  /**
+   * The finale's chord and what rides on it, `strength` 0..1. More voices,
+   * a longer ring and a wider filter the better the run; from GREAT up a
+   * second chord an octave higher blooms behind it and a run of bells climbs
+   * over the top.
+   */
+  private fanfare(delay: number, strength: number): void {
+    const cfg = AUDIO.finale;
+    const voices = Math.round(lerp(cfg.voices[0], cfg.voices[1], strength));
+    const seconds = lerp(cfg.chordSeconds[0], cfg.chordSeconds[1], strength);
+    const filterHz = lerp(cfg.filterHz[0], cfg.filterHz[1], strength);
+
+    for (let i = 0; i < voices; i += 1) {
+      const hz = cfg.rootHz * Math.pow(2, cfg.chord[i]! / 12);
+      for (const detune of [-cfg.detuneCents, cfg.detuneCents]) {
+        this.tone(hz, 0, {
+          duration: seconds * (1 - i * 0.04),
+          gain: cfg.chordGain * (1 - i * 0.07),
+          type: "sawtooth",
+          filterHz,
+          attack: 0.03 + i * 0.012,
+          detune,
+          delay: delay + i * 0.015,
+          pan: [detune < 0 ? -0.35 : 0.35, detune < 0 ? -0.35 : 0.35],
+          send: cfg.send,
+        });
+      }
+    }
+    // The floor: the root an octave down, so the chord has weight on a phone.
+    this.tone(cfg.rootHz / 2, 0, {
+      duration: seconds,
+      gain: cfg.chordGain * 1.6,
+      type: "triangle",
+      attack: 0.04,
+      delay,
+      send: cfg.send * 0.5,
+    });
+
+    if (strength < 0.5) return;
+
+    // The bloom: the same chord an octave up, swelling in behind the hit.
+    for (let i = 0; i < Math.min(4, voices); i += 1) {
+      this.tone(cfg.rootHz * 2 * Math.pow(2, cfg.chord[i]! / 12), 0, {
+        duration: seconds * 0.9,
+        gain: cfg.chordGain * 0.6 * strength,
+        type: "triangle",
+        attack: 0.5,
+        delay: delay + 0.35,
+        filterHz: 6000,
+        send: cfg.send,
+      });
+    }
+
+    // The sparkle: bells climbing, more of them the better the run.
+    const sparkle = cfg.sparkle;
+    const count = Math.round(lerp(4, sparkle.steps.length, (strength - 0.5) * 2));
+    for (let i = 0; i < count; i += 1) {
+      this.bell(sparkle.hz * Math.pow(2, sparkle.steps[i]! / 12), {
+        duration: sparkle.seconds,
+        gain: sparkle.gain * (1 - i * 0.05),
+        delay: delay + 0.18 + i * sparkle.gap,
+      });
+    }
+  }
 
   /**
    * A crash, in four layers.

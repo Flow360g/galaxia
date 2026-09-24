@@ -303,6 +303,43 @@ export const SCORE = {
   penalty: { cluster: 0, lane: 0, laneBoosted: 25, collision: 25, wreck: 50, timeout: 25 },
 } as const;
 
+/**
+ * The end of the run: the finish cue, and the tally that reads the score out.
+ *
+ * A run used to end on four quiet notes and a list that faded in, which is a
+ * flat way to hand someone the number they played for. The finale now scales
+ * with how well the run went, and both the sound and the tally screen read the
+ * same tier (`finaleTier` in `Score.ts`), so they can never disagree about
+ * whether that was a good day.
+ */
+export const FINALE = {
+  /**
+   * Share of the perfect run each tier needs. Full marks is its own tier above
+   * these and needs no threshold: it is every point there was.
+   */
+  tiers: { legendary: 0.85, great: 0.6, good: 0.3 },
+  /**
+   * Milliseconds from the tally mounting to RUN COMPLETE slamming in. The
+   * finish cue's riser is timed off the same figure so its impact lands with
+   * the heading.
+   */
+  introMs: 950,
+  /** Milliseconds between one line landing and the next. */
+  lineMs: 430,
+  /** Extra pause after a stage's last line, while its subtotal stamps in. */
+  stageMs: 360,
+  /** How long a line's points take to roll up from zero. */
+  countMs: 340,
+  /** Pause after the last stage before the total stamps. */
+  totalMs: 650,
+  /** Fewest milliseconds between two count-up ticks, so a roll never buzzes. */
+  tickEveryMs: 60,
+  /** Cells in the meter under the total. Twenty, like the share card's rows. */
+  meterCells: 20,
+  /** Confetti pieces on the top two tiers. Pure CSS, so cheap on a phone. */
+  confetti: 28,
+} as const;
+
 /** The run's shields. Each wrong lane costs one; at zero, a miss is a wreck. */
 export const SHIELDS = {
   perRun: 3,
@@ -1080,6 +1117,61 @@ export const AUDIO = {
    * This is a radio answering. The transmitter keys up the same way both
    * times, then the answer either confirms or refuses.
    */
+  /**
+   * The run is over. A riser into an impact, then a chord that swells open.
+   * Every layer is scaled by the tier (0 for a scrape home, 1 for full marks):
+   * a better run gets a wider chord, a longer tail and, on the top tiers, a
+   * second chord an octave up and a sparkle cascade over the top.
+   */
+  finale: {
+    /** The wind-up: filtered noise and a pitched sweep, both climbing. */
+    riser: { hz: [140, 3600], noiseHz: [300, 7000], gain: 0.13, noiseGain: 0.11, q: 6 },
+    /** The hit, as RUN COMPLETE lands. */
+    impact: { gain: 0.34, subHz: [92, 34], subGain: 0.42, seconds: 1.4, crash: [6200, 900] },
+    /** Root of the chord, Hz. D, so it sits a tone above the countdown. */
+    rootHz: 146.83,
+    /** Semitones stacked over the root, least to most: the tier decides how many play. */
+    chord: [0, 7, 12, 16, 19, 24, 28],
+    /** Chord voices at the lowest tier and at full marks. */
+    voices: [3, 7],
+    chordGain: 0.075,
+    /** Seconds the chord rings at the lowest tier and at full marks. */
+    chordSeconds: [2.2, 4.6],
+    /** Lowpass opening across the chord, Hz, least to most. */
+    filterHz: [1400, 5200],
+    /** Cents either side for the two detuned saws in each voice. */
+    detuneCents: 9,
+    /** A rising run of bells over the top on great and above. */
+    sparkle: { hz: 880, steps: [0, 4, 7, 12, 16, 19, 24, 28], gap: 0.07, gain: 0.07, seconds: 1.1 },
+    send: 0.65,
+    duck: 0.55,
+  },
+
+  /**
+   * The tally reading the score out. Each line lands on a note that climbs a
+   * major scale, so eight lines build to the total rather than repeating.
+   */
+  tally: {
+    /** Root of the line scale, Hz, and the scale it climbs, in semitones. */
+    rootHz: 392,
+    scale: [0, 2, 4, 5, 7, 9, 11, 12, 14, 16],
+    /** A full-marks line: a bright two-note chime. */
+    full: { gain: 0.16, seconds: 0.7, ratio: 2.01, index: 150 },
+    /** Partial points: one softer note. */
+    part: { gain: 0.11, seconds: 0.45 },
+    /** Nothing scored: a dull thud. */
+    nil: { hz: [150, 70], gain: 0.16, seconds: 0.22 },
+    /** Points lost: a falling tone. */
+    down: { hz: [330, 150], gain: 0.12, seconds: 0.4 },
+    /** The count-up blip. Very short and quiet: it is a texture, not a cue. */
+    tick: { hz: 1760, gain: 0.035, seconds: 0.03 },
+    /** A stage's subtotal stamping in: a short chord hit, brighter when it scored. */
+    stage: { hz: 293.66, gain: 0.08, seconds: 0.55, filterHz: [900, 4200] },
+    /** The total: a thump under whatever the tier plays over it. */
+    total: { subHz: [110, 40], subGain: 0.4, seconds: 1.2, gain: 0.3 },
+    send: 0.5,
+  },
+
   site: {
     /** Keying up: a short burst of air off the top of the band. */
     key: { seconds: 0.06, gain: 0.1, hz: [2600, 1700], q: 3 },
