@@ -22,7 +22,11 @@ async function shot(page: Page, name: string) {
 async function seedFlown(page: Page, runs: number) {
   await page.addInitScript(`try {
     localStorage.setItem('galaxia:flown', '${runs}');
-    localStorage.setItem('galaxia:briefed', 'true');
+    // Today's Mayday already heard: it opens each day's first run, on the
+    // round clock's date (Melbourne).
+    localStorage.setItem('galaxia:mayday', JSON.stringify(
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Melbourne' }).format(new Date()),
+    ));
   } catch (error) {}`);
 }
 

@@ -431,6 +431,7 @@ export function Hud({
                 <span className={styles.bankNudgeCall}>
                   <span className={`${styles.bankNudgeLead} arcade`}>TAP BOOST FIRST</span>
                   <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
+                  <span className={`${styles.boostNudgeWarn} arcade`}>WRONG LOSES POINTS</span>
                 </span>
               </div>
             ) : null}
@@ -961,6 +962,7 @@ function BoostDemo() {
         <span className={styles.bankNudgeCall}>
           <span className={`${styles.bankNudgeLead} arcade`}>TAP HERE FIRST</span>
           <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
+          <span className={`${styles.boostNudgeWarn} arcade`}>WRONG LOSES POINTS</span>
         </span>
       </div>
       <p className={styles.boostDemoNote}>Then tap your answer.</p>

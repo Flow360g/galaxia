@@ -158,11 +158,11 @@ The screen has two zones. Respect them:
   the lot. The callout is part of that corner, not a third element, so it is
   drawn off the dial's own `--dial` size, takes no pointer events, and never
   appears again after the first Cluster resolves. Its twin sits in the band, on the run's first
-  PICK ONE only: TAP BOOST FIRST / IF YOU ARE SURE under BOOST, arrow pointing up,
+  PICK ONE only: TAP BOOST FIRST / IF YOU ARE SURE / WRONG LOSES POINTS under BOOST, arrow pointing up,
   gone once BOOST is armed, because testers could not tell whether BOOST went
   before the answer or after it. The OPEN SKY phase card says the same thing
   first, while nothing is timed: a sample of four squares and the tools row
-  with TAP HERE FIRST / IF YOU ARE SURE under BOOST (`BoostDemo` in
+  with TAP HERE FIRST / IF YOU ARE SURE / WRONG LOSES POINTS under BOOST (`BoostDemo` in
   `Hud.tsx`), a picture with no pointer events so the card's tap still lands. Both hug `env(safe-area-inset-*)`. Do not read
   them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
   nowhere and only exists while the run is parked on a verdict; the visible
@@ -464,14 +464,17 @@ Rules that fall out of this:
 Two screens wrap the run, plus the rulebook. Neither is part of it, and neither may slow the
 path from a shared link to flying.
 
-- **Rules arrive a phase at a time.** A first flight opens on the **mission
-  transmission** (a Mayday from Earth Command, `components/Transmission.tsx`)
-  and then the launch card, and nothing else: no rulebook up front. Six pages
+- **Rules arrive a phase at a time.** Each day's first run opens on the **mission
+  transmission** (a Mayday from Earth Command, `components/Transmission.tsx`,
+  remembered by date in `galaxia:mayday`) and then the launch card, and
+  nothing else: no rulebook up front. It used to play once per device, ever,
+  which testers read as Sergeant Soap sometimes turning up and sometimes not. Six pages
   of rules before the first question was what testers called too much text.
   Each phase explains itself on its own card just before it is played, in
   the two or three lines you would text your mum (`rules` in
-  `lib/game/phases.ts`). A run that names every landing site gets a debrief
-  from the same voice after the tally, before the share card. `?replay=1`
+  `lib/game/phases.ts`). Every run just flown gets a debrief from the same
+  voice after the tally, before the share card (`debriefFor`): the win if
+  every landing site was named, a call-back for tomorrow if not. `?replay=1`
   skips the Mayday along with today's stored run.
 - **Every phase card carries the rest, shut.** The launch card and the
   waypoint card both read `phaseGuide(type, round)` and render

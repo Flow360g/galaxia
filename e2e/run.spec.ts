@@ -29,7 +29,13 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   page,
 }) => {
   await stubImagery(page);
-  await page.goto("/play?replay=1&round=2026-09-18");
+  // No `?replay=1`: this is the path a player takes, where finishing saves the
+  // run. The hatch never reads storage, and it hid the engine being torn down
+  // (sound and all) the moment a real run's tally came up.
+  await page.goto("/play?round=2026-09-18");
+  // A fresh profile has not heard today's Mayday.
+  await expect(page.getByTestId("transmission")).toContainText(/mayday/i, { timeout: 20_000 });
+  await acknowledge(page);
 
   const question = page.getByTestId("question");
   const toast = page.getByTestId("toast");
@@ -464,6 +470,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(page.getByTestId("tally-line-7")).toHaveClass(/lineIn/, { timeout: 10_000 });
   // Phases weighted 400/400/400/600 with no points multiplier: 1,800 perfect.
   await expect(page.getByTestId("tally-total")).toContainText("/ 1,800");
+  // The flight engine outlives the run: it plays the tally's sound and keeps
+  // flying under the share card.
+  await expect(page.getByTestId("stage").locator("canvas")).toHaveCount(1);
   // The run is named by how well it went, and the screen says which.
   await expect(tally).toHaveAttribute("data-tier", /^(perfect|legendary|great|good|complete)$/);
   await expect(page.getByTestId("tally-continue")).toHaveText("TAP TO CONTINUE", {
