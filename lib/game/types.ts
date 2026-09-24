@@ -264,8 +264,9 @@ export interface VectorState {
   /** Slider window still open after a NOVA scan, 0..1. */
   window: [number, number];
   /**
-   * Whether the player has put a guess on the slider yet. It opens empty and
-   * FIRE waits for this, so nobody locks a guess they never made.
+   * Whether there is a guess on the slider. The slider opens with the thumb
+   * in the middle, so this is true from the start of a number question; FIRE
+   * still reads it rather than assuming.
    */
   placed: boolean;
 }

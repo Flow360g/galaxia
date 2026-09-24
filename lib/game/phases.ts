@@ -153,10 +153,10 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
       oneLiner: "Guess a number. The closer, the better.",
       rules: [
         `${count(n, "question")}The answer is always a number.`,
-        "Tap the slider where you think the answer is, then tap FIRE. The closer you are, the more points you get.",
+        "The slider starts in the middle. Slide it to where you think the answer is, then tap FIRE. The closer you are, the more points you get.",
       ],
       details: [
-        `The slider has ${VECTOR.notches} steps. Tap it to put your guess on it, then tap FIRE. Every step away from the answer costs ${stepCost()} points. Land within ${VECTOR.deadOnWithin} step${VECTOR.deadOnWithin === 1 ? "" : "s"} of it and you are dead on, which wins back a shield.`,
+        `The slider has ${VECTOR.notches} steps. It starts in the middle, with that number showing. Slide it to your guess, then tap FIRE. Every step away from the answer costs ${stepCost()} points. Land within ${VECTOR.deadOnWithin} step${VECTOR.deadOnWithin === 1 ? "" : "s"} of it and you are dead on, which wins back a shield.`,
         `More than ${VECTOR.wildBeyond} steps away is way off: you lose ${SCORE.penalty.collision} points and a shield. You have ${SHIELDS.perRun} shields for the whole run, and each one saves you from a wrong answer. With none left, a miss costs more.`,
         HINT_LINE,
       ],
