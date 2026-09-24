@@ -17,6 +17,7 @@ export default async function PlayPage({
     replay?: string;
     round?: string;
     shuffle?: string;
+    ship?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -45,6 +46,8 @@ export default async function PlayPage({
       // made up a moment ago, and a tester is not a first-time player.
       replay={practice || params.replay === "1"}
       practice={practice}
+      // A hull picked on `/profile?debug=1`, locked or not. Practice only.
+      practiceShip={practice ? params.ship : undefined}
     />
   );
 }

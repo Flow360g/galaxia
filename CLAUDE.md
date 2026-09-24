@@ -34,7 +34,10 @@ things that make those games sticky:
   `/profile?debug=1`, and never written down, so it cannot overwrite today's
   run, lift the best or count towards the flight log that unlocks hulls. It
   exists so that building the game does not mean answering the same eight
-  questions until they are memorised. Do not put it on a player's path.
+  questions until they are memorised. The same page picks the hull a practice
+  run flies, any hull in the catalogue, locked or not, carried on the URL
+  (`&ship=`) and never stored, so seeing a ship in flight never touches the
+  player's selection, unlocks or purchases. Do not put it on a player's path.
 - **Two to three minutes, one thumb.** A run has to fit a bus stop. Every
   interaction is a single tap. Nothing requires precision, reading a manual,
   or two hands.

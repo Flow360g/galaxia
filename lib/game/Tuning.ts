@@ -1477,10 +1477,10 @@ export const EXHAUST = {
   mid: 0xff8a1f,
   outer: 0xd62d0a,
   /** Cone length at base speed and the extra added at max speed. */
-  baseLength: 3.4,
-  speedLength: 3.2,
+  baseLength: 3.06,
+  speedLength: 2.88,
   /** Radius of the outer cone at the nozzle. */
-  radius: 0.42,
+  radius: 0.38,
   /**
    * Downward tilt of the plume, radians. The chase camera sits above the
    * ship, so a plume aimed dead astern is seen end-on and reads as a dot;
@@ -1490,7 +1490,7 @@ export const EXHAUST = {
   /** Particles streamed per nozzle, per quality tier (high, mid, low). */
   particleCount: [70, 45, 28],
   /** How far back a particle travels before it recycles. */
-  particleTravel: 4.5,
+  particleTravel: 4.05,
   /** Particle speed at base speed and the extra at max speed. */
   particleSpeed: 9,
   particleSpeedBoost: 10,
@@ -1595,10 +1595,15 @@ export const GLOW = {
     [0.55, 0.12],
     [1, 0],
   ] as ReadonlyArray<readonly [number, number]>,
-  /** Nozzle halo: size at cruise, extra per unit of exhaust pulse, opacity. */
-  nozzleSize: 2.4,
-  nozzlePulse: 1.3,
-  nozzleOpacity: 0.55,
+  /**
+   * Nozzle halo: size at cruise, extra per unit of exhaust pulse, opacity.
+   * Kept small and faint on purpose: at 2.4 and 0.55 the two halos and their
+   * flares merged into one orange wash over the tail and hid the hull. The
+   * fire is the light; the halo is only a trace around it.
+   */
+  nozzleSize: 2.04,
+  nozzlePulse: 1.1,
+  nozzleOpacity: 0.3,
   /** Plasma pod halo, as a multiple of the pod's radius, and its breathing. */
   podScale: 8.5,
   podOpacity: 0.6,
@@ -1610,9 +1615,9 @@ export const GLOW = {
    */
   flareTextureWidth: 256,
   flareTextureHeight: 16,
-  nozzleFlareWidth: 9,
-  nozzleFlareHeight: 0.55,
-  nozzleFlareOpacity: 0.55,
+  nozzleFlareWidth: 7.65,
+  nozzleFlareHeight: 0.47,
+  nozzleFlareOpacity: 0.32,
   podFlareWidth: 26,
   podFlareHeight: 1.2,
   podFlareOpacity: 0.75,
