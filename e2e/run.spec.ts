@@ -160,6 +160,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "05-waypoint-rating");
   await expect(waypoint).toContainText("ALIEN CONTACT", { timeout: 6_000 });
   await expect(waypoint).toContainText("PHASE 2");
+  await expect(waypoint.getByTestId("phase-demo")).toBeVisible();
   // The next phase in a few short lines, counted off the round.
   await expect(page.getByTestId("waypoint-rules")).toContainText("2 questions.");
   await expect(page.getByTestId("waypoint-rules")).toContainText(/always a number/i);
@@ -221,9 +222,9 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await expect(waypoint).toContainText("PHASE 3", { timeout: 6_000 });
   await expect(waypoint).toContainText("OPEN SKY");
   await expect(waypoint).toContainText("PICK ONE");
-  // The card shows the band it is about to open, BOOST pointed at, before
-  // the clock is running.
-  await expect(page.getByTestId("boost-demo")).toContainText("TAP HERE FIRST");
+  // The card plays the phase as an example, BOOST tapped before the answer,
+  // before the clock is running.
+  await expect(waypoint.getByTestId("phase-demo")).toContainText("BOOST");
   await shot(page, "09b-waypoint-open-sky");
   // The sample band makes this card tall enough to cover the middle of the
   // screen, so it is tapped on the card itself.
@@ -261,10 +262,11 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await shot(page, "11-timeout");
   await advance(page);
 
-  // Waypoint: Open Sky rated, then the card briefs WHERE ON EARTH as phase 4.
+  // Waypoint: Open Sky rated, then the card briefs WHERE ON EARTH as the
+  // final phase rather than by number.
   await expect(waypoint).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("rating")).toBeVisible({ timeout: 5_000 });
-  await expect(waypoint).toContainText("PHASE 4", { timeout: 6_000 });
+  await expect(waypoint).toContainText("ENTERING FINAL PHASE", { timeout: 6_000 });
   await expect(waypoint).toContainText("NAME THE PLACE");
   await expect(page.getByTestId("waypoint-standby")).toBeVisible();
   await shot(page, "12-waypoint-earth");
@@ -614,7 +616,9 @@ test("a vector graze: points on the ruler, no damage, and the streak holds", asy
     await advance(page);
   }
   await expect(page.getByTestId("waypoint")).toBeVisible({ timeout: 15_000 });
-  await advance(page);
+  // The phase demo makes the card reach the middle of the screen, where a
+  // tap on the catcher would land on MORE DETAIL: tap the card itself.
+  await advance(page, "banner");
 
   // Aim 18 steps high: past a hit, well short of a wild shot. Every step
   // costs 5 of the 200, so it pays 110.

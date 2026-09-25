@@ -167,9 +167,9 @@ The screen has two zones. Respect them:
   drawn off the dial's own `--dial` size, takes no pointer events, and never
   appears again after the first Cluster resolves. Testers also could not tell
   whether BOOST went before the answer or after it; the OPEN SKY phase card
-  answers that, while nothing is timed: a sample of four squares and the tools row
-  with TAP HERE FIRST / IF YOU ARE SURE / WRONG LOSES POINTS under BOOST (`BoostDemo` in
-  `Hud.tsx`), a picture with no pointer events so the card's tap still lands. It is not
+  answers that, while nothing is timed: its worked example (`PhaseDemo`) taps
+  BOOST and then the answer, and then shows a boosted wrong answer losing
+  points, a picture with no pointer events so the card's tap still lands. It is not
   repeated in flight: a callout under BOOST on the first PICK ONE was tried and
   read as clutter over the question. The corners hug `env(safe-area-inset-*)`. Do not read
   them as licence for a third: anything else new goes in the band. The tap-to-continue catcher covers the whole screen but is drawn
@@ -503,13 +503,16 @@ path from a shared link to flying.
   anywhere skips it, and so does SKIP on the banner while Soap is still
   talking: it is a moment, not a wait. The tally follows, then the share
   card. `?replay=1` skips the Mayday along with today's stored run.
-- **Phase 1 is shown, not told.** The launch card plays FIND THE 3 as a
-  worked example (`PhaseDemo`, scripted as `demo` on the phase in
-  `phases.ts`, timed by `DEMO` in `Tuning.ts`): a sample question, a finger
-  tapping squares and BANK, and one caption at a time, looping a scene that
-  banks and a scene that loses the unbanked points to a wrong answer. It is a
-  picture with no pointer events; the rules stay on the card as screen reader
-  text. The other phases still list their rules until they get a demo too.
+- **Every phase is shown, not told.** The launch card and each waypoint card
+  play their phase as a worked example (`PhaseDemo`, scripted as `demo` on
+  the phase in `phases.ts`, timed by `DEMO` in `Tuning.ts`): a sample
+  question, a finger tapping through it, and one caption per step. Each step
+  types its caption in first, fast, and only then moves the finger, so the
+  eye goes to the words and is led from them to the action; a caption sitting
+  still beside a moving finger read as too quick to read and too slow to
+  watch. It is a picture with no pointer events; the rules stay on the card
+  as screen reader text. The waypoint card is taller for it and reaches the
+  middle of the screen, so the e2e taps the card itself to move on.
 - **Every phase card carries the rest, shut.** The launch card and the
   waypoint card both read `phaseGuide(type, round)` and render
   `ScoringDisclosure`: a MORE DETAIL button, collapsed by default, that opens

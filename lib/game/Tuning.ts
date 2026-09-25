@@ -435,20 +435,20 @@ export const VECTOR = {
 } as const;
 
 /**
- * The launch card's worked example (`PhaseDemo`): a finger taps through a
- * sample question while a caption says what just happened. A beat has to be
- * long enough to read one caption line aloud; a hold is a beat with a
- * decision or a loss in it, where the player needs a moment longer.
+ * The phase cards' worked examples (`PhaseDemo`). Each step types its caption
+ * in first and only then moves the finger, so the eye lands on the words and
+ * is led from them to the action. Typing is quick on purpose: it is there to
+ * catch the eye, not to make anyone wait on it.
  */
 export const DEMO = {
-  /** The finger's glide from one target to the next, before it taps. */
-  moveMs: 650,
-  /** A step with a tap in it: glide, press, caption read. */
-  beatMs: 2600,
-  /** A step that asks the player to weigh something. */
-  holdMs: 3200,
-  /** Held on the last line of a scene before the next one starts. */
-  endMs: 3600,
+  /** Per character as a caption types in. */
+  typeMs: 16,
+  /** The finger's glide to its target, or the length of a drag. */
+  moveMs: 600,
+  /** Held after the action lands, for the result to be seen. */
+  afterMs: 1500,
+  /** Held on the last step of a scene, before the next one starts typing. */
+  endMs: 2600,
 } as const;
 
 export const WAYPOINT = {

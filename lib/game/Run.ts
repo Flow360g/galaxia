@@ -842,6 +842,7 @@ export class Run {
       nextType: nextQuestion.type,
       // Stages count from phase 1, so the stage after this one is index + 2.
       nextPhase: next.phase ?? stageIndex + 2,
+      final: stageIndex + 2 >= stages.length,
       rating,
       plasma,
       found,

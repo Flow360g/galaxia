@@ -1,4 +1,4 @@
-import { maxPointsAt, vectorShare } from "./Score";
+import { maxPointsAt, vectorShare, vectorVerdict } from "./Score";
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
 import { CLUSTER, DEMO, ENCOUNTER, NOVA, SCORE, SHIELDS, STATION, VECTOR } from "./Tuning";
 import type { Question, Round, RunSummary } from "./types";
@@ -55,21 +55,46 @@ export interface PhaseGuide {
    */
   readNote?: string;
   /**
-   * A worked example the launch card plays in place of `rules`: a sample
-   * question, a finger tapping through it, and a caption a step at a time.
-   * Only FIND THE 3 has one so far.
+   * A worked example the phase card plays in place of `rules`: a sample
+   * question, a finger tapping through it, and a caption typed in a step at a
+   * time. Every phase has one; `rules` stays for the rulebook and for screen
+   * readers.
    */
   demo?: PhaseDemo;
 }
 
-/** One beat of a phase demo: where the finger goes, and what the card says. */
-export interface DemoStep {
-  /** A square (0-based lane) or the BANK button; null leaves the finger resting. */
-  target: number | "bank" | null;
-  /** Whether the finger taps when it gets there, or only points. */
-  tap: boolean;
+/**
+ * What the finger does once its caption has finished typing. `point` rests on
+ * the target, `tap` presses it and lands the step's view, `drag` starts on
+ * `from` and slides to the target with the view following it.
+ */
+export type DemoAction = "none" | "point" | "tap" | "drag";
+
+/**
+ * One beat of a phase demo: a caption, then the finger, then the view it
+ * leaves behind. A target is a key the board registered ("lane:2", "bank"),
+ * or "key@0.62" for a point that far along that element (the slider).
+ */
+export interface DemoStep<V> {
   caption: string;
-  /** Squares lit correct once this step has played. */
+  action: DemoAction;
+  target: string | null;
+  /** Where a drag starts. */
+  from?: string;
+  /** The board once this step has played. */
+  view: V;
+  /** Held after the action lands, for the result to be seen. */
+  hold: number;
+}
+
+export interface DemoScene<V> {
+  /** The corner label: "PLAY IT SAFE", "PUSH YOUR LUCK". */
+  label: string;
+  steps: DemoStep<V>[];
+}
+
+export interface ClusterView {
+  /** Squares lit correct. */
   got: number[];
   /** The square struck wrong, if any. */
   wrong: number | null;
@@ -77,21 +102,54 @@ export interface DemoStep {
   unbanked: number;
   /** The line under the squares, e.g. "CORRECT · 1 OF 3". */
   status: string;
-  /** How long the step holds, tap included. */
-  ms: number;
 }
 
-export interface DemoScene {
-  /** The corner label: "PLAY IT SAFE", "PUSH YOUR LUCK". */
-  label: string;
-  steps: DemoStep[];
+export interface VectorView {
+  /** Where the thumb sits, 0..1 along the slider. */
+  guess: number;
+  /** The answer's mark is showing. */
+  fired: boolean;
+  status: string;
 }
 
-export interface PhaseDemo {
-  prompt: string;
-  options: string[];
-  scenes: DemoScene[];
+export interface McqView {
+  boost: boolean;
+  /** The square tapped, if any. */
+  picked: number | null;
+  status: string;
 }
+
+export interface EarthView {
+  /** Steps in on the zoom dial, from the first. */
+  zoom: number;
+  /** Hints bought, each one a line under the photo. */
+  hints: number;
+  /** What is in the answer box. */
+  typed: string;
+  /** The answer was sent and marked. */
+  sent: boolean;
+  status: string;
+}
+
+export type PhaseDemo =
+  | { kind: "cluster"; prompt: string; options: string[]; scenes: DemoScene<ClusterView>[] }
+  | {
+      kind: "vector";
+      prompt: string;
+      /** Slider ends and the answer, as the ruler prints them. */
+      min: string;
+      max: string;
+      answer: number;
+      scenes: DemoScene<VectorView>[];
+    }
+  | {
+      kind: "mcq";
+      prompt: string;
+      options: string[];
+      answer: number;
+      scenes: DemoScene<McqView>[];
+    }
+  | { kind: "earth"; hints: string[]; scenes: DemoScene<EarthView>[] };
 
 /** Points for a share of the base, as the tally would print them. */
 function pts(share: number, base: number = SCORE.perEncounter): string {
@@ -152,104 +210,150 @@ function count(n: number | undefined, noun: string): string {
 }
 
 /**
- * FIND THE 3, played once as an example: two scenes on a loop, one that banks
- * and one that pushes its luck into a wrong answer. Figures come from `SCORE`
- * like everything else here, so a retune cannot leave the example lying.
+ * The phases played once as examples. Each is a loop of short steps: a caption
+ * typed in, then the finger acts on it. Figures come from `SCORE` and `VECTOR`
+ * like everything else here, so a retune cannot leave an example lying.
  */
+function step<V>(
+  caption: string,
+  action: DemoAction,
+  target: string | null,
+  view: V,
+  hold: number = DEMO.afterMs,
+  from?: string,
+): DemoStep<V> {
+  return { caption, action, target, view, hold, ...(from ? { from } : {}) };
+}
+
 function clusterDemo(n?: number): PhaseDemo {
   const found = (k: number) => Math.round(SCORE.perEncounter * (SCORE.clusterShare[k - 1] ?? 0));
   const one = found(1);
   const two = found(2);
-  const beat = { tap: true, wrong: null, ms: DEMO.beatMs } as const;
-  const lead = count(n, "question");
+  const none: ClusterView = { got: [], wrong: null, unbanked: 0, status: `0 OF ${FULL_CHARGE} FOUND` };
+  const first: ClusterView = { got: [0], wrong: null, unbanked: one, status: `CORRECT · 1 OF ${FULL_CHARGE}` };
+  const second: ClusterView = { got: [0, 2], wrong: null, unbanked: two, status: `CORRECT · 2 OF ${FULL_CHARGE}` };
+  const kept: ClusterView = { got: [0, 2], wrong: null, unbanked: 0, status: `${two} POINTS KEPT` };
+  const lost: ClusterView = { got: [0, 2], wrong: 1, unbanked: 0, status: `WRONG · ${two} POINTS LOST` };
   return {
+    kind: "cluster",
     prompt: "Which of these are fruits?",
     options: ["Apple", "Carrot", "Pear", "Potato", "Grape", "Onion"],
     scenes: [
       {
         label: "PLAY IT SAFE",
         steps: [
-          {
-            ...beat,
-            target: null,
-            tap: false,
-            caption: `${lead}Each one has ${LANES} answers and ${FULL_CHARGE} of them are correct.`,
-            got: [],
-            unbanked: 0,
-            status: `0 OF ${FULL_CHARGE} FOUND`,
-            ms: DEMO.holdMs,
-          },
-          {
-            ...beat,
-            target: 0,
-            caption: "Tap one you are sure of. A correct answer scores points.",
-            got: [0],
-            unbanked: one,
-            status: `CORRECT · 1 OF ${FULL_CHARGE}`,
-          },
-          {
-            ...beat,
-            target: 2,
-            caption: "Every correct answer you tap is worth more points.",
-            got: [0, 2],
-            unbanked: two,
-            status: `CORRECT · 2 OF ${FULL_CHARGE}`,
-          },
-          {
-            ...beat,
-            target: "bank",
-            tap: false,
-            caption: `Now choose. Tap BANK to keep ${two} points, or keep going for more.`,
-            got: [0, 2],
-            unbanked: two,
-            status: `CORRECT · 2 OF ${FULL_CHARGE}`,
-            ms: DEMO.holdMs,
-          },
-          {
-            ...beat,
-            target: "bank",
-            caption: `Banked. The ${two} points are yours to keep.`,
-            got: [0, 2],
-            unbanked: 0,
-            status: `${two} POINTS KEPT`,
-            ms: DEMO.endMs,
-          },
+          step(`${count(n, "question")}Each one has ${LANES} answers and ${FULL_CHARGE} of them are correct.`, "none", null, none),
+          step("Tap one you are sure of. A correct answer scores points.", "tap", "lane:0", first),
+          step("Every correct answer you tap is worth more points.", "tap", "lane:2", second),
+          step(`Now choose. Tap BANK to keep ${two} points, or keep going for more.`, "point", "bank", second),
+          step(`Banked. The ${two} points are yours to keep.`, "tap", "bank", kept, DEMO.endMs),
         ],
       },
       {
         label: "PUSH YOUR LUCK",
         steps: [
-          {
-            ...beat,
-            target: 1,
-            tap: false,
-            caption: `Same question, but this time you keep going for all ${FULL_CHARGE}.`,
-            got: [0, 2],
-            unbanked: two,
-            status: `CORRECT · 2 OF ${FULL_CHARGE}`,
-            ms: DEMO.holdMs,
-          },
-          {
-            ...beat,
-            target: 1,
-            caption: "Tap a wrong one and you lose the points you did not bank.",
-            got: [0, 2],
-            wrong: 1,
-            unbanked: 0,
-            status: `WRONG · ${two} POINTS LOST`,
-            ms: DEMO.holdMs,
-          },
-          {
-            ...beat,
-            target: null,
-            tap: false,
-            caption: "You can carry on after one wrong answer. Two wrong and the question is over.",
-            got: [0, 2],
-            wrong: 1,
-            unbanked: 0,
-            status: `WRONG · ${two} POINTS LOST`,
-            ms: DEMO.endMs,
-          },
+          step(`Same question, but this time you keep going for all ${FULL_CHARGE}.`, "point", "lane:1", second),
+          step("Tap a wrong one and you lose the points you did not bank.", "tap", "lane:1", lost),
+          step("You can carry on after one wrong answer. Two wrong and the question is over.", "none", null, lost, DEMO.endMs),
+        ],
+      },
+    ],
+  };
+}
+
+function vectorDemo(n?: number): PhaseDemo {
+  // How tall is the Eiffel Tower: 330 m on a 0 to 500 m ruler, so the answer
+  // sits at step 66 and the guess lands 4 steps short of it.
+  const max = 500;
+  const answer = 330;
+  const guess = 310;
+  const middle = 0.5;
+  const at = guess / max;
+  const off = Math.round(((answer - guess) / max) * VECTOR.notches);
+  const scored = Math.round(SCORE.perEncounter * vectorShare(off));
+  const start: VectorView = { guess: middle, fired: false, status: `AIM ${Math.round(middle * max)} M` };
+  const aimed: VectorView = { guess: at, fired: false, status: `AIM ${guess} M` };
+  const fired: VectorView = { guess: at, fired: true, status: `${vectorVerdict(off)} · ${scored} POINTS` };
+  return {
+    kind: "vector",
+    prompt: "How tall is the Eiffel Tower, in metres?",
+    min: "0 m",
+    max: `${max} m`,
+    answer: answer / max,
+    scenes: [
+      {
+        label: "GUESS THE NUMBER",
+        steps: [
+          step(`${count(n, "question")}The answer is always a number. The slider starts in the middle.`, "none", null, start),
+          step("Slide it to where you think the answer is.", "drag", `track@${at}`, aimed, DEMO.afterMs, `track@${middle}`),
+          step("Then tap FIRE.", "tap", "fire", fired),
+          step(`${off} steps off. The closer you are, the more points you get.`, "none", null, fired, DEMO.endMs),
+        ],
+      },
+    ],
+  };
+}
+
+function mcqDemo(n?: number): PhaseDemo {
+  const plain: McqView = { boost: false, picked: null, status: "" };
+  const armed: McqView = { boost: true, picked: null, status: "BOOST ON" };
+  return {
+    kind: "mcq",
+    prompt: "Which planet is closest to the Sun?",
+    options: ["Venus", "Mercury", "Mars", "Earth"],
+    answer: 1,
+    scenes: [
+      {
+        label: "SURE OF IT",
+        steps: [
+          step(`${count(n, "question")}4 answers, and 1 is correct.`, "none", null, plain),
+          step("Really sure? Tap BOOST first for double points.", "tap", "boost", armed),
+          step("Then tap your answer.", "tap", "lane:1", {
+            boost: true,
+            picked: 1,
+            status: `CORRECT · ${pts(1)}`,
+          }, DEMO.endMs),
+        ],
+      },
+      {
+        label: "NOT SO SURE",
+        steps: [
+          step(`Not sure? Skip BOOST. A correct answer is still ${pts(SCORE.laneShare).toLowerCase()}.`, "point", "lane:1", plain),
+          step("But BOOST and get it wrong, and you lose points.", "tap", "boost", armed),
+          step("Wrong, with BOOST on.", "tap", "lane:0", {
+            boost: true,
+            picked: 0,
+            status: `WRONG · ${lose(SCORE.penalty.laneBoosted)}`,
+          }, DEMO.endMs),
+        ],
+      },
+    ],
+  };
+}
+
+function earthDemo(n?: number): PhaseDemo {
+  const full = Math.round(SCORE.earthBase);
+  const hint = Math.round(SCORE.earthBase * SCORE.earthIntelCost);
+  const look: EarthView = { zoom: 0, hints: 0, typed: "", sent: false, status: "" };
+  const zoomed: EarthView = { ...look, zoom: 1 };
+  const helped: EarthView = { ...zoomed, hints: 1, status: `HINT · -${hint} POINTS` };
+  const typed: EarthView = { ...helped, typed: "Venice" };
+  return {
+    kind: "earth",
+    hints: ["Built on more than 100 small islands."],
+    scenes: [
+      {
+        label: "NAME THE PLACE",
+        steps: [
+          step(`${count(n, "place")}You get a satellite photo of somewhere on Earth.`, "none", null, look),
+          step("Zoom in or out as much as you like. It is free.", "tap", "zoom", zoomed),
+          step("Stuck? Get a hint. Each one costs a few points.", "tap", "hint", helped),
+          step("Type the name of the city, not the country.", "tap", "input", typed),
+          step(`Send it. Correct scores ${full - hint} points here, or ${full} with no hints.`, "tap", "send", {
+            ...typed,
+            sent: true,
+            status: `CORRECT · ${full - hint} POINTS`,
+          }, DEMO.endMs),
         ],
       },
     ],
@@ -303,6 +407,7 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
         `More than ${VECTOR.wildBeyond} steps away is way off: you lose ${SCORE.penalty.collision} points and a shield. You have ${SHIELDS.perRun} shields for the whole run, and each one saves you from a wrong answer. With none left, a miss costs more.`,
         HINT_LINE,
       ],
+      demo: vectorDemo(n),
       scoring: vectorRows(),
     },
     mcq: {
@@ -318,6 +423,7 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
         `A wrong answer scores ${SCORE.penalty.lane} points and uses one of your ${SHIELDS.perRun} shields. Wrong with BOOST on loses ${SCORE.penalty.laneBoosted} points as well.`,
         HINT_LINE,
       ],
+      demo: mcqDemo(n),
       scoring: [
         { label: "CORRECT + BOOST", worth: pts(1), tone: "good" },
         { label: "CORRECT", worth: pts(SCORE.laneShare), tone: "good" },
@@ -341,6 +447,7 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
         `You have ${STATION.answerSeconds} seconds for each place, and the clock waits until the photo has loaded.`,
         `A correct answer with no help scores ${pts(1, SCORE.earthBase).toLowerCase()}. Each hint costs ${pts(SCORE.earthIntelCost, SCORE.earthBase).toLowerCase()}, so a correct answer with help still beats a wrong one. Zooming is free.`,
       ],
+      demo: earthDemo(n),
       scoring: [
         { label: "CORRECT", worth: pts(1, SCORE.earthBase), tone: "good" },
         {

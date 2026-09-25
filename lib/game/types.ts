@@ -285,6 +285,8 @@ export interface WaypointState {
   nextType: Question["type"];
   /** The number the card announces: ENTERING PHASE n. */
   nextPhase: number;
+  /** The stage about to begin is the round's last: ENTERING FINAL PHASE. */
+  final: boolean;
   rating: Rating;
   plasma: number;
   /** Correct lanes found across the stage's clusters, for "5 OF 6 FOUND". */
