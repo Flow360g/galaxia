@@ -197,6 +197,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Room under the track for the ANSWER label. */
+  padding-bottom: 16px;
   min-height: 46px;
 }
 
@@ -227,19 +229,22 @@
 
 .answerMark {
   position: absolute;
-  bottom: 50%;
+  top: 50%;
   width: 2px;
-  height: 22px;
+  height: 18px;
+  margin-top: -9px;
   margin-left: -1px;
   background: var(--arcade-cyan);
   animation: statusIn 220ms ease-out;
 }
 
+/* Under the track, in the room the slider row keeps for it: over the track it
+   ran into the question above. */
 .answerLabel {
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
-  transform: translate(-50%, -3px);
+  transform: translate(-50%, 4px);
   font-size: 9px;
   color: var(--arcade-cyan);
   white-space: nowrap;
@@ -349,6 +354,10 @@
 /* The card's own progress is enough in the band; the dots go. */
 .compact .dots {
   display: none;
+}
+
+.compact .controls {
+  justify-content: flex-end;
 }
 
 /* The BANK button, small: the same bezel and cap as the corner dial. */
@@ -478,6 +487,71 @@
    the first character. */
 .ghost {
   visibility: hidden;
+}
+
+/* Dots on the left, NEXT on the right: the one thing in a demo that takes a
+   tap. It stays laid out while the step plays so the card never jumps. */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.next {
+  position: relative;
+  min-width: 96px;
+  min-height: 44px;
+  padding: 0 16px;
+  overflow: hidden;
+  font-size: 11px;
+  letter-spacing: var(--track-label);
+  color: var(--panel-label);
+  background: transparent;
+  border: 1px solid var(--rule-dark);
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 200ms, color 200ms, border-color 200ms;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.next:disabled {
+  cursor: default;
+}
+
+.nextUp {
+  opacity: 1;
+  color: var(--arcade-yellow);
+  border-color: var(--arcade-yellow);
+}
+
+.nextUp:active {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+}
+
+/* The wait, draining along the foot of the button. */
+.nextClock {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--arcade-yellow);
+  transform-origin: left center;
+  animation-name: nextDrain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes nextDrain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .dots {

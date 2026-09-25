@@ -38,6 +38,9 @@ export function Ready({ round, onReady }: Props) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Enter" && event.key !== " ") return;
+      // A focused button (the demo's NEXT, MORE DETAIL) takes its own key;
+      // READY, focused, still launches through its own click.
+      if (event.target instanceof HTMLButtonElement) return;
       event.preventDefault();
       onReady();
     };

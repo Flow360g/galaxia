@@ -437,18 +437,17 @@ export const VECTOR = {
 /**
  * The phase cards' worked examples (`PhaseDemo`). Each step types its caption
  * in first and only then moves the finger, so the eye lands on the words and
- * is led from them to the action. Typing is quick on purpose: it is there to
- * catch the eye, not to make anyone wait on it.
+ * is led from them to the action. Then it waits: the player taps NEXT when
+ * they have read it, or it moves on by itself after `waitMs`. At 16ms a
+ * character with 1.5 seconds between steps, testers called it stressful.
  */
 export const DEMO = {
   /** Per character as a caption types in. */
-  typeMs: 16,
+  typeMs: 27,
   /** The finger's glide to its target, or the length of a drag. */
   moveMs: 600,
-  /** Held after the action lands, for the result to be seen. */
-  afterMs: 1500,
-  /** Held on the last step of a scene, before the next one starts typing. */
-  endMs: 2600,
+  /** After the action lands, how long NEXT waits for a tap before moving on. */
+  waitMs: 3000,
 } as const;
 
 export const WAYPOINT = {

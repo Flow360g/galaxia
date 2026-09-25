@@ -84,7 +84,7 @@ export interface DemoStep<V> {
   from?: string;
   /** The board once this step has played. */
   view: V;
-  /** Held after the action lands, for the result to be seen. */
+  /** How long NEXT waits for a tap, once the action lands, before moving on. */
   hold: number;
 }
 
@@ -227,7 +227,7 @@ function step<V>(
   action: DemoAction,
   target: string | null,
   view: V,
-  hold: number = DEMO.afterMs,
+  hold: number = DEMO.waitMs,
   from?: string,
 ): DemoStep<V> {
   return { caption, action, target, view, hold, ...(from ? { from } : {}) };
@@ -254,7 +254,7 @@ function clusterDemo(n?: number): PhaseDemo {
           step("Tap one you are sure of. A correct answer scores points.", "tap", "lane:0", first),
           step("Every correct answer you tap is worth more points.", "tap", "lane:2", second),
           step(`Now choose. Tap BANK to keep ${two} points, or keep going for more.`, "point", "bank", second),
-          step(`Banked. The ${two} points are yours to keep.`, "tap", "bank", kept, DEMO.endMs),
+          step(`Banked. The ${two} points are yours to keep.`, "tap", "bank", kept, DEMO.waitMs),
         ],
       },
       {
@@ -262,7 +262,7 @@ function clusterDemo(n?: number): PhaseDemo {
         steps: [
           step(`Same question, but this time you keep going for all ${FULL_CHARGE}.`, "point", "lane:1", second),
           step("Tap a wrong one and you lose the points you did not bank.", "tap", "lane:1", lost),
-          step("You can carry on after one wrong answer. Two wrong and the question is over.", "none", null, lost, DEMO.endMs),
+          step("You can carry on after one wrong answer. Two wrong and the question is over.", "none", null, lost, DEMO.waitMs),
         ],
       },
     ],
@@ -293,9 +293,9 @@ function vectorDemo(n?: number): PhaseDemo {
         label: "GUESS THE NUMBER",
         steps: [
           step(`${count(n, "question")}The answer is always a number. The slider starts in the middle.`, "none", null, start),
-          step("Slide it to where you think the answer is.", "drag", `track@${at}`, aimed, DEMO.afterMs, `track@${middle}`),
+          step("Slide it to where you think the answer is.", "drag", `track@${at}`, aimed, DEMO.waitMs, `track@${middle}`),
           step("Then tap FIRE.", "tap", "fire", fired),
-          step(`${off} steps off. The closer you are, the more points you get.`, "none", null, fired, DEMO.endMs),
+          step(`${off} steps off. The closer you are, the more points you get.`, "none", null, fired, DEMO.waitMs),
         ],
       },
     ],
@@ -320,7 +320,7 @@ function mcqDemo(n?: number): PhaseDemo {
             boost: true,
             picked: 1,
             status: `CORRECT · ${pts(1)}`,
-          }, DEMO.endMs),
+          }, DEMO.waitMs),
         ],
       },
       {
@@ -332,7 +332,7 @@ function mcqDemo(n?: number): PhaseDemo {
             boost: true,
             picked: 0,
             status: `WRONG · ${lose(SCORE.penalty.laneBoosted)}`,
-          }, DEMO.endMs),
+          }, DEMO.waitMs),
         ],
       },
     ],
@@ -368,7 +368,7 @@ function earthDemo(n?: number): PhaseDemo {
             ...typed,
             sent: true,
             status: `CORRECT · ${full - hint} POINTS`,
-          }, DEMO.endMs),
+          }, DEMO.waitMs),
         ],
       },
     ],
