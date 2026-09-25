@@ -46,9 +46,18 @@ export const ENDING = {
   /** Engine glow and trail, in the game's own plasma colours. */
   glowSize: 1.8,
   trailLength: 5,
-  /** Landing site beacons: yellow, the win colour. */
-  beaconSize: 2.2,
-  beaconPulse: 2.4,
+  /**
+   * Where a ship's route ends: over its landing site, this far above the
+   * surface as a share of Earth's radius. It never reaches the ground; it
+   * dwindles away in the distance first, from `fadeFrom` of the way in.
+   */
+  stopAbove: 0.45,
+  fadeFrom: 0.4,
+  /**
+   * Earth's turn when the scene opens, radians, chosen so land faces the
+   * pulled-back camera while the fleet goes in. It keeps turning from there.
+   */
+  earthYaw: 2.99,
   /** How far apart the two sites sit on Earth's face, as a share of its radius. */
   siteSpread: 0.42,
   /** The first few ships launch from beside the lens so they tear past it. */
@@ -65,6 +74,7 @@ const pos = new THREE.Vector3();
 const ahead = new THREE.Vector3();
 const dir = new THREE.Vector3();
 const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
+const PLASMA = new THREE.Color(COLOR.plasma);
 
 interface Flight {
   hull: number;
@@ -103,8 +113,8 @@ class Fleet {
   private readonly trailPositions: Float32Array;
   private readonly glow: THREE.Points;
   private readonly glowPositions: Float32Array;
-  private readonly beacons: THREE.Sprite[] = [];
-  private readonly beaconFlash: number[] = [];
+  private readonly trailColours: Float32Array;
+  private readonly glowColours: Float32Array;
   private readonly disposables: Array<{ dispose(): void }> = [];
   private disposed = false;
 
@@ -116,17 +126,14 @@ class Fleet {
   ) {
     const n = Math.max(size, 1);
 
+    // Trails and glows carry their colour per vertex, so each one can fade
+    // with its own ship; the far end of a trail is always black, which on an
+    // additive blend is nothing.
     this.trailPositions = new Float32Array(n * 6);
-    const trailColours = new Float32Array(n * 6);
-    const hot = new THREE.Color(COLOR.plasma);
-    const cold = new THREE.Color(COLOR.space);
-    for (let i = 0; i < n; i += 1) {
-      hot.toArray(trailColours, i * 6);
-      cold.toArray(trailColours, i * 6 + 3);
-    }
+    this.trailColours = new Float32Array(n * 6);
     const trailGeometry = new THREE.BufferGeometry();
     trailGeometry.setAttribute("position", new THREE.BufferAttribute(this.trailPositions, 3));
-    trailGeometry.setAttribute("color", new THREE.BufferAttribute(trailColours, 3));
+    trailGeometry.setAttribute("color", new THREE.BufferAttribute(this.trailColours, 3));
     const trailMaterial = new THREE.LineBasicMaterial({
       vertexColors: true,
       transparent: true,
@@ -139,11 +146,13 @@ class Fleet {
     this.group.add(this.trail);
 
     this.glowPositions = new Float32Array(n * 3);
+    this.glowColours = new Float32Array(n * 3);
     const glowGeometry = new THREE.BufferGeometry();
     glowGeometry.setAttribute("position", new THREE.BufferAttribute(this.glowPositions, 3));
+    glowGeometry.setAttribute("color", new THREE.BufferAttribute(this.glowColours, 3));
     const glowMaterial = new THREE.PointsMaterial({
       map: glowTexture(),
-      color: COLOR.plasma,
+      vertexColors: true,
       size: ENDING.glowSize,
       sizeAttenuation: true,
       transparent: true,
@@ -155,22 +164,6 @@ class Fleet {
     this.disposables.push(glowGeometry, glowMaterial, { dispose: releaseGlow });
     this.group.add(this.glow);
 
-    for (const site of sites) {
-      const material = new THREE.SpriteMaterial({
-        map: glowTexture(),
-        color: COLOR.yellow,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      this.disposables.push(material, { dispose: releaseGlow });
-      const sprite = new THREE.Sprite(material);
-      sprite.position.copy(site);
-      sprite.scale.setScalar(ENDING.beaconSize);
-      this.beacons.push(sprite);
-      this.beaconFlash.push(0);
-      this.group.add(sprite);
-    }
   }
 
   async load(): Promise<void> {
@@ -311,7 +304,7 @@ class Fleet {
       .addScaledVector(flight.end, u * u);
   }
 
-  update(dt: number, elapsed: number): void {
+  update(dt: number): void {
     for (let i = 0; i < this.flights.length; i += 1) {
       const flight = this.flights[i]!;
       const hull = this.hulls[flight.hull]!;
@@ -335,8 +328,10 @@ class Fleet {
       if (dir.lengthSq() < 1e-8) dir.subVectors(flight.end, flight.start);
       dir.normalize();
 
-      // Shrinks to nothing over the last stretch: it has landed.
-      const land = u > 0.9 ? 1 - (u - 0.9) / 0.1 : 1;
+      // Dwindles away over the back of the route, on top of the shrink the
+      // distance already gives it, so it is gone before it reaches the ground.
+      const f = Math.min(Math.max((u - ENDING.fadeFrom) / (1 - ENDING.fadeFrom), 0), 1);
+      const land = 1 - f * f * (3 - 2 * f);
       scratch.position.copy(pos);
       scratch.lookAt(ahead.copy(pos).sub(dir));
       scratch.scale.setScalar(flight.scale * land);
@@ -354,9 +349,14 @@ class Fleet {
       this.trailPositions[t6 + 3] = pos.x - dir.x * length;
       this.trailPositions[t6 + 4] = pos.y - dir.y * length;
       this.trailPositions[t6 + 5] = pos.z - dir.z * length;
+      this.glowColours[t3] = PLASMA.r * land;
+      this.glowColours[t3 + 1] = PLASMA.g * land;
+      this.glowColours[t3 + 2] = PLASMA.b * land;
+      this.trailColours[t6] = PLASMA.r * land;
+      this.trailColours[t6 + 1] = PLASMA.g * land;
+      this.trailColours[t6 + 2] = PLASMA.b * land;
 
       if (u >= 1) {
-        this.beaconFlash[flight.site] = 1;
         flight.hero = false;
         this.plan(flight, this.random);
         flight.wait = this.random() * 1.2;
@@ -366,18 +366,15 @@ class Fleet {
     for (const hull of this.hulls) for (const part of hull.parts) part.instanceMatrix.needsUpdate = true;
     (this.trail.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
     (this.glow.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
-
-    this.beacons.forEach((beacon, i) => {
-      const flash = this.beaconFlash[i]!;
-      this.beaconFlash[i] = Math.max(0, flash - dt * 3);
-      const breathe = 1 + Math.sin(elapsed * ENDING.beaconPulse + i) * 0.12;
-      beacon.scale.setScalar(ENDING.beaconSize * (breathe + flash * 0.5));
-    });
+    (this.trail.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+    (this.glow.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
   }
 
   private hide(hull: Hull, slot: number, t6: number, t3: number): void {
     for (const part of hull.parts) part.setMatrixAt(slot, HIDDEN);
     this.trailPositions.fill(0, t6, t6 + 6);
+    this.trailColours.fill(0, t6, t6 + 6);
+    this.glowColours.fill(0, t3, t3 + 3);
     this.glowPositions[t3] = 0;
     this.glowPositions[t3 + 1] = -1e5;
     this.glowPositions[t3 + 2] = 0;
@@ -441,6 +438,7 @@ export class EndingScene {
     this.earth.position.fromArray(EARTH.position);
     this.earth.rotation.z = EARTH.tilt;
     this.earth.add(this.earthBody);
+    this.earthBody.rotation.y = ENDING.earthYaw;
     this.scene.add(this.earth);
     const radius = EARTH.diameter / 2;
     for (const [halo, side] of [
@@ -501,7 +499,7 @@ export class EndingScene {
    */
   private siteSpots(named: number): THREE.Vector3[] {
     const centre = this.earth.position;
-    const radius = (EARTH.diameter / 2) * 1.02;
+    const radius = (EARTH.diameter / 2) * (1 + ENDING.stopAbove);
     const toCamera = new THREE.Vector3().subVectors(this.endCam, centre).normalize();
     const side = new THREE.Vector3().crossVectors(toCamera, new THREE.Vector3(0, 1, 0)).normalize();
     const up = new THREE.Vector3().crossVectors(side, toCamera).normalize();
@@ -569,7 +567,7 @@ export class EndingScene {
     }
     this.camera.lookAt(this.look);
 
-    this.fleet?.update(dt, this.elapsed);
+    this.fleet?.update(dt);
     this.renderer.render(this.scene, this.camera);
   };
 
@@ -600,6 +598,11 @@ export class EndingScene {
       .add(this.endLook);
     this.endCam.y += ENDING.pullRise;
     this.camera.updateProjectionMatrix();
+  }
+
+  /** Turns Earth to `yaw` radians. For finding `ENDING.earthYaw`; mock only. */
+  debugEarthYaw(yaw: number): void {
+    this.earthBody.rotation.y = yaw;
   }
 
   /** Where the camera and fleet are, for the mock's debug readout. */
