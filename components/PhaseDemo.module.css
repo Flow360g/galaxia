@@ -197,6 +197,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Room under the track for the ANSWER label. */
+  padding-bottom: 16px;
   min-height: 46px;
 }
 
@@ -227,19 +229,22 @@
 
 .answerMark {
   position: absolute;
-  bottom: 50%;
+  top: 50%;
   width: 2px;
-  height: 22px;
+  height: 18px;
+  margin-top: -9px;
   margin-left: -1px;
   background: var(--arcade-cyan);
   animation: statusIn 220ms ease-out;
 }
 
+/* Under the track, in the room the slider row keeps for it: over the track it
+   ran into the question above. */
 .answerLabel {
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
-  transform: translate(-50%, -3px);
+  transform: translate(-50%, 4px);
   font-size: 9px;
   color: var(--arcade-cyan);
   white-space: nowrap;
@@ -350,6 +355,8 @@
 .compact .dots {
   display: none;
 }
+
+
 
 /* The BANK button, small: the same bezel and cap as the corner dial. */
 .bank {
@@ -478,6 +485,84 @@
    the first character. */
 .ghost {
   visibility: hidden;
+}
+
+/* SKIP on the left, the dots, NEXT on the right. Both are words, not boxes:
+   the example is the thing to look at, and these only sit under it. Each
+   keeps a 44px tall tap area without drawing one. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.link {
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 10px;
+  letter-spacing: var(--track-label);
+  background: transparent;
+  border: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.skip {
+  color: var(--panel-label);
+}
+
+.skip:active {
+  color: #ffffff;
+}
+
+.next {
+  margin-left: auto;
+  color: var(--panel-label);
+  opacity: 0.35;
+  transition: opacity 200ms, color 200ms;
+}
+
+.next:disabled {
+  cursor: default;
+}
+
+.nextUp {
+  opacity: 1;
+  color: var(--arcade-yellow);
+}
+
+.nextUp:active {
+  color: #ffffff;
+}
+
+/* The label carries the wait as its own underline, draining. */
+.nextLabel {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+}
+
+.nextClock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--arcade-yellow);
+  transform-origin: left center;
+  animation-name: nextDrain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes nextDrain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .dots {

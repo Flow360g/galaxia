@@ -38,6 +38,9 @@ export function Ready({ round, onReady }: Props) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Enter" && event.key !== " ") return;
+      // A focused button (the demo's NEXT, MORE DETAIL) takes its own key;
+      // READY, focused, still launches through its own click.
+      if (event.target instanceof HTMLButtonElement) return;
       event.preventDefault();
       onReady();
     };
@@ -73,7 +76,7 @@ export function Ready({ round, onReady }: Props) {
 
         {/* A phase with a worked example plays it instead of listing its
             rules; the rules stay on the card as text for screen readers. */}
-        {guide.demo ? <PhaseDemo demo={guide.demo} /> : null}
+        {guide.demo ? <PhaseDemo demo={guide.demo} onSkip={onReady} /> : null}
         <ul className={guide.demo ? styles.srOnly : styles.lines}>
           {guide.rules.map((line) => (
             <li key={line} className={styles.line}>

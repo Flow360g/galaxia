@@ -40,29 +40,38 @@ import feed from "./StationFeed.module.css";
  * rules as text for screen readers. The scripts, figures and all, are `demo`
  * in `lib/game/phases.ts`; timings are `DEMO` in `Tuning.ts`.
  */
-export function PhaseDemo({ demo, compact = false }: { demo: Demo; compact?: boolean }) {
+export function PhaseDemo({
+  demo,
+  compact = false,
+  onSkip,
+}: {
+  demo: Demo;
+  compact?: boolean;
+  /** Skip the example and move straight on to play. No SKIP without it. */
+  onSkip?: () => void;
+}) {
   switch (demo.kind) {
     case "cluster":
       return (
-        <DemoShell<ClusterView> scenes={demo.scenes} compact={compact}>
+        <DemoShell<ClusterView> scenes={demo.scenes} compact={compact} onSkip={onSkip}>
           {(view, reg, step) => <ClusterBoard demo={demo} view={view} reg={reg} step={step} />}
         </DemoShell>
       );
     case "vector":
       return (
-        <DemoShell<VectorView> scenes={demo.scenes} compact={compact}>
+        <DemoShell<VectorView> scenes={demo.scenes} compact={compact} onSkip={onSkip}>
           {(view, reg) => <VectorBoard demo={demo} view={view} reg={reg} />}
         </DemoShell>
       );
     case "mcq":
       return (
-        <DemoShell<McqView> scenes={demo.scenes} compact={compact}>
+        <DemoShell<McqView> scenes={demo.scenes} compact={compact} onSkip={onSkip}>
           {(view, reg) => <McqBoard demo={demo} view={view} reg={reg} />}
         </DemoShell>
       );
     case "earth":
       return (
-        <DemoShell<EarthView> scenes={demo.scenes} compact={compact}>
+        <DemoShell<EarthView> scenes={demo.scenes} compact={compact} onSkip={onSkip}>
           {(view, reg) => <EarthBoard demo={demo} view={view} reg={reg} />}
         </DemoShell>
       );
@@ -81,10 +90,12 @@ const HAND =
 function DemoShell<V>({
   scenes,
   compact,
+  onSkip,
   children,
 }: {
   scenes: DemoScene<V>[];
   compact: boolean;
+  onSkip?: () => void;
   children: (view: V, reg: Register, step: DemoStep<V>) => ReactNode;
 }) {
   const steps = useMemo(
@@ -135,6 +146,7 @@ function DemoShell<V>({
     if (moves > 1) at(typed + DEMO.moveMs, () => setPhaseAt({ index, phase: "dragging" }));
     const landed = typed + moves * DEMO.moveMs;
     at(landed, () => setPhaseAt({ index, phase: "done" }));
+    // Then NEXT is up; if nobody taps it, the example moves on by itself.
     at(landed + hold, () => setIndex((i) => (i + 1) % total));
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [index, length, action, hold, total]);
@@ -182,22 +194,34 @@ function DemoShell<V>({
 
   const tapped = action === "tap" && phase === "done";
   const typing = chars < length;
+  // NEXT arrives once the step has played out, so it is never a way to skip
+  // the words; the demo's own pace is the floor, the player sets the rest.
+  const waiting = phase === "done";
+  const last = index === total - 1;
+  const next = useCallback(
+    (event: React.MouseEvent) => {
+      // The waypoint card moves the run on with a tap anywhere on it. This
+      // tap is the demo's, never the card's.
+      event.stopPropagation();
+      setIndex((i) => (i + 1) % total);
+    },
+    [total],
+  );
 
   return (
     <div
       className={`${styles.demo} ${compact ? styles.compact : ""}`}
       style={{ "--move": `${DEMO.moveMs}ms` } as CSSProperties}
       data-testid="phase-demo"
-      aria-hidden="true"
     >
-      <p className={styles.caption}>
+      <p className={styles.caption} aria-hidden="true">
         {caption.slice(0, chars)}
         {typing ? <span className={styles.cursor} /> : null}
         {/* The rest of the line, invisible, holds the caption's height so the
             board under it does not jump as the words arrive. */}
         <span className={styles.ghost}>{caption.slice(chars)}</span>
       </p>
-      <div className={styles.frame} ref={frameRef}>
+      <div className={styles.frame} ref={frameRef} aria-hidden="true">
         <span className={`${styles.label} arcade`}>
           EXAMPLE <span className={styles.labelScene}>· {current.label}</span>
         </span>
@@ -218,11 +242,48 @@ function DemoShell<V>({
           </span>
         ) : null}
       </div>
-      <span className={styles.dots}>
-        {steps.map((_, i) => (
-          <span key={i} className={`${styles.dot} ${i === index ? styles.dotOn : ""}`} />
-        ))}
-      </span>
+      <div className={styles.controls}>
+        {onSkip ? (
+          <button
+            type="button"
+            className={`${styles.link} ${styles.skip} arcade`}
+            onClick={(event) => {
+              // Its own tap, then the card's move on: never both.
+              event.stopPropagation();
+              onSkip();
+            }}
+            data-testid="demo-skip"
+          >
+            SKIP
+          </button>
+        ) : null}
+        <span className={styles.dots} aria-hidden="true">
+          {steps.map((_, i) => (
+            <span key={i} className={`${styles.dot} ${i === index ? styles.dotOn : ""}`} />
+          ))}
+        </span>
+        <button
+          type="button"
+          className={`${styles.link} ${styles.next} ${waiting ? styles.nextUp : ""} arcade`}
+          onClick={next}
+          disabled={!waiting}
+          tabIndex={waiting ? 0 : -1}
+          aria-label={last ? "Watch the example again" : "Next step of the example"}
+          data-testid="demo-next"
+        >
+          <span className={styles.nextLabel}>
+            {last ? "AGAIN" : "NEXT"} <span aria-hidden="true">&rsaquo;</span>
+            {/* Drains over the wait, so moving on by itself is never a surprise. */}
+            {waiting ? (
+              <span
+                key={index}
+                className={styles.nextClock}
+                style={{ animationDuration: `${hold}ms` }}
+              />
+            ) : null}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

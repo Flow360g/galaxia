@@ -510,8 +510,15 @@ path from a shared link to flying.
   types its caption in first, fast, and only then moves the finger, so the
   eye goes to the words and is led from them to the action; a caption sitting
   still beside a moving finger read as too quick to read and too slow to
-  watch. It is a picture with no pointer events; the rules stay on the card
-  as screen reader text. NAME THE PLACE's example draws its zoom dial, hint
+  watch. Once the step has played, a NEXT button waits for the player, with a
+  bar draining along its foot, and the example moves on by itself after
+  `DEMO.waitMs` if nobody taps. Typing at 16ms a character with a second and a
+  half between steps was called stressful; the player now sets the pace, the
+  demo only its floor. NEXT and SKIP are words, not boxes, under the example.
+  SKIP moves straight on to play: READY on the launch card, the card's own
+  tap on a waypoint (offered once that card takes one). Both swallow their
+  tap, so NEXT never moves the waypoint card on. The rest is a picture with no pointer
+  events, and the rules stay on the card as screen reader text. NAME THE PLACE's example draws its zoom dial, hint
   button and answer row with `StationFeed.module.css` itself, so it cannot
   drift from the controls the player will press. The waypoint card is taller for it and reaches the
   middle of the screen, so the e2e taps the card itself to move on.

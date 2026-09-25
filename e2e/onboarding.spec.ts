@@ -75,7 +75,8 @@ test("a first flight hears the Mayday, then gets Phase 1 in a few lines", async 
   // Opening it did not launch the run.
   await expect(ready).toBeVisible();
   await shot(page, "b02c-ready-detail");
-  await launch(page);
+  // SKIP under the example goes straight to flying, like READY.
+  await ready.getByTestId("demo-skip").click();
   await expect(page.getByTestId("question")).toBeVisible({ timeout: 25_000 });
 
   // The Mayday was heard once and does not come back.
