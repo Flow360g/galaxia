@@ -356,9 +356,7 @@
   display: none;
 }
 
-.compact .controls {
-  justify-content: flex-end;
-}
+
 
 /* The BANK button, small: the same bezel and cap as the corner dial. */
 .bank {
@@ -489,31 +487,40 @@
   visibility: hidden;
 }
 
-/* Dots on the left, NEXT on the right: the one thing in a demo that takes a
-   tap. It stays laid out while the step plays so the card never jumps. */
+/* SKIP on the left, the dots, NEXT on the right. Both are words, not boxes:
+   the example is the thing to look at, and these only sit under it. Each
+   keeps a 44px tall tap area without drawing one. */
 .controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
 }
 
-.next {
-  position: relative;
-  min-width: 96px;
+.link {
   min-height: 44px;
-  padding: 0 16px;
-  overflow: hidden;
-  font-size: 11px;
+  padding: 0 4px;
+  font-size: 10px;
   letter-spacing: var(--track-label);
-  color: var(--panel-label);
   background: transparent;
-  border: 1px solid var(--rule-dark);
+  border: 0;
   pointer-events: auto;
   cursor: pointer;
-  opacity: 0.35;
-  transition: opacity 200ms, color 200ms, border-color 200ms;
   -webkit-tap-highlight-color: transparent;
+}
+
+.skip {
+  color: var(--panel-label);
+}
+
+.skip:active {
+  color: #ffffff;
+}
+
+.next {
+  margin-left: auto;
+  color: var(--panel-label);
+  opacity: 0.35;
+  transition: opacity 200ms, color 200ms;
 }
 
 .next:disabled {
@@ -523,21 +530,25 @@
 .nextUp {
   opacity: 1;
   color: var(--arcade-yellow);
-  border-color: var(--arcade-yellow);
 }
 
 .nextUp:active {
-  background: var(--arcade-yellow);
-  color: var(--ink);
+  color: #ffffff;
 }
 
-/* The wait, draining along the foot of the button. */
+/* The label carries the wait as its own underline, draining. */
+.nextLabel {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+}
+
 .nextClock {
   position: absolute;
   left: 0;
+  right: 0;
   bottom: 0;
-  height: 3px;
-  width: 100%;
+  height: 2px;
   background: var(--arcade-yellow);
   transform-origin: left center;
   animation-name: nextDrain;

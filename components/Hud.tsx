@@ -895,7 +895,14 @@ function WaypointCard({
           <span className={`${styles.wpGame} arcade`}>{guide.title}</span>
           {/* The phase played as an example, the way the launch card plays
               Phase 1; the rules stay on the card for screen readers. */}
-          {guide.demo ? <PhaseDemo demo={guide.demo} compact /> : null}
+          {guide.demo ? (
+            <PhaseDemo
+              demo={guide.demo}
+              compact
+              // SKIP moves the run on, so it is offered once the card takes a tap.
+              onSkip={awaitingTap ? onConfirm : undefined}
+            />
+          ) : null}
           <ul
             className={guide.demo ? styles.srOnly : styles.wpRules}
             data-testid="waypoint-rules"
