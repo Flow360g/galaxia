@@ -34,7 +34,14 @@ const SCRIPTS: Record<0 | 1 | 2, Script> = {
       "Same sky tomorrow, and we need you back.",
     ],
   },
-  0: EARTH_LOST_TRANSMISSION,
+  0: {
+    ...EARTH_LOST_TRANSMISSION,
+    lines: [
+      "MAYDAY. MAYDAY. Earth Command to pilot.",
+      "We could not confirm the landing sites. The invasion has not been stopped.",
+      "We may have lost this battle, but not the war. Same sky tomorrow, pilot.",
+    ],
+  },
 };
 
 /**
@@ -80,7 +87,7 @@ export function EndingMock({ initialSites }: { initialSites: 0 | 1 | 2 }) {
         <Transmission
           key={`${sites}-${take}`}
           script={SCRIPTS[sites]}
-          kind="debrief"
+          kind={sites === 0 ? "incoming" : "debrief"}
           banner
           onDone={() => setDone(true)}
         />

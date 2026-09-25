@@ -3,7 +3,7 @@ import { Backdrop } from "@/lib/game/Backdrop";
 import { glowTexture, releaseGlow } from "@/lib/game/glow";
 import { loadLambertModel } from "@/lib/game/gltf";
 import { dprForTier, detectTier, prefersReducedMotion } from "@/lib/game/quality";
-import { COLOR, EARTH, ORBIT, PERF, SHIPS, STATION } from "@/lib/game/Tuning";
+import { ALIEN, COLOR, EARTH, ORBIT, PERF, SHIPS, STATION } from "@/lib/game/Tuning";
 
 /**
  * MOCK: the ending, where the reinforcements go in.
@@ -13,7 +13,8 @@ import { COLOR, EARTH, ORBIT, PERF, SHIPS, STATION } from "@/lib/game/Tuning";
  * tally, pulls the camera back until Earth is a planet in a window, and sends
  * the fleet past the lens and down onto the two landing sites the player
  * named. The number of ships is the result: both sites named sends the
- * armada, one sends a wave, none sends nobody.
+ * armada, one sends a wave. None named sends THEIR fleet instead: the alien
+ * scouts pour in, and a few of them fire on the surface on the way down.
  *
  * Built to port straight into `Orbit.ts` if it is kept: the fleet is its own
  * class that only needs a scene, and the pull is two vectors and a curve.
@@ -65,7 +66,96 @@ export const ENDING = {
   /** Seconds into the pull the lead ships launch, one after another. */
   heroFrom: 1.1,
   heroEvery: 0.28,
+  /**
+   * The invasion, when no site was named: alien scouts, slower than our
+   * ships and a size bigger, so the descent reads as heavy and unhurried.
+   */
+  invaders: 96,
+  invaderLength: 1.5,
+  invaderSeconds: 8.5,
+  /** Their hulls glow faintly in the contact violet, so they read at a speck. */
+  invaderGlow: 0.35,
+  /** One invader in this many fires on the way down; the rest just fly. */
+  shooterEvery: 4,
+  /**
+   * A shot: seconds on and seconds off. A scout fires only within this many
+   * Earth radii of the centre: nearer the camera a beam is a bar across the
+   * whole screen. Every beam lands on Earth's visible face.
+   */
+  shotSeconds: 0.8,
+  shotGap: 0.6,
+  shootWithin: 7,
+  /**
+   * Beam thickness and colour, and the flash where it lands. The HUD's damage
+   * red rather than `COLOR.neg`, which is too dark to carry on an additive
+   * blend at this distance.
+   */
+  beamRadius: 0.26,
+  beamColor: 0xff6b5c,
+  hitSize: 4.2,
+  /** Scouts hold their size longer than our ships: they are coming down, not going away. */
+  invaderFadeFrom: 0.72,
+  invaderTrail: 1.6,
 } as const;
+
+/** What a fleet is made of and how it flies. */
+interface FleetStyle {
+  hulls: Array<{
+    url: string;
+    length: number;
+    yaw: number;
+    trim: { yaw: number; roll: number };
+    share: number;
+  }>;
+  /** Engine glow and trail colour. */
+  trail: number;
+  /** Hull glow, for a fleet that has to read against the dark as a speck. */
+  glow: { color: number; intensity: number } | null;
+  seconds: number;
+  /** Share of the trip after which the hull dwindles away, and trail length. */
+  fadeFrom: number;
+  trailLength: number;
+  /** One in this many fires beams at the surface; 0 for none. */
+  shooterEvery: number;
+}
+
+/** Ours: the three hulls from the bay, mostly standard issue. */
+const OUR_FLEET: FleetStyle = {
+  hulls: SHIPS.map((ship) => ({
+    url: ship.modelUrl,
+    length: ENDING.shipLength,
+    yaw: ship.modelYaw,
+    trim: ship.modelTrim,
+    share: ENDING.hullMix[ship.id] ?? 0,
+  })),
+  trail: COLOR.plasma,
+  glow: null,
+  seconds: ENDING.flightSeconds,
+  fadeFrom: ENDING.fadeFrom,
+  trailLength: ENDING.trailLength,
+  shooterEvery: 0,
+};
+
+/** Theirs: the scout from ALIEN CONTACT, by the dozen. */
+const INVADERS: FleetStyle = {
+  hulls: [
+    {
+      url: ALIEN.modelUrl,
+      length: ENDING.invaderLength,
+      yaw: Math.PI,
+      trim: { yaw: 0, roll: 0 },
+      share: 1,
+    },
+  ],
+  trail: COLOR.contact,
+  glow: { color: COLOR.contact, intensity: ENDING.invaderGlow },
+  seconds: ENDING.invaderSeconds,
+  fadeFrom: ENDING.invaderFadeFrom,
+  trailLength: ENDING.invaderTrail,
+  shooterEvery: ENDING.shooterEvery,
+};
+
+const facing = new THREE.Vector3();
 
 const EASE = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -74,7 +164,11 @@ const pos = new THREE.Vector3();
 const ahead = new THREE.Vector3();
 const dir = new THREE.Vector3();
 const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
-const PLASMA = new THREE.Color(COLOR.plasma);
+const hit = new THREE.Vector3();
+const RED = new THREE.Color(ENDING.beamColor);
+const UP = new THREE.Vector3(0, 1, 0);
+const side = new THREE.Vector3();
+const up = new THREE.Vector3();
 
 interface Flight {
   hull: number;
@@ -92,6 +186,8 @@ interface Flight {
   hero: boolean;
   /** Its route is planned at launch, from wherever the lens is then. */
   planned: boolean;
+  /** Where on the surface it fires, for a fleet that shoots. */
+  aim: THREE.Vector3;
 }
 
 /** One hull type as instanced parts: one InstancedMesh per mesh in the model. */
@@ -115,16 +211,26 @@ class Fleet {
   private readonly glowPositions: Float32Array;
   private readonly trailColours: Float32Array;
   private readonly glowColours: Float32Array;
+  private readonly tint: THREE.Color;
+  /** Beams and their hit flashes: only built for a fleet that shoots. */
+  private beamOuter: THREE.InstancedMesh | null = null;
+  private beamCore: THREE.InstancedMesh | null = null;
+  private hits: THREE.Points | null = null;
+  private hitPositions: Float32Array | null = null;
+  private hitColours: Float32Array | null = null;
   private readonly disposables: Array<{ dispose(): void }> = [];
   private disposed = false;
 
   constructor(
+    private readonly style: FleetStyle,
     private readonly size: number,
     private readonly sites: THREE.Vector3[],
+    private readonly planet: { centre: THREE.Vector3; radius: number; facing: () => THREE.Vector3 },
     private readonly launchFrom: () => THREE.Vector3,
     private readonly lens: () => THREE.Vector3,
   ) {
     const n = Math.max(size, 1);
+    this.tint = new THREE.Color(style.trail);
 
     // Trails and glows carry their colour per vertex, so each one can fade
     // with its own ship; the far end of a trail is always black, which on an
@@ -164,19 +270,73 @@ class Fleet {
     this.disposables.push(glowGeometry, glowMaterial, { dispose: releaseGlow });
     this.group.add(this.glow);
 
+    if (style.shooterEvery > 0) this.buildBeams(n);
+  }
+
+  /**
+   * The beams, the way `Beam.ts` draws one: an open additive cylinder with a
+   * white core inside it, here instanced so any number firing at once is two
+   * draw calls. Laid along +Z from 0 to 1, so a beam is placed at the muzzle,
+   * pointed at the ground and stretched to reach it.
+   */
+  private buildBeams(n: number): void {
+    const geometry = new THREE.CylinderGeometry(1, 1, 1, 8, 1, true);
+    geometry.rotateX(Math.PI / 2);
+    geometry.translate(0, 0, 0.5);
+    const make = (color: number, opacity: number, blending: THREE.Blending) =>
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        blending,
+        depthWrite: false,
+      });
+    // The outer beam is laid over the scene rather than added to it, so it
+    // stays red across green land instead of summing to yellow. The core is
+    // added, which is what makes it read as light.
+    const outerMaterial = make(ENDING.beamColor, 0.85, THREE.NormalBlending);
+    const coreMaterial = make(COLOR.white, 0.6, THREE.AdditiveBlending);
+    this.beamOuter = new THREE.InstancedMesh(geometry, outerMaterial, n);
+    this.beamCore = new THREE.InstancedMesh(geometry, coreMaterial, n);
+    for (const mesh of [this.beamOuter, this.beamCore]) {
+      mesh.frustumCulled = false;
+      for (let i = 0; i < n; i += 1) mesh.setMatrixAt(i, HIDDEN);
+      this.group.add(mesh);
+    }
+    this.disposables.push(geometry, outerMaterial, coreMaterial);
+
+    this.hitPositions = new Float32Array(n * 3);
+    this.hitColours = new Float32Array(n * 3);
+    const hitGeometry = new THREE.BufferGeometry();
+    hitGeometry.setAttribute("position", new THREE.BufferAttribute(this.hitPositions, 3));
+    hitGeometry.setAttribute("color", new THREE.BufferAttribute(this.hitColours, 3));
+    const hitMaterial = new THREE.PointsMaterial({
+      map: glowTexture(),
+      vertexColors: true,
+      size: ENDING.hitSize,
+      sizeAttenuation: true,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      // It sits exactly on the surface, so half of it would be inside Earth.
+      depthTest: false,
+    });
+    this.hits = new THREE.Points(hitGeometry, hitMaterial);
+    this.hits.frustumCulled = false;
+    this.disposables.push(hitGeometry, hitMaterial, { dispose: releaseGlow });
+    this.group.add(this.hits);
+
   }
 
   async load(): Promise<void> {
     if (this.size === 0) return;
-    const mix = SHIPS.map((ship) => ENDING.hullMix[ship.id] ?? 0);
+    const mix = this.style.hulls.map((hull) => hull.share);
     const total = mix.reduce((a, b) => a + b, 0) || 1;
     const counts = mix.map((share) => Math.round((share / total) * this.size));
     counts[0] = (counts[0] ?? 0) + this.size - counts.reduce((a, b) => a + b, 0);
 
     const models = await Promise.all(
-      SHIPS.map((ship) =>
-        loadLambertModel(ship.modelUrl, ENDING.shipLength, ship.modelYaw, ship.modelTrim),
-      ),
+      this.style.hulls.map((hull) => loadLambertModel(hull.url, hull.length, hull.yaw, hull.trim)),
     );
     if (this.disposed) {
       models.forEach((model) => model?.disposables.forEach((item) => item.dispose()));
@@ -190,6 +350,13 @@ class Fleet {
         return;
       }
       this.disposables.push(...model.disposables);
+      const glow = this.style.glow;
+      if (glow) {
+        for (const material of model.materials) {
+          material.emissive.setHex(glow.color);
+          material.emissiveIntensity = glow.intensity;
+        }
+      }
       model.group.updateMatrixWorld(true);
       const parts: THREE.InstancedMesh[] = [];
       model.group.traverse((object) => {
@@ -248,6 +415,7 @@ class Fleet {
         duration: 0,
         scale: 1,
         planned: false,
+        aim: new THREE.Vector3(),
       };
       return flight;
     });
@@ -289,10 +457,26 @@ class Fleet {
       .copy(flight.start)
       .lerp(flight.end, 0.55)
       .add(pos.set((rand() - 0.5) * 12, 6 + rand() * 8, (rand() - 0.5) * 6));
-    flight.duration = ENDING.flightSeconds + (rand() - 0.5) * 2 * ENDING.flightJitter;
+    flight.duration = this.style.seconds + (rand() - 0.5) * 2 * ENDING.flightJitter;
     flight.duration *= hero ? 0.75 : 1;
     flight.scale = hero ? 1.3 : 0.8 + rand() * 0.6;
     flight.age = 0;
+
+    // A shooter fires at a spot on the face of Earth the camera sees, not
+    // the ground straight under it: from most of the fleet that points
+    // almost at the lens, and a beam seen end on is a dot.
+    if (this.style.shooterEvery > 0) {
+      const facing = this.planet.facing();
+      side.crossVectors(facing, UP).normalize();
+      up.crossVectors(side, facing).normalize();
+      flight.aim
+        .copy(facing)
+        .addScaledVector(side, (rand() - 0.5) * 1.3)
+        .addScaledVector(up, (rand() - 0.5) * 1.1)
+        .normalize()
+        .multiplyScalar(this.planet.radius)
+        .add(this.planet.centre);
+    }
   }
 
   private at(flight: Flight, u: number, out: THREE.Vector3): THREE.Vector3 {
@@ -330,7 +514,8 @@ class Fleet {
 
       // Dwindles away over the back of the route, on top of the shrink the
       // distance already gives it, so it is gone before it reaches the ground.
-      const f = Math.min(Math.max((u - ENDING.fadeFrom) / (1 - ENDING.fadeFrom), 0), 1);
+      const from = this.style.fadeFrom;
+      const f = Math.min(Math.max((u - from) / (1 - from), 0), 1);
       const land = 1 - f * f * (3 - 2 * f);
       scratch.position.copy(pos);
       scratch.lookAt(ahead.copy(pos).sub(dir));
@@ -342,19 +527,20 @@ class Fleet {
       this.glowPositions[t3] = pos.x - dir.x * tail;
       this.glowPositions[t3 + 1] = pos.y - dir.y * tail;
       this.glowPositions[t3 + 2] = pos.z - dir.z * tail;
-      const length = ENDING.trailLength * flight.scale * land;
+      const length = this.style.trailLength * flight.scale * land;
       this.trailPositions[t6] = this.glowPositions[t3]!;
       this.trailPositions[t6 + 1] = this.glowPositions[t3 + 1]!;
       this.trailPositions[t6 + 2] = this.glowPositions[t3 + 2]!;
       this.trailPositions[t6 + 3] = pos.x - dir.x * length;
       this.trailPositions[t6 + 4] = pos.y - dir.y * length;
       this.trailPositions[t6 + 5] = pos.z - dir.z * length;
-      this.glowColours[t3] = PLASMA.r * land;
-      this.glowColours[t3 + 1] = PLASMA.g * land;
-      this.glowColours[t3 + 2] = PLASMA.b * land;
-      this.trailColours[t6] = PLASMA.r * land;
-      this.trailColours[t6 + 1] = PLASMA.g * land;
-      this.trailColours[t6 + 2] = PLASMA.b * land;
+      this.glowColours[t3] = this.tint.r * land;
+      this.glowColours[t3 + 1] = this.tint.g * land;
+      this.glowColours[t3 + 2] = this.tint.b * land;
+      this.trailColours[t6] = this.tint.r * land;
+      this.trailColours[t6 + 1] = this.tint.g * land;
+      this.trailColours[t6 + 2] = this.tint.b * land;
+      this.shoot(i, flight, land);
 
       if (u >= 1) {
         flight.hero = false;
@@ -368,6 +554,61 @@ class Fleet {
     (this.glow.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
     (this.trail.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
     (this.glow.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+    if (this.beamOuter && this.beamCore && this.hits) {
+      this.beamOuter.instanceMatrix.needsUpdate = true;
+      this.beamCore.instanceMatrix.needsUpdate = true;
+      (this.hits.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+      (this.hits.geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+    }
+  }
+
+  /**
+   * One invader in `shooterEvery` fires at its spot on the surface, in
+   * bursts, once it is close to Earth and while it is still big enough to
+   * see. Each shooter has its own phase so the fire rolls across the fleet
+   * rather than strobing in time.
+   */
+  private shoot(i: number, flight: Flight, land: number): void {
+    if (!this.beamOuter || !this.beamCore || !this.hitPositions || !this.hitColours) return;
+    const t3 = i * 3;
+    const every = this.style.shooterEvery;
+    const cycle = ENDING.shotSeconds + ENDING.shotGap;
+    const phase = (flight.age + i * 0.37) % cycle;
+    const firing =
+      i % every === 1 &&
+      land > 0.2 &&
+      pos.distanceTo(this.planet.centre) < this.planet.radius * ENDING.shootWithin &&
+      phase < ENDING.shotSeconds;
+    if (!firing) {
+      this.beamOuter.setMatrixAt(i, HIDDEN);
+      this.beamCore.setMatrixAt(i, HIDDEN);
+      this.hitColours.fill(0, t3, t3 + 3);
+      return;
+    }
+
+    hit.copy(flight.aim);
+    const reach = pos.distanceTo(hit);
+    // Swells in and out over the burst, with a flicker on top.
+    const burst = Math.sin((phase / ENDING.shotSeconds) * Math.PI);
+    const flicker = 0.8 + 0.2 * Math.sin(flight.age * 60);
+    const radius = ENDING.beamRadius * flight.scale * burst * flicker * land;
+
+    scratch.position.copy(pos);
+    scratch.lookAt(hit);
+    scratch.scale.set(radius, radius, reach);
+    scratch.updateMatrix();
+    this.beamOuter.setMatrixAt(i, scratch.matrix);
+    scratch.scale.set(radius * 0.25, radius * 0.25, reach);
+    scratch.updateMatrix();
+    this.beamCore.setMatrixAt(i, scratch.matrix);
+
+    this.hitPositions[t3] = hit.x;
+    this.hitPositions[t3 + 1] = hit.y;
+    this.hitPositions[t3 + 2] = hit.z;
+    const heat = burst * flicker;
+    this.hitColours[t3] = RED.r * heat;
+    this.hitColours[t3 + 1] = RED.g * heat;
+    this.hitColours[t3 + 2] = RED.b * heat;
   }
 
   private hide(hull: Hull, slot: number, t6: number, t3: number): void {
@@ -476,13 +717,21 @@ export class EndingScene {
     this.resizeObserver.observe(container);
     this.resize();
 
-    const sites = this.siteSpots(sitesNamed);
-    const size = ENDING.fleet[sitesNamed];
+    // Nothing named: the invaders land where they meant to, both sites.
+    const invaded = sitesNamed === 0;
+    const sites = this.siteSpots(invaded ? 2 : sitesNamed);
+    const size = invaded ? ENDING.invaders : ENDING.fleet[sitesNamed];
     this.fleet =
       size > 0
         ? new Fleet(
+            invaded ? INVADERS : OUR_FLEET,
             this.reducedMotion ? Math.round(size / 3) : size,
             sites,
+            {
+              centre: this.earth.position,
+              radius: EARTH.diameter / 2,
+              facing: () => facing.subVectors(this.endCam, this.earth.position).normalize(),
+            },
             () => this.endCam,
             () => this.camera.position,
           )
