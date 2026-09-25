@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { loadBest, loadFlown, loadRun } from "@/lib/game/storage";
+import { loadBest, loadDayStreak, loadFlown, loadLongestStreak, loadRun } from "@/lib/game/storage";
 import { formatDistance, formatScore } from "@/lib/game/format";
 
 /** One stored run, reduced to the two figures the profile shows. */
@@ -17,6 +17,9 @@ interface Record {
   today: Figures | null;
   /** Runs completed, one per date. What earns a hull in the bay. */
   flown: number;
+  /** Days in a row as of today (alive until a whole day goes by), and the most ever. */
+  streak: number;
+  longest: number;
 }
 
 /**
@@ -63,6 +66,18 @@ export function BestRun({
         </span>
       </div>
       <div className={className}>
+        <span className="label">Day streak</span>
+        <span className={value} data-testid="day-streak">
+          {record.streak > 0 ? `🔥 ${record.streak}` : "0"}
+        </span>
+      </div>
+      <div className={className}>
+        <span className="label">Longest streak</span>
+        <span className={value} data-testid="longest-streak">
+          {record.longest}
+        </span>
+      </div>
+      <div className={className}>
         <span className="label">Runs played</span>
         <span className={value} data-testid="runs-played">
           {record.flown}
@@ -81,7 +96,7 @@ function line(figures: Figures): string {
   return `${formatScore(figures.score)} / ${formatScore(figures.max)} · ${distance}`;
 }
 
-const EMPTY: Record = { best: null, today: null, flown: 0 };
+const EMPTY: Record = { best: null, today: null, flown: 0, streak: 0, longest: 0 };
 let cached: { date: string; record: Record } | null = null;
 
 function snapshot(date: string): Record {
@@ -94,6 +109,8 @@ function snapshot(date: string): Record {
         best: best ? figures(best.score, best.maxScore, best.distance) : null,
         today: today ? figures(today.score, today.maxScore, today.distance) : null,
         flown: loadFlown(),
+        streak: loadDayStreak(date),
+        longest: loadLongestStreak(),
       },
     };
   }

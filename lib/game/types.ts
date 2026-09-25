@@ -574,6 +574,15 @@ export interface RunSummary {
    * to standard issue rather than failing to draw.
    */
   shipId?: string;
+  /**
+   * Days in a row with a completed run, this one included, and whether it
+   * beat the player's previous best. Stamped when the run is saved, not by
+   * the run (which knows nothing of other days), and stored with it so the
+   * card on a revisit says what it said on the day. Optional: a practice run
+   * is never saved, and a run stored before these existed has neither.
+   */
+  dayStreak?: number;
+  newBest?: boolean;
   outcomes: Outcome[];
   samples: FlightSample[];
   events: RunEvent[];

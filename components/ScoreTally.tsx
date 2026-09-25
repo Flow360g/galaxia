@@ -151,6 +151,8 @@ export function ScoreTally({
   const max = summary.maxScore ?? 0;
   const score = summary.score ?? 0;
   const tier = finaleTier(score, max);
+  /** Days in a row, stamped when the run was saved. None on a practice run. */
+  const dayStreak = Math.max(0, Math.floor(summary.dayStreak ?? 0));
 
   // Decided once, on mount: this only ever renders on the client, after a
   // run has ended.
@@ -393,15 +395,38 @@ export function ScoreTally({
               <span key={i} className={`${styles.cell} ${i < meterFill ? styles.cellOn : ""}`} />
             ))}
           </span>
-          <span
-            className={`${styles.tier} ${totalIn ? styles.tierIn : ""} ${
-              celebrate ? styles.tierHot : ""
-            } arcade`}
-            data-testid="tally-tier"
-            aria-hidden={totalIn ? undefined : true}
-          >
-            {TIER_TITLE[tier]}
+          <span className={styles.verdict} aria-hidden={totalIn ? undefined : true}>
+            <span
+              className={`${styles.tier} ${totalIn ? styles.tierIn : ""} ${
+                celebrate ? styles.tierHot : ""
+              } arcade`}
+              data-testid="tally-tier"
+            >
+              {TIER_TITLE[tier]}
+            </span>
+            {summary.newBest ? (
+              <span
+                className={`${styles.newBest} ${totalIn ? styles.newBestIn : ""} arcade`}
+                data-testid="tally-new-best"
+              >
+                New best
+              </span>
+            ) : null}
           </span>
+          {dayStreak > 0 ? (
+            <span
+              className={`${styles.dayStreak} ${totalIn ? styles.dayStreakIn : ""}`}
+              data-testid="tally-day-streak"
+              aria-hidden={totalIn ? undefined : true}
+            >
+              <span className={`${styles.dayStreakFigure} arcade`}>
+                🔥 {dayStreak} day streak
+              </span>
+              <span className={styles.dayStreakNext}>
+                Play tomorrow to make it {dayStreak + 1}.
+              </span>
+            </span>
+          ) : null}
         </div>
 
         <button
