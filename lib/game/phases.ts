@@ -1,6 +1,6 @@
 import { maxPointsAt, vectorShare } from "./Score";
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
-import { CLUSTER, ENCOUNTER, NOVA, SCORE, SHIELDS, STATION, VECTOR } from "./Tuning";
+import { CLUSTER, DEMO, ENCOUNTER, NOVA, SCORE, SHIELDS, STATION, VECTOR } from "./Tuning";
 import type { Question, Round, RunSummary } from "./types";
 
 /**
@@ -54,6 +54,43 @@ export interface PhaseGuide {
    * Read from here so the HUD never carries a second wording of the rule.
    */
   readNote?: string;
+  /**
+   * A worked example the launch card plays in place of `rules`: a sample
+   * question, a finger tapping through it, and a caption a step at a time.
+   * Only FIND THE 3 has one so far.
+   */
+  demo?: PhaseDemo;
+}
+
+/** One beat of a phase demo: where the finger goes, and what the card says. */
+export interface DemoStep {
+  /** A square (0-based lane) or the BANK button; null leaves the finger resting. */
+  target: number | "bank" | null;
+  /** Whether the finger taps when it gets there, or only points. */
+  tap: boolean;
+  caption: string;
+  /** Squares lit correct once this step has played. */
+  got: number[];
+  /** The square struck wrong, if any. */
+  wrong: number | null;
+  /** Points on the BANK button, not yet kept. */
+  unbanked: number;
+  /** The line under the squares, e.g. "CORRECT · 1 OF 3". */
+  status: string;
+  /** How long the step holds, tap included. */
+  ms: number;
+}
+
+export interface DemoScene {
+  /** The corner label: "PLAY IT SAFE", "PUSH YOUR LUCK". */
+  label: string;
+  steps: DemoStep[];
+}
+
+export interface PhaseDemo {
+  prompt: string;
+  options: string[];
+  scenes: DemoScene[];
 }
 
 /** Points for a share of the base, as the tally would print them. */
@@ -114,6 +151,111 @@ function count(n: number | undefined, noun: string): string {
   return `${n} ${noun}${n === 1 ? "" : "s"}. `;
 }
 
+/**
+ * FIND THE 3, played once as an example: two scenes on a loop, one that banks
+ * and one that pushes its luck into a wrong answer. Figures come from `SCORE`
+ * like everything else here, so a retune cannot leave the example lying.
+ */
+function clusterDemo(n?: number): PhaseDemo {
+  const found = (k: number) => Math.round(SCORE.perEncounter * (SCORE.clusterShare[k - 1] ?? 0));
+  const one = found(1);
+  const two = found(2);
+  const beat = { tap: true, wrong: null, ms: DEMO.beatMs } as const;
+  const lead = count(n, "question");
+  return {
+    prompt: "Which of these are fruits?",
+    options: ["Apple", "Carrot", "Pear", "Potato", "Grape", "Onion"],
+    scenes: [
+      {
+        label: "PLAY IT SAFE",
+        steps: [
+          {
+            ...beat,
+            target: null,
+            tap: false,
+            caption: `${lead}Each one has ${LANES} answers and ${FULL_CHARGE} of them are correct.`,
+            got: [],
+            unbanked: 0,
+            status: `0 OF ${FULL_CHARGE} FOUND`,
+            ms: DEMO.holdMs,
+          },
+          {
+            ...beat,
+            target: 0,
+            caption: "Tap one you are sure of. A correct answer scores points.",
+            got: [0],
+            unbanked: one,
+            status: `CORRECT · 1 OF ${FULL_CHARGE}`,
+          },
+          {
+            ...beat,
+            target: 2,
+            caption: "Every correct answer you tap is worth more points.",
+            got: [0, 2],
+            unbanked: two,
+            status: `CORRECT · 2 OF ${FULL_CHARGE}`,
+          },
+          {
+            ...beat,
+            target: "bank",
+            tap: false,
+            caption: `Now choose. Tap BANK to keep ${two} points, or keep going for more.`,
+            got: [0, 2],
+            unbanked: two,
+            status: `CORRECT · 2 OF ${FULL_CHARGE}`,
+            ms: DEMO.holdMs,
+          },
+          {
+            ...beat,
+            target: "bank",
+            caption: `Banked. The ${two} points are yours to keep.`,
+            got: [0, 2],
+            unbanked: 0,
+            status: `${two} POINTS KEPT`,
+            ms: DEMO.endMs,
+          },
+        ],
+      },
+      {
+        label: "PUSH YOUR LUCK",
+        steps: [
+          {
+            ...beat,
+            target: 1,
+            tap: false,
+            caption: `Same question, but this time you keep going for all ${FULL_CHARGE}.`,
+            got: [0, 2],
+            unbanked: two,
+            status: `CORRECT · 2 OF ${FULL_CHARGE}`,
+            ms: DEMO.holdMs,
+          },
+          {
+            ...beat,
+            target: 1,
+            caption: "Tap a wrong one and you lose the points you did not bank.",
+            got: [0, 2],
+            wrong: 1,
+            unbanked: 0,
+            status: `WRONG · ${two} POINTS LOST`,
+            ms: DEMO.holdMs,
+          },
+          {
+            ...beat,
+            target: null,
+            tap: false,
+            caption: "You can carry on after one wrong answer. Two wrong and the question is over.",
+            got: [0, 2],
+            wrong: 1,
+            unbanked: 0,
+            status: `WRONG · ${two} POINTS LOST`,
+            ms: DEMO.endMs,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 const HINT_LINE = `Stuck? Tap HINT. You get ${NOVA.perRun} for the whole run, free. Each one takes away a wrong answer or gives you a clue, and adds ${NOVA.bonusSeconds} second${NOVA.bonusSeconds === 1 ? "" : "s"} to the clock.`;
 
 function guides(n?: number): Record<Question["type"], PhaseGuide> {
@@ -133,6 +275,7 @@ function guides(n?: number): Record<Question["type"], PhaseGuide> {
         HINT_LINE,
       ],
       readNote: `One wrong answer is allowed. Two ends the question.`,
+      demo: clusterDemo(n),
       scoring: [
         ...SCORE.clusterShare.map((share, index) => ({
           label: index + 1 === FULL_CHARGE ? `ALL ${FULL_CHARGE} FOUND` : `${index + 1} FOUND`,

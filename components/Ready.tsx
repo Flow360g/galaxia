@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { phaseGuide } from "@/lib/game/phases";
 import type { Round } from "@/lib/game/types";
+import { PhaseDemo } from "./PhaseDemo";
 import { ScoringDisclosure } from "./ScoringTable";
 import styles from "./Ready.module.css";
 
@@ -22,7 +23,9 @@ interface Props {
  * so, which is the same rule the rest of the game is built on -- nothing
  * else advances on a timer either.
  *
- * Kept to a few lines. On a first flight this is the only rules a player is
+ * Phase 1 is shown, not told: `PhaseDemo` plays a sample question with a
+ * finger tapping through it, which testers took in faster than three lines
+ * of rules. Kept to a few lines. On a first flight this is the only rules a player is
  * shown before the first question: the round in one line, above and apart
  * from Phase 1 so it is not read as a Phase 1 rule, then Phase 1 the way you
  * would text it to your mum. The finer print and the scoring sit
@@ -59,8 +62,7 @@ export function Ready({ round, onReady }: Props) {
       <div className={styles.panel}>
         {phases > 1 ? (
           <p className={styles.intro}>
-            {round.questions.length} questions in {phases} phases. Same questions for everyone
-            today.
+            {round.questions.length} questions in {phases} phases. Same questions for everyone.
           </p>
         ) : null}
 
@@ -69,7 +71,10 @@ export function Ready({ round, onReady }: Props) {
         </span>
         <h2 className={`${styles.title} arcade`}>{guide.title}</h2>
 
-        <ul className={styles.lines}>
+        {/* A phase with a worked example plays it instead of listing its
+            rules; the rules stay on the card as text for screen readers. */}
+        {guide.demo ? <PhaseDemo demo={guide.demo} /> : null}
+        <ul className={guide.demo ? styles.srOnly : styles.lines}>
           {guide.rules.map((line) => (
             <li key={line} className={styles.line}>
               {line}

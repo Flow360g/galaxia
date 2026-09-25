@@ -503,6 +503,13 @@ path from a shared link to flying.
   anywhere skips it, and so does SKIP on the banner while Soap is still
   talking: it is a moment, not a wait. The tally follows, then the share
   card. `?replay=1` skips the Mayday along with today's stored run.
+- **Phase 1 is shown, not told.** The launch card plays FIND THE 3 as a
+  worked example (`PhaseDemo`, scripted as `demo` on the phase in
+  `phases.ts`, timed by `DEMO` in `Tuning.ts`): a sample question, a finger
+  tapping squares and BANK, and one caption at a time, looping a scene that
+  banks and a scene that loses the unbanked points to a wrong answer. It is a
+  picture with no pointer events; the rules stay on the card as screen reader
+  text. The other phases still list their rules until they get a demo too.
 - **Every phase card carries the rest, shut.** The launch card and the
   waypoint card both read `phaseGuide(type, round)` and render
   `ScoringDisclosure`: a MORE DETAIL button, collapsed by default, that opens
