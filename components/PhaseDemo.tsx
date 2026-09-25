@@ -1,67 +1,178 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { DemoStep, PhaseDemo as Demo } from "@/lib/game/phases";
-import { DEMO } from "@/lib/game/Tuning";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import type {
+  ClusterView,
+  DemoScene,
+  DemoStep,
+  EarthView,
+  McqView,
+  PhaseDemo as Demo,
+  VectorView,
+} from "@/lib/game/phases";
+import { DEMO, STATION } from "@/lib/game/Tuning";
+import { prefersReducedMotion } from "./useTyped";
 import styles from "./PhaseDemo.module.css";
+import feed from "./StationFeed.module.css";
 
 /**
- * A phase played once as an example, on the launch card, in place of a list
- * of rules: a sample question, a finger that glides to a square or the BANK
- * button and taps it, and one caption at a time saying what just happened.
- * Testers skimmed three lines of rules and still did not know what BANK was
- * for; watching it pressed says it faster.
+ * A phase played once as an example, on its phase card, in place of a list of
+ * rules: a sample question, a finger that taps through it, and a caption per
+ * step. Testers skimmed three lines of rules and still did not know what BANK
+ * was for; watching it pressed says it faster.
+ *
+ * Every step runs in the same order: the caption types in, fast, and only once
+ * it has landed does the finger move and act. Captions that sat still while
+ * the finger moved read as too quick to read and too slow to watch at once;
+ * typing them first leads the eye from the words to the action.
  *
  * It is a picture, not a control. Spans, no pointer events, `aria-hidden`:
- * the card's READY is still the only thing that takes a tap, and the card
- * carries the rules as text for screen readers. The script, figures and all,
- * is `demo` in `lib/game/phases.ts`; timings are `DEMO` in `Tuning.ts`.
+ * the card's own tap is still the only one it takes, and the card carries the
+ * rules as text for screen readers. The scripts, figures and all, are `demo`
+ * in `lib/game/phases.ts`; timings are `DEMO` in `Tuning.ts`.
  */
-export function PhaseDemo({ demo }: { demo: Demo }) {
+export function PhaseDemo({ demo, compact = false }: { demo: Demo; compact?: boolean }) {
+  switch (demo.kind) {
+    case "cluster":
+      return (
+        <DemoShell<ClusterView> scenes={demo.scenes} compact={compact}>
+          {(view, reg, step) => <ClusterBoard demo={demo} view={view} reg={reg} step={step} />}
+        </DemoShell>
+      );
+    case "vector":
+      return (
+        <DemoShell<VectorView> scenes={demo.scenes} compact={compact}>
+          {(view, reg) => <VectorBoard demo={demo} view={view} reg={reg} />}
+        </DemoShell>
+      );
+    case "mcq":
+      return (
+        <DemoShell<McqView> scenes={demo.scenes} compact={compact}>
+          {(view, reg) => <McqBoard demo={demo} view={view} reg={reg} />}
+        </DemoShell>
+      );
+    case "earth":
+      return (
+        <DemoShell<EarthView> scenes={demo.scenes} compact={compact}>
+          {(view, reg) => <EarthBoard demo={demo} view={view} reg={reg} />}
+        </DemoShell>
+      );
+  }
+}
+
+/** Registers a board element as a finger target under `key`. */
+type Register = (key: string) => (el: HTMLElement | null) => void;
+
+/** Where a step is: its caption typing, the finger gliding, dragging, or landed. */
+type Phase = "typing" | "moving" | "dragging" | "done";
+
+const HAND =
+  "M18.84 15.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z";
+
+function DemoShell<V>({
+  scenes,
+  compact,
+  children,
+}: {
+  scenes: DemoScene<V>[];
+  compact: boolean;
+  children: (view: V, reg: Register, step: DemoStep<V>) => ReactNode;
+}) {
   const steps = useMemo(
-    () => demo.scenes.flatMap((scene) => scene.steps.map((step) => ({ step, label: scene.label }))),
-    [demo],
+    () => scenes.flatMap((scene) => scene.steps.map((step) => ({ step, label: scene.label }))),
+    [scenes],
   );
   const [index, setIndex] = useState(0);
-  // The step whose tap has landed; any other step is still gliding.
-  const [tappedAt, setTappedAt] = useState<number | null>(null);
+  // Both are stamped with the step they belong to, so a new step starts from
+  // "typing" and no characters without an effect having to reset them.
+  const [phaseAt, setPhaseAt] = useState<{ index: number; phase: Phase }>({ index: 0, phase: "typing" });
+  const [typedAt, setTypedAt] = useState<{ index: number; chars: number }>({ index: 0, chars: 0 });
   const [finger, setFinger] = useState<{ x: number; y: number } | null>(null);
 
   const frameRef = useRef<HTMLDivElement>(null);
-  const laneRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const bankRef = useRef<HTMLSpanElement>(null);
+  const targets = useRef(new Map<string, HTMLElement>());
+  const reg = useCallback<Register>(
+    (key) => (el) => {
+      if (el) targets.current.set(key, el);
+      else targets.current.delete(key);
+    },
+    [],
+  );
 
-  const current = steps[index]!;
-  const { step } = current;
-  const tapped = tappedAt === index;
-
-  // Advance on the step's own clock; the tap lands after the glide.
-  // Keyed on primitives only: the card rebuilds the script on every render
-  // of its parent, and a timer keyed on the object would never fire.
-  const { ms, tap } = step;
   const total = steps.length;
-  useEffect(() => {
-    const timers = [window.setTimeout(() => setIndex((i) => (i + 1) % total), ms)];
-    if (tap) timers.push(window.setTimeout(() => setTappedAt(index), DEMO.moveMs));
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [index, ms, tap, total]);
+  const current = steps[index % total]!;
+  const { step } = current;
+  const phase = phaseAt.index === index ? phaseAt.phase : "typing";
+  const chars = typedAt.index === index ? typedAt.chars : 0;
 
-  // Until the tap lands, the scene still shows the step before it.
-  const shown: DemoStep = step.tap && !tapped ? (steps[index - 1]?.step ?? step) : step;
+  // Keyed on primitives only: the card rebuilds the script on every render of
+  // its parent, and a timer keyed on the objects would never fire.
+  const { caption, action, hold } = step;
+  const length = caption.length;
+  useEffect(() => {
+    const still = prefersReducedMotion();
+    const typeMs = still ? 0 : DEMO.typeMs;
+    const typed = length * typeMs;
+    const moves = action === "none" ? 0 : action === "drag" ? 2 : 1;
+    const timers: number[] = [];
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+
+    if (typeMs > 0) {
+      for (let c = 1; c <= length; c++) at(c * typeMs, () => setTypedAt({ index, chars: c }));
+    } else {
+      at(0, () => setTypedAt({ index, chars: length }));
+    }
+    if (moves > 0) at(typed, () => setPhaseAt({ index, phase: "moving" }));
+    if (moves > 1) at(typed + DEMO.moveMs, () => setPhaseAt({ index, phase: "dragging" }));
+    const landed = typed + moves * DEMO.moveMs;
+    at(landed, () => setPhaseAt({ index, phase: "done" }));
+    at(landed + hold, () => setIndex((i) => (i + 1) % total));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [index, length, action, hold, total]);
+
+  const previous = steps[(index - 1 + total) % total]!.step;
+  // The view changes when the finger does something: on a tap as it lands, on
+  // a drag as the slide starts. Pointing and resting show the step's own view.
+  const changes = action === "tap" ? phase === "done" : action === "drag" ? phase === "dragging" || phase === "done" : true;
+  const shown = changes ? step.view : previous.view;
+
+  // Until the caption has landed, the finger stays where the last step left it.
+  const aim =
+    phase === "typing"
+      ? previous.target
+      : action === "drag" && phase === "moving"
+        ? (step.from ?? step.target)
+        : step.target;
+  // Hidden while a step with nothing to touch types in, and while the last
+  // step rested; a loop starting over does not leave it on the old button.
+  const away =
+    step.target === null ||
+    (phase === "typing" && (previous.target === null || previous.action === "none"));
 
   const place = useCallback(() => {
     const frame = frameRef.current;
-    const target = step.target === "bank" ? bankRef.current : step.target === null ? null : laneRefs.current[step.target];
     if (!frame) return;
     const f = frame.getBoundingClientRect();
-    // Resting: stay where the last tap left it, or wait under the row.
+    const [key, along] = (aim ?? "").split("@");
+    const target = key ? targets.current.get(key) : undefined;
     if (!target) {
+      // Resting: stay where the last tap left it, or wait under the board.
       setFinger((prev) => prev ?? { x: f.width * 0.5, y: f.height * 0.9 });
       return;
     }
     const t = target.getBoundingClientRect();
-    setFinger({ x: t.left - f.left + t.width / 2, y: t.top - f.top + t.height * 0.6 });
-  }, [step.target]);
+    const x = along === undefined ? t.left + t.width / 2 : t.left + t.width * Number(along);
+    setFinger({ x: x - f.left, y: t.top - f.top + t.height * 0.6 });
+  }, [aim]);
 
   useLayoutEffect(() => {
     place();
@@ -69,74 +180,252 @@ export function PhaseDemo({ demo }: { demo: Demo }) {
     return () => window.removeEventListener("resize", place);
   }, [place]);
 
-  const tone = shown.wrong !== null ? styles.bad : shown.unbanked === 0 && shown.got.length > 0 ? styles.kept : styles.good;
+  const tapped = action === "tap" && phase === "done";
+  const typing = chars < length;
 
   return (
-    <div className={styles.demo} data-testid="phase-demo" aria-hidden="true">
+    <div
+      className={`${styles.demo} ${compact ? styles.compact : ""}`}
+      style={{ "--move": `${DEMO.moveMs}ms` } as CSSProperties}
+      data-testid="phase-demo"
+      aria-hidden="true"
+    >
+      <p className={styles.caption}>
+        {caption.slice(0, chars)}
+        {typing ? <span className={styles.cursor} /> : null}
+        {/* The rest of the line, invisible, holds the caption's height so the
+            board under it does not jump as the words arrive. */}
+        <span className={styles.ghost}>{caption.slice(chars)}</span>
+      </p>
       <div className={styles.frame} ref={frameRef}>
         <span className={`${styles.label} arcade`}>
           EXAMPLE <span className={styles.labelScene}>· {current.label}</span>
         </span>
-        <p className={styles.prompt}>{demo.prompt}</p>
-        <div className={styles.lanes}>
-          {demo.options.map((option, lane) => (
-            <span
-              key={option}
-              ref={(el) => {
-                laneRefs.current[lane] = el;
-              }}
-              className={`${styles.lane} ${shown.got.includes(lane) ? styles.laneGot : ""} ${
-                shown.wrong === lane ? styles.laneWrong : ""
-              }`}
-            >
-              <span className={`${styles.laneKey} arcade`}>{lane + 1}</span>
-              <span className={styles.laneText}>{option}</span>
-            </span>
-          ))}
-        </div>
-        <div className={styles.foot}>
-          <span key={shown.status} className={`${styles.status} ${tone} arcade`}>
-            {shown.status}
-          </span>
-          <span
-            ref={bankRef}
-            className={`${styles.bank} ${shown.unbanked > 0 ? styles.bankLive : ""} ${
-              step.target === "bank" && !step.tap ? styles.bankCalled : ""
-            }`}
-          >
-            <span className={styles.bankCap}>
-              <span className={`${styles.bankLabel} arcade`}>BANK</span>
-              {shown.unbanked > 0 ? (
-                <>
-                  <span className={`${styles.bankValue} arcade`}>+{shown.unbanked}</span>
-                  <span className={`${styles.bankValue} arcade`}>PTS</span>
-                </>
-              ) : null}
-            </span>
-          </span>
-        </div>
+        {children(shown, reg, step)}
         {finger ? (
           <span
-            className={`${styles.finger} ${step.target === null ? styles.fingerAway : ""}`}
+            className={`${styles.finger} ${away ? styles.fingerAway : ""} ${
+              phase === "dragging" ? styles.fingerDrag : ""
+            }`}
             style={{ transform: `translate(${finger.x}px, ${finger.y}px)` }}
           >
             <span key={`${index}-${tapped}`} className={`${styles.fingerBody} ${tapped ? styles.fingerTap : ""}`}>
               {tapped ? <span className={styles.ripple} /> : null}
               <svg viewBox="0 0 24 24" className={styles.hand}>
-                <path d="M18.84 15.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z" />
+                <path d={HAND} />
               </svg>
             </span>
           </span>
         ) : null}
       </div>
-      <p key={index} className={styles.caption}>
-        {step.caption}
-      </p>
       <span className={styles.dots}>
         {steps.map((_, i) => (
           <span key={i} className={`${styles.dot} ${i === index ? styles.dotOn : ""}`} />
         ))}
       </span>
     </div>
+  );
+}
+
+type Of<K extends Demo["kind"]> = Extract<Demo, { kind: K }>;
+
+function Status({ text, tone }: { text: string; tone: "good" | "bad" | "kept" | "plain" }) {
+  return (
+    <span key={text} className={`${styles.status} ${styles[tone]} arcade`}>
+      {text}
+    </span>
+  );
+}
+
+function ClusterBoard({
+  demo,
+  view,
+  reg,
+  step,
+}: {
+  demo: Of<"cluster">;
+  view: ClusterView;
+  reg: Register;
+  step: DemoStep<ClusterView>;
+}) {
+  const tone = view.wrong !== null ? "bad" : view.unbanked === 0 && view.got.length > 0 ? "kept" : "good";
+  return (
+    <>
+      <p className={styles.prompt}>{demo.prompt}</p>
+      <div className={styles.lanes}>
+        {demo.options.map((option, lane) => (
+          <span
+            key={option}
+            ref={reg(`lane:${lane}`)}
+            className={`${styles.lane} ${view.got.includes(lane) ? styles.laneGot : ""} ${
+              view.wrong === lane ? styles.laneWrong : ""
+            }`}
+          >
+            <span className={`${styles.laneKey} arcade`}>{lane + 1}</span>
+            <span className={styles.laneText}>{option}</span>
+          </span>
+        ))}
+      </div>
+      <div className={styles.foot}>
+        <Status text={view.status} tone={tone} />
+        <span
+          ref={reg("bank")}
+          className={`${styles.bank} ${view.unbanked > 0 ? styles.bankLive : ""} ${
+            step.target === "bank" && step.action === "point" ? styles.bankCalled : ""
+          }`}
+        >
+          <span className={styles.bankCap}>
+            <span className={`${styles.bankLabel} arcade`}>BANK</span>
+            {view.unbanked > 0 ? (
+              <>
+                <span className={`${styles.bankValue} arcade`}>+{view.unbanked}</span>
+                <span className={`${styles.bankValue} arcade`}>PTS</span>
+              </>
+            ) : null}
+          </span>
+        </span>
+      </div>
+    </>
+  );
+}
+
+function VectorBoard({ demo, view, reg }: { demo: Of<"vector">; view: VectorView; reg: Register }) {
+  return (
+    <>
+      <p className={styles.prompt}>{demo.prompt}</p>
+      <div className={styles.slider}>
+        <span className={`${styles.sliderEnd} arcade`}>{demo.min}</span>
+        <span className={styles.track} ref={reg("track")}>
+          <span className={styles.thumb} style={{ left: `${view.guess * 100}%` }} />
+          {view.fired ? (
+            <span className={styles.answerMark} style={{ left: `${demo.answer * 100}%` }}>
+              <span className={`${styles.answerLabel} arcade`}>ANSWER</span>
+            </span>
+          ) : null}
+        </span>
+        <span className={`${styles.sliderEnd} arcade`}>{demo.max}</span>
+      </div>
+      <div className={styles.foot}>
+        <Status text={view.status} tone={view.fired ? "good" : "plain"} />
+        <span ref={reg("fire")} className={`${styles.tool} ${styles.toolFire} arcade`}>
+          FIRE
+        </span>
+      </div>
+    </>
+  );
+}
+
+function McqBoard({ demo, view, reg }: { demo: Of<"mcq">; view: McqView; reg: Register }) {
+  const right = view.picked === demo.answer;
+  return (
+    <>
+      <p className={styles.prompt}>{demo.prompt}</p>
+      <div className={`${styles.lanes} ${styles.lanesFour}`}>
+        {demo.options.map((option, lane) => (
+          <span
+            key={option}
+            ref={reg(`lane:${lane}`)}
+            className={`${styles.lane} ${view.picked === lane ? (right ? styles.laneGot : styles.laneWrong) : ""}`}
+          >
+            <span className={`${styles.laneKey} arcade`}>{lane + 1}</span>
+            <span className={styles.laneText}>{option}</span>
+          </span>
+        ))}
+      </div>
+      {/* The verdict gets its own line: beside two tools it would wrap. */}
+      <div className={`${styles.foot} ${styles.footTools}`}>
+        <span className={styles.tools}>
+          <span className={`${styles.tool} ${styles.toolHint} arcade`}>HINT</span>
+          <span
+            ref={reg("boost")}
+            className={`${styles.tool} ${styles.toolBoost} ${view.boost ? styles.toolBoostOn : ""} arcade`}
+          >
+            BOOST
+          </span>
+        </span>
+      </div>
+      <span className={styles.statusLine}>
+        <Status text={view.status} tone={view.picked === null ? "plain" : right ? "good" : "bad"} />
+      </span>
+    </>
+  );
+}
+
+/** The zoom dial's picture scale, Out to In. */
+const MAP_SCALE: Record<number, number> = { [-1]: 1, 0: 1.35, 1: 1.8 };
+
+/**
+ * NAME THE PLACE, drawn with the station feed's own classes for the zoom dial,
+ * the hint button and the answer row, so what the example taps is exactly what
+ * the player will tap. Only the photograph is drawn here: the demo fetches
+ * nothing.
+ */
+function EarthBoard({ demo, view, reg }: { demo: Of<"earth">; view: EarthView; reg: Register }) {
+  const left = demo.hintsTotal - view.hints;
+  return (
+    <>
+      <div className={styles.photo}>
+        <svg
+          viewBox="0 0 160 90"
+          preserveAspectRatio="xMidYMid slice"
+          className={styles.map}
+          style={{ transform: `scale(${MAP_SCALE[view.zoom] ?? 1})` }}
+        >
+          {/* A lagoon city from above: water, the islands, one canal. */}
+          <rect width="160" height="90" fill="#123049" />
+          <path
+            d="M34 30 C 48 16, 92 12, 118 24 C 134 32, 132 58, 116 66 C 94 78, 52 76, 38 64 C 26 54, 26 38, 34 30 Z"
+            fill="#8a7b62"
+          />
+          <path
+            d="M44 38 C 60 30, 70 52, 86 44 S 108 34, 118 46"
+            fill="none"
+            stroke="#123049"
+            strokeWidth="4"
+          />
+          <path
+            d="M50 58 L 62 50 M 70 62 L 78 54 M 92 58 L 100 50 M 60 34 L 66 26 M 96 32 L 104 26"
+            stroke="#123049"
+            strokeWidth="1.4"
+          />
+          <path d="M8 76 C 30 70, 50 86, 72 84" fill="none" stroke="#1d4a6b" strokeWidth="6" />
+        </svg>
+        <span className={`${styles.photoTag} arcade`}>SATELLITE VIEW</span>
+      </div>
+      <div className={feed.optics}>
+        <span className={`${feed.opticsLabel} arcade`}>Zoom</span>
+        <div className={feed.opticsDial}>
+          {STATION.zoomSteps.map((value) => (
+            <span
+              key={value}
+              ref={reg(`zoom:${value}`)}
+              className={`${feed.opticsStep} ${view.zoom === value ? feed.opticsOn : ""} arcade`}
+            >
+              {value === -1 ? "Out" : value === 0 ? "Normal" : "In"}
+            </span>
+          ))}
+        </div>
+      </div>
+      {view.hints > 0 ? (
+        <p className={styles.hintLine}>{demo.hints.slice(0, view.hints).join(" ")}</p>
+      ) : null}
+      <span ref={reg("hint")} className={`${feed.intelButton} ${styles.still} arcade`}>
+        <span className={feed.intelMain}>Get a hint</span>
+        <span className={feed.intelSub}>
+          {left} {left === 1 ? "hint" : "hints"} left &middot; {demo.hintCost} points each
+        </span>
+      </span>
+      <div className={feed.typedRow}>
+        <span ref={reg("input")} className={`${feed.input} ${styles.inputBox} ${view.typed ? styles.inputFilled : ""}`}>
+          {view.typed || "Type the city here"}
+        </span>
+        <span ref={reg("send")} className={`${feed.submit} ${styles.sendBox} arcade`}>
+          Send
+        </span>
+      </div>
+      <span className={styles.statusLine}>
+        <Status text={view.status} tone="good" />
+      </span>
+    </>
   );
 }

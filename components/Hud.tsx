@@ -23,6 +23,7 @@ import { FULL_CHARGE, isMaxThrust } from "@/lib/game/Flight";
 import { formatOnRuler, fromSlider } from "@/lib/game/nova";
 import { multiplierFor, vectorVerdict } from "@/lib/game/Score";
 import { phaseGuide } from "@/lib/game/phases";
+import { PhaseDemo } from "./PhaseDemo";
 import { ScoringDisclosure } from "./ScoringTable";
 import { formatPoints, formatScore, formatVelocity } from "@/lib/game/format";
 import styles from "./Hud.module.css";
@@ -888,16 +889,21 @@ function WaypointCard({
       ) : (
         <>
           <span className={`${styles.wpEntering} arcade`}>
-            ENTERING PHASE {waypoint.nextPhase}
+            {waypoint.final ? "ENTERING FINAL PHASE" : `ENTERING PHASE ${waypoint.nextPhase}`}
           </span>
           <span className={`${styles.wpNext} arcade`}>{waypoint.next.toUpperCase()}</span>
           <span className={`${styles.wpGame} arcade`}>{guide.title}</span>
-          <ul className={styles.wpRules} data-testid="waypoint-rules">
+          {/* The phase played as an example, the way the launch card plays
+              Phase 1; the rules stay on the card for screen readers. */}
+          {guide.demo ? <PhaseDemo demo={guide.demo} compact /> : null}
+          <ul
+            className={guide.demo ? styles.srOnly : styles.wpRules}
+            data-testid="waypoint-rules"
+          >
             {guide.rules.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
-          {waypoint.nextType === "mcq" ? <BoostDemo /> : null}
           {waypoint.nextType === "earth" ? (
             <span className={`${styles.wpStreak} arcade`} data-testid="waypoint-standby">
               SATELLITE VIEW · LOADING
@@ -908,45 +914,6 @@ function WaypointCard({
       )}
       <TapPrompt shown={awaitingTap} />
     </section>
-  );
-}
-
-/**
- * PICK ONE, shown before it is played: four sample squares, the tools row,
- * and the BOOST callout pointing at the button with the words the run's own
- * nudge uses. Testers could not tell whether BOOST went before the answer or
- * after it, and the in-run nudge only helps once the clock is already
- * running; this says it on the card, where there is time to read.
- *
- * It is a picture, not a control: built from the band's own classes so it
- * looks like what is coming, but spans rather than buttons and no pointer
- * events, so a tap anywhere on it is the card's tap and moves the run on.
- */
-function BoostDemo() {
-  return (
-    <div className={styles.boostDemo} data-testid="boost-demo" aria-hidden="true">
-      <div className={`${styles.lanes} ${styles.boostDemoLanes}`}>
-        {[1, 2, 3, 4].map((key) => (
-          <span key={key} className={`${styles.lane} ${styles.boostDemoLane}`}>
-            <span className={`${styles.laneKey} arcade`}>{key}</span>
-            <span className={styles.laneText}>Answer</span>
-          </span>
-        ))}
-      </div>
-      <div className={styles.tools}>
-        <span className={`${styles.tool} ${styles.nova} ${styles.boostDemoTool} arcade`}>HINT</span>
-        <span className={`${styles.tool} ${styles.boost} ${styles.boostDemoTool} arcade`}>BOOST</span>
-      </div>
-      <div className={styles.boostNudge}>
-        <span className={styles.boostNudgeArrow} />
-        <span className={styles.bankNudgeCall}>
-          <span className={`${styles.bankNudgeLead} arcade`}>TAP HERE FIRST</span>
-          <span className={`${styles.bankNudgeSub} arcade`}>IF YOU ARE SURE</span>
-          <span className={`${styles.boostNudgeWarn} arcade`}>WRONG LOSES POINTS</span>
-        </span>
-      </div>
-      <p className={styles.boostDemoNote}>Then tap your answer.</p>
-    </div>
   );
 }
 

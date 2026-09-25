@@ -781,56 +781,6 @@
   }
 }
 
-/*
- * The OPEN SKY card's sample band: the bank nudge's twin, pointing up at
- * BOOST from under the tools row. Right-aligned under the button, and the
- * arrow lands on the middle of BOOST, which is the right half of a row
- * split by a 6px gap. It is drawn on the card only, never in flight.
- */
-.boostNudge {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  margin-top: -4px;
-  pointer-events: none;
-  text-align: right;
-  animation: cornerIn 260ms ease-out;
-}
-
-.boostNudgeArrow {
-  width: 0;
-  height: 0;
-  margin-right: calc(25% - 1.5px - 7px);
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-bottom: 9px solid #ff8a1f;
-  filter: drop-shadow(0 0 6px rgba(255, 138, 31, 0.6));
-  animation: nudgeNodUp 1100ms ease-in-out infinite;
-}
-
-/* The stake, in the damage colour: BOOST doubles a correct answer and costs
-   points on a wrong one, and testers read "if you are sure" as all upside. */
-.boostNudgeWarn {
-  font-size: 9px;
-  line-height: 1.2;
-  white-space: nowrap;
-  color: #ff6b5c;
-  letter-spacing: var(--track-label);
-}
-
-@keyframes nudgeNodUp {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(-3px);
-    opacity: 0.6;
-  }
-}
-
 .boostOn {
   animation: pulseGlow 900ms ease-in-out infinite;
 }
@@ -1395,6 +1345,19 @@
   box-shadow: 0 0 36px rgba(178, 140, 255, 0.3);
 }
 
+/* The rules, kept for screen readers when a phase demo is showing them. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .wpStage {
   font-size: 10px;
   color: var(--arcade-cyan);
@@ -1474,41 +1437,6 @@
   font-size: 14px;
   line-height: 1.4;
   color: #d5dbe6;
-}
-
-/*
- * PICK ONE's sample band on the phase card (`BoostDemo`): the lanes and the
- * tools row in miniature, with the BOOST callout under them. A picture, so
- * it takes no pointer events and the card's tap-to-continue still lands.
- */
-.boostDemo {
-  width: 100%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid var(--rule-dark);
-  pointer-events: none;
-  text-align: left;
-}
-
-.boostDemoLane {
-  min-height: 34px;
-  padding: 4px 3px;
-}
-
-.boostDemoTool {
-  min-height: 30px;
-}
-
-.boostDemoNote {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #d5dbe6;
-  text-align: center;
 }
 
 /*
@@ -1903,8 +1831,6 @@
   .bankNudge,
   .bankNudgeCall,
   .bankNudgeArrow,
-  .boostNudge,
-  .boostNudgeArrow,
   .gaugeFull,
   .burnFull:not(:disabled),
   .burnHot:not(:disabled),
@@ -2037,16 +1963,6 @@
   }
 
   .wpRules {
-    font-size: 13px;
-  }
-
-  /* The sample band on the PICK ONE card is a picture, not a tap target,
-     so on a short phone it gives its height back to the card. */
-  .boostDemoLane {
-    min-height: 30px;
-  }
-
-  .boostDemoNote {
     font-size: 13px;
   }
 
