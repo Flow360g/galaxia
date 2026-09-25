@@ -336,7 +336,13 @@ codebase: the engine calls cues, nothing else makes a noise.
   theory wants them, because a phone speaker reproduces almost nothing below
   about 400Hz: a bass at 55Hz is a bass nobody hears. Check a mix change by
   muting one bus and measuring the other, not by ear on a laptop.
-- **The finale scales with the run.** `finish(tier)` is a riser timed to
+- **The ending turns the music.** `ending(sites)` switches the loop to the
+  `victory` mood (C major, I IV V I, a march) under a bugle call landing on
+  the finale's chord, or to `invasion` (E and F grinding a semitone apart,
+  slow and heavy) under the scout's arrival, a clashing brass stab and an
+  air-raid siren. The loop keeps going under the tally.
+- **The finale scales with the run.** `finish(tier)`, fired as the tally
+  opens after the ending (`Engine.finale`), is a riser timed to
   `FINALE.introMs`, an impact as the tally slams RUN COMPLETE in, and a chord
   that grows with the tier (`finaleTier` in `Score.ts`). The tally then plays
   its own read-out through `Engine.tallyCue`: a note per line climbing a
@@ -368,7 +374,9 @@ lib/game/Engine.ts    three.js shell; subscribes to Run via RunHooks, owns the c
 lib/game/ShipBay.ts   the hangar's own tiny shell: one hull on a lit pad, and the drag
 lib/game/bayTextures.ts  the bay's concrete, plating and markings, drawn into canvases
 lib/game/Station.ts   the station on the flight: comes up dead ahead, arms the door
-lib/game/Orbit.ts     the station screen's own tiny shell: the station over Earth
+lib/game/Orbit.ts     the station screen's own tiny shell: the station over Earth,
+                      and the run's ending (`reinforce`: the pull back, Earth turned to land)
+lib/game/Fleet.ts     the ending's fleet, ours or theirs: instanced hulls, trails, lights, beams
 lib/game/ships.ts     the hangar's rules: what is unlocked, what is selected, what is bought
 lib/game/Tuning.ts    every constant that decides how the game feels (FLIGHT, ENCOUNTER,
                       CLUSTER, LANE, SHIELDS, NOVA, FX, CAMERA, SHIP, SHIPS, HANGAR, ...)
@@ -418,7 +426,9 @@ Rules that fall out of this:
   hands the display to `components/Station.tsx`, which has its own tiny
   shell (`Orbit.ts`) like the hangar does. The flight engine parks under it
   and never draws again that run; it keeps the sound bed going and nothing
-  else. Docking records a neutral `dock` outcome and hands over to the feed:
+  else. The run's last state is `finished`, not `docked`, so `GameCanvas`
+  remembers the run was aboard and keeps the station up for the ending, the
+  tally and the share card. Docking hands over to the feed:
   two sites, drawn from `lib/content/sites.ts` and played through
   `Run.feedArrived`, `buyIntel`, `setOptics`, `submitSite` and `nextSite`.
   Arrival on the approach is a timer (`STATION.approachSeconds`), never an
@@ -483,10 +493,16 @@ path from a shared link to flying.
   of rules before the first question was what testers called too much text.
   Each phase explains itself on its own card just before it is played, in
   the two or three lines you would text your mum (`rules` in
-  `lib/game/phases.ts`). Every run just flown gets a debrief from the same
-  voice after the tally, before the share card (`debriefFor`): the win if
-  every landing site was named, a call-back for tomorrow if not. `?replay=1`
-  skips the Mayday along with today's stored run.
+  `lib/game/phases.ts`). Every run just flown ends on the **ending**, before
+  the tally (`endingFor`): the station screen pulls back to Earth and the
+  fleet the landing sites bought flies in, with Sergeant Soap as a banner
+  over it. Both sites named sends the armada ("You saved Earth today"), one
+  sends a squadron, none lets sixteen dark alien scouts in, a few of them
+  firing red beams at the surface, and Soap calls that one in as a Mayday.
+  The music turns with it (`victory` or `invasion`, see Sound). A tap
+  anywhere skips it, and so does SKIP on the banner while Soap is still
+  talking: it is a moment, not a wait. The tally follows, then the share
+  card. `?replay=1` skips the Mayday along with today's stored run.
 - **Every phase card carries the rest, shut.** The launch card and the
   waypoint card both read `phaseGuide(type, round)` and render
   `ScoringDisclosure`: a MORE DETAIL button, collapsed by default, that opens

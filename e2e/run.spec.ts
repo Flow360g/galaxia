@@ -25,7 +25,7 @@ async function advance(page: Page, via: "banner" | "anywhere" = "anywhere") {
   else await page.getByTestId("continue").click();
 }
 
-test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, debrief, share", async ({
+test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, timeout, dock, ending, share", async ({
   page,
 }) => {
   await stubImagery(page);
@@ -464,6 +464,18 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     await page.getByTestId("next-site").click();
   }
 
+  // The ending comes first: the station pulls back, the fleet the landing
+  // sites bought flies in, and Earth Command calls it in as a banner over
+  // it. Both sites named here, so it is the win. The tally waits behind it.
+  const ending = page.getByTestId("transmission");
+  await expect(ending).toContainText(/saved earth/i, { timeout: 15_000 });
+  await expect(page.getByTestId("ending-skip")).toBeVisible();
+  await expect(page.getByTestId("tally")).toHaveCount(0);
+  await expect(ending).toHaveAttribute("data-landed", "true", { timeout: 15_000 });
+  await shot(page, "15b-ending");
+  await page.getByTestId("transmission-ack").click();
+  await expect(ending).toHaveCount(0);
+
   // The scorecard: one line per encounter, then the total out of the perfect
   // run. It is the beat before the share card, and it waits for a tap.
   const tally = page.getByTestId("tally");
@@ -504,13 +516,6 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const beforeDock = Number(scoreBefore.split("/")[0]!.replace(/[^0-9]/g, ""));
   expect(scored).toBeGreaterThan(beforeDock);
   await page.getByTestId("tally-continue").click();
-
-  // Both sites named: Earth Command calls back before the share card.
-  await expect(page.getByTestId("transmission")).toContainText(/saved earth/i, {
-    timeout: 15_000,
-  });
-  await shot(page, "15b-debrief");
-  await acknowledge(page);
 
   // Share card.
   const card = page.getByTestId("share-card");

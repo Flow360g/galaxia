@@ -22,6 +22,18 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The ending's skip: the whole screen, drawn nowhere, under Soap's banner. */
+.skip {
+  position: absolute;
+  inset: 0;
+  z-index: 28;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* MAXIMUM THRUST: the surface itself loses its grip for a beat. Kept small in
    amplitude and irregular in period so it reads as a hull fighting the burn
    rather than a screen wobble, and stopped outright for reduced motion. The

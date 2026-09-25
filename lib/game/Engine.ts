@@ -151,6 +151,8 @@ export class Engine {
   private resizeObserver: ResizeObserver | null = null;
   private disposed = false;
   private ended = false;
+  /** The run's summary once it has ended, for the finale the tally opens on. */
+  private finalSummary: RunSummary | null = null;
   /**
    * WHERE ON EARTH: the ship is aboard and the station screen owns the
    * display. The loop keeps ticking so the sound bed carries on under it,
@@ -934,11 +936,32 @@ export class Engine {
     }
   }
 
+  /**
+   * The ending plays over the station (see `Orbit.reinforce`): the music turns
+   * to what the landing sites bought, a victory or the invasion, and lands on
+   * a stinger. The shell calls it because the shell sequences the screens;
+   * the engine owns the sound, so nothing else makes a noise.
+   */
+  ending(sitesNamed: number): void {
+    this.audio.ending(sitesNamed);
+  }
+
+  /**
+   * The tally opens. The finale's riser winds up for exactly as long as RUN
+   * COMPLETE takes to slam in, so it starts here, not when the run ended: the
+   * ending plays in between.
+   */
+  finale(): void {
+    const summary = this.finalSummary;
+    if (!summary) return;
+    this.audio.finish(finaleTier(summary.score, summary.maxScore));
+  }
+
   private endRun(): void {
     if (this.ended) return;
     this.ended = true;
     const summary = this.run.summary();
-    this.audio.finish(finaleTier(summary.score, summary.maxScore));
+    this.finalSummary = summary;
     this.options.onRunEnd?.(summary);
     // Keep flying under the share card: the ship coasting on is the story's
     // last frame. State updates stop mattering, the loop just renders.

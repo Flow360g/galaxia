@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { newShuffleSeed, practiceUrl } from "@/lib/content/round";
 import { Engine } from "@/lib/game/Engine";
@@ -20,10 +20,8 @@ import {
   saveSimResult,
 } from "@/lib/game/storage";
 import { selectedShip, shipById } from "@/lib/game/ships";
-import {
-  MISSION_TRANSMISSION,
-  debriefFor,
-} from "@/lib/game/phases";
+import { MISSION_TRANSMISSION, endingFor } from "@/lib/game/phases";
+import { ENDING } from "@/lib/game/Tuning";
 import { Ready } from "./Ready";
 import { Transmission } from "./Transmission";
 import { Hud } from "./Hud";
@@ -122,10 +120,16 @@ export function GameCanvas({
   /** Today's Mayday has been heard (or skipped) this visit. */
   const [briefed, setBriefed] = useState(false);
   /**
-   * The debrief after the tally has been read. Every run just flown gets one,
-   * a win or a call-back, and the share card waits behind it.
+   * The ending has played, or been skipped. Every run just flown opens on it,
+   * before the tally: the station pulls back and the fleet the landing sites
+   * bought flies in, with Sergeant Soap as a banner over it. The tally waits
+   * behind it, and the share card behind that.
    */
-  const [debriefed, setDebriefed] = useState(false);
+  const [ended, setEnded] = useState(false);
+  /** Soap's banner is down: it drops in a beat into the pull, not on the cut. */
+  const [endingBanner, setEndingBanner] = useState(false);
+  /** This run has been aboard the station, so it ends there too. */
+  const [aboard, setAboard] = useState(false);
   /**
    * Today's stored run, if any. `undefined` on the server and until hydration
    * so the engine never starts before storage has been checked.
@@ -158,6 +162,7 @@ export function GameCanvas({
   const lastStateEmit = useRef(0);
   const lastBeat = useRef("");
   const handleState = useCallback((next: GameState) => {
+    if (next.phase === "docked") setAboard(true);
     const beat = stateBeat(next);
     const now = performance.now();
     if (beat === lastBeat.current && now - lastStateEmit.current < 80) return;
@@ -226,9 +231,6 @@ export function GameCanvas({
     saveMaydayDate(round.date);
     setBriefed(true);
   }, [round.date]);
-  const closeDebrief = useCallback(() => setDebriefed(true), []);
-  /** Every run just flown is signed off, saved Earth or not. See `debriefFor`. */
-  const debrief = summary !== null && tallied && !debriefed;
 
   const launch = useCallback(() => {
     setLaunched(true);
@@ -244,16 +246,54 @@ export function GameCanvas({
 
   /**
    * WHERE ON EARTH: aboard the station. Gated on the run's phase rather than
-   * on `playing`, because the station screen stays up as the backdrop for the
-   * tally and the share card: the run ends from inside it, and the last state
-   * the engine emits is the docked one.
+   * on `playing`, because the station screen stays up once the run is over:
+   * the ending plays in it, and it is the backdrop for the tally and the share
+   * card. The last state the engine emits is `finished`, not `docked`, so a
+   * finished run counts as aboard when it was seen docked on the way.
    */
-  const docked = state?.phase === "docked";
+  const docked = state?.phase === "docked" || (state?.phase === "finished" && aboard);
   const current = state ? round.questions[state.encounter] : undefined;
   const earthQuestion = current?.type === "earth" ? current : null;
   /** Whether a second site follows this one, for the continue button's wording. */
   const moreSites =
     state !== null && round.questions[state.encounter + 1]?.type === "earth";
+
+  /** How this run ends: sites named, the fleet, and Soap's words. See `endingFor`. */
+  const ending = useMemo(
+    () => (summary !== null ? endingFor(round, summary) : null),
+    [round, summary],
+  );
+  /**
+   * The ending plays aboard the station, where the scene it pulls back from
+   * is. A run that somehow finished anywhere else has nothing to pull back
+   * from, and goes straight to the tally.
+   */
+  const playingEnding = ending !== null && !ended && docked;
+
+  /**
+   * Out of the ending and into the tally: the finale's riser starts here,
+   * timed to RUN COMPLETE, rather than when the run ended.
+   */
+  const endedRef = useRef(false);
+  const finishEnding = useCallback(() => {
+    // Guarded by a ref, not inside a state updater: React may run an updater
+    // twice, and the finale is a sound.
+    if (endedRef.current) return;
+    endedRef.current = true;
+    setEnded(true);
+    engineRef.current?.finale();
+  }, []);
+
+  useEffect(() => {
+    if (ending === null || ended) return;
+    if (!docked) {
+      finishEnding();
+      return;
+    }
+    engineRef.current?.ending(ending.sites);
+    const id = window.setTimeout(() => setEndingBanner(true), ENDING.bannerSeconds * 1000);
+    return () => window.clearTimeout(id);
+  }, [ending, ended, docked, finishEnding]);
   const toggleSound = useCallback(() => {
     setMuted((current) => {
       const next = !current;
@@ -331,7 +371,10 @@ export function GameCanvas({
     }
     setSummary(null);
     setTallied(false);
-    setDebriefed(false);
+    setEnded(false);
+    endedRef.current = false;
+    setEndingBanner(false);
+    setAboard(false);
     setState(null);
     setLaunched(false);
     setAttempt((n) => n + 1);
@@ -380,6 +423,7 @@ export function GameCanvas({
           onOptics={setOptics}
           onSubmit={submitSite}
           onNext={nextSite}
+          ending={ending?.sites ?? null}
         />
       ) : null}
 
@@ -394,7 +438,30 @@ export function GameCanvas({
 
       {readying ? <Ready round={round} onReady={launch} /> : null}
 
-      {summary && !tallied ? (
+      {playingEnding ? (
+        <>
+          {/* The whole screen skips the ending: it is a moment, not a wait,
+              and the run is over, so nothing below needs keeping clear. */}
+          <button
+            type="button"
+            className={styles.skip}
+            onClick={finishEnding}
+            aria-label="Skip to your score"
+            data-testid="ending-skip"
+          />
+          {endingBanner ? (
+            <Transmission
+              script={ending.script}
+              kind={ending.kind}
+              banner
+              skippable
+              onDone={finishEnding}
+            />
+          ) : null}
+        </>
+      ) : null}
+
+      {summary && ended && !tallied ? (
         <ScoreTally
           summary={summary}
           onDone={() => setTallied(true)}
@@ -402,15 +469,7 @@ export function GameCanvas({
         />
       ) : null}
 
-      {debrief ? (
-        <Transmission
-          script={debriefFor(round, summary)}
-          kind="debrief"
-          onDone={closeDebrief}
-        />
-      ) : null}
-
-      {shown && !debrief && (tallied || summary === null) ? (
+      {shown && (tallied || summary === null) ? (
         <ShareCard round={round} summary={shown} onReplay={replayRun} />
       ) : null}
       {sim ? (

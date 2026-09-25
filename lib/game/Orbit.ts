@@ -1,8 +1,16 @@
 import * as THREE from "three";
 import { Backdrop } from "./Backdrop";
+import { Fleet, fleetFor } from "./Fleet";
 import { loadLambertModel } from "./gltf";
 import { dprForTier, detectTier, prefersReducedMotion } from "./quality";
-import { COLOR, EARTH, ORBIT, PERF, STATION } from "./Tuning";
+import { COLOR, EARTH, ENDING, ORBIT, PERF, STATION } from "./Tuning";
+
+/** Cubic in and out: the pull starts gently and settles. */
+function easeInOut(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+const facing = new THREE.Vector3();
 
 /**
  * The view from the station: WHERE ON EARTH, aboard.
@@ -17,6 +25,10 @@ import { COLOR, EARTH, ORBIT, PERF, STATION } from "./Tuning";
  * Deliberately not a mode on `Engine`, for the reason the hangar is not: the
  * flight engine flies things, and this is a thing to look at. The engine
  * parks under it and never draws again.
+ *
+ * It also plays the run's ending (`reinforce`): the camera pulls back until
+ * Earth fills the frame under the banner, Earth turns its most-land face to
+ * the camera, and the fleet the run earned flies in (`Fleet.ts`).
  */
 export class Orbit {
   private readonly canvas: HTMLCanvasElement;
@@ -46,6 +58,15 @@ export class Orbit {
   private readonly reducedMotion = prefersReducedMotion();
   private readonly cameraBase = new THREE.Vector3();
   private readonly lookTarget = new THREE.Vector3().fromArray(ORBIT.lookAt);
+
+  /** The ending, once `reinforce` has been called; null until then. */
+  private fleet: Fleet | null = null;
+  private endingAt = -1;
+  private readonly endCam = new THREE.Vector3();
+  private readonly endLook = new THREE.Vector3().fromArray(ENDING.endLook);
+  private readonly look = new THREE.Vector3();
+  private yawFrom = 0;
+  private yawTo = 0;
 
   private frameHandle: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
@@ -201,6 +222,39 @@ export class Orbit {
     }
   }
 
+  /**
+   * The ending: pull back, turn Earth to land, send the fleet. Ours for a run
+   * that named sites, theirs for one that named none. Safe to call once;
+   * later calls are ignored.
+   */
+  reinforce(sitesNamed: number): void {
+    if (this.endingAt >= 0 || this.disposed) return;
+    this.endingAt = this.elapsed;
+
+    // The short way round to the land face, from wherever the spin has left
+    // it, so the turn during the pull is never more than half a revolution.
+    this.yawFrom = this.earthBody.rotation.y;
+    const turn = ENDING.earthYaw - this.yawFrom;
+    const wrapped = Math.atan2(Math.sin(turn), Math.cos(turn));
+    this.yawTo = this.yawFrom + wrapped;
+
+    const { style, size } = fleetFor(sitesNamed);
+    if (size === 0) return;
+    this.fleet = new Fleet(
+      style,
+      this.reducedMotion ? Math.max(1, Math.round(size / 3)) : size,
+      {
+        centre: this.earth.position,
+        radius: EARTH.diameter / 2,
+        facing: () => facing.subVectors(this.endCam, this.earth.position).normalize(),
+      },
+      () => this.endCam,
+      () => this.camera.position,
+    );
+    this.scene.add(this.fleet.group);
+    void this.fleet.load();
+  }
+
   start(): void {
     if (this.frameHandle !== null || this.disposed) return;
     this.clock.getDelta();
@@ -224,14 +278,30 @@ export class Orbit {
     this.earthBody.rotation.y += EARTH.spin * rate * dt;
     this.roll.rotation.y += STATION.dockedSpin * rate * dt;
 
-    if (!this.reducedMotion) {
+    // The ending's pull: 0 on the station screen's own frame, 1 pulled back.
+    // Reduced motion cuts straight to the end of it.
+    let pull = 0;
+    if (this.endingAt >= 0) {
+      const since = this.elapsed - this.endingAt;
+      const raw = this.reducedMotion
+        ? 1
+        : Math.min(Math.max((since - ENDING.holdSeconds) / ENDING.pullSeconds, 0), 1);
+      pull = easeInOut(raw);
+      // Turned by the pull and spun on top, so the spin never stops.
+      this.yawFrom += EARTH.spin * rate * dt;
+      this.yawTo += EARTH.spin * rate * dt;
+      this.earthBody.rotation.y = this.yawFrom + (this.yawTo - this.yawFrom) * pull;
+      this.fleet?.update(dt);
+    }
+
+    if (!this.reducedMotion || pull > 0) {
       const t = this.elapsed * ORBIT.driftRate;
-      this.camera.position.set(
-        this.cameraBase.x + Math.sin(t) * ORBIT.driftAmplitude,
-        this.cameraBase.y + Math.cos(t * 0.7) * ORBIT.driftAmplitude * 0.6,
-        this.cameraBase.z,
-      );
-      this.camera.lookAt(this.lookTarget);
+      const drift = this.reducedMotion ? 0 : 1;
+      this.camera.position.lerpVectors(this.cameraBase, this.endCam, pull);
+      this.camera.position.x += Math.sin(t) * ORBIT.driftAmplitude * drift;
+      this.camera.position.y += Math.cos(t * 0.7) * ORBIT.driftAmplitude * 0.6 * drift;
+      this.look.lerpVectors(this.lookTarget, this.endLook, pull);
+      this.camera.lookAt(this.look);
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -270,6 +340,14 @@ export class Orbit {
     this.camera.position.copy(this.cameraBase);
     this.camera.lookAt(this.lookTarget);
     this.camera.updateProjectionMatrix();
+
+    // Where the ending pulls back to: further out along the same line, and up.
+    this.endCam
+      .copy(this.cameraBase)
+      .sub(this.lookTarget)
+      .multiplyScalar(ENDING.pullScale)
+      .add(this.endLook);
+    this.endCam.y += ENDING.pullRise;
   }
 
   private onVisibilityChange = (): void => {
@@ -285,6 +363,8 @@ export class Orbit {
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
 
     this.backdrop.dispose();
+    this.fleet?.dispose();
+    this.fleet = null;
     this.disposables.forEach((item) => item.dispose());
     this.disposables.length = 0;
     this.scene.traverse((object) => {

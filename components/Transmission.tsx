@@ -17,6 +17,12 @@ interface Props {
    * mid-flight rather than on a loading screen.
    */
   banner?: boolean;
+  /**
+   * SKIP while the words are still arriving ends the whole thing rather than
+   * landing the rest of them. The ending uses it: it is a moment over a scene,
+   * and a player who wants their score should not have to tap twice for it.
+   */
+  skippable?: boolean;
   onDone: () => void;
 }
 
@@ -26,20 +32,21 @@ interface Props {
  * character at a time (see `useTyped`, shared with Sergeant Soap's hail on
  * the satellite feed).
  *
- * A small modal (or, for the Mayday, a banner over the flying ship) rather
- * than a page. It sets the tone and gets out of the way:
+ * A small modal, or a banner across the top so the scene under it stays in
+ * view, rather than a page. It sets the tone and gets out of the way:
  * a tap while the text is still arriving lands all of it, and a tap once it
- * has landed closes it. It is shown before the launch card on a first flight
- * and after the tally on a run that saved Earth, and never against a clock.
+ * has landed closes it. It is the day's Mayday over the flying ship before
+ * the launch card, and the ending over the fleet before the tally (see
+ * `endingFor`), and never against a clock.
  */
-export function Transmission({ script, kind, banner = false, onDone }: Props) {
+export function Transmission({ script, kind, banner = false, skippable = false, onDone }: Props) {
   const speaker = script.speaker;
   const { shown: lines, active, landed, skip } = useTyped(script.lines);
 
   const tap = useCallback(() => {
-    if (landed) onDone();
+    if (landed || skippable) onDone();
     else skip();
-  }, [landed, onDone, skip]);
+  }, [landed, skippable, onDone, skip]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
