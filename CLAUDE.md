@@ -349,6 +349,18 @@ codebase: the engine calls cues, nothing else makes a noise.
   scale, a chord per stage subtotal, ticks under the running total, and
   `tallyTotal(tier)` on the stamp. The sound and the tally screen read the
   same tier, so they cannot disagree about how the run went.
+- **The menus have their own bed.** The title, the ship bay and the profile
+  play the loop in the `menu` mood (the run's four bars, slower and darker,
+  no drone) through a second `AudioEngine` in the `menu` role, held by
+  `lib/game/menuMusic.ts` and driven by route from `components/MenuMusic.tsx`
+  in the root layout. It is closed on the way into `/play` so two contexts
+  are never open at once. The title's SOUND chip and the run's toggle share
+  `galaxia:muted`.
+- **iOS plays through the mute.** `init` asks for the `playback` audio
+  session, because the default (ambient) is silenced by the silent switch
+  and Control Center mute, and that was why an iPad played nothing. The
+  game's SOUND toggle is the mute. The unlock listens for touchend, pointerup
+  and click as well, since WebKit will not start a context from touchstart.
 - **Tapping a lane is silent.** The verdict riding in is the sound of a
   choice. A click on top of it was noise, and it is not coming back.
 - **Never load-bearing.** Browsers hold the context suspended until a
