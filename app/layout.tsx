@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
+import { MenuMusic } from "@/components/MenuMusic";
 import { SHARE } from "@/lib/game/Tuning";
 import "./globals.css";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
     <html lang="en" className={arcade.variable}>
       <body>
         {children}
+        <MenuMusic />
         <Analytics />
       </body>
     </html>

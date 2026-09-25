@@ -1021,6 +1021,13 @@ export const AUDIO = {
   fadeSeconds: 0.25,
 
   /**
+   * The title, the ship bay and the profile. Only the music loop, in the
+   * `menu` mood, with the master scaled by `level` so it sits well under the
+   * run. It fades in and out slowly: it is a room tone, not a cue.
+   */
+  menu: { level: 0.55, fadeSeconds: 1.6 },
+
+  /**
    * The room. A convolution tail is the single thing that separates a game
    * that sounds built from one that sounds like a browser playing beeps: dry
    * one-shots read as cheap however well they are synthesised. Every cue
@@ -1162,6 +1169,29 @@ export const AUDIO = {
       padSecond: 0,
       subGain: 0,
       arpEvery: 1,
+    },
+
+    /**
+     * The menus: the run's own four bars (A, F, C, G) so it is recognisably
+     * the same game, but slower, darker and half as busy. No hat, no sparkle,
+     * the arp on every other step through a closed filter, a wider pad and a
+     * sub, so it reads as the hangar at night rather than the launch.
+     */
+    menu: {
+      bpm: [70, 70],
+      roots: [55, 43.65, 65.41, 49],
+      /** Minor with the flat sixth in it, not the pentatonic: the sixth is the sigh. */
+      scale: [0, 2, 3, 7, 8, 12, 14],
+      bassGain: 0.13,
+      padGain: 0.085,
+      arpGain: [0.055, 0.055],
+      sparkleGain: 0,
+      hatGain: [0, 0],
+      arpFilterHz: [1100, 1100],
+      padDetune: 11,
+      padSecond: 0,
+      subGain: 0.05,
+      arpEvery: 2,
     },
 
     /**

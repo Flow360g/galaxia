@@ -41,7 +41,22 @@ const SILENT = 0.0001;
  * gains in `AUDIO.music`: the run is flown to `cruise`, the alien stage to
  * `dread`, and the ending to `victory` or `invasion`.
  */
-export type MusicMood = "cruise" | "dread" | "victory" | "invasion";
+export type MusicMood = "cruise" | "dread" | "victory" | "invasion" | "menu";
+
+/**
+ * Which soundtrack an engine is for. `flight` is the run: the engine drone,
+ * the air and every cue. `menu` is the title, the ship bay and the profile:
+ * the music loop on its own, in the `menu` mood, at `AUDIO.menu.level`.
+ */
+export type AudioRole = "flight" | "menu";
+
+/**
+ * Events that count as a user gesture for unlocking audio. WebKit only lets a
+ * context start inside touchend, click, pointerup or keydown on a touch
+ * screen; touchstart and pointerdown are listened to because other browsers
+ * accept them, but on an iPad they arrive without the permission attached.
+ */
+const GESTURES = ["pointerdown", "pointerup", "touchstart", "touchend", "click", "keydown"] as const;
 
 /** Options shared by every one-shot voice. */
 interface VoiceOptions {
@@ -118,9 +133,17 @@ export class AudioEngine {
   private muted: boolean;
   private disposed = false;
   private unlockBound = false;
+  private readonly role: AudioRole;
 
-  constructor(muted = false) {
+  constructor(muted = false, role: AudioRole = "flight") {
     this.muted = muted;
+    this.role = role;
+    if (role === "menu") this.mood = "menu";
+  }
+
+  /** Master level when sounding. The menu sits under the run. */
+  private get level(): number {
+    return this.role === "menu" ? AUDIO.master * AUDIO.menu.level : AUDIO.master;
   }
 
   // --------------------------------------------------------------- lifecycle
@@ -136,6 +159,8 @@ export class AudioEngine {
       window.AudioContext ??
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return;
+
+    playThroughMute();
 
     let ctx: AudioContext;
     try {
@@ -159,7 +184,8 @@ export class AudioEngine {
     limiter.connect(ctx.destination);
 
     this.master = ctx.createGain();
-    this.master.gain.value = this.muted ? SILENT : AUDIO.master;
+    // The menu starts silent and fades in with `setRunning`.
+    this.master.gain.value = this.muted || this.role === "menu" ? SILENT : AUDIO.master;
     this.master.connect(limiter);
 
     this.musicBus = this.bus(AUDIO.musicBus);
@@ -181,7 +207,16 @@ export class AudioEngine {
     this.driveCurve = buildDriveCurve();
 
     this.noise = buildNoise(ctx);
-    this.buildDrone();
+    if (this.role === "flight") this.buildDrone();
+
+    // iOS stops a running context on its own (a call, Siri, the tab going to
+    // the background) and marks it interrupted. It needs a gesture to come
+    // back, so the unlock listeners go back on whenever it leaves running.
+    ctx.onstatechange = () => {
+      if (this.ctx === ctx && !isRunning(ctx) && ctx.state !== "closed") this.bindUnlock();
+    };
+    document.addEventListener("visibilitychange", this.onVisible);
+
     this.bindUnlock();
     void this.resume();
   }
@@ -202,21 +237,41 @@ export class AudioEngine {
   private bindUnlock(): void {
     if (this.unlockBound || typeof window === "undefined") return;
     this.unlockBound = true;
-    window.addEventListener("pointerdown", this.onGesture, { passive: true });
-    window.addEventListener("keydown", this.onGesture, { passive: true });
-    window.addEventListener("touchstart", this.onGesture, { passive: true });
+    for (const type of GESTURES) {
+      window.addEventListener(type, this.onGesture, { capture: true, passive: true });
+    }
   }
 
   private unbindUnlock(): void {
     if (!this.unlockBound || typeof window === "undefined") return;
     this.unlockBound = false;
-    window.removeEventListener("pointerdown", this.onGesture);
-    window.removeEventListener("keydown", this.onGesture);
-    window.removeEventListener("touchstart", this.onGesture);
+    for (const type of GESTURES) {
+      window.removeEventListener(type, this.onGesture, { capture: true });
+    }
   }
 
+  /**
+   * Inside the gesture, before anything async: start a one-sample silent
+   * buffer. On iOS that is what actually opens the output; `resume()` on its
+   * own can report running and stay silent.
+   */
   private onGesture = (): void => {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    try {
+      const source = ctx.createBufferSource();
+      source.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      source.connect(ctx.destination);
+      source.start(0);
+      source.onended = () => source.disconnect();
+    } catch {
+      // Nothing to open. The resume below is the real attempt.
+    }
     void this.resume();
+  };
+
+  private onVisible = (): void => {
+    if (document.visibilityState === "visible") void this.resume();
   };
 
   private async resume(): Promise<void> {
@@ -268,11 +323,12 @@ export class AudioEngine {
   private applyLevel(): void {
     const ctx = this.ctx;
     if (!ctx || !this.master) return;
-    const target = this.muted || !this.running ? SILENT : AUDIO.master;
+    const target = this.muted || !this.running ? SILENT : this.level;
+    const fade = this.role === "menu" ? AUDIO.menu.fadeSeconds : AUDIO.fadeSeconds;
     const now = ctx.currentTime;
     this.master.gain.cancelScheduledValues(now);
     this.master.gain.setValueAtTime(Math.max(this.master.gain.value, SILENT), now);
-    this.master.gain.exponentialRampToValueAtTime(target, now + AUDIO.fadeSeconds);
+    this.master.gain.exponentialRampToValueAtTime(target, now + fade);
   }
 
   dispose(): void {
@@ -281,6 +337,9 @@ export class AudioEngine {
     this.running = false;
     this.stopMusic();
     this.unbindUnlock();
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.onVisible);
+    }
 
     for (const osc of this.drone) {
       try {
@@ -299,6 +358,7 @@ export class AudioEngine {
 
     const ctx = this.ctx;
     this.ctx = null;
+    if (ctx) ctx.onstatechange = null;
     this.master = null;
     this.musicBus = this.sfxBus = this.engineBus = null;
     this.reverbSend = null;
@@ -1870,6 +1930,25 @@ export class AudioEngine {
 
   private busFor(options: VoiceOptions): GainNode | null {
     return options.bus ?? this.sfxBus;
+  }
+}
+
+/**
+ * Ask iOS to treat the page's sound as playback rather than ambient. Ambient
+ * is the default, and it is silenced by the silent switch and by the mute in
+ * Control Center, which on an iPad is easy to leave on without knowing: the
+ * game played on a phone and not on an iPad beside it. With playback it
+ * behaves like a video, and the game's own SOUND toggle is the way to mute
+ * it. `navigator.audioSession` is WebKit only (Safari 16.4 and later);
+ * everywhere else this does nothing.
+ */
+function playThroughMute(): void {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (!session) return;
+  try {
+    session.type = "playback";
+  } catch {
+    // An older WebKit with the object and not the setter.
   }
 }
 
