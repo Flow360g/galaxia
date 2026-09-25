@@ -17,6 +17,7 @@ import {
   saveMaydayDate,
   saveMuted,
   saveRun,
+  saveSimResult,
 } from "@/lib/game/storage";
 import { selectedShip, shipById } from "@/lib/game/ships";
 import {
@@ -30,6 +31,7 @@ import { Station } from "./Station";
 import { ScoreTally } from "./ScoreTally";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
+import { SimSheet } from "./SimSheet";
 import styles from "./GameCanvas.module.css";
 
 interface Props {
@@ -56,6 +58,11 @@ interface Props {
    * player's own selection and unlocks are untouched.
    */
   practiceShip?: string;
+  /**
+   * The simulation mode off `/dev`: a day's real round flown ahead of its
+   * date, with a pause tab for notes. Recorded nowhere, like practice.
+   */
+  sim?: { authored: boolean };
 }
 
 /**
@@ -72,7 +79,10 @@ export function GameCanvas({
   replay = false,
   practice = false,
   practiceShip,
+  sim,
 }: Props) {
+  /** Practice and simulation both leave no trace: no run saved, nothing tracked. */
+  const unrecorded = practice || sim !== undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const router = useRouter();
@@ -107,7 +117,7 @@ export function GameCanvas({
    * not a thing, so this never updates.
    */
   const [ship] = useState(() =>
-    practice && practiceShip ? shipById(practiceShip) : selectedShip(),
+    unrecorded && practiceShip ? shipById(practiceShip) : selectedShip(),
   );
   /** Today's Mayday has been heard (or skipped) this visit. */
   const [briefed, setBriefed] = useState(false);
@@ -166,7 +176,9 @@ export function GameCanvas({
       // so writing it would overwrite the real run, and counting it would farm
       // the flight log that unlocks hulls. Saving stamps the day streak and
       // NEW BEST on the summary, so a practice run has neither.
-      if (!practice) {
+      if (sim) {
+        saveSimResult(flown.date, flown.score, flown.maxScore);
+      } else if (!practice) {
         flown = saveRun(flown);
         storedCache.set(flown.date, flown);
         trackEvent({
@@ -183,7 +195,7 @@ export function GameCanvas({
       setTallied(false);
       setSummary(flown);
     },
-    [ship, practice],
+    [ship, practice, sim],
   );
 
   /**
@@ -220,8 +232,8 @@ export function GameCanvas({
 
   const launch = useCallback(() => {
     setLaunched(true);
-    if (!practice) trackEvent({ name: "Run started", data: { round: round.roundNumber } });
-  }, [practice, round.roundNumber]);
+    if (!unrecorded) trackEvent({ name: "Run started", data: { round: round.roundNumber } });
+  }, [unrecorded, round.roundNumber]);
   // WHERE ON EARTH, played at the station. The engine is parked while docked,
   // so each of these pushes a fresh state frame of its own.
   const feedReady = useCallback(() => engineRef.current?.feedArrived(), []);
@@ -311,15 +323,19 @@ export function GameCanvas({
       router.push(practiceUrl(newShuffleSeed(), practiceShip));
       return;
     }
-    clearRun(round.date);
-    storedCache.set(round.date, null);
+    // A simulated day flies again on the same round, and has no stored run to
+    // clear: the date may be today's, and today's real run must survive it.
+    if (!sim) {
+      clearRun(round.date);
+      storedCache.set(round.date, null);
+    }
     setSummary(null);
     setTallied(false);
     setDebriefed(false);
     setState(null);
     setLaunched(false);
     setAttempt((n) => n + 1);
-  }, [round.date, practice, practiceShip, router]);
+  }, [round.date, practice, practiceShip, router, sim]);
 
   const shown = summary ?? stored ?? null;
   // MAXIMUM THRUST shakes the whole surface, canvas and HUD together, so the
@@ -396,6 +412,16 @@ export function GameCanvas({
 
       {shown && !debrief && (tallied || summary === null) ? (
         <ShareCard round={round} summary={shown} onReplay={replayRun} />
+      ) : null}
+      {sim ? (
+        <SimSheet
+          round={round}
+          authored={sim.authored}
+          encounter={state?.encounter ?? -1}
+          finished={summary !== null}
+          onPause={() => engineRef.current?.pause()}
+          onResume={() => engineRef.current?.resume()}
+        />
       ) : null}
       {debug && debugInfo ? <DebugStats info={debugInfo} /> : null}
     </div>

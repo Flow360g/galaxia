@@ -300,3 +300,68 @@ export function nextPracticeDeal(): string {
   write(PRACTICE_KEY, { deck, n });
   return `${deck}.${n}`;
 }
+
+// ------------------------------------------------------------ simulation
+
+const SIM_PREFIX = "galaxia:sim:";
+
+/** What a tester said about one question of a simulated day. */
+export interface SimQuestionNote {
+  flag: boolean;
+  note: string;
+}
+
+/**
+ * Notes from the simulation mode on `/dev`: a day's round flown ahead of its
+ * date to check the questions. Kept per date and apart from everything a
+ * player owns, so a simulated run never touches the stored run, the best, the
+ * streak or the flight log.
+ */
+export interface SimNotes {
+  /** By question id. */
+  questions: Record<string, SimQuestionNote>;
+  /** Anything about the day as a whole. */
+  general: string;
+  /** The last simulated run's score, for the day list. */
+  lastScore?: number;
+  lastMaxScore?: number;
+  /** How many simulated runs of this day have been finished. */
+  runs?: number;
+}
+
+export function emptySimNotes(): SimNotes {
+  return { questions: {}, general: "" };
+}
+
+export function loadSimNotes(date: string): SimNotes {
+  const stored = read<Partial<SimNotes>>(`${SIM_PREFIX}${date}`);
+  if (!stored || typeof stored !== "object") return emptySimNotes();
+  return {
+    ...stored,
+    questions: stored.questions && typeof stored.questions === "object" ? stored.questions : {},
+    general: typeof stored.general === "string" ? stored.general : "",
+  };
+}
+
+export function saveSimNotes(date: string, notes: SimNotes): void {
+  write(`${SIM_PREFIX}${date}`, notes);
+}
+
+/** Stamp a finished simulated run on its day's notes. */
+export function saveSimResult(date: string, score: number, maxScore: number): void {
+  const notes = loadSimNotes(date);
+  saveSimNotes(date, {
+    ...notes,
+    lastScore: score,
+    lastMaxScore: maxScore,
+    runs: (notes.runs ?? 0) + 1,
+  });
+}
+
+export function clearSimNotes(date: string): void {
+  try {
+    store()?.removeItem(`${SIM_PREFIX}${date}`);
+  } catch {
+    // Nothing to clear, or nowhere to clear it from.
+  }
+}
