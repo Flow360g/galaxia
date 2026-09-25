@@ -1,0 +1,94 @@
+/* The simulation mode's pages, `/dev` and `/dev/review`. Dev only. They
+   borrow the profile page's frame, and unlike it they scroll: two weeks of
+   days and eight notes a day do not fit a phone. */
+
+.page {
+  height: 100dvh;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.intro {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--panel-label);
+}
+
+.days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+  border-top: 1px solid var(--rule-dark);
+}
+
+.dayHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weekday {
+  font-size: 11px;
+  color: #ffffff;
+}
+
+.today {
+  color: var(--arcade-yellow);
+}
+
+.date {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--panel-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--panel-label);
+}
+
+.dayActions {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+
+.fly,
+.notes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.fly {
+  background: var(--arcade-yellow);
+  color: var(--ink);
+}
+
+.notes {
+  color: #ffffff;
+  border: 1px solid var(--rule-dark);
+  background: rgba(7, 17, 34, 0.72);
+}
+
+.fly:active,
+.notes:active {
+  background: #ffffff;
+  color: var(--ink);
+}

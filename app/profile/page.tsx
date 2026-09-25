@@ -95,6 +95,9 @@ export default async function ProfilePage({
 
         {debug ? (
           <>
+            <Link href="/dev" className={`${styles.practice} arcade`} data-testid="profile-sim">
+              Simulate a coming day
+            </Link>
             <PracticeLink className={`${styles.practice} arcade`} />
             <span className={styles.practiceNote}>
               A practice run picks new questions every time. Any ship can fly

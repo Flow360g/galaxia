@@ -472,6 +472,15 @@ export function getRound(date: string | undefined = todayKey()): Round {
   return hydrateEarth({ ...rotated, date: key });
 }
 
+/**
+ * Whether a date has a round file of its own, rather than one rotated in from
+ * the pool. The simulation mode on `/dev` says which, because a note about a
+ * rotated day is a note about some other day's file.
+ */
+export function isAuthoredRound(date: string): boolean {
+  return date in ROUNDS;
+}
+
 /** Whole days since the epoch for a `YYYY-MM-DD` key. */
 function dayNumber(key: string): number {
   const [year, month, day] = key.split("-").map(Number);

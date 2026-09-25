@@ -585,7 +585,13 @@ never performance. `/play?replay=1` skips today's stored run and
 `?round=YYYY-MM-DD` flies any round in the pool. `/play?shuffle=<seed>` flies
 a practice round built from the whole pool, reachable from `/profile?debug=1`
 and recorded nowhere; the seed is on the URL rather than made up server side
-so the same round can be opened twice and reported against. `?debug=1`
+so the same round can be opened twice and reported against. `/dev` is the
+simulation mode, linked from the same page: the coming days' real rounds,
+each flown ahead of its date through `/play?round=YYYY-MM-DD&sim=1`, recorded
+nowhere like practice. A NOTES tab on the left edge pauses the engine
+(`Engine.pause`, clock included) and opens a flag and a note per question,
+kept in localStorage under `galaxia:sim:<date>` and sent on as a prefilled
+GitHub issue or copied text (`lib/game/simFeedback.ts`). `?debug=1`
 overlays FPS, draw calls, triangles, tier, bloom and DPR on the flight, and
 with it `?tier=0|1|2` pins the quality tier and stops it stepping down: a
 headless browser detects as a low-end phone, and bloom cannot be looked at

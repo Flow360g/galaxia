@@ -137,6 +137,8 @@ export class Engine {
    */
   private timeScale = 1;
   private stopLeft = 0;
+  /** Held by `pause` until `resume`. */
+  private paused = false;
   private slowLeft = 0;
   private slowScale = 1;
   private readonly backdrop: Backdrop;
@@ -366,6 +368,22 @@ export class Engine {
     this.frameHandle = null;
     this.clock.stop();
     this.audio.setRunning(false);
+  }
+
+  /**
+   * Hold everything, clock included, until `resume`. Only the simulation
+   * mode's note sheet calls it (`/dev`): a tester writing down what was wrong
+   * with a question must not be timed out of it. Unlike `stop` it survives the
+   * tab being hidden and shown again.
+   */
+  pause(): void {
+    this.paused = true;
+    this.stop();
+  }
+
+  resume(): void {
+    this.paused = false;
+    this.start();
   }
 
   dispose(): void {
@@ -1002,7 +1020,7 @@ export class Engine {
     // Pause when backgrounded: rAF is throttled anyway, and resuming from a
     // stale clock would otherwise jump the world forward.
     if (document.hidden) this.stop();
-    else if (!this.disposed) this.start();
+    else if (!this.disposed && !this.paused) this.start();
   };
 
   // -------------------------------------------------------------- frame loop

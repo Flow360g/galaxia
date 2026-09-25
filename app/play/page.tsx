@@ -1,5 +1,5 @@
 import { GameCanvas } from "@/components/GameCanvas";
-import { getRound, getShuffledRound } from "@/lib/content/round";
+import { getRound, getShuffledRound, isAuthoredRound } from "@/lib/content/round";
 
 /**
  * The flight surface.
@@ -18,6 +18,7 @@ export default async function PlayPage({
     round?: string;
     shuffle?: string;
     ship?: string;
+    sim?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -34,6 +35,14 @@ export default async function PlayPage({
    */
   const practice = params.shuffle !== undefined;
 
+  /**
+   * `?sim=1` with `?round=YYYY-MM-DD` is the simulation mode, reached from
+   * `/dev`: a day's real round flown ahead of its date, with a pause tab for
+   * notes on its questions. Recorded nowhere, like a practice run, so flying
+   * tomorrow tonight cannot touch today's run, the best or the flight log.
+   */
+  const sim = !practice && params.sim === "1";
+
   // `?round=YYYY-MM-DD` is a dev and QA hatch like `?replay=1`: fly any round
   // in the pool rather than today's. Anything else falls through to today.
   const round = practice ? getShuffledRound(params.shuffle ?? "") : getRound(params.round);
@@ -44,10 +53,12 @@ export default async function PlayPage({
       debug={params.debug === "1"}
       // Practice implies replay: there is no stored run for a round that was
       // made up a moment ago, and a tester is not a first-time player.
-      replay={practice || params.replay === "1"}
+      replay={practice || sim || params.replay === "1"}
       practice={practice}
-      // A hull picked on `/profile?debug=1`, locked or not. Practice only.
-      practiceShip={practice ? params.ship : undefined}
+      sim={sim ? { authored: isAuthoredRound(round.date) } : undefined}
+      // A hull picked on `/profile?debug=1` or `/dev`, locked or not. Never
+      // on the daily run.
+      practiceShip={practice || sim ? params.ship : undefined}
     />
   );
 }
