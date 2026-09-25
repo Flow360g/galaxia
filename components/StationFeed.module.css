@@ -378,10 +378,6 @@
   background: var(--arcade-cyan);
   border-color: var(--arcade-cyan);
 }
-.opticsCost {
-  font-size: 8px;
-  color: var(--arcade-yellow);
-}
 .ground {
   margin: 0;
   border: 1px solid var(--rule-dark);

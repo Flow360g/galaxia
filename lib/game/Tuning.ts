@@ -289,13 +289,11 @@ export const SCORE = {
    */
   earthBase: 300,
   /**
-   * What working the feed costs, as a share of `earthBase`. Intel is the
-   * expensive one because someone else is handing you the answer; the optics
-   * dial is cheap and reversible because the player is working their own
-   * instrument. 15 and 5 against a base of 100.
+   * What a hint costs, as a share of `earthBase`. The zoom dial is free: the
+   * player is working their own instrument, and charging for it made testers
+   * leave the view alone rather than read it.
    */
   earthIntelCost: 0.15,
-  earthOpticsCost: 0.05,
   /** However much was bought, a correct call is never worth less than this. */
   earthFloor: 0.25,
   /**

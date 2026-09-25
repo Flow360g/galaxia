@@ -1,6 +1,6 @@
 /* The launch card. A full-screen panel over the stage, shown before the
-   engine starts, so like the briefing it is allowed to own the whole screen:
-   there is no ship underneath it yet. Same dark panel, hairlines and square
+   run starts, so like the briefing it is allowed to own the whole screen: the
+   ship is flying underneath in standby, but nothing is timed yet. Same dark panel, hairlines and square
    yellow button as the rest of the cabinet. */
 
 .overlay {

@@ -43,8 +43,13 @@ test("a first flight hears the Mayday, then gets Phase 1 in a few lines", async 
   // The mayday has a face on it, not a voice alone.
   await expect(mayday).toContainText(/sergeant soap/i);
   await expect(mayday.getByTestId("transmission-portrait").locator("img")).toBeVisible();
-  // The run is held back: no question is open behind it.
+  // The run is held back: no question is open behind it, but the ship is
+  // already flying, and the call is a banner across the top, not a modal.
   await expect(page.getByTestId("question")).toHaveCount(0);
+  await expect(page.getByTestId("stage").locator("canvas")).toHaveCount(1);
+  const box = await mayday.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box && viewport && box.y + box.height < viewport.height * 0.6).toBeTruthy();
   await shot(page, "b01-transmission");
   await acknowledge(page);
 

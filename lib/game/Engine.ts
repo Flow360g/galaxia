@@ -79,6 +79,11 @@ export interface EngineOptions {
    * detects as a low-tier phone, and bloom cannot be looked at otherwise.
    */
   tier?: QualityTier;
+  /**
+   * Fly the ship without starting the run, until `launch()`. The scene is live
+   * behind the Mayday and the launch card; see `Run.standby`.
+   */
+  standby?: boolean;
   onState?: (state: GameState) => void;
   onDebug?: (info: DebugInfo) => void;
   onOutcome?: (outcome: Outcome, index: number) => void;
@@ -340,6 +345,7 @@ export class Engine {
       },
       random,
     );
+    this.run.standby = options.standby ?? false;
 
     this.observeResize();
   }
@@ -423,6 +429,11 @@ export class Engine {
   /** Cluster: pick a lane. */
   pick(lane: number): void {
     this.run.pick(lane);
+  }
+
+  /** READY on the launch card: the countdown starts. */
+  launch(): void {
+    this.run.launch();
   }
 
   /** Cluster: the question is read, open the lanes. */

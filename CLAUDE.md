@@ -248,7 +248,7 @@ one to check before any other when writing or changing copy.
 - **Every score figure says POINTS.** The run also counts speed and
   distance, so a bare +100 could be either. The toast, the tally and every
   scoring table row spell it out; the one abbreviation allowed is PTS on a
-  chip too small for the word (the zoom cost, the FIRE dial).
+  chip too small for the word (the FIRE dial).
 - **A figure appears once.** What the last answer was worth is in the
   verdict toast and nowhere else. It used to be under the score in the top
   band as well, and the same number in two places on one screen reads as two
@@ -436,7 +436,7 @@ Rules that fall out of this:
   it says it at the foot of a scroll region under a photograph and five bought
   hints, and a tester read the answer there without ever seeing what it was
   worth. The pop is the one place the figure appears: the panel's line under
-  the answer carries what was SPENT (hints, zooms) and no points at all. It
+  the answer carries what was SPENT (hints; zooming is free) and no points at all. It
   takes no tap and blocks none, because NEXT PLACE is underneath it.
 - **The feed's imagery is fetched at launch, not on the tap.** A hint is
   bought and a zoom step taken against a running clock, and a photograph
@@ -467,7 +467,10 @@ path from a shared link to flying.
 - **Rules arrive a phase at a time.** Each day's first run opens on the **mission
   transmission** (a Mayday from Earth Command, `components/Transmission.tsx`,
   remembered by date in `galaxia:mayday`) and then the launch card, and
-  nothing else: no rulebook up front. It used to play once per device, ever,
+  nothing else: no rulebook up front. The ship is already flying behind both:
+  the engine mounts in standby (`Run.standby`, nothing stepped, no clock, no
+  distance), the Mayday drops in as a banner across the top band, and READY
+  launches the run on the live engine rather than mounting one. It used to play once per device, ever,
   which testers read as Sergeant Soap sometimes turning up and sometimes not. Six pages
   of rules before the first question was what testers called too much text.
   Each phase explains itself on its own card just before it is played, in

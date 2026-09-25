@@ -10,6 +10,13 @@ interface Props {
   script: Script;
   /** The eyebrow: INCOMING or DEBRIEF. */
   kind: "incoming" | "debrief";
+  /**
+   * Drop in as a banner across the top of the screen instead of a modal, so
+   * the ship flying underneath stays in view. The Mayday uses it: the run is
+   * in standby behind it (see `Run.standby`), and the call reads as coming in
+   * mid-flight rather than on a loading screen.
+   */
+  banner?: boolean;
   onDone: () => void;
 }
 
@@ -19,12 +26,13 @@ interface Props {
  * character at a time (see `useTyped`, shared with Sergeant Soap's hail on
  * the satellite feed).
  *
- * A small modal rather than a page. It sets the tone and gets out of the way:
+ * A small modal (or, for the Mayday, a banner over the flying ship) rather
+ * than a page. It sets the tone and gets out of the way:
  * a tap while the text is still arriving lands all of it, and a tap once it
  * has landed closes it. It is shown before the launch card on a first flight
  * and after the tally on a run that saved Earth, and never against a clock.
  */
-export function Transmission({ script, kind, onDone }: Props) {
+export function Transmission({ script, kind, banner = false, onDone }: Props) {
   const speaker = script.speaker;
   const { shown: lines, active, landed, skip } = useTyped(script.lines);
 
@@ -46,15 +54,15 @@ export function Transmission({ script, kind, onDone }: Props) {
 
   return (
     <div
-      className={styles.overlay}
+      className={banner ? styles.banner : styles.overlay}
       data-testid="transmission"
       data-landed={String(landed)}
       role="dialog"
-      aria-modal="true"
+      aria-modal={banner ? undefined : "true"}
       aria-label={kind === "incoming" ? "Incoming transmission" : "Debrief"}
-      onClick={tap}
+      onClick={banner ? undefined : tap}
     >
-      <div className={styles.panel}>
+      <div className={styles.panel} onClick={banner ? tap : undefined}>
         <header className={styles.header}>
           <span className={`${styles.eyebrow} arcade`}>
             {kind === "incoming" ? "INCOMING TRANSMISSION" : "DEBRIEF"}

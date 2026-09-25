@@ -44,7 +44,7 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   const ready = page.getByTestId("ready");
   await expect(ready).toBeVisible({ timeout: 20_000 });
   await expect(ready).toContainText("FIND THE 3");
-  // Nothing is flying behind it.
+  // No question is open behind it; the ship flies in standby.
   await expect(question).toHaveCount(0);
   await shot(page, "00-ready");
   await launch(page);
