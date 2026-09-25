@@ -24,6 +24,12 @@ interface Props {
   onOptics: (step: number) => void;
   onSubmit: (text: string) => void;
   onNext: () => void;
+  /**
+   * The run's ending, once it is over: how many landing sites it named. The
+   * scene pulls back and flies the fleet that bought (see `Orbit.reinforce`).
+   * Null while the run is live.
+   */
+  ending: number | null;
 }
 
 /**
@@ -59,16 +65,26 @@ export function Station({
   onOptics,
   onSubmit,
   onNext,
+  ending,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const orbitRef = useRef<Orbit | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const orbit = new Orbit(container);
+    orbitRef.current = orbit;
     orbit.start();
-    return () => orbit.dispose();
+    return () => {
+      orbit.dispose();
+      orbitRef.current = null;
+    };
   }, []);
+
+  useEffect(() => {
+    if (ending !== null) orbitRef.current?.reinforce(ending);
+  }, [ending]);
 
   /**
    * Whether the hail is done and the feed has the screen. Refs alongside the

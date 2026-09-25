@@ -320,40 +320,68 @@ export const SITE_HAIL: Transmission = {
   ],
 };
 
-/** The debrief, after a run that named every landing site. See `debriefFor`. */
+/**
+ * The ending, which Sergeant Soap calls in over the fleet before the tally
+ * (see `endingFor`). The words and the picture land together: the win points
+ * at the ships, a part win at the squadron, and a loss is a Mayday over the
+ * invaders coming down.
+ */
 export const EARTH_SAVED_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",
   speaker: SOAP,
   lines: [
-    "Earth Command to pilot. Landing sites confirmed.",
-    "Reinforcements are inbound.",
+    "Earth Command to pilot. Both landing sites confirmed.",
+    "Every ship we have is on its way. Look at them go.",
     "You saved Earth today. Same sky tomorrow.",
   ],
 };
 
-/** The debrief, after a run that missed a landing site. Every run gets one. */
+/** One site of two named: a squadron goes in, and the other site is still theirs. */
+export const EARTH_HELD_TRANSMISSION: Transmission = {
+  from: "EARTH COMMAND",
+  speaker: SOAP,
+  lines: [
+    "Earth Command to pilot. One landing site confirmed.",
+    "A squadron is on its way there. The other site is still dark.",
+    "Same sky tomorrow, and we need you back.",
+  ],
+};
+
+/** No site named: the invasion goes on, and Soap calls it in as a Mayday. */
 export const EARTH_LOST_TRANSMISSION: Transmission = {
   from: "EARTH COMMAND",
   speaker: SOAP,
   lines: [
-    "Earth Command to pilot. We could not confirm every landing site.",
-    "The invaders are still out there.",
-    "Get some rest. Same sky tomorrow, and we need you back.",
+    "MAYDAY. MAYDAY. Earth Command to pilot.",
+    "We could not confirm the landing sites. The invasion has not been stopped.",
+    "We may have lost this battle, but not the war. Same sky tomorrow, pilot.",
   ],
 };
 
-/** Sergeant Soap signs off every run: the win if every site was named, else the call-back. */
-export function debriefFor(round: Round, summary: RunSummary): Transmission {
-  return earthSaved(round, summary) ? EARTH_SAVED_TRANSMISSION : EARTH_LOST_TRANSMISSION;
+/** How the run ends: sites named, what Soap says, and in what voice. */
+export interface Ending {
+  /** Landing sites named, which decides the fleet (`fleetFor`). */
+  sites: number;
+  script: Transmission;
+  /** A loss is an incoming Mayday; anything else is a debrief. */
+  kind: "incoming" | "debrief";
 }
 
-/** Every NAME THE PLACE site was named, and there was at least one. */
-export function earthSaved(round: Round, summary: RunSummary): boolean {
+/**
+ * Every run just flown ends on one: the fleet it earned, and Soap over it.
+ * All sites named is the win; some is the squadron; none is the invasion.
+ */
+export function endingFor(round: Round, summary: RunSummary): Ending {
   let sites = 0;
+  let named = 0;
   for (const [index, question] of round.questions.entries()) {
     if (question.type !== "earth") continue;
     sites += 1;
-    if (!summary.outcomes[index]?.correct) return false;
+    if (summary.outcomes[index]?.correct) named += 1;
   }
-  return sites > 0;
+  if (sites > 0 && named === sites) {
+    return { sites: named, script: EARTH_SAVED_TRANSMISSION, kind: "debrief" };
+  }
+  if (named > 0) return { sites: named, script: EARTH_HELD_TRANSMISSION, kind: "debrief" };
+  return { sites: 0, script: EARTH_LOST_TRANSMISSION, kind: "incoming" };
 }

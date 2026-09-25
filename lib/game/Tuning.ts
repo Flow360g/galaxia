@@ -599,6 +599,106 @@ export const ORBIT = {
   fillIntensity: 0.55,
 } as const;
 
+/**
+ * The ending: what the landing sites bought, shown before the tally.
+ *
+ * The station screen pulls back until Earth fills the space under the
+ * banner, and a fleet flies in. The fleet is the result: both sites named
+ * sends the armada, one sends a squadron, none lets the invaders in, and a few
+ * of them fire on the surface. Played by `Orbit.reinforce` and `Fleet.ts`.
+ */
+export const ENDING = {
+  /** Seconds from the ending opening to the pull starting, and how long it takes. */
+  holdSeconds: 0.7,
+  pullSeconds: 4.2,
+  /** How far back along its own line the camera ends up, and how much it climbs. */
+  pullScale: 1.5,
+  pullRise: 3,
+  /**
+   * Where the camera looks once the pull has landed: above Earth's centre, so
+   * the planet sits in the lower half of a portrait frame, under the banner.
+   */
+  endLook: [1.2, -4.6, -2] as [number, number, number],
+  /**
+   * Earth's turn as the pull lands, radians, found by sweeping the model: the
+   * face with the most land on it. It turns there the short way during the
+   * pull, from wherever the station screen left it, then spins on as usual.
+   */
+  earthYaw: Math.PI,
+  /** Seconds after the ending opens that Sergeant Soap's banner drops in. */
+  bannerSeconds: 1.4,
+  /** How far apart the two sites sit on Earth's face, as a share of its radius. */
+  siteSpread: 0.42,
+  /**
+   * Where a route ends: over its landing site, this far above the surface as
+   * a share of Earth's radius. A ship never reaches the ground; it dwindles
+   * away in the distance first.
+   */
+  stopAbove: 0.45,
+  /** A route's spread either side of its fleet's flight time, seconds. */
+  flightJitter: 1.6,
+  /** Seconds between launches, so a fleet arrives as a stream. */
+  launchEvery: 0.045,
+  /** The first few ships launch from beside the lens so they tear past it. */
+  heroShips: 8,
+  /** Seconds into the pull the lead ships launch, one after another. */
+  heroFrom: 1.1,
+  heroEvery: 0.28,
+
+  /** Ours. Ships in the air at once, by landing sites named (index 1 and 2). */
+  fleet: [0, 36, 110] as const,
+  ours: {
+    /** A ship's length in orbit units. Earth is 10 across; scale is fantasy. */
+    length: 1.0,
+    seconds: 6.4,
+    /** Share of the trip after which it dwindles away. */
+    fadeFrom: 0.4,
+    /** Share of each hull in the fleet: mostly standard issue. */
+    mix: { cinder: 0.7, flamingo: 0.2, seraph: 0.1 } as Record<string, number>,
+    /** Engine glow size and trail length, in the player's own plasma. */
+    glowSize: 1.8,
+    trailLength: 5,
+  },
+
+  /**
+   * Theirs, when no site was named: the scout from ALIEN CONTACT, fewer and
+   * slower than our ships and a size bigger. Black hulls with a few small
+   * violet running lights, not glowing: a shape against the stars.
+   */
+  invaders: {
+    count: 16,
+    length: 1.6,
+    seconds: 8.5,
+    fadeFrom: 0.72,
+    /**
+     * How far towards Earth a relaunched scout starts, as a share of the way.
+     * There are few of them and they are dark: launched from as far back as
+     * our ships, the second wave was invisible and the sky went empty.
+     */
+    closeIn: 0.55,
+    /** The hull colour, and how many lights ring the rim. */
+    hull: 0x1b1d26,
+    lights: 5,
+    /** Light size, how far out on the rim as a share of the hull, and blink rate in Hz. */
+    lightSize: 0.8,
+    lightRim: 0.42,
+    blinkHz: 1.6,
+    /** One in this many fires on the way down. */
+    shooterEvery: 3,
+    /** A burst: seconds on and off. Only within this many Earth radii of its centre. */
+    shotSeconds: 0.8,
+    shotGap: 0.6,
+    shootWithin: 7,
+    /**
+     * Beam thickness and colour, and the flash where it lands. The HUD's damage
+     * red rather than `COLOR.neg`, which is too dark to carry at this distance.
+     */
+    beamRadius: 0.26,
+    beamColor: 0xff6b5c,
+    hitSize: 4.2,
+  },
+} as const;
+
 export const ALIEN = {
   modelUrl: "/models/alien.glb",
   /**
@@ -1022,6 +1122,95 @@ export const AUDIO = {
       subGain: 0.1,
       arpEvery: 2,
     },
+
+    /**
+     * The ending, when the fleet goes in: C major, the heroic I IV V I, a
+     * march tempo with the hat driving it. Written for the docked station,
+     * where the speed ratio is zero, so both ends of every range are the
+     * same: there is no run to lift it.
+     */
+    victory: {
+      bpm: [124, 124],
+      /** C, F, G, C. */
+      roots: [65.41, 43.65, 49, 65.41],
+      /** Major pentatonic: nothing in it can sound sad. */
+      scale: [0, 2, 4, 7, 9, 12, 14],
+      bassGain: 0.24,
+      padGain: 0.08,
+      arpGain: [0.12, 0.12],
+      sparkleGain: 0,
+      hatGain: [0.045, 0.045],
+      arpFilterHz: [4200, 4200],
+      padDetune: 7,
+      padSecond: 0,
+      subGain: 0,
+      arpEvery: 1,
+    },
+
+    /**
+     * The ending, when the invaders come down: slower than dread and heavier.
+     * E and F grinding a semitone apart, the Phrygian dominant over them, a
+     * sub under every bar and the hat ticking like boots.
+     */
+    invasion: {
+      bpm: [66, 66],
+      /** E1, F1, E1, Eb1. */
+      roots: [41.2, 43.65, 41.2, 38.89],
+      scale: [0, 1, 4, 5, 7, 8, 12],
+      bassGain: 0.3,
+      padGain: 0.1,
+      arpGain: [0.05, 0.05],
+      sparkleGain: 0,
+      hatGain: [0.022, 0.022],
+      arpFilterHz: [900, 900],
+      padDetune: 30,
+      padSecond: 1,
+      subGain: 0.12,
+      arpEvery: 2,
+    },
+  },
+
+  /**
+   * The ending's stingers, which land as the music turns (see `Audio.ending`).
+   *
+   * The victory is a call on a bugle, three quick notes and a leap up to the
+   * held one, then the finale's own chord swelling behind it, bigger for both
+   * sites named than for one. The invasion is the scout's arrival, a low
+   * brass stab on a clashing chord, and an air-raid siren winding up and down.
+   */
+  ending: {
+    call: {
+      /** D4, above the finale's D3 root, so the chord lands under it. */
+      rootHz: 293.66,
+      /** Semitones, start times and lengths, seconds. */
+      notes: [0, 0, 0, 7, 12],
+      at: [0, 0.13, 0.26, 0.4, 0.62],
+      seconds: [0.11, 0.11, 0.11, 0.2, 1.3],
+      gain: 0.085,
+      filterHz: 2800,
+      detuneCents: 8,
+    },
+    /** When the chord lands under the call, and how big it is for one site and for both. */
+    chordAt: 0.62,
+    strength: [0.55, 1],
+    stab: {
+      /** E2, with a flat second and a tritone over it. */
+      rootHz: 82.41,
+      semitones: [0, 1, 6, 12],
+      seconds: 1.8,
+      gain: 0.07,
+      filterHz: 900,
+    },
+    siren: {
+      /** Low and high of the wail, Hz, how long each sweep takes, and how many. */
+      hz: [420, 780],
+      sweepSeconds: 0.9,
+      sweeps: 6,
+      delay: 0.5,
+      gain: 0.05,
+      filterHz: 1900,
+    },
+    send: 0.6,
   },
 
   /**

@@ -20,6 +20,7 @@ declare global {
       pick?: unknown;
       finish: (tier?: string) => void;
       tallyTotal: (tier: string) => void;
+      ending: (sitesNamed: number) => void;
     };
     __peak: number;
     /** Brightness of the mix right now, as a spectral centroid in hertz. */
@@ -195,7 +196,7 @@ test("sound: the flight has a bed, a hit rises above it, and mute silences it", 
   });
 });
 
-test("sound: the finale clears the bed and never clips", async ({ page }) => {
+test("sound: the finale and the ending clear the bed and never clip", async ({ page }) => {
   await page.addInitScript(probe);
   await page.goto("/play?replay=1&debug=1&round=2026-09-18");
   await launch(page);
@@ -233,6 +234,19 @@ test("sound: the finale clears the bed and never clips", async ({ page }) => {
   const stamp = await page.evaluate(() => window.__peak);
   expect(stamp).toBeGreaterThan(engineOnly * 2);
   expect(stamp).toBeLessThan(1);
+
+  // The ending's stingers: the bugle call and chord for a win, and the
+  // arrival, stab and siren for the invasion. Heard over the bed, never clipped.
+  for (const sites of [2, 0]) {
+    await page.evaluate((n) => {
+      window.__peak = 0;
+      window.galaxiaAudio.ending(n);
+    }, sites);
+    await page.waitForTimeout(2200);
+    const stinger = await page.evaluate(() => window.__peak);
+    expect(stinger, `ending(${sites})`).toBeGreaterThan(engineOnly * 2);
+    expect(stinger, `ending(${sites})`).toBeLessThan(1);
+  }
 });
 
 /** The wrong lanes of a cluster, in lane order. There are always three. */

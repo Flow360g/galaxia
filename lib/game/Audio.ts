@@ -39,9 +39,9 @@ const SILENT = 0.0001;
 /**
  * Which bed the music loop is playing. One scheduler, two tables of notes and
  * gains in `AUDIO.music`: the run is flown to `cruise`, the alien stage to
- * `dread`.
+ * `dread`, and the ending to `victory` or `invasion`.
  */
-export type MusicMood = "cruise" | "dread";
+export type MusicMood = "cruise" | "dread" | "victory" | "invasion";
 
 /** Options shared by every one-shot voice. */
 interface VoiceOptions {
@@ -1238,6 +1238,71 @@ export class AudioEngine {
 
     // 3. The chord, and on the top tiers everything that rides on it.
     this.fanfare(rise, strength);
+  }
+
+  /**
+   * The ending: the music turns to what the landing sites bought, and a
+   * stinger lands on the seam. Any site named is a victory, a call on a bugle
+   * and the finale's chord behind it; none is the invasion, the scout's
+   * arrival with a stab and a siren over it.
+   */
+  ending(sitesNamed: number): void {
+    const cfg = AUDIO.ending;
+    if (sitesNamed > 0) {
+      this.setMood("victory");
+      const call = cfg.call;
+      call.notes.forEach((semitones, i) => {
+        const hz = call.rootHz * Math.pow(2, semitones / 12);
+        for (const detune of [-call.detuneCents, call.detuneCents]) {
+          this.tone(hz, 0, {
+            duration: call.seconds[i]!,
+            gain: call.gain,
+            type: "sawtooth",
+            filterHz: call.filterHz,
+            attack: 0.015,
+            detune,
+            delay: call.at[i]!,
+            pan: [detune < 0 ? -0.25 : 0.25, detune < 0 ? -0.25 : 0.25],
+            send: cfg.send,
+          });
+        }
+      });
+      const strength = sitesNamed >= 2 ? cfg.strength[1] : cfg.strength[0];
+      this.fanfare(cfg.chordAt, strength);
+      return;
+    }
+
+    this.setMood("invasion");
+    this.alienArrival();
+    const stab = cfg.stab;
+    for (const [i, semitones] of stab.semitones.entries()) {
+      this.tone(stab.rootHz * Math.pow(2, semitones / 12), 0, {
+        duration: stab.seconds,
+        gain: stab.gain * (1 - i * 0.12),
+        type: "sawtooth",
+        filterHz: stab.filterHz,
+        attack: 0.02,
+        drive: true,
+        send: cfg.send,
+      });
+    }
+    // The wail: up and down, up and down, drifting across the field.
+    const siren = cfg.siren;
+    for (let i = 0; i < siren.sweeps; i += 1) {
+      const rising = i % 2 === 0;
+      const side = i % 4 < 2 ? -0.4 : 0.4;
+      this.tone(rising ? siren.hz[0] : siren.hz[1], 0, {
+        duration: siren.sweepSeconds,
+        gain: siren.gain,
+        type: "sawtooth",
+        sweepTo: rising ? siren.hz[1] : siren.hz[0],
+        filterHz: siren.filterHz,
+        attack: siren.sweepSeconds * 0.3,
+        delay: siren.delay + i * siren.sweepSeconds,
+        pan: [side, -side],
+        send: cfg.send,
+      });
+    }
   }
 
   /**
