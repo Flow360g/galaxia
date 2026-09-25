@@ -19,9 +19,10 @@ import type {
   PhaseDemo as Demo,
   VectorView,
 } from "@/lib/game/phases";
-import { DEMO } from "@/lib/game/Tuning";
+import { DEMO, STATION } from "@/lib/game/Tuning";
 import { prefersReducedMotion } from "./useTyped";
 import styles from "./PhaseDemo.module.css";
+import feed from "./StationFeed.module.css";
 
 /**
  * A phase played once as an example, on its phase card, in place of a list of
@@ -350,7 +351,17 @@ function McqBoard({ demo, view, reg }: { demo: Of<"mcq">; view: McqView; reg: Re
   );
 }
 
+/** The zoom dial's picture scale, Out to In. */
+const MAP_SCALE: Record<number, number> = { [-1]: 1, 0: 1.35, 1: 1.8 };
+
+/**
+ * NAME THE PLACE, drawn with the station feed's own classes for the zoom dial,
+ * the hint button and the answer row, so what the example taps is exactly what
+ * the player will tap. Only the photograph is drawn here: the demo fetches
+ * nothing.
+ */
 function EarthBoard({ demo, view, reg }: { demo: Of<"earth">; view: EarthView; reg: Register }) {
+  const left = demo.hintsTotal - view.hints;
   return (
     <>
       <div className={styles.photo}>
@@ -358,7 +369,7 @@ function EarthBoard({ demo, view, reg }: { demo: Of<"earth">; view: EarthView; r
           viewBox="0 0 160 90"
           preserveAspectRatio="xMidYMid slice"
           className={styles.map}
-          style={{ transform: `scale(${1 + view.zoom * 0.45})` }}
+          style={{ transform: `scale(${MAP_SCALE[view.zoom] ?? 1})` }}
         >
           {/* A lagoon city from above: water, the islands, one canal. */}
           <rect width="160" height="90" fill="#123049" />
@@ -380,30 +391,41 @@ function EarthBoard({ demo, view, reg }: { demo: Of<"earth">; view: EarthView; r
           <path d="M8 76 C 30 70, 50 86, 72 84" fill="none" stroke="#1d4a6b" strokeWidth="6" />
         </svg>
         <span className={`${styles.photoTag} arcade`}>SATELLITE VIEW</span>
-        <span className={styles.zoom}>
-          <span className={`${styles.zoomLabel} arcade`}>ZOOM</span>
-          <span ref={reg("zoom")} className={`${styles.zoomStep} arcade`}>
-            +
-          </span>
-        </span>
+      </div>
+      <div className={feed.optics}>
+        <span className={`${feed.opticsLabel} arcade`}>Zoom</span>
+        <div className={feed.opticsDial}>
+          {STATION.zoomSteps.map((value) => (
+            <span
+              key={value}
+              ref={reg(`zoom:${value}`)}
+              className={`${feed.opticsStep} ${view.zoom === value ? feed.opticsOn : ""} arcade`}
+            >
+              {value === -1 ? "Out" : value === 0 ? "Normal" : "In"}
+            </span>
+          ))}
+        </div>
       </div>
       {view.hints > 0 ? (
         <p className={styles.hintLine}>{demo.hints.slice(0, view.hints).join(" ")}</p>
       ) : null}
-      <div className={styles.earthRow}>
-        <span ref={reg("hint")} className={`${styles.tool} ${styles.toolHint} arcade`}>
-          GET A HINT
+      <span ref={reg("hint")} className={`${feed.intelButton} ${styles.still} arcade`}>
+        <span className={feed.intelMain}>Get a hint</span>
+        <span className={feed.intelSub}>
+          {left} {left === 1 ? "hint" : "hints"} left &middot; {demo.hintCost} points each
         </span>
-        <Status text={view.status} tone={view.sent ? "good" : view.hints > 0 ? "bad" : "plain"} />
-      </div>
-      <div className={styles.answerRow}>
-        <span ref={reg("input")} className={`${styles.input} ${view.typed ? styles.inputFilled : ""}`}>
+      </span>
+      <div className={feed.typedRow}>
+        <span ref={reg("input")} className={`${feed.input} ${styles.inputBox} ${view.typed ? styles.inputFilled : ""}`}>
           {view.typed || "Type the city here"}
         </span>
-        <span ref={reg("send")} className={`${styles.tool} ${styles.toolSend} arcade`}>
-          SEND
+        <span ref={reg("send")} className={`${feed.submit} ${styles.sendBox} arcade`}>
+          Send
         </span>
       </div>
+      <span className={styles.statusLine}>
+        <Status text={view.status} tone="good" />
+      </span>
     </>
   );
 }

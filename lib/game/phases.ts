@@ -1,3 +1,4 @@
+import { earthLadder } from "./feed";
 import { maxPointsAt, vectorShare, vectorVerdict } from "./Score";
 import { CLUSTER_FIND, PHASE_TITLE } from "./phaseTitles";
 import { CLUSTER, DEMO, ENCOUNTER, NOVA, SCORE, SHIELDS, STATION, VECTOR } from "./Tuning";
@@ -120,7 +121,7 @@ export interface McqView {
 }
 
 export interface EarthView {
-  /** Steps in on the zoom dial, from the first. */
+  /** The zoom dial: -1 out, 0 normal, 1 in, as `STATION.zoomSteps`. */
   zoom: number;
   /** Hints bought, each one a line under the photo. */
   hints: number;
@@ -149,7 +150,14 @@ export type PhaseDemo =
       answer: number;
       scenes: DemoScene<McqView>[];
     }
-  | { kind: "earth"; hints: string[]; scenes: DemoScene<EarthView>[] };
+  | {
+      kind: "earth";
+      hints: string[];
+      /** Hints on offer, and what each costs, for the button's second line. */
+      hintsTotal: number;
+      hintCost: number;
+      scenes: DemoScene<EarthView>[];
+    };
 
 /** Points for a share of the base, as the tally would print them. */
 function pts(share: number, base: number = SCORE.perEncounter): string {
@@ -334,20 +342,27 @@ function mcqDemo(n?: number): PhaseDemo {
 function earthDemo(n?: number): PhaseDemo {
   const full = Math.round(SCORE.earthBase);
   const hint = Math.round(SCORE.earthBase * SCORE.earthIntelCost);
+  // A site with every rung, the most hints the feed ever offers.
+  const hintsTotal = earthLadder({ street: true, landmark: true, structure: true }).length;
   const look: EarthView = { zoom: 0, hints: 0, typed: "", sent: false, status: "" };
-  const zoomed: EarthView = { ...look, zoom: 1 };
-  const helped: EarthView = { ...zoomed, hints: 1, status: `HINT · -${hint} POINTS` };
+  const closer: EarthView = { ...look, zoom: 1 };
+  const wider: EarthView = { ...look, zoom: -1 };
+  const helped: EarthView = { ...wider, hints: 1 };
   const typed: EarthView = { ...helped, typed: "Venice" };
   return {
     kind: "earth",
     hints: ["Built on more than 100 small islands."],
+    hintsTotal,
+    hintCost: hint,
     scenes: [
       {
         label: "NAME THE PLACE",
         steps: [
           step(`${count(n, "place")}You get a satellite photo of somewhere on Earth.`, "none", null, look),
-          step("Zoom in or out as much as you like. It is free.", "tap", "zoom", zoomed),
-          step("Stuck? Get a hint. Each one costs a few points.", "tap", "hint", helped),
+          step("These are the zoom buttons. Zoom as much as you like, it is free.", "point", "zoom:0", look),
+          step("Tap In to look closer.", "tap", "zoom:1", closer),
+          step("Tap Out to see more of the area around it.", "tap", "zoom:-1", wider),
+          step(`Stuck? Tap GET A HINT for a clue. Each one costs ${hint} points.`, "tap", "hint", helped),
           step("Type the name of the city, not the country.", "tap", "input", typed),
           step(`Send it. Correct scores ${full - hint} points here, or ${full} with no hints.`, "tap", "send", {
             ...typed,

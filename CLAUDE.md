@@ -511,7 +511,9 @@ path from a shared link to flying.
   eye goes to the words and is led from them to the action; a caption sitting
   still beside a moving finger read as too quick to read and too slow to
   watch. It is a picture with no pointer events; the rules stay on the card
-  as screen reader text. The waypoint card is taller for it and reaches the
+  as screen reader text. NAME THE PLACE's example draws its zoom dial, hint
+  button and answer row with `StationFeed.module.css` itself, so it cannot
+  drift from the controls the player will press. The waypoint card is taller for it and reaches the
   middle of the screen, so the e2e taps the card itself to move on.
 - **Every phase card carries the rest, shut.** The launch card and the
   waypoint card both read `phaseGuide(type, round)` and render
