@@ -1,0 +1,363 @@
+/* The launch card's worked example. Drawn from the band's own vocabulary
+   (square lanes, cyan for correct, red for wrong, the orange BANK cap) at a
+   size that fits inside the card, so what the player watches here is what
+   they get the moment READY is pressed. Nothing here takes a tap. */
+
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--rule-dark);
+  border-radius: 4px;
+  background: rgba(13, 27, 46, 0.6);
+  overflow: hidden;
+}
+
+.label {
+  font-size: 9px;
+  letter-spacing: var(--track-label);
+  color: var(--panel-label);
+}
+
+.labelScene {
+  color: var(--arcade-cyan);
+}
+
+.prompt {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.lane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 5px 2px;
+  background: rgba(13, 27, 46, 0.92);
+  border: 1px solid var(--rule-dark);
+  color: #ffffff;
+  text-align: center;
+  transition: background 160ms, border-color 160ms, color 160ms, box-shadow 160ms;
+}
+
+.laneKey {
+  font-size: 9px;
+  color: var(--panel-label);
+}
+
+.laneText {
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.laneGot {
+  border-color: var(--arcade-cyan);
+  background: rgba(79, 241, 255, 0.16);
+  color: var(--arcade-cyan);
+  box-shadow: 0 0 12px rgba(79, 241, 255, 0.35);
+}
+
+.laneGot .laneKey {
+  color: var(--arcade-cyan);
+}
+
+.laneWrong {
+  border-color: #ff6b5c;
+  background: rgba(255, 107, 92, 0.18);
+  color: #ff6b5c;
+  box-shadow: 0 0 12px rgba(255, 107, 92, 0.4);
+  animation: shake 320ms ease-out;
+}
+
+.laneWrong .laneKey {
+  color: #ff6b5c;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 66px;
+}
+
+.status {
+  font-size: 9px;
+  line-height: 1.4;
+  letter-spacing: var(--track-label);
+  animation: statusIn 220ms ease-out;
+}
+
+.good {
+  color: var(--arcade-cyan);
+}
+
+.kept {
+  color: var(--arcade-yellow);
+}
+
+.bad {
+  color: #ff6b5c;
+}
+
+/* The BANK button, small: the same bezel and cap as the corner dial. */
+.bank {
+  flex: none;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 34%, #2a3548 0%, #101a2b 62%, #060d18 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.bankCap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--panel-label);
+  background: radial-gradient(circle at 38% 26%, #2b3648 0%, #1b2536 60%, #121b2a 100%);
+  transition: background 200ms, color 200ms;
+}
+
+.bankLive .bankCap {
+  color: var(--ink);
+  background: radial-gradient(circle at 38% 26%, #ffc46a 0%, #ff9c33 34%, #ff8a1f 58%, #d96a0c 100%);
+  box-shadow:
+    0 3px 0 #8f4506,
+    inset 0 2px 1px rgba(255, 255, 255, 0.55);
+  transform: translateY(-2px);
+}
+
+.bankCalled {
+  animation: dialGlow 900ms ease-in-out infinite;
+}
+
+.bankLabel {
+  font-size: 9px;
+  line-height: 1;
+}
+
+.bankValue {
+  font-size: 9px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The finger. Placed by its tip: the transform puts the corner of this box
+   on the target, and the hand is pulled back so its tip sits on that corner. */
+.finger {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transition: transform 600ms cubic-bezier(0.45, 0, 0.2, 1), opacity 300ms;
+  z-index: 2;
+}
+
+.fingerAway {
+  opacity: 0;
+}
+
+.fingerBody {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.fingerTap .hand {
+  animation: press 380ms ease-out;
+}
+
+.hand {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  /* The fingertip is at (11.5, 6) of the 24 unit box. */
+  left: -15.3px;
+  top: -8px;
+  fill: #ffffff;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  transform-origin: 48% 20%;
+}
+
+.ripple {
+  position: absolute;
+  left: -16px;
+  top: -16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--arcade-yellow);
+  animation: ripple 520ms ease-out forwards;
+}
+
+.caption {
+  margin: 0;
+  /* Two lines reserved, so a short caption does not pull the card up. */
+  min-height: calc(2 * 1.5em);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d5dbe6;
+  animation: captionIn 260ms ease-out;
+}
+
+.dots {
+  display: flex;
+  gap: 5px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  background: var(--rule-dark);
+  transition: background 200ms;
+}
+
+.dotOn {
+  background: var(--arcade-yellow);
+}
+
+@keyframes press {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.82) translateY(2px);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ripple {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes captionIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes statusIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes dialGlow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.16),
+      0 0 0 0 rgba(255, 138, 31, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.16),
+      0 0 16px 3px rgba(255, 138, 31, 0.6);
+  }
+}
+
+/* Short phones: the card must never scroll. */
+@media (max-height: 700px) {
+  .frame {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .lane {
+    min-height: 44px;
+  }
+
+  .caption {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .finger {
+    transition: opacity 300ms;
+  }
+
+  .ripple {
+    display: none;
+  }
+
+  .fingerTap .hand,
+  .laneWrong,
+  .bankCalled,
+  .caption,
+  .status {
+    animation: none;
+  }
+}

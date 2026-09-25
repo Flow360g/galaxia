@@ -59,6 +59,9 @@ test("a first flight hears the Mayday, then gets Phase 1 in a few lines", async 
   await expect(ready).toContainText(/8 questions in 4 phases/i);
   await expect(ready).toContainText(/2 questions\. Each one has 6 answers and 3 of them are correct/);
   await expect(ready).toContainText(/Tap BANK/);
+  // Phase 1 is shown as a worked example, not only told.
+  await expect(ready.getByTestId("phase-demo")).toBeVisible();
+  await expect(ready).not.toContainText(/today\./i);
   await expect(ready).not.toContainText(/plasma/i);
   const toggle = page.getByTestId("scoring-toggle");
   await expect(toggle).toHaveText(/more detail/i);
