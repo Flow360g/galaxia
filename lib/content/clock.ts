@@ -74,3 +74,15 @@ export function nextRoundAt(now: Date = new Date()): number {
   guess = target - offset(guess);
   return guess > at ? guess : guess + 24 * HOUR_MS;
 }
+
+/**
+ * A round date moved by whole days, as YYYY-MM-DD. What the day streak walks
+ * back along: round dates are calendar days on one clock for everyone, so
+ * the day before a round is simply the date before it. An unreadable key
+ * comes back unchanged.
+ */
+export function shiftDay(date: string, days: number): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return date;
+  return key(Number(match[1]), Number(match[2]), Number(match[3]) + days);
+}

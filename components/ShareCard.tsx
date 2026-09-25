@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { formatDistance, formatRoundNumber, formatScore } from "@/lib/game/format";
 import { preloadShareArt, renderShareCard, shareCardBlob, shareText } from "@/lib/game/share";
 import type { RunSummary } from "@/lib/game/types";
+import { trackEvent } from "@/lib/analytics";
 import styles from "./ShareCard.module.css";
 
 const COPIED_MS = 2000;
@@ -87,6 +88,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
     try {
       await navigator.clipboard.writeText(shareText(summary));
       flashCopied();
+      trackEvent({ name: "Shared", data: { how: "copied" } });
     } catch {
       setShareState("failed");
     }
@@ -94,7 +96,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
 
   const handleShare = useCallback(async () => {
     setShareState("busy");
-    const fileName = `galaxia-${round.date}.png`;
+    const fileName = `astro-run-${round.date}.png`;
     try {
       const blob = blobRef.current ?? (await shareCardBlob(summary));
       blobRef.current = blob;
@@ -110,6 +112,7 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
           text: shareText(summary),
         });
         setShareState("idle");
+        trackEvent({ name: "Shared", data: { how: "share sheet" } });
         return;
       }
     } catch (error) {
@@ -186,9 +189,13 @@ export function ShareCard({ round, summary, onReplay }: ShareCardProps) {
           <a
             className={`${styles.button} arcade ${imageUrl ? "" : styles.disabled}`}
             href={imageUrl ?? "#"}
-            download={`galaxia-${round.date}.png`}
+            download={`astro-run-${round.date}.png`}
             aria-disabled={imageUrl ? undefined : true}
-            onClick={imageUrl ? undefined : (e) => e.preventDefault()}
+            onClick={
+              imageUrl
+                ? () => trackEvent({ name: "Shared", data: { how: "saved" } })
+                : (e) => e.preventDefault()
+            }
           >
             Save
           </a>

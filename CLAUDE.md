@@ -106,7 +106,15 @@ things that make those games sticky:
   day; if a new element on the card cannot be read in one second, it does not
   belong on it. A shared link should land a new player on the title screen one
   tap from flying. Anything that makes the result more comparable, more
-  braggable or more legible in a group chat is on-mission.
+  braggable or more legible in a group chat is on-mission. Saving a run
+  stamps two things on it (`saveRun` in `storage.ts`): the **day streak**,
+  days in a row with a completed run, walked back through the stored runs
+  rather than counted so a QA flight of another date cannot reset it; and
+  **NEW BEST**, only when there was a best to beat. The tally, the card and
+  the text all read the stamp, so a revisit says what the day said. A
+  perfect run gets the gold card. The link a card points at unfurls into
+  `app/opengraph-image.tsx`, and the home screen icon and manifest sit
+  beside it; all of it is drawn at build from `lib/brand/art.tsx`.
 - **Same help for everyone.** NOVA picks are seeded per question so friends
   comparing runs got identical assistance. Never introduce randomness that
   makes two players' runs on the same day non-comparable.
@@ -746,6 +754,14 @@ short version is below; the reasoning is in that file.
   draw of two a kind repeats within a handful of runs whatever the pool size,
   and testers read that as a small pool. Any other seed is still a one-off
   draw, so `?shuffle=alpha` rebuilds exactly as before.
+
+## Analytics
+
+Vercel Web Analytics, cookieless: `<Analytics />` in the layout counts page
+views, and `lib/analytics.ts` sends three events a page view cannot see
+(Run started, Run finished, Shared). Practice runs send nothing. Like sound
+and storage it is never load-bearing. Add an event there, typed, rather than
+calling `track` from a component.
 
 ## Deliberately not done
 

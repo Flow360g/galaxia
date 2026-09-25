@@ -6,6 +6,8 @@ import { newShuffleSeed, practiceUrl } from "@/lib/content/round";
 import { Engine } from "@/lib/game/Engine";
 import { isMaxThrust } from "@/lib/game/Flight";
 import { preloadFeed } from "@/lib/game/prefetch";
+import { finaleTier } from "@/lib/game/Score";
+import { trackEvent } from "@/lib/analytics";
 import type { DebugInfo, GameState, Round, RunSummary } from "@/lib/game/types";
 import {
   clearRun,
@@ -159,13 +161,24 @@ export function GameCanvas({
   // cosmetic: the results card draws it and nothing else reads it.
   const handleRunEnd = useCallback(
     (result: RunSummary) => {
-      const flown: RunSummary = { ...result, shipId: ship.id };
+      let flown: RunSummary = { ...result, shipId: ship.id };
       // A practice run is shown and then forgotten. It carries today's date,
       // so writing it would overwrite the real run, and counting it would farm
-      // the flight log that unlocks hulls.
+      // the flight log that unlocks hulls. Saving stamps the day streak and
+      // NEW BEST on the summary, so a practice run has neither.
       if (!practice) {
-        saveRun(flown);
+        flown = saveRun(flown);
         storedCache.set(flown.date, flown);
+        trackEvent({
+          name: "Run finished",
+          data: {
+            round: flown.roundNumber,
+            score: flown.score,
+            tier: finaleTier(flown.score, flown.maxScore),
+            dayStreak: flown.dayStreak ?? 0,
+            newBest: flown.newBest === true,
+          },
+        });
       }
       setTallied(false);
       setSummary(flown);
@@ -205,7 +218,10 @@ export function GameCanvas({
   /** Every run just flown is signed off, saved Earth or not. See `debriefFor`. */
   const debrief = summary !== null && tallied && !debriefed;
 
-  const launch = useCallback(() => setLaunched(true), []);
+  const launch = useCallback(() => {
+    setLaunched(true);
+    if (!practice) trackEvent({ name: "Run started", data: { round: round.roundNumber } });
+  }, [practice, round.roundNumber]);
   // WHERE ON EARTH, played at the station. The engine is parked while docked,
   // so each of these pushes a fresh state frame of its own.
   const feedReady = useCallback(() => engineRef.current?.feedArrived(), []);

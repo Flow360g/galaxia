@@ -1,3 +1,4 @@
+import { shiftDay } from "@/lib/content/clock";
 import type { RunSummary } from "./types";
 
 /**
@@ -57,17 +58,28 @@ function write(key: string, value: unknown): void {
 
 /**
  * Records the run under its date, counts it toward the flight log and lifts
- * the best if it was beaten.
+ * the best if it was beaten. Hands back the summary stamped with the day
+ * streak and whether it was a new best, which is what gets stored, so the
+ * card on a revisit still says it.
  *
  * A date already on file does not count again, so the `?replay=1` escape
  * hatch cannot be used to farm an unlock.
+ *
+ * NEW BEST needs a best to beat: a first ever run is not a record, it is the
+ * only run. A best set earlier the same day (the replay hatch) still counts.
  */
-export function saveRun(summary: RunSummary): void {
+export function saveRun(summary: RunSummary): RunSummary {
   const firstToday = loadRun(summary.date) === null;
-  write(`${RUN_PREFIX}${summary.date}`, summary);
+  const best = loadBest();
+  const newBest = best !== null && beats(summary, best) && num(summary.score) > num(best.score);
+  const stamped: RunSummary = {
+    ...summary,
+    dayStreak: streakBack(summary.date, 1),
+    newBest,
+  };
+  write(`${RUN_PREFIX}${summary.date}`, stamped);
   if (firstToday) write(FLOWN_KEY, loadFlown() + 1);
 
-  const best = loadBest();
   if (!best || beats(summary, best)) {
     const record: BestRecord = {
       score: num(summary.score),
@@ -78,6 +90,66 @@ export function saveRun(summary: RunSummary): void {
     };
     write(BEST_KEY, record);
   }
+  return stamped;
+}
+
+/**
+ * Days in a row, walking back from `date`, with a completed run on file.
+ * `counted` is how many are already known to be there (the run being saved).
+ *
+ * Derived from the stored runs rather than kept as a counter, so it cannot
+ * drift: a QA flight of a future round (`?round=`) is a run on a day nobody
+ * has reached yet and breaks nothing, where a counter would have reset. The
+ * one hole is the replay hatch clearing today's run, and flying it again puts
+ * it back.
+ */
+function streakBack(date: string, counted: number): number {
+  let days = counted;
+  let day = shiftDay(date, -counted);
+  // A year is plenty of walk and bounds the loop on a device with odd keys.
+  while (days < 366 && loadRun(day) !== null) {
+    days += 1;
+    day = shiftDay(day, -1);
+  }
+  return days;
+}
+
+/**
+ * The streak as it stands on `today`: counted through today if today has been
+ * flown, through yesterday if not. A streak is not broken until a whole round
+ * goes by unplayed, so the morning after a run it still reads as alive.
+ */
+export function loadDayStreak(today: string): number {
+  if (loadRun(today) !== null) return streakBack(today, 1);
+  return streakBack(shiftDay(today, -1), 0);
+}
+
+/**
+ * The longest run of consecutive days ever flown on this device, read off
+ * the stored runs. Zero with no runs, or no storage.
+ */
+export function loadLongestStreak(): number {
+  const dates: string[] = [];
+  try {
+    const s = store();
+    if (!s) return 0;
+    for (let i = 0; i < s.length; i += 1) {
+      const k = s.key(i);
+      if (k?.startsWith(RUN_PREFIX)) dates.push(k.slice(RUN_PREFIX.length));
+    }
+  } catch {
+    return 0;
+  }
+  dates.sort();
+  let longest = 0;
+  let current = 0;
+  let previous: string | null = null;
+  for (const date of dates) {
+    current = previous !== null && shiftDay(previous, 1) === date ? current + 1 : 1;
+    longest = Math.max(longest, current);
+    previous = date;
+  }
+  return longest;
 }
 
 /**

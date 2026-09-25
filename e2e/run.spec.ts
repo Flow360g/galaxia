@@ -29,6 +29,19 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   page,
 }) => {
   await stubImagery(page);
+  // The two days before this round were flown, and the best on file is low:
+  // finishing this one makes a three day streak and a new best. Seeded once,
+  // not in an init script, which would re-seed the best over the saved one.
+  await page.goto("/?round=2026-09-18");
+  await page.evaluate(() => {
+    for (const date of ["2026-09-16", "2026-09-17"]) {
+      localStorage.setItem(`galaxia:run:${date}`, JSON.stringify({ date, distance: 1000 }));
+    }
+    localStorage.setItem(
+      "galaxia:best",
+      JSON.stringify({ score: 100, maxScore: 1800, distance: 1000, date: "2026-09-17", roundNumber: 1 }),
+    );
+  });
   // No `?replay=1`: this is the path a player takes, where finishing saves the
   // run. The hatch never reads storage, and it hid the engine being torn down
   // (sound and all) the moment a real run's tally came up.
@@ -473,6 +486,10 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
     timeout: 10_000,
   });
   await expect(page.getByTestId("tally-tier")).toBeVisible();
+  // Saving stamped the day streak and the beaten best on the run.
+  await expect(page.getByTestId("tally-new-best")).toBeVisible();
+  await expect(page.getByTestId("tally-day-streak")).toContainText(/3 day streak/i);
+  await expect(page.getByTestId("tally-day-streak")).toContainText("make it 4");
   // The total stamps in a beat after the last line.
   await expect(page.getByTestId("tally-total")).toBeVisible();
   await page.waitForTimeout(700);
@@ -518,6 +535,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   expect(copied).toMatch(/Total Score: [\d,]+\/[\d,]+/);
   expect(copied.split("\n").filter((line) => /[🟦⬜]/u.test(line))).toHaveLength(4);
   expect(copied).toContain("www.astrorun.io");
+  expect(copied).toContain("🏆 New personal best");
+  expect(copied).toContain("🔥 3 day streak");
 
   // The run is persisted: a reload shows the card, not a fresh run.
   await page.goto("/play?round=2026-09-18");
@@ -526,6 +545,8 @@ test("a full run: burn, cluster miss, waypoint, direct hit, miss, slingshot, tim
   await page.getByTestId("view-profile").click();
   await expect(page.getByTestId("today-run")).toContainText("KM");
   await expect(page.getByTestId("runs-played")).toHaveText("1");
+  await expect(page.getByTestId("day-streak")).toHaveText("🔥 3");
+  await expect(page.getByTestId("longest-streak")).toHaveText("3");
 
   // And the flight log counted it, which is what earns a hull in the bay.
   expect(await page.evaluate(() => localStorage.getItem("galaxia:flown"))).toBe("1");

@@ -86,6 +86,19 @@ const YELLOW = "#ffe03d";
 
 const ARCADE_FALLBACK = '"Press Start 2P", monospace';
 
+/** The gold edge a perfect run's card wears, inset from the bleed. */
+const PERFECT_FRAME_INSET = 18;
+const PERFECT_FRAME_WIDTH = 6;
+
+/** The chip beside SCORE: PERFECT RUN or NEW BEST. */
+const CHIP_GAP = 18;
+const CHIP_PAD_X = 10;
+const CHIP_H = 26;
+const CHIP_FONT = 12;
+
+/** Days in a row, under the distance. Shown from two: one day is not a streak. */
+const DAY_STREAK_FONT = 16;
+
 // ------------------------------------------------------------------ stages
 
 /**
@@ -191,7 +204,7 @@ export function renderShareCard(canvas: HTMLCanvasElement, summary: RunSummary):
     const arcade = arcadeFamily();
     const rows = stageRows(summary);
 
-    drawBackground(ctx);
+    drawBackground(ctx, isPerfect(summary));
     drawLogo(ctx, summary, arcade);
     drawEyebrow(ctx, summary, arcade);
     drawHero(ctx, summary, arcade);
@@ -246,11 +259,26 @@ export function shareText(summary: RunSummary): string {
     heading,
     "",
     `Total Score: ${formatScore(score)}/${formatScore(max)}`,
+    ...badges(summary),
     "",
     ...rows,
     "",
     SHARE.site,
   ].join("\n");
+}
+
+/**
+ * The lines under the score, one fact each: a perfect run or a new best, and
+ * the day streak from two days up. The same three things the card draws, so
+ * the paste and the picture still agree.
+ */
+function badges(summary: RunSummary): string[] {
+  const lines: string[] = [];
+  if (isPerfect(summary)) lines.push("⭐ Perfect run");
+  else if (summary.newBest) lines.push("🏆 New personal best");
+  const days = Math.max(0, Math.floor(safe(summary.dayStreak)));
+  if (days >= 2) lines.push(`🔥 ${days} day streak`);
+  return lines;
 }
 
 // -------------------------------------------------------------------- art
@@ -399,15 +427,24 @@ function text(
 
 // ---------------------------------------------------------------- sections
 
-function drawBackground(ctx: Ctx): void {
+/** Every point there was to score. The one run that gets the gold card. */
+function isPerfect(summary: RunSummary): boolean {
+  const max = stored(summary.maxScore);
+  const score = stored(summary.score);
+  return max !== null && max > 0 && score !== null && score >= max;
+}
+
+function drawBackground(ctx: Ctx, perfect: boolean): void {
   ctx.fillStyle = INK;
   ctx.fillRect(0, 0, W, H);
 
-  // A faint cyan wash behind the table, so the middle of the card reads as a
-  // viewport rather than a spreadsheet.
+  // A faint wash behind the table, so the middle of the card reads as a
+  // viewport rather than a spreadsheet. Cyan, or the score's yellow on a
+  // perfect run, which is also framed in it: the one card worth a second look.
+  const tint = perfect ? "255, 224, 61" : "79, 241, 255";
   const wash = ctx.createRadialGradient(W / 2, TABLE_TOP + 120, 40, W / 2, TABLE_TOP + 120, 700);
-  wash.addColorStop(0, "rgba(79, 241, 255, 0.07)");
-  wash.addColorStop(1, "rgba(79, 241, 255, 0)");
+  wash.addColorStop(0, `rgba(${tint}, ${perfect ? 0.12 : 0.07})`);
+  wash.addColorStop(1, `rgba(${tint}, 0)`);
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, W, H);
 
@@ -423,6 +460,17 @@ function drawBackground(ctx: Ctx): void {
     const y = rand() * H;
     const s = rand() < 0.15 ? 2 : 1;
     ctx.fillRect(Math.floor(x), Math.floor(y), s, s);
+  }
+
+  if (perfect) {
+    ctx.save();
+    ctx.strokeStyle = YELLOW;
+    ctx.lineWidth = PERFECT_FRAME_WIDTH;
+    ctx.shadowColor = "rgba(255, 224, 61, 0.6)";
+    ctx.shadowBlur = 24;
+    const inset = PERFECT_FRAME_INSET + PERFECT_FRAME_WIDTH / 2;
+    ctx.strokeRect(inset, inset, W - inset * 2, H - inset * 2);
+    ctx.restore();
   }
 }
 
@@ -476,6 +524,11 @@ function drawHero(ctx: Ctx, summary: RunSummary, arcade: string): void {
   }
 
   text(ctx, "SCORE", PAD, HERO_LABEL_Y, arcadeFont(12, arcade), LABEL);
+  const chip = isPerfect(summary) ? "PERFECT RUN" : summary.newBest ? "NEW BEST" : null;
+  if (chip) {
+    ctx.font = arcadeFont(12, arcade);
+    drawChip(ctx, chip, PAD + ctx.measureText("SCORE").width + CHIP_GAP, HERO_LABEL_Y, arcade);
+  }
 
   ctx.save();
   ctx.shadowColor = "rgba(255, 224, 61, 0.55)";
@@ -485,6 +538,35 @@ function drawHero(ctx: Ctx, summary: RunSummary, arcade: string): void {
   text(ctx, `/ ${formatScore(max)}`, PAD, HERO_MAX_Y, arcadeFont(HERO_MAX_FONT, arcade), LABEL);
 
   drawDistanceAside(ctx, summary, arcade);
+  drawDayStreak(ctx, summary, arcade);
+}
+
+/**
+ * A yellow tab with the label knocked out of it, sat on the baseline of the
+ * label it follows.
+ */
+function drawChip(ctx: Ctx, label: string, x: number, baseline: number, arcade: string): void {
+  ctx.font = arcadeFont(CHIP_FONT, arcade);
+  const w = ctx.measureText(label).width + CHIP_PAD_X * 2;
+  const top = baseline - CHIP_FONT - (CHIP_H - CHIP_FONT) / 2;
+  ctx.fillStyle = YELLOW;
+  ctx.fillRect(x, top, w, CHIP_H);
+  text(ctx, label, x + CHIP_PAD_X, baseline, arcadeFont(CHIP_FONT, arcade), INK);
+}
+
+/** Days in a row, right-aligned under the distance, on the /1,800 line. */
+function drawDayStreak(ctx: Ctx, summary: RunSummary, arcade: string): void {
+  const days = Math.max(0, Math.floor(safe(summary.dayStreak)));
+  if (days < 2) return;
+  text(
+    ctx,
+    `${days} DAY STREAK`,
+    W - PAD,
+    HERO_MAX_Y,
+    arcadeFont(DAY_STREAK_FONT, arcade),
+    CYAN,
+    "right",
+  );
 }
 
 /** Distance, right-aligned in the hero band: second billing, same eye line. */
@@ -574,7 +656,11 @@ function drawMeter(ctx: Ctx, x: number, y: number, filled: number): void {
   }
 }
 
-/** The landing sites on the left, the best streak on the right. One line. */
+/**
+ * The landing sites on the left, the longest run of correct answers on the
+ * right. One line. Said in words rather than as a "streak", because the day
+ * streak in the hero band is the streak a friend reads.
+ */
 function drawSummaryLine(ctx: Ctx, summary: RunSummary, arcade: string): void {
   const earth = earthLineFor(summary);
   if (earth) {
@@ -584,7 +670,7 @@ function drawSummaryLine(ctx: Ctx, summary: RunSummary, arcade: string): void {
   if (streak > 0) {
     text(
       ctx,
-      `BEST STREAK x${streak}`,
+      `${streak} CORRECT IN A ROW`,
       W - PAD,
       SUMMARY_TEXT_Y,
       arcadeFont(14, arcade),
