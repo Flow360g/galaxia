@@ -425,33 +425,57 @@ function EarthBoard({ demo, view, reg }: { demo: Of<"earth">; view: EarthView; r
   const left = demo.hintsTotal - view.hints;
   return (
     <>
-      <div className={styles.photo}>
-        <svg
-          viewBox="0 0 160 90"
-          preserveAspectRatio="xMidYMid slice"
-          className={styles.map}
-          style={{ transform: `scale(${MAP_SCALE[view.zoom] ?? 1})` }}
-        >
-          {/* A lagoon city from above: water, the islands, one canal. */}
-          <rect width="160" height="90" fill="#123049" />
-          <path
-            d="M34 30 C 48 16, 92 12, 118 24 C 134 32, 132 58, 116 66 C 94 78, 52 76, 38 64 C 26 54, 26 38, 34 30 Z"
-            fill="#8a7b62"
-          />
-          <path
-            d="M44 38 C 60 30, 70 52, 86 44 S 108 34, 118 46"
-            fill="none"
-            stroke="#123049"
-            strokeWidth="4"
-          />
-          <path
-            d="M50 58 L 62 50 M 70 62 L 78 54 M 92 58 L 100 50 M 60 34 L 66 26 M 96 32 L 104 26"
-            stroke="#123049"
-            strokeWidth="1.4"
-          />
-          <path d="M8 76 C 30 70, 50 86, 72 84" fill="none" stroke="#1d4a6b" strokeWidth="6" />
+      {/* The optic, as the station draws it: a round view with a ring of
+          ticks and a crosshair over a drawn lagoon city. Only the ground is
+          invented; the demo fetches nothing. */}
+      <div className={styles.optic}>
+        <div className={styles.opticView}>
+          <svg
+            viewBox="0 0 100 100"
+            className={styles.map}
+            style={{ transform: `scale(${MAP_SCALE[view.zoom] ?? 1})` }}
+          >
+            <rect width="100" height="100" fill="#10283d" />
+            <path
+              d="M18 30 C 28 16, 62 12, 80 24 C 92 34, 90 60, 78 72 C 64 86, 34 86, 22 72 C 12 60, 10 42, 18 30 Z"
+              fill="#6f6a4f"
+            />
+            <path d="M24 58 C 30 50, 38 64, 46 54 C 52 46, 50 38, 58 40" fill="#355a36" opacity="0.8" />
+            <path
+              d="M26 44 C 38 36, 46 58, 58 48 S 74 34, 82 46"
+              fill="none"
+              stroke="#10283d"
+              strokeWidth="3.2"
+            />
+            <path
+              d="M30 64 L 38 58 M 46 70 L 52 62 M 62 66 L 68 58 M 40 32 L 44 24 M 64 30 L 70 24"
+              stroke="#10283d"
+              strokeWidth="1.1"
+            />
+            <path d="M6 88 C 22 82, 36 96, 52 94" fill="none" stroke="#1a4462" strokeWidth="5" />
+          </svg>
+        </div>
+        <svg viewBox="0 0 100 100" className={styles.opticRing} aria-hidden="true">
+          <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(79,241,255,0.55)" strokeWidth="0.6" />
+          {Array.from({ length: 60 }, (_, i) => {
+            const a = (i / 60) * Math.PI * 2;
+            const inner = i % 5 === 0 ? 42.5 : 45;
+            return (
+              <line
+                key={i}
+                x1={50 + Math.cos(a) * inner}
+                y1={50 + Math.sin(a) * inner}
+                x2={50 + Math.cos(a) * 47.5}
+                y2={50 + Math.sin(a) * 47.5}
+                stroke="rgba(79,241,255,0.8)"
+                strokeWidth={i % 5 === 0 ? 0.9 : 0.5}
+              />
+            );
+          })}
+          <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(79,241,255,0.35)" strokeWidth="0.3" />
+          <line x1="4" y1="50" x2="96" y2="50" stroke="rgba(79,241,255,0.35)" strokeWidth="0.3" />
+          <rect x="45" y="45" width="10" height="10" fill="none" stroke="rgba(79,241,255,0.7)" strokeWidth="0.5" />
         </svg>
-        <span className={`${styles.photoTag} arcade`}>SATELLITE VIEW</span>
       </div>
       <div className={feed.optics}>
         <span className={`${feed.opticsLabel} arcade`}>Zoom</span>
