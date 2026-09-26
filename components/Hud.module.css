@@ -1338,6 +1338,19 @@
   align-items: center;
   text-align: center;
   gap: 8px;
+  /* It scrolls inside itself: with the example played in full and MORE DETAIL
+     open it is taller than any phone, and a card that grew past the band
+     could not be scrolled at all. */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Between phases the band may run most of the way down the screen. Nothing is
+   timed and nothing is in the sky, and the ship is still there below it. */
+.board.boardWaypoint {
+  max-height: calc(100dvh - max(16px, env(safe-area-inset-bottom)));
 }
 
 .waypointEntering {

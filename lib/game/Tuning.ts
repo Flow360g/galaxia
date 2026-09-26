@@ -515,6 +515,11 @@ export const STATION = {
    */
   hailHoldSeconds: 1.5,
   /**
+   * Milliseconds the answer box ignores taps after the feed opens, so a tap on
+   * the hail's TAP TO CONTINUE cannot fall through to it and open the keyboard.
+   */
+  inputGuardMs: 500,
+  /**
    * Seconds the verdict holds in the middle of the screen before it clears.
    * Long enough to read a word and a figure, short enough to be gone by the
    * time the player looks for the answer and the fact underneath it.

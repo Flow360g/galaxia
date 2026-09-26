@@ -32,6 +32,10 @@
   gap: 14px;
   color: #ffffff;
   animation: rise 240ms ease-out;
+  /* MORE DETAIL opened under the example is taller than a short phone: the
+     card scrolls inside itself rather than running off the screen. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .tag {

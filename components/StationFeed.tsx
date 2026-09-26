@@ -29,6 +29,8 @@ interface Props {
   onNext: () => void;
   /** Whether another site follows this one, for the continue button's wording. */
   more: boolean;
+  /** The answer box takes taps. False for a moment after the feed opens. */
+  armed: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export function StationFeed({
   onSubmit,
   onNext,
   more,
+  armed,
 }: Props) {
   const [typed, setTyped] = useState("");
   const [countryNudge, setCountryNudge] = useState(false);
@@ -313,7 +316,7 @@ export function StationFeed({
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}
-                disabled={!state.feedReady}
+                disabled={!state.feedReady || !armed}
                 data-testid="site-answer"
               />
               <button

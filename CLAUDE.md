@@ -453,7 +453,11 @@ Rules that fall out of this:
   last word or on a tap. `Station.tsx` holds `feedArrived` back until then,
   which is the whole of that mechanism; the feed is mounted and merely hidden
   underneath, so the tiles settle while he talks. Nobody is timed on reading,
-  here or on a cluster's read screen.
+  here or on a cluster's read screen. The answer box sits right under his
+  TAP TO CONTINUE, so it takes no taps for `STATION.inputGuardMs` after the
+  feed opens: a tap landing as it opened fell through, focused the box and put
+  the keyboard over the photo before anyone had looked at it. Never focus the
+  box for the player.
 - **The verdict aboard is a radio call.** A site is named on a screen with no
   lane and no hull, so nothing reaches `onLock` or `onContact` and the flight's
   contact cues would be describing something that never happened. `submitSite`
@@ -532,8 +536,14 @@ path from a shared link to flying.
   tap, so NEXT never moves the waypoint card on. The rest is a picture with no pointer
   events, and the rules stay on the card as screen reader text. NAME THE PLACE's example draws its zoom dial, hint
   button and answer row with `StationFeed.module.css` itself, so it cannot
-  drift from the controls the player will press. The waypoint card is taller for it and reaches the
-  middle of the screen, so the e2e taps the card itself to move on.
+  drift from the controls the player will press, and its view is the station's
+  round optic, not a strip. The waypoint card is taller for it: between phases
+  the band may run most of the way down the screen (`.boardWaypoint`), since
+  nothing is timed and nothing is in the sky, and the card scrolls inside
+  itself (`overscroll-behavior: contain`). Squeezed under the band's usual cap
+  it was cramped, and with MORE DETAIL open it ran off the screen and could
+  not be scrolled. The launch card scrolls inside itself the same way. The e2e
+  taps the card itself to move on.
 - **Every phase card carries the rest, shut.** The launch card and the
   waypoint card both read `phaseGuide(type, round)` and render
   `ScoringDisclosure`: a MORE DETAIL button, collapsed by default, that opens

@@ -4,6 +4,10 @@
    they get the moment READY is pressed. Nothing here takes a tap. */
 
 .demo {
+  /* Full width and left aligned even inside the centred waypoint card. */
+  align-self: stretch;
+  width: 100%;
+  text-align: left;
   /* Set from DEMO.moveMs on the element, so the glide and the slider agree. */
   --move: 600ms;
   display: flex;
@@ -251,11 +255,66 @@
 }
 
 /* NAME THE PLACE: a drawn aerial, since the demo fetches nothing. */
-.photo {
+/* The round optic. A square box, the view clipped to a circle inside it and
+   the tick ring drawn over the top, unscaled, so zooming moves the ground and
+   not the instrument. */
+.optic {
   position: relative;
-  height: 96px;
+  width: min(100%, 240px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+
+.opticView {
+  position: absolute;
+  /* Inside the bezel ring (r 46.6 of 100), so no ground shows past it. */
+  inset: 4.5%;
+  border-radius: 50%;
   overflow: hidden;
-  border: 1px solid var(--rule-dark);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7);
+}
+
+.opticRing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 0 solid rgba(79, 241, 255, 0.7);
+}
+
+.bracketTl {
+  top: -6px;
+  left: -6px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+
+.bracketTr {
+  top: -6px;
+  right: -6px;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+
+.bracketBl {
+  bottom: -6px;
+  left: -6px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+
+.bracketBr {
+  bottom: -6px;
+  right: -6px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
 }
 
 .map {
@@ -265,14 +324,6 @@
   transition: transform var(--move) ease-out;
 }
 
-.photoTag {
-  position: absolute;
-  left: 6px;
-  top: 6px;
-  font-size: 9px;
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
 
 
 
@@ -339,8 +390,8 @@
   min-height: 44px;
 }
 
-.compact .photo {
-  height: 72px;
+.compact .optic {
+  width: min(100%, 180px);
 }
 
 .compact .slider {

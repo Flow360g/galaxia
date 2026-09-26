@@ -108,6 +108,18 @@ export function Station({
     if (settled.current) onFeedReady();
   }, [onFeedReady]);
 
+  // The answer box sits right under the hail's TAP TO CONTINUE, and the feed
+  // also opens on its own a beat after the last word. A tap landing as it
+  // opens, or the second of a double tap, fell through to the box, focused it
+  // and put the keyboard over half the screen before anyone had looked at the
+  // photo. The box takes no taps until the feed has been up a moment.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => setArmed(true), STATION.inputGuardMs);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
   const keyboard = useSyncExternalStore(subscribeViewport, keyboardInset, () => 0);
 
   return (
@@ -146,6 +158,7 @@ export function Station({
                 question={question}
                 state={state}
                 more={more}
+                armed={armed}
                 onFeedReady={feedSettled}
                 onBuyIntel={onBuyIntel}
                 onOptics={onOptics}

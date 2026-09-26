@@ -222,7 +222,9 @@ export function Hud({
         />
       ) : null}
 
-      <div className={styles.board}>
+      {/* The waypoint card may take more of the screen than a question: nothing
+          is timed while it is up, and it scrolls inside itself. */}
+      <div className={`${styles.board} ${waypoint ? styles.boardWaypoint : ""}`}>
         <header className={styles.top}>
           <div className={styles.readout}>
             <span className="label">
@@ -898,7 +900,6 @@ function WaypointCard({
           {guide.demo ? (
             <PhaseDemo
               demo={guide.demo}
-              compact
               // SKIP moves the run on, so it is offered once the card takes a tap.
               onSkip={awaitingTap ? onConfirm : undefined}
             />
