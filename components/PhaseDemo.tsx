@@ -413,7 +413,7 @@ function McqBoard({ demo, view, reg }: { demo: Of<"mcq">; view: McqView; reg: Re
 }
 
 /** The zoom dial's picture scale, Out to In. */
-const MAP_SCALE: Record<number, number> = { [-1]: 1, 0: 1.35, 1: 1.8 };
+const MAP_SCALE: Record<number, number> = { [-1]: 1, 0: 1.5, 1: 2.3 };
 
 /**
  * NAME THE PLACE, drawn with the station feed's own classes for the zoom dial,
@@ -430,52 +430,75 @@ function EarthBoard({ demo, view, reg }: { demo: Of<"earth">; view: EarthView; r
           invented; the demo fetches nothing. */}
       <div className={styles.optic}>
         <div className={styles.opticView}>
+          {/* Drawn wider than the view, water all round, so the circle is
+              filled at every step of the dial and zooming out shows more sea
+              rather than the edge of the picture. */}
           <svg
-            viewBox="0 0 100 100"
+            viewBox="-60 -60 220 220"
             className={styles.map}
             style={{ transform: `scale(${MAP_SCALE[view.zoom] ?? 1})` }}
           >
-            <rect width="100" height="100" fill="#10283d" />
+            <rect x="-60" y="-60" width="220" height="220" fill="#0c2436" />
+            <path d="M-60 118 C -20 104, 30 128, 70 116 S 140 96, 160 112 L 160 160 L -60 160 Z" fill="#0f2c42" />
+            {/* The mainland, with its beaches picked out. */}
             <path
-              d="M18 30 C 28 16, 62 12, 80 24 C 92 34, 90 60, 78 72 C 64 86, 34 86, 22 72 C 12 60, 10 42, 18 30 Z"
-              fill="#6f6a4f"
+              d="M-60 -60 L 160 -60 L 160 8 C 132 2, 118 20, 104 14 C 90 8, 84 22, 70 20 C 52 18, 40 4, 22 10 C 4 16, -10 2, -30 8 C -44 12, -52 4, -60 6 Z"
+              fill="#2f3d2c"
+              stroke="#b9ad86"
+              strokeWidth="1.2"
             />
-            <path d="M24 58 C 30 50, 38 64, 46 54 C 52 46, 50 38, 58 40" fill="#355a36" opacity="0.8" />
+            {/* The lagoon city on its islands. */}
             <path
-              d="M26 44 C 38 36, 46 58, 58 48 S 74 34, 82 46"
-              fill="none"
-              stroke="#10283d"
-              strokeWidth="3.2"
+              d="M18 38 C 30 26, 64 24, 80 34 C 92 42, 90 66, 78 74 C 64 84, 34 84, 22 72 C 12 62, 10 48, 18 38 Z"
+              fill="#6e6a58"
+              stroke="#b9ad86"
+              strokeWidth="0.9"
             />
-            <path
-              d="M30 64 L 38 58 M 46 70 L 52 62 M 62 66 L 68 58 M 40 32 L 44 24 M 64 30 L 70 24"
-              stroke="#10283d"
-              strokeWidth="1.1"
-            />
-            <path d="M6 88 C 22 82, 36 96, 52 94" fill="none" stroke="#1a4462" strokeWidth="5" />
+            <g fill="#8a856f">
+              {[
+                [26, 44], [34, 40], [42, 38], [50, 38], [58, 40], [66, 42], [74, 46],
+                [24, 54], [32, 58], [40, 62], [62, 60], [70, 58], [78, 56],
+                [28, 66], [36, 70], [44, 74], [52, 74], [60, 70], [68, 68],
+              ].map(([x, y]) => (
+                <rect key={`${x}-${y}`} x={x} y={y} width="5" height="4" />
+              ))}
+            </g>
+            <path d="M22 50 C 34 42, 44 64, 56 54 S 72 42, 84 50" fill="none" stroke="#0c2436" strokeWidth="2.6" />
+            <path d="M36 44 L 40 76 M 60 42 L 56 76" stroke="#0c2436" strokeWidth="0.9" />
+            {/* A causeway to the mainland, and green on the far shore. */}
+            <path d="M80 36 L 104 16" stroke="#8a856f" strokeWidth="1.6" />
+            <path d="M-20 -20 C 0 -34, 30 -24, 40 -40 L 80 -60 L -60 -60 Z" fill="#26341f" />
+            <circle cx="120" cy="90" r="10" fill="#2f3d2c" stroke="#b9ad86" strokeWidth="0.8" />
           </svg>
         </div>
         <svg viewBox="0 0 100 100" className={styles.opticRing} aria-hidden="true">
-          <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(79,241,255,0.55)" strokeWidth="0.6" />
+          {/* The bezel, then the tick ring and the crosshair on the glass. */}
+          <circle cx="50" cy="50" r="46.6" fill="none" stroke="#06101b" strokeWidth="2.2" />
+          <circle cx="50" cy="50" r="47.8" fill="none" stroke="rgba(79,241,255,0.55)" strokeWidth="0.5" />
           {Array.from({ length: 60 }, (_, i) => {
             const a = (i / 60) * Math.PI * 2;
-            const inner = i % 5 === 0 ? 42.5 : 45;
+            const inner = i % 5 === 0 ? 41.5 : 43.5;
             return (
               <line
                 key={i}
                 x1={50 + Math.cos(a) * inner}
                 y1={50 + Math.sin(a) * inner}
-                x2={50 + Math.cos(a) * 47.5}
-                y2={50 + Math.sin(a) * 47.5}
-                stroke="rgba(79,241,255,0.8)"
-                strokeWidth={i % 5 === 0 ? 0.9 : 0.5}
+                x2={50 + Math.cos(a) * 45.4}
+                y2={50 + Math.sin(a) * 45.4}
+                stroke="rgba(79,241,255,0.85)"
+                strokeWidth={i % 5 === 0 ? 0.9 : 0.45}
               />
             );
           })}
-          <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(79,241,255,0.35)" strokeWidth="0.3" />
-          <line x1="4" y1="50" x2="96" y2="50" stroke="rgba(79,241,255,0.35)" strokeWidth="0.3" />
-          <rect x="45" y="45" width="10" height="10" fill="none" stroke="rgba(79,241,255,0.7)" strokeWidth="0.5" />
+          <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(79,241,255,0.3)" strokeWidth="0.3" />
+          <line x1="6" y1="50" x2="94" y2="50" stroke="rgba(79,241,255,0.3)" strokeWidth="0.3" />
+          <rect x="45" y="45" width="10" height="10" fill="none" stroke="rgba(79,241,255,0.75)" strokeWidth="0.5" />
         </svg>
+        {/* The housing's corner brackets, as the station draws them. */}
+        <span className={`${styles.bracket} ${styles.bracketTl}`} />
+        <span className={`${styles.bracket} ${styles.bracketTr}`} />
+        <span className={`${styles.bracket} ${styles.bracketBl}`} />
+        <span className={`${styles.bracket} ${styles.bracketBr}`} />
       </div>
       <div className={feed.optics}>
         <span className={`${feed.opticsLabel} arcade`}>Zoom</span>
