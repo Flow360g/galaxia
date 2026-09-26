@@ -937,6 +937,15 @@ export class Engine {
   }
 
   /**
+   * The `?squad=1` bonus round's two sounds: a fanfare as it slams in, and a
+   * refusal on the verdict. It scores nothing, so it borrows existing cues.
+   */
+  bonusCue(kind: "reveal" | "verdict"): void {
+    if (kind === "reveal") this.audio.tallyTotal("great");
+    else this.audio.site(false);
+  }
+
+  /**
    * The ending plays over the station (see `Orbit.reinforce`): the music turns
    * to what the landing sites bought, a victory or the invasion, and lands on
    * a stinger. The shell calls it because the shell sequences the screens;

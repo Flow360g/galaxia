@@ -15,7 +15,7 @@ import styles from "./page.module.css";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ round?: string; debug?: string }>;
+  searchParams: Promise<{ round?: string; debug?: string; squad?: string }>;
 }) {
   // Read per request rather than prerendered, so the title screen turns
   // over with the round (see `DAILY` in `Tuning.ts`). `?round=` and `?debug=1` are the same QA
@@ -28,6 +28,8 @@ export default async function Home({
   const query = [
     params.round ? `round=${encodeURIComponent(params.round)}` : "",
     params.debug === "1" ? "debug=1" : "",
+    // The prank bonus question rides through Press Start. See BonusQuestion.
+    params.squad === "1" ? "squad=1" : "",
   ]
     .filter(Boolean)
     .join("&");
