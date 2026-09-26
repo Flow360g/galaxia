@@ -27,6 +27,7 @@ import { Transmission } from "./Transmission";
 import { Hud } from "./Hud";
 import { Station } from "./Station";
 import { ScoreTally } from "./ScoreTally";
+import { BonusQuestion } from "./BonusQuestion";
 import { ShareCard } from "./ShareCard";
 import { DebugStats } from "./DebugStats";
 import { SimSheet } from "./SimSheet";
@@ -61,6 +62,11 @@ interface Props {
    * date, with a pause tab for notes. Recorded nowhere, like practice.
    */
   sim?: { authored: boolean };
+  /**
+   * `?squad=1`: a prank bonus question between the ending and the tally.
+   * Scores nothing and is recorded nowhere; the run is otherwise the day's.
+   */
+  bonus?: boolean;
 }
 
 /**
@@ -78,6 +84,7 @@ export function GameCanvas({
   practice = false,
   practiceShip,
   sim,
+  bonus = false,
 }: Props) {
   /** Practice and simulation both leave no trace: no run saved, nothing tracked. */
   const unrecorded = practice || sim !== undefined;
@@ -128,6 +135,8 @@ export function GameCanvas({
   const [ended, setEnded] = useState(false);
   /** Soap's banner is down: it drops in a beat into the pull, not on the cut. */
   const [endingBanner, setEndingBanner] = useState(false);
+  /** The `?squad=1` bonus question has been answered and tapped away. */
+  const [bonusDone, setBonusDone] = useState(false);
   /** This run has been aboard the station, so it ends there too. */
   const [aboard, setAboard] = useState(false);
   /**
@@ -281,8 +290,15 @@ export function GameCanvas({
     if (endedRef.current) return;
     endedRef.current = true;
     setEnded(true);
+    // The bonus question goes first, and the finale's riser waits for it.
+    if (!bonus) engineRef.current?.finale();
+  }, [bonus]);
+
+  const finishBonus = useCallback(() => {
+    setBonusDone(true);
     engineRef.current?.finale();
   }, []);
+  const bonusPending = bonus && !bonusDone;
 
   useEffect(() => {
     if (ending === null || ended) return;
@@ -374,6 +390,7 @@ export function GameCanvas({
     setEnded(false);
     endedRef.current = false;
     setEndingBanner(false);
+    setBonusDone(false);
     setAboard(false);
     setState(null);
     setLaunched(false);
@@ -461,7 +478,15 @@ export function GameCanvas({
         </>
       ) : null}
 
-      {summary && ended && !tallied ? (
+      {summary && ended && bonusPending ? (
+        <BonusQuestion
+          onReveal={() => engineRef.current?.bonusCue("reveal")}
+          onVerdict={() => engineRef.current?.bonusCue("verdict")}
+          onDone={finishBonus}
+        />
+      ) : null}
+
+      {summary && ended && !bonusPending && !tallied ? (
         <ScoreTally
           summary={summary}
           onDone={() => setTallied(true)}

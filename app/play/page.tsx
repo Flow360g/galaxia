@@ -19,6 +19,7 @@ export default async function PlayPage({
     shuffle?: string;
     ship?: string;
     sim?: string;
+    squad?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -59,6 +60,8 @@ export default async function PlayPage({
       // A hull picked on `/profile?debug=1` or `/dev`, locked or not. Never
       // on the daily run.
       practiceShip={practice || sim ? params.ship : undefined}
+      // `?squad=1`: the prank bonus question after the last site. See BonusQuestion.
+      bonus={params.squad === "1"}
     />
   );
 }
