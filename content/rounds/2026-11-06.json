@@ -1,8 +1,119 @@
 {
   "date": "2026-11-06",
-  "roundNumber": 49,
+  "roundNumber": 46,
   "seed": 20261106,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which of these are dog breeds?",
+      "options": [
+        "Shih Tzu",
+        "Ragdoll",
+        "Sphynx",
+        "Vizsla",
+        "Bengal",
+        "Whippet"
+      ],
+      "answers": [
+        0,
+        3,
+        5
+      ],
+      "fact": "Ragdoll, Bengal and Sphynx are all cat breeds. A Sphynx has almost no fur."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which of these are root vegetables?",
+      "options": [
+        "Celery",
+        "Leek",
+        "Beetroot",
+        "Parsnip",
+        "Asparagus",
+        "Carrot"
+      ],
+      "answers": [
+        2,
+        3,
+        5
+      ],
+      "fact": "Carrots were mostly purple or yellow until orange ones were bred in the Netherlands in the 1600s."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "At what temperature does water boil, in degrees Fahrenheit?",
+      "answer": 212,
+      "min": 0,
+      "max": 1000,
+      "unit": "°F",
+      "fact": "212 °F at sea level. Water freezes at 32 °F, so the two are 180 degrees apart."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How far do you travel in an Olympic triathlon, in kilometres?",
+      "answer": 51.5,
+      "min": 0,
+      "max": 100,
+      "unit": "km",
+      "route": "A 1.5 km swim, a 40 km bike ride and a 10 km run.",
+      "fact": "51.5 km in all, and the best finish in well under two hours."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which mountains are usually taken as the border of Europe and Asia?",
+      "options": [
+        "Pyrenees",
+        "Carpathians",
+        "Urals",
+        "Alps"
+      ],
+      "answer": 2,
+      "hint": "They run north to south through Russia.",
+      "fact": "The Urals stretch about 2,500 km from the Arctic Ocean to Kazakhstan."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Who wrote the novel 1984?",
+      "options": [
+        "H. G. Wells",
+        "Orwell",
+        "Bradbury",
+        "Huxley"
+      ],
+      "answer": 1,
+      "hint": "The same author wrote Animal Farm.",
+      "fact": "George Orwell was a pen name. His real name was Eric Blair."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,116 +132,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
-      "options": [
-        "Romania",
-        "Portugal",
-        "Greece",
-        "Turkey",
-        "Egypt",
-        "Austria"
-      ],
-      "answers": [
-        2,
-        3,
-        4
-      ],
-      "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these birds cannot fly?",
-      "options": [
-        "Kiwi",
-        "Albatross",
-        "Ostrich",
-        "Penguin",
-        "Swan",
-        "Pelican"
-      ],
-      "answers": [
-        0,
-        2,
-        3
-      ],
-      "fact": "An ostrich cannot get off the ground but can outrun a racehorse. A penguin flies, just underwater."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "How tall is the Great Pyramid of Giza, in metres?",
-      "answer": 147,
-      "min": 0,
-      "max": 250,
-      "unit": "m",
-      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How many years ago did the last dinosaurs die out, in millions?",
-      "answer": 66,
-      "min": 0,
-      "max": 100,
-      "unit": "million years",
-      "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "Which metal is liquid at room temperature?",
-      "options": [
-        "Zinc",
-        "Tin",
-        "Lead",
-        "Mercury"
-      ],
-      "answer": 3,
-      "hint": "It is the one that was used in old thermometers.",
-      "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Who composed The Four Seasons?",
-      "options": [
-        "Mozart",
-        "Handel",
-        "Vivaldi",
-        "Bach"
-      ],
-      "answer": 2,
-      "hint": "He was a priest from Venice, nicknamed the Red Priest for his hair.",
-      "fact": "The Four Seasons is four violin concertos, one for each season, written around 1720."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

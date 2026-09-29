@@ -1,106 +1,106 @@
 {
   "date": "2026-10-28",
-  "roundNumber": 40,
+  "roundNumber": 37,
   "seed": 20261028,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these are types of pasta?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these countries are in Asia?",
       "options": [
-        "Risotto",
-        "Farfalle",
-        "Focaccia",
-        "Fusilli",
-        "Penne",
-        "Polenta"
+        "Belize",
+        "Chad",
+        "Malta",
+        "Laos",
+        "Nepal",
+        "Oman"
       ],
       "answers": [
-        1,
         3,
-        4
+        4,
+        5
       ],
-      "fact": "Farfalle means butterflies in Italian, and fusilli comes from the word for a spindle."
+      "fact": "Oman sits on the Arabian Peninsula, which counts as part of Asia."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
+      "topic": "sport",
       "difficulty": 1,
-      "prompt": "Which of these are birds of prey?",
+      "prompt": "Which of these are positions in football?",
       "options": [
-        "Albatross",
-        "Osprey",
-        "Eagle",
-        "Kestrel",
-        "Heron",
-        "Pelican"
+        "Hooker",
+        "Goal attack",
+        "Winger",
+        "Sweeper",
+        "Pitcher",
+        "Striker"
       ],
       "answers": [
-        1,
         2,
-        3
+        3,
+        5
       ],
-      "fact": "A kestrel can hang still in the air against the wind while it watches the grass for mice."
+      "fact": "A pitcher plays baseball, a hooker plays rugby and goal attack plays netball."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "sport",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "How high is a basketball hoop, in centimetres?",
-      "answer": 305,
+      "prompt": "How high is Mount Fuji, in metres?",
+      "answer": 3776,
       "min": 0,
-      "max": 1000,
-      "unit": "cm",
-      "fact": "Ten feet, the height James Naismith nailed his peach baskets at in 1891, and it has never changed."
+      "max": 10000,
+      "unit": "m",
+      "fact": "3,776 m, the highest mountain in Japan. Its last eruption was in 1707."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
+      "topic": "arts",
       "difficulty": 3,
-      "prompt": "How old was Alexander the Great when he died?",
-      "answer": 32,
-      "min": 0,
-      "max": 100,
-      "unit": "years",
-      "fact": "32, and by then he ruled an empire stretching from Greece to what is now Pakistan."
+      "prompt": "In what year was the first part of Don Quixote published?",
+      "answer": 1605,
+      "min": 1500,
+      "max": 1700,
+      "year": true,
+      "fact": "1605. Cervantes and Shakespeare both died in 1616."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "science",
+      "topic": "food",
       "difficulty": 2,
-      "prompt": "Which part of the eye controls how much light gets in?",
+      "prompt": "Which continent did the tomato originally come from?",
       "options": [
-        "Cornea",
-        "Lens",
-        "Iris",
-        "Retina"
+        "Asia",
+        "South America",
+        "Africa",
+        "Europe"
       ],
-      "answer": 2,
-      "hint": "It is the coloured part.",
-      "fact": "The iris is a ring of muscle that opens and closes the pupil like a camera shutter."
+      "answer": 1,
+      "hint": "Italy only got them in the 1500s.",
+      "fact": "Tomatoes were grown in Europe for years as decoration, because people thought they were poisonous."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "What is a male bee called?",
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "Which country won the first football World Cup, in 1930?",
       "options": [
-        "A worker",
-        "A drone",
-        "A buck",
-        "A soldier"
+        "Brazil",
+        "Italy",
+        "Argentina",
+        "Uruguay"
       ],
-      "answer": 1,
-      "hint": "It is also a word for a flying robot.",
-      "fact": "Drones do no work in the hive. Their only job is to mate with a queen."
+      "answer": 3,
+      "hint": "The winners were also the hosts.",
+      "fact": "Uruguay beat neighbours Argentina 4-2 in the final in Montevideo."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

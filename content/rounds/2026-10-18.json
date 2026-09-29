@@ -1,106 +1,106 @@
 {
   "date": "2026-10-18",
-  "roundNumber": 30,
+  "roundNumber": 27,
   "seed": 20261018,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "Which of these go into a classic basil pesto?",
+      "prompt": "Which of these are Greek gods, not Roman ones?",
       "options": [
-        "Pine nuts",
-        "Parmesan",
-        "Tomato",
-        "Oregano",
-        "Coriander",
-        "Garlic"
+        "Jupiter",
+        "Athena",
+        "Mars",
+        "Venus",
+        "Hermes",
+        "Ares"
       ],
       "answers": [
-        0,
         1,
+        4,
         5
       ],
-      "fact": "Pesto comes from Genoa and takes its name from pestare, to pound, because it was made with a pestle and mortar."
+      "fact": "The Romans took over most of the Greek gods and renamed them. Hermes became Mercury and Ares became Mars."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "Which of these are fish?",
+      "prompt": "Which of these were Viking homelands?",
       "options": [
-        "Shark",
-        "Dolphin",
-        "Seahorse",
-        "Jellyfish",
-        "Eel",
-        "Starfish"
+        "Scotland",
+        "Norway",
+        "Finland",
+        "Sweden",
+        "Denmark",
+        "Iceland"
       ],
       "answers": [
-        0,
-        2,
+        1,
+        3,
         4
       ],
-      "fact": "A seahorse is a fish, and it is the male that carries the eggs and gives birth."
+      "fact": "Iceland was settled by Vikings from Norway in the 870s, but the raids set out from Scandinavia itself."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How long is the Suez Canal, in kilometres?",
-      "answer": 193,
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "How many calories are in one gram of fat?",
+      "answer": 9,
       "min": 0,
-      "max": 500,
-      "unit": "km",
-      "fact": "About 193 km, joining the Mediterranean to the Red Sea with no locks at all."
+      "max": 25,
+      "unit": "calories",
+      "fact": "Nine, more than twice the four in a gram of sugar or protein."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "How many years did Queen Victoria reign?",
-      "answer": 63,
+      "prompt": "How many years did Michelangelo spend painting the Sistine Chapel ceiling?",
+      "answer": 4,
       "min": 0,
-      "max": 200,
+      "max": 10,
       "unit": "years",
-      "fact": "63 years, from 1837 to 1901. Elizabeth II passed her record in 2015."
+      "fact": "Four years, 1508 to 1512, mostly standing up and painting above his head."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
+      "topic": "geography",
       "difficulty": 1,
-      "prompt": "Which group was Beyoncé a member of?",
+      "prompt": "What is the smallest country in the world?",
       "options": [
-        "TLC",
-        "Destiny's Child",
-        "Spice Girls",
-        "En Vogue"
+        "Vatican City",
+        "Monaco",
+        "Malta",
+        "San Marino"
       ],
-      "answer": 1,
-      "hint": "Kelly Rowland was in it too.",
-      "fact": "Destiny's Child took its name from a passage in the Book of Isaiah."
+      "answer": 0,
+      "hint": "It sits entirely inside a capital city.",
+      "fact": "Vatican City covers less than half a square kilometre, smaller than many city parks."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "history",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "What was the capital of the Byzantine Empire?",
+      "prompt": "Which band made the album Rumours?",
       "options": [
-        "Athens",
-        "Alexandria",
-        "Constantinople",
-        "Rome"
+        "Fleetwood Mac",
+        "Led Zeppelin",
+        "The Doors",
+        "Eagles"
       ],
-      "answer": 2,
-      "hint": "Today it is called Istanbul.",
-      "fact": "Constantinople stood for more than a thousand years until the Ottomans took it in 1453."
+      "answer": 0,
+      "hint": "Stevie Nicks sang for them.",
+      "fact": "Rumours was made in 1976 while two couples in the band were breaking up."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

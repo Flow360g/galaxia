@@ -1,106 +1,106 @@
 {
   "date": "2026-10-10",
-  "roundNumber": 22,
+  "roundNumber": 19,
   "seed": 20261010,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "arts",
+      "topic": "food",
       "difficulty": 2,
-      "prompt": "Which of these books did Roald Dahl write?",
+      "prompt": "Which of these drinks are made from grapes?",
       "options": [
-        "Matilda",
-        "Stig of the Dump",
-        "The Twits",
-        "The Hobbit",
-        "Peter Pan",
-        "The BFG"
+        "Cider",
+        "Champagne",
+        "Grappa",
+        "Whisky",
+        "Sake",
+        "Brandy"
       ],
       "answers": [
-        0,
+        1,
         2,
         5
       ],
-      "fact": "The BFG speaks his own language, gobblefunk, which Dahl made up."
+      "fact": "Grappa is made from the skins and seeds left over after the grapes have been pressed for wine."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "misc",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these currencies are used in Asia?",
+      "prompt": "Which of these are insects?",
       "options": [
-        "Baht",
-        "Yen",
-        "Won",
-        "Rand",
-        "Zloty",
-        "Krona"
+        "Beetle",
+        "Scorpion",
+        "Earwig",
+        "Woodlouse",
+        "Ant",
+        "Spider"
       ],
       "answers": [
         0,
-        1,
-        2
+        2,
+        4
       ],
-      "fact": "The baht began as a weight for silver, and in Thailand gold is still sold by the baht."
+      "fact": "Insects have six legs. Spiders and scorpions have eight, and a woodlouse is a crustacean, like a crab."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "How many hours a day does a koala sleep?",
-      "answer": 20,
-      "min": 0,
-      "max": 50,
-      "unit": "hours",
-      "fact": "Around 20. Gum leaves give it very little energy, so it saves what it can."
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "In what year did Gutenberg start printing with movable type in Europe?",
+      "answer": 1440,
+      "min": 1300,
+      "max": 1500,
+      "year": true,
+      "fact": "Around 1440 in Mainz. His Bible, finished around 1455, was the first major book printed in Europe."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "How tall is the Statue of Liberty from the ground to the tip of the torch, in metres?",
-      "answer": 93,
+      "prompt": "How much does an adult human brain weigh, in kilograms?",
+      "answer": 1.4,
       "min": 0,
-      "max": 250,
-      "unit": "m",
-      "fact": "About 93 m with its pedestal. The copper skin is thinner than two coins stacked together."
+      "max": 5,
+      "unit": "kg",
+      "fact": "About 1.4 kg, yet it uses around a fifth of the body's energy."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "science",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "What is the largest organ of the human body?",
+      "prompt": "What is a group of crows called?",
       "options": [
-        "Skin",
-        "Liver",
-        "Lungs",
-        "Brain"
+        "A murder",
+        "A parliament",
+        "A pod",
+        "A gaggle"
       ],
       "answer": 0,
-      "hint": "It is on the outside.",
-      "fact": "An adult's skin weighs around four kilograms."
+      "hint": "It is the darkest name of the four.",
+      "fact": "A parliament is owls, a gaggle is geese on the ground, and a pod is whales or dolphins."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which Pixar film is set mostly in Paris?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which organ makes insulin?",
       "options": [
-        "Up",
-        "Ratatouille",
-        "Coco",
-        "Luca"
+        "Spleen",
+        "Kidney",
+        "Pancreas",
+        "Liver"
       ],
-      "answer": 1,
-      "hint": "It is about a rat who wants to be a chef.",
-      "fact": "Pixar's team ate at top Paris restaurants and took a cooking class to get the kitchen scenes right."
+      "answer": 2,
+      "hint": "It sits behind the stomach.",
+      "fact": "Insulin was first used to treat diabetes in 1922, on a 14-year-old boy in Toronto."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

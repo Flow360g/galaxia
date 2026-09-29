@@ -1,6 +1,6 @@
 {
   "date": "2026-11-11",
-  "roundNumber": 54,
+  "roundNumber": 51,
   "seed": 20261111,
   "theme": "General knowledge",
   "stages": [
@@ -27,100 +27,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which of these bands come from Australia?",
+      "prompt": "Which of these martial arts come from Japan?",
       "options": [
-        "Blur",
-        "AC/DC",
-        "INXS",
-        "Split Enz",
-        "Tame Impala",
-        "The Cure"
-      ],
-      "answers": [
-        1,
-        2,
-        4
-      ],
-      "fact": "AC/DC formed in Sydney in 1973 around the Young brothers, who were born in Glasgow."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Which of these were written by Charles Dickens?",
-      "options": [
-        "Frankenstein",
-        "Dracula",
-        "Hard Times",
-        "Bleak House",
-        "Jane Eyre",
-        "Oliver Twist"
+        "Taekwondo",
+        "Capoeira",
+        "Aikido",
+        "Judo",
+        "Karate",
+        "Kung fu"
       ],
       "answers": [
         2,
         3,
+        4
+      ],
+      "fact": "Judo became the first Asian martial art in the Olympics, at Tokyo in 1964."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "Which of these explorers sailed for Spain?",
+      "options": [
+        "Cook",
+        "Columbus",
+        "Drake",
+        "Magellan",
+        "Vasco da Gama",
+        "Balboa"
+      ],
+      "answers": [
+        1,
+        3,
         5
       ],
-      "fact": "Dickens published most of his novels a chapter at a time in magazines, so he could change the plot if readers hated it."
+      "fact": "Magellan was Portuguese but sailed for Spain. He died in the Philippines, and his crew finished the first voyage round the world."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "history",
-      "difficulty": 1,
-      "prompt": "In what year did the Second World War end?",
-      "answer": 1945,
-      "min": 1825,
-      "max": 2025,
-      "year": true,
-      "fact": "1945: in May in Europe, and in September in the Pacific."
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How many countries are there in Africa?",
+      "answer": 54,
+      "min": 0,
+      "max": 100,
+      "unit": "countries",
+      "fact": "54, more than any other continent. Nigeria alone has more people than Germany, France and Spain put together."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "How many calories are in one large hen's egg?",
-      "answer": 72,
+      "topic": "arts",
+      "difficulty": 1,
+      "prompt": "In the Jules Verne novel, how many days does it take Phileas Fogg to go around the world?",
+      "answer": 80,
       "min": 0,
-      "max": 200,
-      "unit": "kcal",
-      "fact": "About 72, and almost all of the fat sits in the yolk. The white is mostly water and protein."
+      "max": 250,
+      "unit": "days",
+      "fact": "Eighty days, and he wins his bet only because travelling east has gained him a day."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which band recorded the album The Dark Side of the Moon?",
+      "prompt": "Which gas makes up most of the air we breathe?",
       "options": [
-        "Pink Floyd",
-        "The Who",
-        "Led Zeppelin",
-        "Genesis"
+        "Oxygen",
+        "Argon",
+        "Nitrogen",
+        "Carbon dioxide"
       ],
-      "answer": 0,
-      "hint": "The cover is a prism splitting white light into a rainbow.",
-      "fact": "It stayed on the US album chart for more than fourteen years, which no record has matched."
+      "answer": 2,
+      "hint": "It is not the one your body actually uses.",
+      "fact": "About 78% of the atmosphere is nitrogen. Oxygen is only about 21%."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "In Greek myth, which god ruled the sea?",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which sea has no coastline at all?",
       "options": [
-        "Poseidon",
-        "Hades",
-        "Apollo",
-        "Zeus"
+        "Caspian Sea",
+        "Baltic Sea",
+        "Sargasso Sea",
+        "Coral Sea"
       ],
-      "answer": 0,
-      "hint": "His brothers took the sky and the underworld.",
-      "fact": "The three brothers drew lots for the world. Zeus got the sky, Hades the underworld, Poseidon the sea."
+      "answer": 2,
+      "hint": "Its edges are four ocean currents rather than land.",
+      "fact": "The Sargasso Sea sits inside the North Atlantic, bounded by currents instead of shores."
     },
     {
       "id": "q7",

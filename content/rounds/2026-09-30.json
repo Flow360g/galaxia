@@ -1,106 +1,107 @@
 {
   "date": "2026-09-30",
-  "roundNumber": 12,
+  "roundNumber": 9,
   "seed": 20260930,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "Which of these are elements on the periodic table?",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Which of these countries stayed neutral in the Second World War?",
       "options": [
-        "Brass",
-        "Steel",
-        "Cobalt",
-        "Neon",
-        "Bronze",
-        "Tin"
+        "Ireland",
+        "Sweden",
+        "Greece",
+        "Norway",
+        "Switzerland",
+        "Belgium"
       ],
       "answers": [
-        2,
-        3,
-        5
+        0,
+        1,
+        4
       ],
-      "fact": "Bronze, steel and brass are all alloys: metals mixed together. Bronze is mostly copper with a little tin."
+      "fact": "Norway and Belgium both declared themselves neutral and were invaded anyway in 1940."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Which of these painters were Impressionists?",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "Which of these countries are in South America?",
       "options": [
-        "Picasso",
-        "Rembrandt",
-        "Dalí",
-        "Degas",
-        "Monet",
-        "Renoir"
+        "Panama",
+        "Chile",
+        "Uruguay",
+        "Peru",
+        "Guatemala",
+        "Honduras"
       ],
       "answers": [
-        3,
-        4,
-        5
+        1,
+        2,
+        3
       ],
-      "fact": "The movement got its name from a critic mocking Monet's painting Impression, Sunrise."
+      "fact": "Panama is the narrow join between the two continents and counts as Central America."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "nature",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "How many months is an elephant pregnant for?",
-      "answer": 22,
+      "prompt": "How many seconds are there in one day?",
+      "answer": 86400,
       "min": 0,
-      "max": 100,
-      "unit": "months",
-      "fact": "About 22 months, the longest pregnancy of any land animal."
+      "max": 200000,
+      "unit": "seconds",
+      "route": "60 x 60 = 3,600 an hour, times 24 hours = 86,400.",
+      "fact": "86,400. A day is slowly getting longer, by about two thousandths of a second a century."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "history",
-      "difficulty": 3,
-      "prompt": "How many years did the Ottoman Empire last?",
-      "answer": 623,
+      "difficulty": 2,
+      "prompt": "How many years did Nelson Mandela spend in prison?",
+      "answer": 27,
       "min": 0,
-      "max": 2000,
+      "max": 100,
       "unit": "years",
-      "fact": "623 years, from about 1299 until 1922."
+      "fact": "27 years, 18 of them on Robben Island. Four years after his release he was elected president."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Who directed Pulp Fiction?",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which is the longest river in Europe?",
       "options": [
-        "Tarantino",
-        "Coppola",
-        "Fincher",
-        "Scorsese"
+        "Danube",
+        "Rhine",
+        "Volga",
+        "Loire"
       ],
-      "answer": 0,
-      "hint": "He also made Reservoir Dogs and Kill Bill.",
-      "fact": "Pulp Fiction won the top prize at the Cannes Film Festival in 1994."
+      "answer": 2,
+      "hint": "It flows into the Caspian Sea.",
+      "fact": "The Volga runs about 3,500 km through Russia. The Danube comes second."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which country does kimchi come from?",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which sport do teams play for the Stanley Cup?",
       "options": [
-        "Japan",
-        "Korea",
-        "China",
-        "Vietnam"
+        "Basketball",
+        "American football",
+        "Baseball",
+        "Ice hockey"
       ],
-      "answer": 1,
-      "hint": "It is served with almost every meal in Seoul.",
-      "fact": "Kimchi is fermented cabbage, and Korean homes often have a second fridge just for it."
+      "answer": 3,
+      "hint": "It is played on ice.",
+      "fact": "The Stanley Cup was first awarded in 1893 and is named after a Governor General of Canada."
     },
     {
       "id": "q7",
@@ -110,7 +111,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

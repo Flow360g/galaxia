@@ -5,9 +5,6 @@ import round20260922 from "@/content/rounds/2026-09-22.json";
 import round20260923 from "@/content/rounds/2026-09-23.json";
 import round20260924 from "@/content/rounds/2026-09-24.json";
 import round20260925 from "@/content/rounds/2026-09-25.json";
-import round20260926 from "@/content/rounds/2026-09-26.json";
-import round20260927 from "@/content/rounds/2026-09-27.json";
-import round20260928 from "@/content/rounds/2026-09-28.json";
 import round20260929 from "@/content/rounds/2026-09-29.json";
 import round20260930 from "@/content/rounds/2026-09-30.json";
 import round20261001 from "@/content/rounds/2026-10-01.json";
@@ -56,6 +53,9 @@ import round20261112 from "@/content/rounds/2026-11-12.json";
 import round20261113 from "@/content/rounds/2026-11-13.json";
 import round20261114 from "@/content/rounds/2026-11-14.json";
 import round20261115 from "@/content/rounds/2026-11-15.json";
+import round20261116 from "@/content/rounds/2026-11-16.json";
+import round20261117 from "@/content/rounds/2026-11-17.json";
+import round20261118 from "@/content/rounds/2026-11-18.json";
 import { pickSites } from "@/lib/content/sites";
 import { ROUND_PROFILE, checkVector, rangeFor } from "@/lib/content/difficulty";
 import { nextPracticeDeal } from "@/lib/game/storage";
@@ -91,9 +91,6 @@ const POOL: Round[] = [
   round20260923,
   round20260924,
   round20260925,
-  round20260926,
-  round20260927,
-  round20260928,
   round20260929,
   round20260930,
   round20261001,
@@ -142,6 +139,9 @@ const POOL: Round[] = [
   round20261113,
   round20261114,
   round20261115,
+  round20261116,
+  round20261117,
+  round20261118,
 ]
   // Hydrate before validating: the earth slots carry no site of their own, so
   // validation has nothing to check until the pool has filled them in.

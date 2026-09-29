@@ -1,106 +1,106 @@
 {
   "date": "2026-10-24",
-  "roundNumber": 36,
+  "roundNumber": 33,
   "seed": 20261024,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these are the primary colours of light?",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these are star signs?",
       "options": [
-        "Green",
-        "Magenta",
-        "Blue",
-        "Red",
-        "Cyan",
-        "Yellow"
-      ],
-      "answers": [
-        0,
-        2,
-        3
-      ],
-      "fact": "Screens make every colour from red, green and blue dots. Printers use cyan, magenta and yellow ink instead."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these were dinosaurs?",
-      "options": [
-        "Triceratops",
-        "Velociraptor",
-        "Mammoth",
-        "Plesiosaur",
-        "Stegosaurus",
-        "Pterodactyl"
+        "Libra",
+        "Aries",
+        "Pegasus",
+        "Orion",
+        "Ursa",
+        "Pisces"
       ],
       "answers": [
         0,
         1,
-        4
+        5
       ],
-      "fact": "Pterosaurs flew and plesiosaurs swam alongside the dinosaurs, but neither was a dinosaur."
+      "fact": "Orion and Pegasus are constellations too, but the Sun never passes in front of them, so they are not signs of the zodiac."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which of these are Grand Slam tennis tournaments?",
+      "options": [
+        "Wimbledon",
+        "Indian Wells",
+        "US Open",
+        "Queen's",
+        "Davis Cup",
+        "Roland Garros"
+      ],
+      "answers": [
+        0,
+        2,
+        5
+      ],
+      "fact": "Wimbledon is the only Grand Slam still played on grass."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How far is it around the Earth at the equator, in kilometres?",
-      "answer": 40075,
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "How many days does a human pregnancy last, on average?",
+      "answer": 280,
       "min": 0,
-      "max": 200000,
-      "unit": "km",
-      "fact": "About 40,075 km. The metre was first defined as a ten-millionth of the distance from the North Pole to the equator, which is why the answer is so close to 40,000."
+      "max": 1000,
+      "unit": "days",
+      "fact": "Forty weeks, counted from the start of the last period, so a baby is really growing for about 38 of them."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "In what year did Michael Jackson release the album Thriller?",
-      "answer": 1982,
-      "min": 1825,
-      "max": 2025,
-      "year": true,
-      "fact": "1982, and it is still thought to be the best-selling album ever made."
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How long is a tennis court, in metres?",
+      "answer": 23.77,
+      "min": 0,
+      "max": 50,
+      "unit": "m",
+      "fact": "78 feet from baseline to baseline, set down in the 1870s."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 1,
-      "prompt": "Which ocean lies between Africa and Australia?",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which Shakespeare play features the moneylender Shylock?",
       "options": [
-        "Atlantic",
-        "Pacific",
-        "Southern",
-        "Indian"
+        "Merchant of Venice",
+        "Macbeth",
+        "King Lear",
+        "Othello"
       ],
-      "answer": 3,
-      "hint": "It is named after a country on its northern shore.",
-      "fact": "The Indian Ocean is the warmest of the world's oceans."
+      "answer": 0,
+      "hint": "It is set in an Italian city of canals.",
+      "fact": "Shylock demands a pound of flesh as his price for an unpaid loan."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "What does \"al dente\" mean in Italian?",
+      "prompt": "Which philosopher taught Alexander the Great?",
       "options": [
-        "To the tooth",
-        "Soft",
-        "With sauce",
-        "Well cooked"
+        "Socrates",
+        "Aristotle",
+        "Pythagoras",
+        "Plato"
       ],
-      "answer": 0,
-      "hint": "It tells you the pasta should still have a little bite.",
-      "fact": "Pasta cooked al dente is firm in the middle when you bite it."
+      "answer": 1,
+      "hint": "He was Plato's student.",
+      "fact": "Aristotle taught the young Alexander for about three years."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

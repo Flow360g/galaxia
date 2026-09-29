@@ -1,107 +1,106 @@
 {
   "date": "2026-10-30",
-  "roundNumber": 42,
+  "roundNumber": 39,
   "seed": 20261030,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these dishes come from Spain?",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which of these musicals are by Andrew Lloyd Webber?",
       "options": [
-        "Paella",
-        "Chorizo",
-        "Moussaka",
-        "Ratatouille",
-        "Risotto",
-        "Gazpacho"
+        "Evita",
+        "Starlight Express",
+        "Wicked",
+        "Cats",
+        "Chicago",
+        "Les Misérables"
       ],
       "answers": [
         0,
         1,
-        5
+        3
       ],
-      "fact": "Gazpacho is a tomato soup served cold, from Andalusia in the hot south of Spain."
+      "fact": "Cats is based on a book of poems about cats by T. S. Eliot."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which of these singers started out in a boy band?",
+      "prompt": "Which of these are Australian state capitals?",
       "options": [
-        "Harry Styles",
-        "Robbie Williams",
-        "Ed Sheeran",
-        "Michael Bublé",
-        "Justin Timberlake",
-        "Bruno Mars"
+        "Adelaide",
+        "Darwin",
+        "Canberra",
+        "Hobart",
+        "Cairns",
+        "Perth"
       ],
       "answers": [
         0,
-        1,
-        4
+        3,
+        5
       ],
-      "fact": "Justin Timberlake was in NSYNC, Harry Styles in One Direction and Robbie Williams in Take That."
+      "fact": "Canberra and Darwin are capitals of territories, not states. Canberra was built because Sydney and Melbourne would not let each other be the capital."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "How many squares are there on a chessboard?",
-      "answer": 64,
+      "prompt": "How heavy is a newborn elephant, in kilograms?",
+      "answer": 100,
       "min": 0,
-      "max": 200,
-      "unit": "squares",
-      "route": "8 rows of 8.",
-      "fact": "64, half of them light and half dark, and the bottom right square is always light."
+      "max": 250,
+      "unit": "kg",
+      "fact": "Around 100 kg, and it can stand within an hour of being born."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "How high is a football goal's crossbar, in metres?",
-      "answer": 2.44,
+      "prompt": "How many volts does a normal AA battery give?",
+      "answer": 1.5,
       "min": 0,
-      "max": 10,
-      "unit": "m",
-      "fact": "2.44 m, which is exactly 8 feet. The goal is 7.32 m, or 8 yards, wide."
+      "max": 5,
+      "unit": "volts",
+      "fact": "1.5 volts. The plug socket in an Australian or British home gives about 230."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "What is the capital of Turkey?",
+      "prompt": "Who wrote The Great Gatsby?",
       "options": [
-        "Izmir",
-        "Istanbul",
-        "Ankara",
-        "Antalya"
+        "Hemingway",
+        "Faulkner",
+        "Fitzgerald",
+        "Steinbeck"
       ],
       "answer": 2,
-      "hint": "Not the famous city on the Bosphorus. This one is in the middle of the country.",
-      "fact": "Atatürk made Ankara the capital in 1923, partly because it was far from the sea and hard to attack."
+      "hint": "His first names were Francis Scott, and his wife Zelda was a writer too.",
+      "fact": "The Great Gatsby sold poorly when it came out in 1925. Fitzgerald died thinking it had failed."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "science",
+      "topic": "food",
       "difficulty": 2,
-      "prompt": "Which scientist imagined a cat that is both alive and dead?",
+      "prompt": "Which vegetable makes borscht red?",
       "options": [
-        "Heisenberg",
-        "Schrödinger",
-        "Bohr",
-        "Planck"
+        "Radish",
+        "Red onion",
+        "Red pepper",
+        "Beetroot"
       ],
-      "answer": 1,
-      "hint": "He was an Austrian physicist.",
-      "fact": "Erwin Schrödinger meant the cat as a joke, to show how strange quantum physics sounds."
+      "answer": 3,
+      "hint": "It is a root vegetable that stains everything it touches.",
+      "fact": "Borscht is a soup from Ukraine, eaten across Eastern Europe."
     },
     {
       "id": "q7",
@@ -111,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

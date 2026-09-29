@@ -1,6 +1,6 @@
 {
   "date": "2026-10-17",
-  "roundNumber": 29,
+  "roundNumber": 26,
   "seed": 20261017,
   "theme": "General knowledge",
   "questions": [
@@ -8,99 +8,99 @@
       "id": "q1",
       "type": "cluster",
       "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these are Snow White's seven dwarfs?",
+      "difficulty": 1,
+      "prompt": "Which of these TV shows are set in a hospital?",
       "options": [
-        "Dizzy",
-        "Grouchy",
-        "Sneezy",
-        "Bashful",
-        "Dopey",
-        "Jumpy"
+        "Scrubs",
+        "Grey's Anatomy",
+        "Mad Men",
+        "Suits",
+        "ER",
+        "The Wire"
       ],
       "answers": [
-        2,
-        3,
+        0,
+        1,
         4
       ],
-      "fact": "The dwarfs only got names in Disney's 1937 film. In the Grimm fairy tale they have none."
+      "fact": "ER ran for fifteen seasons and made a star of George Clooney."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "arts",
+      "topic": "history",
       "difficulty": 3,
-      "prompt": "Which of these are poems rather than novels?",
+      "prompt": "Which of these were civilisations of ancient Mesopotamia?",
       "options": [
-        "Ulysses",
-        "The Odyssey",
-        "Paradise Lost",
-        "Dracula",
-        "Don Quixote",
-        "The Raven"
+        "Minoans",
+        "Assyria",
+        "Sumer",
+        "Carthage",
+        "Babylon",
+        "Etruscans"
       ],
       "answers": [
         1,
         2,
-        5
+        4
       ],
-      "fact": "James Joyce's novel Ulysses borrows its shape from the Odyssey, the poem about the same hero."
+      "fact": "Sumer gave the world some of its earliest writing, pressed into wet clay with a reed."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 3,
-      "prompt": "How far do you travel in an Ironman triathlon, in kilometres?",
-      "answer": 226,
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "How tall is the Leaning Tower of Pisa, in metres?",
+      "answer": 56,
       "min": 0,
-      "max": 500,
-      "unit": "km",
-      "fact": "About 226 km: a 3.8 km swim, a 180 km bike ride and a full marathon."
+      "max": 200,
+      "unit": "m",
+      "fact": "About 56 m, leaning around four degrees. It began tilting while it was still being built."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "In what year did Leonardo da Vinci start painting the Mona Lisa?",
-      "answer": 1503,
-      "min": 1400,
-      "max": 1600,
-      "year": true,
-      "fact": "Around 1503. He kept working on it for more than ten years and never handed it over."
+      "prompt": "How far is it from Paris to Rome in a straight line, in kilometres?",
+      "answer": 1105,
+      "min": 0,
+      "max": 5000,
+      "unit": "km",
+      "fact": "About 1,100 km, a two-hour flight."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "history",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "Who was the first person to reach the South Pole?",
+      "prompt": "Which film is set on the moon Pandora?",
       "options": [
-        "Shackleton",
-        "Scott",
-        "Hillary",
-        "Amundsen"
+        "Dune",
+        "Prometheus",
+        "Interstellar",
+        "Avatar"
       ],
       "answer": 3,
-      "hint": "He was Norwegian, and he used dog sleds.",
-      "fact": "Roald Amundsen got there in December 1911, five weeks before Robert Falcon Scott."
+      "hint": "Its people are tall and blue.",
+      "fact": "James Cameron waited more than ten years for film technology to catch up with his idea for Avatar."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "geography",
-      "difficulty": 1,
-      "prompt": "In which country is Machu Picchu?",
+      "difficulty": 3,
+      "prompt": "Which country has the longest coastline?",
       "options": [
-        "Chile",
-        "Mexico",
-        "Bolivia",
-        "Peru"
+        "Russia",
+        "Canada",
+        "Indonesia",
+        "Australia"
       ],
-      "answer": 3,
-      "hint": "The nearest big city is Cusco, once the capital of the Inca Empire.",
-      "fact": "Machu Picchu was built for an Inca emperor in the 1400s and was abandoned about a century later."
+      "answer": 1,
+      "hint": "Thousands of Arctic islands add to its total.",
+      "fact": "Canada's coast is about 243,000 km long, enough to go round the Earth six times."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

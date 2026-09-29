@@ -1,107 +1,106 @@
 {
   "date": "2026-11-03",
-  "roundNumber": 46,
+  "roundNumber": 43,
   "seed": 20261103,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "nature",
-      "difficulty": 1,
-      "prompt": "Which of these are dog breeds?",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "Which of these are letters of the Greek alphabet?",
       "options": [
-        "Shih Tzu",
-        "Ragdoll",
-        "Sphynx",
-        "Vizsla",
-        "Bengal",
-        "Whippet"
+        "Lambda",
+        "Sigma",
+        "Theta",
+        "Umlaut",
+        "Cedilla",
+        "Aleph"
       ],
       "answers": [
         0,
-        3,
-        5
+        1,
+        2
       ],
-      "fact": "Ragdoll, Bengal and Sphynx are all cat breeds. A Sphynx has almost no fur."
+      "fact": "Our word alphabet is just the first two Greek letters stuck together: alpha and beta."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these are root vegetables?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these rivers are in Africa?",
       "options": [
-        "Celery",
-        "Leek",
-        "Beetroot",
-        "Parsnip",
-        "Asparagus",
-        "Carrot"
+        "Congo",
+        "Indus",
+        "Mekong",
+        "Niger",
+        "Zambezi",
+        "Orinoco"
       ],
       "answers": [
-        2,
+        0,
         3,
-        5
+        4
       ],
-      "fact": "Carrots were mostly purple or yellow until orange ones were bred in the Netherlands in the 1600s."
+      "fact": "The Zambezi pours over Victoria Falls on the border of Zambia and Zimbabwe."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "At what temperature does water boil, in degrees Fahrenheit?",
-      "answer": 212,
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Roughly how many languages are spoken in the world today?",
+      "answer": 7000,
       "min": 0,
-      "max": 1000,
-      "unit": "°F",
-      "fact": "212 °F at sea level. Water freezes at 32 °F, so the two are 180 degrees apart."
+      "max": 20000,
+      "unit": "languages",
+      "fact": "About 7,000, and around 40% of them are endangered."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 3,
-      "prompt": "How far do you travel in an Olympic triathlon, in kilometres?",
-      "answer": 51.5,
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How long is the Channel Tunnel, in kilometres?",
+      "answer": 50,
       "min": 0,
-      "max": 100,
+      "max": 200,
       "unit": "km",
-      "route": "A 1.5 km swim, a 40 km bike ride and a 10 km run.",
-      "fact": "51.5 km in all, and the best finish in well under two hours."
+      "fact": "About 50 km, 38 of them under the sea: the longest undersea stretch of any tunnel."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which mountains are usually taken as the border of Europe and Asia?",
+      "topic": "history",
+      "difficulty": 1,
+      "prompt": "Which country gave the Statue of Liberty to the United States?",
       "options": [
-        "Pyrenees",
-        "Carpathians",
-        "Urals",
-        "Alps"
+        "Netherlands",
+        "Britain",
+        "Spain",
+        "France"
       ],
-      "answer": 2,
-      "hint": "They run north to south through Russia.",
-      "fact": "The Urals stretch about 2,500 km from the Arctic Ocean to Kazakhstan."
+      "answer": 3,
+      "hint": "The same country later built the Eiffel Tower, whose engineer also designed the statue's frame.",
+      "fact": "Gustave Eiffel designed the iron skeleton inside the statue."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who wrote the novel 1984?",
+      "topic": "food",
+      "difficulty": 1,
+      "prompt": "Which grain is sake made from?",
       "options": [
-        "H. G. Wells",
-        "Orwell",
-        "Bradbury",
-        "Huxley"
+        "Millet",
+        "Rice",
+        "Barley",
+        "Wheat"
       ],
       "answer": 1,
-      "hint": "The same author wrote Animal Farm.",
-      "fact": "George Orwell was a pen name. His real name was Eric Blair."
+      "hint": "It is the grain eaten with most Japanese meals.",
+      "fact": "Sake is brewed more like beer than made like wine, even though people call it rice wine."
     },
     {
       "id": "q7",
@@ -111,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

@@ -1,106 +1,106 @@
 {
   "date": "2026-10-09",
-  "roundNumber": 21,
+  "roundNumber": 18,
   "seed": 20261009,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which of these scientists won a Nobel Prize?",
+      "prompt": "Which of these are James Bond villains?",
       "options": [
-        "Edison",
-        "Curie",
-        "Einstein",
-        "Newton",
-        "Feynman",
-        "Darwin"
+        "Blofeld",
+        "Moriarty",
+        "Hannibal",
+        "Jaws",
+        "Lex Luthor",
+        "Goldfinger"
       ],
       "answers": [
-        1,
-        2,
-        4
+        0,
+        3,
+        5
       ],
-      "fact": "The first Nobel Prizes were given in 1901. Darwin died in 1882, and Newton almost two hundred years before that."
+      "fact": "Jaws, the giant with steel teeth, changes sides at the end of Moonraker."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
-      "difficulty": 3,
-      "prompt": "Which of these animals live wild only in Africa?",
+      "topic": "history",
+      "difficulty": 1,
+      "prompt": "Which of these were invented in ancient China?",
       "options": [
-        "Hippo",
-        "Leopard",
-        "Zebra",
-        "Giraffe",
-        "Lion",
-        "Cheetah"
+        "Gunpowder",
+        "Telescope",
+        "Steam engine",
+        "Thermometer",
+        "Compass",
+        "Paper"
       ],
       "answers": [
         0,
-        2,
-        3
+        4,
+        5
       ],
-      "fact": "A few hundred wild lions still live in India, in the Gir Forest in Gujarat."
+      "fact": "China counts four great inventions: paper, printing, gunpowder and the compass."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "science",
-      "difficulty": 2,
-      "prompt": "How high does a passenger jet usually cruise, in kilometres?",
-      "answer": 11,
+      "difficulty": 3,
+      "prompt": "How fast does sound travel through air, in metres per second?",
+      "answer": 343,
       "min": 0,
-      "max": 50,
-      "unit": "km",
-      "fact": "About 11 km, above most of the weather and in air thin enough to save fuel."
+      "max": 1000,
+      "unit": "m/s",
+      "fact": "About 343 m/s, so count the seconds between lightning and thunder and divide by three to get the distance in kilometres."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "nature",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "How fast can an ostrich run, in km/h?",
-      "answer": 70,
+      "prompt": "Roughly how many people died when the Titanic sank?",
+      "answer": 1500,
       "min": 0,
-      "max": 250,
-      "unit": "km/h",
-      "fact": "About 70 km/h, faster than any other bird on land. One stride can cover 5 m."
+      "max": 5000,
+      "unit": "people",
+      "fact": "About 1,500 of the roughly 2,200 on board. There were lifeboats for only about half of them."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "arts",
-      "difficulty": 1,
-      "prompt": "What is the Japanese art of folding paper called?",
+      "difficulty": 2,
+      "prompt": "Which novel opens with the line \"Call me Ishmael\"?",
       "options": [
-        "Bonsai",
-        "Haiku",
-        "Ikebana",
-        "Origami"
+        "Robinson Crusoe",
+        "Moby-Dick",
+        "Treasure Island",
+        "Old Man and the Sea"
       ],
-      "answer": 3,
-      "hint": "The word means folding paper.",
-      "fact": "Ikebana is flower arranging, and bonsai is growing tiny trees in pots."
+      "answer": 1,
+      "hint": "It is about a captain hunting a whale.",
+      "fact": "Herman Melville's Moby-Dick flopped when it came out in 1851 and only became a classic after he died."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "geography",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which strait separates Spain from Morocco?",
+      "prompt": "In which sport would you bowl a googly?",
       "options": [
-        "Bosphorus",
-        "Messina",
-        "Gibraltar",
-        "Hormuz"
+        "Lawn bowls",
+        "Baseball",
+        "Tenpin",
+        "Cricket"
       ],
-      "answer": 2,
-      "hint": "A famous rock stands at its northern end.",
-      "fact": "At its narrowest the strait is about 14 km wide, and on a clear day you can see Africa from Europe."
+      "answer": 3,
+      "hint": "It is a ball that spins the opposite way to the one the batter expects.",
+      "fact": "The googly was invented by an English bowler, Bernard Bosanquet, around 1900."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

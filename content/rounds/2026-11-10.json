@@ -1,6 +1,6 @@
 {
   "date": "2026-11-10",
-  "roundNumber": 53,
+  "roundNumber": 50,
   "seed": 20261110,
   "theme": "General knowledge",
   "stages": [
@@ -27,101 +27,101 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "geography",
-      "difficulty": 1,
-      "prompt": "Which of these rivers flow through Europe?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these are woodwind instruments?",
       "options": [
-        "Danube",
-        "Ganges",
-        "Rhine",
-        "Amazon",
-        "Nile",
-        "Seine"
+        "Cornet",
+        "French horn",
+        "Trumpet",
+        "Flute",
+        "Saxophone",
+        "Bassoon"
       ],
       "answers": [
-        0,
-        2,
+        3,
+        4,
         5
       ],
-      "fact": "The Danube passes through ten countries, more than any other river in the world."
+      "fact": "A saxophone is made of brass but counts as woodwind, because a reed makes its sound."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "science",
+      "topic": "nature",
       "difficulty": 3,
-      "prompt": "Which of these are gases at room temperature?",
+      "prompt": "Which of these are fruits, to a botanist?",
       "options": [
-        "Oxygen",
-        "Iron",
-        "Helium",
-        "Bromine",
-        "Mercury",
-        "Neon"
+        "Carrot",
+        "Pumpkin",
+        "Cucumber",
+        "Celery",
+        "Tomato",
+        "Lettuce"
       ],
       "answers": [
-        0,
+        1,
         2,
-        5
+        4
       ],
-      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
+      "fact": "A fruit is the part that holds the seeds, which is why a tomato counts and a carrot does not."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "food",
-      "difficulty": 3,
-      "prompt": "How many litres of milk does it take to make one kilogram of cheese?",
-      "answer": 10,
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "How many cards are in a standard deck, without the jokers?",
+      "answer": 52,
       "min": 0,
-      "max": 25,
-      "unit": "litres",
-      "fact": "About ten litres for a hard cheese. Most of the milk drains away as whey."
+      "max": 200,
+      "unit": "cards",
+      "route": "4 suits of 13 cards.",
+      "fact": "52, the same as the number of weeks in a year."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "nature",
-      "difficulty": 1,
-      "prompt": "How many teeth does an adult human usually have?",
-      "answer": 32,
+      "difficulty": 3,
+      "prompt": "How deep can an emperor penguin dive, in metres?",
+      "answer": 550,
       "min": 0,
-      "max": 100,
-      "unit": "teeth",
-      "route": "Count your own: 16 along the top and 16 along the bottom.",
-      "fact": "32, counting the four wisdom teeth that many people never grow at all."
+      "max": 1000,
+      "unit": "m",
+      "fact": "Over 500 metres, and it can hold its breath for more than twenty minutes doing it."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "food",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "Which part of the plant is cinnamon?",
+      "prompt": "Which empire built the Taj Mahal?",
       "options": [
-        "Leaf",
-        "Seed",
-        "Root",
-        "Bark"
+        "Persian",
+        "Ottoman",
+        "Mughal",
+        "Maratha"
       ],
-      "answer": 3,
-      "hint": "It is peeled off in strips and curls up as it dries.",
-      "fact": "Cinnamon is the inner bark of a tree. The strips curl into quills as they dry out."
+      "answer": 2,
+      "hint": "The same empire ruled most of the Indian subcontinent for three centuries.",
+      "fact": "Shah Jahan built it as a tomb for his wife Mumtaz Mahal. It took about twenty years."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "What is the chemical symbol for gold?",
+      "prompt": "What does a Geiger counter measure?",
       "options": [
-        "Au",
-        "Gd",
-        "Ag",
-        "Go"
+        "Pressure",
+        "Sound",
+        "Wind speed",
+        "Radiation"
       ],
-      "answer": 0,
-      "hint": "It comes from the Latin word for gold, aurum.",
-      "fact": "Ag, silver, comes from the Latin argentum, which is also where Argentina got its name."
+      "answer": 3,
+      "hint": "The clicking sound is the giveaway.",
+      "fact": "Each click is one particle striking the tube, so a faster clicking means a stronger source."
     },
     {
       "id": "q7",

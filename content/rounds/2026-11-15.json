@@ -1,6 +1,6 @@
 {
   "date": "2026-11-15",
-  "roundNumber": 58,
+  "roundNumber": 55,
   "seed": 20261115,
   "theme": "General knowledge",
   "stages": [
@@ -28,98 +28,99 @@
       "id": "q1",
       "type": "cluster",
       "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these actors have played James Bond?",
+      "difficulty": 2,
+      "prompt": "Which of these are Pixar films?",
       "options": [
-        "Grant",
-        "Hanks",
-        "Connery",
-        "Ford",
-        "Moore",
-        "Craig"
+        "Toy Story",
+        "Madagascar",
+        "Shrek",
+        "Frozen",
+        "Coco",
+        "Up"
       ],
       "answers": [
-        2,
+        0,
         4,
         5
       ],
-      "fact": "Seven actors have played him on film. Sean Connery was the first and almost turned it down."
+      "fact": "Pixar started out selling computers. The films were made to show off what the hardware could draw."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "Which of these are deserts?",
+      "topic": "sport",
+      "difficulty": 1,
+      "prompt": "Which of these are golf scores?",
       "options": [
-        "Kalahari",
-        "Atacama",
-        "Serengeti",
-        "Taiga",
-        "Pampas",
-        "Gobi"
+        "Birdie",
+        "Let",
+        "Bogey",
+        "Deuce",
+        "Eagle",
+        "Love"
       ],
       "answers": [
         0,
-        1,
-        5
+        2,
+        4
       ],
-      "fact": "Some weather stations in Chile's Atacama have gone years without recording any rain."
+      "fact": "An albatross is three under par on one hole, rarer than a hole in one."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "How many letters are in the English alphabet?",
-      "answer": 26,
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "How long is the human small intestine, in metres?",
+      "answer": 6,
       "min": 0,
-      "max": 100,
-      "unit": "letters",
-      "fact": "26, and the one used most in English writing is E."
+      "max": 20,
+      "unit": "m",
+      "fact": "About six metres, folded up to fit inside your belly."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "nature",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "How long can a giant tortoise live, in years?",
-      "answer": 150,
+      "prompt": "How fast does a passenger jet cruise, in km/h?",
+      "answer": 900,
       "min": 0,
-      "max": 250,
-      "fact": "Well past 150. One taken from the Galapagos by Charles Darwin's crew was still alive in a zoo in 2006."
+      "max": 2000,
+      "unit": "km/h",
+      "fact": "About 900 km/h, which is roughly three quarters of the speed of sound at that height."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "food",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which spice gives a curry its yellow colour?",
+      "prompt": "Which unit measures electrical resistance?",
       "options": [
-        "Cumin",
-        "Turmeric",
-        "Paprika",
-        "Coriander"
+        "Amp",
+        "Watt",
+        "Ohm",
+        "Volt"
       ],
-      "answer": 1,
-      "hint": "It is a root, sold ground to a bright powder, and it stains everything.",
-      "fact": "Turmeric. The colour comes from curcumin, and it will stain a chopping board for good."
+      "answer": 2,
+      "hint": "Its symbol is the Greek letter omega.",
+      "fact": "The ohm is named after Georg Ohm, a German teacher."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "misc",
+      "topic": "arts",
       "difficulty": 3,
-      "prompt": "Which country has a flag that is not a rectangle?",
+      "prompt": "Who painted The Persistence of Memory, with the melting clocks?",
       "options": [
-        "Switzerland",
-        "Sri Lanka",
-        "Nepal",
-        "Bhutan"
+        "Max Ernst",
+        "Rene Magritte",
+        "Joan Miro",
+        "Salvador Dali"
       ],
-      "answer": 2,
-      "hint": "Its flag is two stacked triangles, one carrying a moon and one a sun.",
-      "fact": "Nepal's flag is two stacked pennants. Every other national flag in the world is four-sided."
+      "answer": 3,
+      "hint": "The painter of this one is as famous for his moustache as for his work.",
+      "fact": "Salvador Dali painted it in 1931. He said the soft watches came to him while looking at a ripe camembert."
     },
     {
       "id": "q7",

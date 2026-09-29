@@ -1,8 +1,118 @@
 {
   "date": "2026-11-07",
-  "roundNumber": 50,
+  "roundNumber": 47,
   "seed": 20261107,
   "theme": "General knowledge",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "Which of these cities have hosted the Summer Olympics?",
+      "options": [
+        "Barcelona",
+        "Cape Town",
+        "Sydney",
+        "Istanbul",
+        "Seoul",
+        "Toronto"
+      ],
+      "answers": [
+        0,
+        2,
+        4
+      ],
+      "fact": "Triathlon made its Olympic debut at Sydney 2000, starting with a swim beside the Opera House."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "Which of these cities stand on the Danube?",
+      "options": [
+        "Warsaw",
+        "Budapest",
+        "Vienna",
+        "Belgrade",
+        "Prague",
+        "Munich"
+      ],
+      "answers": [
+        1,
+        2,
+        3
+      ],
+      "fact": "The Danube runs through or along ten countries, more than any other river on Earth."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "How heavy is a newborn baby, on average, in kilograms?",
+      "answer": 3.5,
+      "min": 0,
+      "max": 20,
+      "unit": "kg",
+      "fact": "About 3.5 kg. Most babies lose a little weight in their first few days, then gain it back within a fortnight."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many characters could a tweet have when Twitter started?",
+      "answer": 140,
+      "min": 0,
+      "max": 500,
+      "unit": "characters",
+      "fact": "140, so a tweet would fit in a text message with room for a username."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which bird lays the biggest egg?",
+      "options": [
+        "Emu",
+        "Condor",
+        "Albatross",
+        "Ostrich"
+      ],
+      "answer": 3,
+      "hint": "It is also the biggest bird alive.",
+      "fact": "One ostrich egg holds as much as about two dozen hen's eggs."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which pastry are profiteroles made from?",
+      "options": [
+        "Filo",
+        "Shortcrust",
+        "Puff",
+        "Choux"
+      ],
+      "answer": 3,
+      "hint": "It is also used for eclairs.",
+      "fact": "Choux pastry puffs up in the oven because the water in it turns to steam."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+    }
+  ],
   "stages": [
     {
       "name": "Cluster Belt",
@@ -21,117 +131,6 @@
     {
       "name": "Where on Earth",
       "after": 7
-    }
-  ],
-  "questions": [
-    {
-      "id": "q1",
-      "type": "cluster",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which of these are woodwind instruments?",
-      "options": [
-        "Cornet",
-        "French horn",
-        "Trumpet",
-        "Flute",
-        "Saxophone",
-        "Bassoon"
-      ],
-      "answers": [
-        3,
-        4,
-        5
-      ],
-      "fact": "A saxophone is made of brass but counts as woodwind, because a reed makes its sound."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 3,
-      "prompt": "Which of these are fruits, to a botanist?",
-      "options": [
-        "Carrot",
-        "Pumpkin",
-        "Cucumber",
-        "Celery",
-        "Tomato",
-        "Lettuce"
-      ],
-      "answers": [
-        1,
-        2,
-        4
-      ],
-      "fact": "A fruit is the part that holds the seeds, which is why a tomato counts and a carrot does not."
-    },
-    {
-      "id": "q3",
-      "type": "vector",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "How many cards are in a standard deck, without the jokers?",
-      "answer": 52,
-      "min": 0,
-      "max": 200,
-      "unit": "cards",
-      "route": "4 suits of 13 cards.",
-      "fact": "52, the same as the number of weeks in a year."
-    },
-    {
-      "id": "q4",
-      "type": "vector",
-      "topic": "nature",
-      "difficulty": 3,
-      "prompt": "How deep can an emperor penguin dive, in metres?",
-      "answer": 550,
-      "min": 0,
-      "max": 1000,
-      "unit": "m",
-      "fact": "Over 500 metres, and it can hold its breath for more than twenty minutes doing it."
-    },
-    {
-      "id": "q5",
-      "type": "mcq",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "Which empire built the Taj Mahal?",
-      "options": [
-        "Persian",
-        "Ottoman",
-        "Mughal",
-        "Maratha"
-      ],
-      "answer": 2,
-      "hint": "The same empire ruled most of the Indian subcontinent for three centuries.",
-      "fact": "Shah Jahan built it as a tomb for his wife Mumtaz Mahal. It took about twenty years."
-    },
-    {
-      "id": "q6",
-      "type": "mcq",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "What does a Geiger counter measure?",
-      "options": [
-        "Pressure",
-        "Sound",
-        "Wind speed",
-        "Radiation"
-      ],
-      "answer": 3,
-      "hint": "The clicking sound is the giveaway.",
-      "fact": "Each click is one particle striking the tube, so a faster clicking means a stronger source."
-    },
-    {
-      "id": "q7",
-      "type": "earth",
-      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
-    },
-    {
-      "id": "q8",
-      "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ]
 }

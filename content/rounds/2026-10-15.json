@@ -1,106 +1,106 @@
 {
   "date": "2026-10-15",
-  "roundNumber": 27,
+  "roundNumber": 24,
   "seed": 20261015,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "misc",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these are Greek gods, not Roman ones?",
+      "prompt": "Which of these are amphibians?",
       "options": [
-        "Jupiter",
-        "Athena",
-        "Mars",
-        "Venus",
-        "Hermes",
-        "Ares"
+        "Toad",
+        "Iguana",
+        "Gecko",
+        "Axolotl",
+        "Tortoise",
+        "Newt"
       ],
       "answers": [
-        1,
-        4,
+        0,
+        3,
         5
       ],
-      "fact": "The Romans took over most of the Greek gods and renamed them. Hermes became Mercury and Ares became Mars."
+      "fact": "An axolotl can regrow a lost leg, and even parts of its heart and brain."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which of these were Viking homelands?",
+      "prompt": "Which of these US states border Canada?",
       "options": [
-        "Scotland",
-        "Norway",
-        "Finland",
-        "Sweden",
-        "Denmark",
-        "Iceland"
+        "Minnesota",
+        "Montana",
+        "Iowa",
+        "Maine",
+        "Oregon",
+        "Wyoming"
       ],
       "answers": [
+        0,
         1,
-        3,
-        4
+        3
       ],
-      "fact": "Iceland was settled by Vikings from Norway in the 870s, but the raids set out from Scandinavia itself."
+      "fact": "Thirteen US states touch the Canadian border, counting the ones that meet it across the Great Lakes."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "food",
+      "topic": "history",
       "difficulty": 3,
-      "prompt": "How many calories are in one gram of fat?",
-      "answer": 9,
-      "min": 0,
-      "max": 25,
-      "unit": "calories",
-      "fact": "Nine, more than twice the four in a gram of sugar or protein."
+      "prompt": "In what year did the Great Fire of London happen?",
+      "answer": 1666,
+      "min": 1550,
+      "max": 1750,
+      "year": true,
+      "fact": "1666. It burned for four days and destroyed about 13,000 houses, but only a handful of deaths were recorded."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "How many years did Michelangelo spend painting the Sistine Chapel ceiling?",
-      "answer": 4,
+      "prompt": "How long is a giraffe's neck, in metres?",
+      "answer": 1.8,
       "min": 0,
-      "max": 10,
-      "unit": "years",
-      "fact": "Four years, 1508 to 1512, mostly standing up and painting above his head."
+      "max": 5,
+      "unit": "m",
+      "fact": "A giraffe's neck has seven bones in it, the same number as yours. Each one is just much longer."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 1,
-      "prompt": "What is the smallest country in the world?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Who discovered penicillin?",
       "options": [
-        "Vatican City",
-        "Monaco",
-        "Malta",
-        "San Marino"
+        "Pasteur",
+        "Jenner",
+        "Lister",
+        "Fleming"
       ],
-      "answer": 0,
-      "hint": "It sits entirely inside a capital city.",
-      "fact": "Vatican City covers less than half a square kilometre, smaller than many city parks."
+      "answer": 3,
+      "hint": "He was a Scottish scientist who noticed mould killing bacteria in a dish he had left out.",
+      "fact": "Alexander Fleming found it in 1928 after coming back from a holiday to a messy lab."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which band made the album Rumours?",
+      "difficulty": 1,
+      "prompt": "What is the name of Batman's butler?",
       "options": [
-        "Fleetwood Mac",
-        "Led Zeppelin",
-        "The Doors",
-        "Eagles"
+        "Lucius",
+        "Alfred",
+        "Gordon",
+        "Jarvis"
       ],
-      "answer": 0,
-      "hint": "Stevie Nicks sang for them.",
-      "fact": "Rumours was made in 1976 while two couples in the band were breaking up."
+      "answer": 1,
+      "hint": "Jarvis serves a different superhero.",
+      "fact": "Michael Caine played Alfred in all three of Christopher Nolan's Batman films."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [
