@@ -1,6 +1,6 @@
 {
   "date": "2026-11-09",
-  "roundNumber": 52,
+  "roundNumber": 49,
   "seed": 20261109,
   "theme": "General knowledge",
   "stages": [
@@ -27,100 +27,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "nature",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which of these live in the ocean their whole lives?",
+      "prompt": "Which of these countries have a coast on the Mediterranean Sea?",
       "options": [
-        "Octopus",
-        "Blue whale",
-        "Salmon",
-        "Coral",
-        "Sea turtle",
-        "Penguin"
+        "Romania",
+        "Portugal",
+        "Greece",
+        "Turkey",
+        "Egypt",
+        "Austria"
       ],
       "answers": [
-        0,
-        1,
-        3
+        2,
+        3,
+        4
       ],
-      "fact": "Salmon spawn in rivers, sea turtles lay their eggs on beaches and penguins breed on land. None of them spends a whole life at sea."
+      "fact": "Portugal faces the Atlantic, Austria has no coast at all, and Romania sits on the Black Sea."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "Which of these were presidents of the United States?",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these birds cannot fly?",
       "options": [
-        "Kennedy",
-        "Lincoln",
-        "Roosevelt",
-        "Franklin",
-        "Hamilton",
-        "Burr"
+        "Kiwi",
+        "Albatross",
+        "Ostrich",
+        "Penguin",
+        "Swan",
+        "Pelican"
       ],
       "answers": [
         0,
-        1,
-        2
+        2,
+        3
       ],
-      "fact": "Benjamin Franklin, Alexander Hamilton and Aaron Burr never held the office. Burr shot Hamilton dead in a duel."
+      "fact": "An ostrich cannot get off the ground but can outrun a racehorse. A penguin flies, just underwater."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "What percentage of the Earth's surface is covered by water?",
-      "answer": 71,
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How tall is the Great Pyramid of Giza, in metres?",
+      "answer": 147,
       "min": 0,
       "max": 250,
-      "unit": "%",
-      "fact": "About 71%, and almost all of it is salt water in the oceans."
+      "unit": "m",
+      "fact": "About 147 metres when it was finished. It was the tallest building on Earth for nearly four thousand years."
     },
     {
       "id": "q4",
       "type": "vector",
       "topic": "nature",
       "difficulty": 2,
-      "prompt": "How heavy is an adult male African elephant, in kilograms?",
-      "answer": 6000,
+      "prompt": "How many years ago did the last dinosaurs die out, in millions?",
+      "answer": 66,
       "min": 0,
-      "max": 20000,
-      "unit": "kg",
-      "fact": "About 6,000 kg. An elephant can eat around 150 kg of plants in a day."
+      "max": 100,
+      "unit": "million years",
+      "fact": "About 66 million years ago, after an asteroid struck what is now Mexico. Birds are the dinosaurs that made it through."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these is a prime number?",
+      "difficulty": 1,
+      "prompt": "Which metal is liquid at room temperature?",
       "options": [
-        "29",
-        "33",
-        "27",
-        "21"
+        "Zinc",
+        "Tin",
+        "Lead",
+        "Mercury"
       ],
-      "answer": 0,
-      "hint": "A prime has no factors but itself and one. Try dividing each by three.",
-      "fact": "A prime divides by nothing but itself and one. 29 is the only one here that manages it."
+      "answer": 3,
+      "hint": "It is the one that was used in old thermometers.",
+      "fact": "Mercury freezes at about minus 39 degrees, which is why it stays liquid in a warm room."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Which artist cut off part of his own ear?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Who composed The Four Seasons?",
       "options": [
-        "Van Gogh",
-        "Picasso",
-        "Dali",
-        "Monet"
+        "Mozart",
+        "Handel",
+        "Vivaldi",
+        "Bach"
       ],
-      "answer": 0,
-      "hint": "He painted a night sky full of swirling stars.",
-      "fact": "He painted himself afterwards with the bandage on, and sold almost nothing in his lifetime."
+      "answer": 2,
+      "hint": "He was a priest from Venice, nicknamed the Red Priest for his hair.",
+      "fact": "The Four Seasons is four violin concertos, one for each season, written around 1720."
     },
     {
       "id": "q7",

@@ -1,106 +1,106 @@
 {
   "date": "2026-10-26",
-  "roundNumber": 38,
+  "roundNumber": 35,
   "seed": 20261026,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "Which of these countries still have a king or queen?",
+      "prompt": "Which of these are fielding positions in cricket?",
       "options": [
-        "Norway",
-        "Greece",
-        "Thailand",
-        "France",
-        "Spain",
-        "Italy"
-      ],
-      "answers": [
-        0,
-        2,
-        4
-      ],
-      "fact": "Greece voted to abolish its monarchy in 1974, after a military government fell."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "Which of these were rulers of ancient Egypt?",
-      "options": [
-        "Hannibal",
-        "Cleopatra",
-        "Ramesses",
-        "Xerxes",
-        "Nebuchadnezzar",
-        "Akhenaten"
+        "Scrum-half",
+        "Slip",
+        "Silly point",
+        "Shortstop",
+        "Gully",
+        "Winger"
       ],
       "answers": [
         1,
         2,
-        5
+        4
       ],
-      "fact": "Cleopatra lived closer in time to the Moon landing than to the building of the Great Pyramid."
+      "fact": "Silly point stands a few metres from the batter, which is exactly why it is called silly."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "Which of these spices come from a seed?",
+      "options": [
+        "Nutmeg",
+        "Saffron",
+        "Cinnamon",
+        "Cumin",
+        "Mustard",
+        "Ginger"
+      ],
+      "answers": [
+        0,
+        3,
+        4
+      ],
+      "fact": "Nutmeg and mace come from the same fruit. Nutmeg is the seed and mace is the red lace wrapped round it."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "In what year did The Simpsons first air as a series?",
-      "answer": 1989,
-      "min": 1825,
-      "max": 2025,
-      "year": true,
-      "fact": "December 1989, after starting as short cartoons on another show two years earlier."
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "How long is the Panama Canal, in kilometres?",
+      "answer": 82,
+      "min": 0,
+      "max": 200,
+      "unit": "km",
+      "fact": "About 82 km, and a ship takes around 8 to 10 hours to pass through it."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "What percentage of an adult's body is water?",
-      "answer": 60,
+      "prompt": "How old was Mozart when he died?",
+      "answer": 35,
       "min": 0,
-      "max": 200,
-      "unit": "%",
-      "fact": "About 60%. A newborn baby is closer to 75% water."
+      "max": 100,
+      "unit": "years",
+      "fact": "35. He wrote more than 600 pieces of music, and started composing at five."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "In which country is Timbuktu?",
+      "topic": "sport",
+      "difficulty": 2,
+      "prompt": "In which sport do teams play for the Webb Ellis Cup?",
       "options": [
-        "Morocco",
-        "Mali",
-        "Chad",
-        "Niger"
+        "Cricket",
+        "Rugby league",
+        "Football",
+        "Rugby union"
       ],
-      "answer": 1,
-      "hint": "It is on the edge of the Sahara, near the Niger River.",
-      "fact": "Timbuktu was a great centre of learning in the 1400s, with libraries of handwritten books."
+      "answer": 3,
+      "hint": "It is named after a schoolboy said to have picked up the ball and run with it.",
+      "fact": "The story says William Webb Ellis invented rugby at Rugby School in 1823, though there is little proof it happened."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "history",
-      "difficulty": 2,
-      "prompt": "Who captained the Endeavour on its voyage to Australia?",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which kind of music came from Jamaica?",
       "options": [
-        "James Cook",
-        "Tasman",
-        "Drake",
-        "Magellan"
+        "Flamenco",
+        "Samba",
+        "Reggae",
+        "Salsa"
       ],
-      "answer": 0,
-      "hint": "He was a British navy officer who landed at Botany Bay.",
-      "fact": "Cook reached the east coast of Australia in 1770."
+      "answer": 2,
+      "hint": "Bob Marley made it famous.",
+      "fact": "Reggae grew out of ska and rocksteady in the late 1960s."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

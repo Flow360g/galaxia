@@ -1,6 +1,6 @@
 {
   "date": "2026-11-12",
-  "roundNumber": 55,
+  "roundNumber": 52,
   "seed": 20261112,
   "theme": "General knowledge",
   "stages": [
@@ -27,100 +27,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these are Pixar films?",
+      "prompt": "Which of these live in the ocean their whole lives?",
       "options": [
-        "Toy Story",
-        "Madagascar",
-        "Shrek",
-        "Frozen",
-        "Coco",
-        "Up"
+        "Octopus",
+        "Blue whale",
+        "Salmon",
+        "Coral",
+        "Sea turtle",
+        "Penguin"
       ],
       "answers": [
         0,
-        4,
-        5
+        1,
+        3
       ],
-      "fact": "Pixar started out selling computers. The films were made to show off what the hardware could draw."
+      "fact": "Salmon spawn in rivers, sea turtles lay their eggs on beaches and penguins breed on land. None of them spends a whole life at sea."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "sport",
-      "difficulty": 1,
-      "prompt": "Which of these are golf scores?",
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "Which of these were presidents of the United States?",
       "options": [
-        "Birdie",
-        "Let",
-        "Bogey",
-        "Deuce",
-        "Eagle",
-        "Love"
+        "Kennedy",
+        "Lincoln",
+        "Roosevelt",
+        "Franklin",
+        "Hamilton",
+        "Burr"
       ],
       "answers": [
         0,
-        2,
-        4
+        1,
+        2
       ],
-      "fact": "An albatross is three under par on one hole, rarer than a hole in one."
+      "fact": "Benjamin Franklin, Alexander Hamilton and Aaron Burr never held the office. Burr shot Hamilton dead in a duel."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 3,
-      "prompt": "How long is the human small intestine, in metres?",
-      "answer": 6,
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "What percentage of the Earth's surface is covered by water?",
+      "answer": 71,
       "min": 0,
-      "max": 20,
-      "unit": "m",
-      "fact": "About six metres, folded up to fit inside your belly."
+      "max": 250,
+      "unit": "%",
+      "fact": "About 71%, and almost all of it is salt water in the oceans."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "misc",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "How fast does a passenger jet cruise, in km/h?",
-      "answer": 900,
+      "prompt": "How heavy is an adult male African elephant, in kilograms?",
+      "answer": 6000,
       "min": 0,
-      "max": 2000,
-      "unit": "km/h",
-      "fact": "About 900 km/h, which is roughly three quarters of the speed of sound at that height."
+      "max": 20000,
+      "unit": "kg",
+      "fact": "About 6,000 kg. An elephant can eat around 150 kg of plants in a day."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "science",
       "difficulty": 2,
-      "prompt": "Which unit measures electrical resistance?",
+      "prompt": "Which of these is a prime number?",
       "options": [
-        "Amp",
-        "Watt",
-        "Ohm",
-        "Volt"
+        "29",
+        "33",
+        "27",
+        "21"
       ],
-      "answer": 2,
-      "hint": "Its symbol is the Greek letter omega.",
-      "fact": "The ohm is named after Georg Ohm, a German teacher."
+      "answer": 0,
+      "hint": "A prime has no factors but itself and one. Try dividing each by three.",
+      "fact": "A prime divides by nothing but itself and one. 29 is the only one here that manages it."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Who painted The Persistence of Memory, with the melting clocks?",
+      "difficulty": 1,
+      "prompt": "Which artist cut off part of his own ear?",
       "options": [
-        "Max Ernst",
-        "Rene Magritte",
-        "Joan Miro",
-        "Salvador Dali"
+        "Van Gogh",
+        "Picasso",
+        "Dali",
+        "Monet"
       ],
-      "answer": 3,
-      "hint": "The painter of this one is as famous for his moustache as for his work.",
-      "fact": "Salvador Dali painted it in 1931. He said the soft watches came to him while looking at a ripe camembert."
+      "answer": 0,
+      "hint": "He painted a night sky full of swirling stars.",
+      "fact": "He painted himself afterwards with the bandage on, and sold almost nothing in his lifetime."
     },
     {
       "id": "q7",

@@ -1,106 +1,106 @@
 {
   "date": "2026-10-05",
-  "roundNumber": 17,
+  "roundNumber": 14,
   "seed": 20261005,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "Which of these words read the same backwards?",
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "Which of these mountains are in the Himalayas?",
       "options": [
-        "Level",
-        "Kayak",
-        "Banana",
-        "Llama",
-        "Salsa",
-        "Radar"
+        "Mont Blanc",
+        "Aconcagua",
+        "Everest",
+        "Kangchenjunga",
+        "Annapurna",
+        "Kilimanjaro"
       ],
       "answers": [
-        0,
-        1,
-        5
+        2,
+        3,
+        4
       ],
-      "fact": "Christopher Nolan's 2020 film Tenet has a palindrome for a title."
+      "fact": "Kangchenjunga, on the border of Nepal and India, is the third highest mountain in the world."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which of these are breads?",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these animals are primates?",
       "options": [
-        "Naan",
-        "Focaccia",
-        "Brioche",
-        "Couscous",
-        "Tofu",
-        "Polenta"
+        "Lemur",
+        "Raccoon",
+        "Meerkat",
+        "Gibbon",
+        "Tarsier",
+        "Sloth"
       ],
       "answers": [
         0,
-        1,
-        2
+        3,
+        4
       ],
-      "fact": "Brioche is rich with butter and eggs, which sits it halfway between bread and cake."
+      "fact": "A tarsier's eyes are each as big as its brain, and they cannot move in their sockets."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How many coloured squares does a Rubik's Cube have?",
-      "answer": 54,
+      "topic": "history",
+      "difficulty": 3,
+      "prompt": "How many seconds did the Wright brothers' first powered flight last?",
+      "answer": 12,
       "min": 0,
-      "max": 200,
-      "unit": "squares",
-      "fact": "Nine on each of six faces makes 54."
+      "max": 25,
+      "unit": "seconds",
+      "fact": "Twelve seconds, covering 37 m. That is shorter than the wingspan of a jumbo jet."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "How many degrees is each corner of a regular hexagon?",
-      "answer": 120,
+      "prompt": "How much does a tennis ball weigh, in grams?",
+      "answer": 58,
       "min": 0,
-      "max": 500,
-      "unit": "degrees",
-      "fact": "120 degrees, which is why hexagons fit together with no gaps, as in a honeycomb."
+      "max": 200,
+      "unit": "g",
+      "fact": "Between 56 and 59.4 g by the rules, so about the weight of an egg."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "nature",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "What is the largest kind of shark?",
+      "prompt": "What colour is an aircraft's black box flight recorder?",
       "options": [
-        "Whale shark",
-        "Hammerhead",
-        "Great white",
-        "Tiger shark"
+        "Orange",
+        "Yellow",
+        "Black",
+        "Red"
       ],
       "answer": 0,
-      "hint": "It eats only tiny plankton.",
-      "fact": "A whale shark can grow to about 12 m and is completely harmless to people."
+      "hint": "It has to be easy to spot in wreckage.",
+      "fact": "Nobody is quite sure why it is called a black box. It has always been painted bright orange."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Who painted Girl with a Pearl Earring?",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which sauce is made from egg yolks, butter and lemon?",
       "options": [
-        "Rubens",
-        "Van Eyck",
-        "Vermeer",
-        "Rembrandt"
+        "Béchamel",
+        "Hollandaise",
+        "Mornay",
+        "Aioli"
       ],
-      "answer": 2,
-      "hint": "He worked in Delft and left fewer than forty paintings.",
-      "fact": "Johannes Vermeer painted it around 1665. Nobody knows who the girl was."
+      "answer": 1,
+      "hint": "It is the sauce on eggs Benedict.",
+      "fact": "Béchamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

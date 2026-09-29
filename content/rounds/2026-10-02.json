@@ -1,6 +1,6 @@
 {
   "date": "2026-10-02",
-  "roundNumber": 14,
+  "roundNumber": 11,
   "seed": 20261002,
   "theme": "General knowledge",
   "questions": [
@@ -9,98 +9,99 @@
       "type": "cluster",
       "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which of these mountains are in the Himalayas?",
+      "prompt": "Which of these capital cities are in Africa?",
       "options": [
-        "Mont Blanc",
-        "Aconcagua",
-        "Everest",
-        "Kangchenjunga",
-        "Annapurna",
-        "Kilimanjaro"
-      ],
-      "answers": [
-        2,
-        3,
-        4
-      ],
-      "fact": "Kangchenjunga, on the border of Nepal and India, is the third highest mountain in the world."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these animals are primates?",
-      "options": [
-        "Lemur",
-        "Raccoon",
-        "Meerkat",
-        "Gibbon",
-        "Tarsier",
-        "Sloth"
+        "Nairobi",
+        "Beirut",
+        "Baku",
+        "Accra",
+        "Dakar",
+        "Muscat"
       ],
       "answers": [
         0,
         3,
         4
       ],
-      "fact": "A tarsier's eyes are each as big as its brain, and they cannot move in their sockets."
+      "fact": "Dakar, the capital of Senegal, stands on the westernmost point of mainland Africa."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these characters did Shakespeare create?",
+      "options": [
+        "Beowulf",
+        "Ophelia",
+        "Faustus",
+        "Tartuffe",
+        "Puck",
+        "Hamlet"
+      ],
+      "answers": [
+        1,
+        4,
+        5
+      ],
+      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Molière's, and Beowulf is an Old English poem nobody knows the author of."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "How many seconds did the Wright brothers' first powered flight last?",
-      "answer": 12,
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many times a minute does a resting adult's heart beat, on average?",
+      "answer": 70,
       "min": 0,
-      "max": 25,
-      "unit": "seconds",
-      "fact": "Twelve seconds, covering 37 m. That is shorter than the wingspan of a jumbo jet."
+      "max": 200,
+      "unit": "beats",
+      "route": "Count your own pulse for 15 seconds and multiply by 4.",
+      "fact": "Anywhere from 60 to 100 is normal, and about 70 is typical. Trained athletes can sit below 50."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "How much does a tennis ball weigh, in grams?",
-      "answer": 58,
+      "topic": "geography",
+      "difficulty": 3,
+      "prompt": "How far is it from London to New York in a straight line, in kilometres?",
+      "answer": 5570,
       "min": 0,
-      "max": 200,
-      "unit": "g",
-      "fact": "Between 56 and 59.4 g by the rules, so about the weight of an egg."
+      "max": 20000,
+      "unit": "km",
+      "fact": "About 5,570 km, roughly seven hours on a plane heading west."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "What colour is an aircraft's black box flight recorder?",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which gas do plants take in from the air to make their food?",
       "options": [
-        "Orange",
-        "Yellow",
-        "Black",
-        "Red"
+        "Oxygen",
+        "Nitrogen",
+        "Carbon dioxide",
+        "Hydrogen"
       ],
-      "answer": 0,
-      "hint": "It has to be easy to spot in wreckage.",
-      "fact": "Nobody is quite sure why it is called a black box. It has always been painted bright orange."
+      "answer": 2,
+      "hint": "It is the gas you breathe out.",
+      "fact": "Plants use sunlight to turn it and water into sugar, and give off oxygen as they do it."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which sauce is made from egg yolks, butter and lemon?",
+      "difficulty": 1,
+      "prompt": "Which fruit is dried to make a prune?",
       "options": [
-        "Béchamel",
-        "Hollandaise",
-        "Mornay",
-        "Aioli"
+        "Date",
+        "Grape",
+        "Plum",
+        "Fig"
       ],
-      "answer": 1,
-      "hint": "It is the sauce on eggs Benedict.",
-      "fact": "Béchamel is a white sauce of milk, butter and flour. Add cheese and it becomes Mornay."
+      "answer": 2,
+      "hint": "It is small and purple, with a stone inside.",
+      "fact": "A dried grape is a raisin, sultana or currant, depending on the grape."
     },
     {
       "id": "q7",
@@ -110,7 +111,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

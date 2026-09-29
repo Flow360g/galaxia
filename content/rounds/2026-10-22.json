@@ -1,107 +1,106 @@
 {
   "date": "2026-10-22",
-  "roundNumber": 34,
+  "roundNumber": 31,
   "seed": 20261022,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which of these are types of bean?",
+      "prompt": "Which of these are parts of the human ear?",
       "options": [
-        "Cannellini",
-        "Kidney",
-        "Pinto",
-        "Spelt",
-        "Barley",
-        "Quinoa"
+        "Anvil",
+        "Larynx",
+        "Retina",
+        "Eardrum",
+        "Cochlea",
+        "Tonsil"
       ],
       "answers": [
         0,
-        1,
-        2
+        3,
+        4
       ],
-      "fact": "Baked beans in a tin are usually haricot beans, also called navy beans."
+      "fact": "The anvil is one of three tiny bones in the middle ear. With the hammer and stirrup, they are the smallest bones in your body."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "science",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "Which of these are found inside a cell?",
+      "prompt": "Which of these are types of knot?",
       "options": [
-        "Artery",
-        "Nucleus",
-        "Alveolus",
-        "Neuron",
-        "Ribosome",
-        "Mitochondria"
+        "Reef",
+        "Spinnaker",
+        "Keel",
+        "Tiller",
+        "Bowline",
+        "Clove hitch"
       ],
       "answers": [
-        1,
+        0,
         4,
         5
       ],
-      "fact": "Mitochondria have DNA of their own, and you inherit it only from your mother."
+      "fact": "Spinnaker, keel and tiller are parts of a sailing boat, where knots like the bowline get used most."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "How many dominoes are in a standard double-six set?",
-      "answer": 28,
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "How long is Bohemian Rhapsody, in minutes?",
+      "answer": 5.9,
       "min": 0,
-      "max": 100,
-      "unit": "dominoes",
-      "route": "Seven tiles have a blank, six more have a one, and so on: 7 + 6 + 5 + 4 + 3 + 2 + 1 = 28.",
-      "fact": "28, one for every pairing of the numbers 0 to 6."
+      "max": 20,
+      "unit": "minutes",
+      "fact": "Just under six minutes. The record company said it was far too long for radio."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "How tall is Michelangelo's statue of David, in metres?",
-      "answer": 5.17,
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How tall is the Burj Khalifa, in metres?",
+      "answer": 828,
       "min": 0,
-      "max": 10,
+      "max": 2500,
       "unit": "m",
-      "fact": "5.17 m, about three times the height of a real man."
+      "fact": "828 m, more than twice the height of the Empire State Building."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which film has the line \"I'll be back\"?",
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "Which artist is famous for paintings of soup cans?",
       "options": [
-        "The Terminator",
-        "Predator",
-        "Die Hard",
-        "Rambo"
+        "Warhol",
+        "Pollock",
+        "Lichtenstein",
+        "Hockney"
       ],
       "answer": 0,
-      "hint": "It is said by a robot sent back in time.",
-      "fact": "Arnold Schwarzenegger wanted to say \"I will be back\", but the director made him keep the shorter line."
+      "hint": "He also made a famous print of Marilyn Monroe, repeated in bright colours.",
+      "fact": "Andy Warhol painted 32 Campbell's soup cans, one for every flavour on sale in 1962."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "history",
+      "topic": "food",
       "difficulty": 1,
-      "prompt": "Which Roman city was buried when Vesuvius erupted in AD 79?",
+      "prompt": "Which spirit goes into a margarita?",
       "options": [
-        "Troy",
-        "Ostia",
-        "Pompeii",
-        "Carthage"
+        "Gin",
+        "Rum",
+        "Tequila",
+        "Vodka"
       ],
       "answer": 2,
-      "hint": "It is near Naples.",
-      "fact": "The ash that buried Pompeii preserved bread in ovens and graffiti on the walls."
+      "hint": "It is made from the agave plant in Mexico.",
+      "fact": "A classic margarita is tequila, orange liqueur and lime, with salt on the rim."
     },
     {
       "id": "q7",
@@ -111,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

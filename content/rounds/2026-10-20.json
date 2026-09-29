@@ -1,105 +1,106 @@
 {
   "date": "2026-10-20",
-  "roundNumber": 32,
+  "roundNumber": 29,
   "seed": 20261020,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "Which of these metals does a magnet pick up?",
-      "options": [
-        "Aluminium",
-        "Copper",
-        "Cobalt",
-        "Gold",
-        "Nickel",
-        "Iron"
-      ],
-      "answers": [
-        2,
-        4,
-        5
-      ],
-      "fact": "Only a handful of metals are strongly magnetic at room temperature. A drinks can is aluminium, so a magnet slides off it."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
       "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these superheroes are from Marvel?",
+      "difficulty": 2,
+      "prompt": "Which of these are Snow White's seven dwarfs?",
       "options": [
-        "Batman",
-        "Aquaman",
-        "Hulk",
-        "Thor",
-        "Black Panther",
-        "The Flash"
+        "Dizzy",
+        "Grouchy",
+        "Sneezy",
+        "Bashful",
+        "Dopey",
+        "Jumpy"
       ],
       "answers": [
         2,
         3,
         4
       ],
-      "fact": "Batman, Aquaman and The Flash belong to DC, Marvel's great rival."
+      "fact": "The dwarfs only got names in Disney's 1937 film. In the Grimm fairy tale they have none."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these are poems rather than novels?",
+      "options": [
+        "Ulysses",
+        "The Odyssey",
+        "Paradise Lost",
+        "Dracula",
+        "Don Quixote",
+        "The Raven"
+      ],
+      "answers": [
+        1,
+        2,
+        5
+      ],
+      "fact": "James Joyce's novel Ulysses borrows its shape from the Odyssey, the poem about the same hero."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 2,
-      "prompt": "What is the pH of pure water?",
-      "answer": 7,
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How far do you travel in an Ironman triathlon, in kilometres?",
+      "answer": 226,
       "min": 0,
-      "max": 25,
-      "fact": "Seven, right in the middle of the scale. Lower is acid and higher is alkaline."
+      "max": 500,
+      "unit": "km",
+      "fact": "About 226 km: a 3.8 km swim, a 180 km bike ride and a full marathon."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "How high is Mount Kilimanjaro, in metres?",
-      "answer": 5895,
-      "min": 0,
-      "max": 20000,
-      "unit": "m",
-      "fact": "5,895 m, the highest mountain in Africa, with snow near the equator."
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "In what year did Leonardo da Vinci start painting the Mona Lisa?",
+      "answer": 1503,
+      "min": 1400,
+      "max": 1600,
+      "year": true,
+      "fact": "Around 1503. He kept working on it for more than ten years and never handed it over."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "history",
       "difficulty": 2,
-      "prompt": "Who designed the Sagrada Família in Barcelona?",
+      "prompt": "Who was the first person to reach the South Pole?",
       "options": [
-        "Gehry",
-        "Gaudí",
-        "Dalí",
-        "Le Corbusier"
+        "Shackleton",
+        "Scott",
+        "Hillary",
+        "Amundsen"
       ],
-      "answer": 1,
-      "hint": "He was from Catalonia and loved curves drawn from nature.",
-      "fact": "Building began in 1882, and Antoni Gaudí worked on it for over 40 years."
+      "answer": 3,
+      "hint": "He was Norwegian, and he used dog sleds.",
+      "fact": "Roald Amundsen got there in December 1911, five weeks before Robert Falcon Scott."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "nature",
+      "topic": "geography",
       "difficulty": 1,
-      "prompt": "What is a group of lions called?",
+      "prompt": "In which country is Machu Picchu?",
       "options": [
-        "A troop",
-        "A herd",
-        "A pack",
-        "A pride"
+        "Chile",
+        "Mexico",
+        "Bolivia",
+        "Peru"
       ],
       "answer": 3,
-      "hint": "It is also a word for feeling good about yourself.",
-      "fact": "The lionesses in a pride do most of the hunting, and they are usually all related."
+      "hint": "The nearest big city is Cusco, once the capital of the Inca Empire.",
+      "fact": "Machu Picchu was built for an Inca emperor in the 1400s and was abandoned about a century later."
     },
     {
       "id": "q7",
@@ -109,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

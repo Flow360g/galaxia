@@ -1,106 +1,106 @@
 {
   "date": "2026-10-13",
-  "roundNumber": 25,
+  "roundNumber": 22,
   "seed": 20261013,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Which of these films did Steven Spielberg direct?",
+      "prompt": "Which of these books did Roald Dahl write?",
       "options": [
-        "Titanic",
-        "Jaws",
-        "E.T.",
-        "Jurassic Park",
-        "Star Wars",
-        "Back to the Future"
+        "Matilda",
+        "Stig of the Dump",
+        "The Twits",
+        "The Hobbit",
+        "Peter Pan",
+        "The BFG"
       ],
       "answers": [
-        1,
+        0,
         2,
-        3
+        5
       ],
-      "fact": "Spielberg produced Back to the Future but did not direct it. Robert Zemeckis did."
+      "fact": "The BFG speaks his own language, gobblefunk, which Dahl made up."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "Which of these monarchs were Tudors?",
+      "prompt": "Which of these currencies are used in Asia?",
       "options": [
-        "Anne",
-        "Victoria",
-        "Mary I",
-        "Charles I",
-        "Elizabeth I",
-        "Henry VIII"
+        "Baht",
+        "Yen",
+        "Won",
+        "Rand",
+        "Zloty",
+        "Krona"
       ],
       "answers": [
-        2,
-        4,
-        5
+        0,
+        1,
+        2
       ],
-      "fact": "The Tudors ruled England for 118 years, from 1485 to 1603, when Elizabeth I died without children."
+      "fact": "The baht began as a weight for silver, and in Thailand gold is still sold by the baht."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "How many squares are there on a Scrabble board?",
-      "answer": 225,
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "How many hours a day does a koala sleep?",
+      "answer": 20,
       "min": 0,
-      "max": 500,
-      "unit": "squares",
-      "fact": "225, on a grid 15 squares wide and 15 tall."
+      "max": 50,
+      "unit": "hours",
+      "fact": "Around 20. Gum leaves give it very little energy, so it saves what it can."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "nature",
-      "difficulty": 3,
-      "prompt": "How many teeth does an adult dog have?",
-      "answer": 42,
+      "topic": "arts",
+      "difficulty": 2,
+      "prompt": "How tall is the Statue of Liberty from the ground to the tip of the torch, in metres?",
+      "answer": 93,
       "min": 0,
-      "max": 100,
-      "unit": "teeth",
-      "fact": "42, ten more than an adult human."
+      "max": 250,
+      "unit": "m",
+      "fact": "About 93 m with its pedestal. The copper skin is thinner than two coins stacked together."
     },
     {
       "id": "q5",
       "type": "mcq",
       "topic": "science",
-      "difficulty": 1,
-      "prompt": "Which blood cells fight infection?",
+      "difficulty": 2,
+      "prompt": "What is the largest organ of the human body?",
       "options": [
-        "White cells",
-        "Red cells",
-        "Platelets",
-        "Plasma"
+        "Skin",
+        "Liver",
+        "Lungs",
+        "Brain"
       ],
       "answer": 0,
-      "hint": "They are named after their colour.",
-      "fact": "Red blood cells carry oxygen and platelets help blood clot."
+      "hint": "It is on the outside.",
+      "fact": "An adult's skin weighs around four kilograms."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "arts",
+      "topic": "screen",
       "difficulty": 1,
-      "prompt": "Which dance comes from Argentina?",
+      "prompt": "Which Pixar film is set mostly in Paris?",
       "options": [
-        "Flamenco",
-        "Salsa",
-        "Tango",
-        "Samba"
+        "Up",
+        "Ratatouille",
+        "Coco",
+        "Luca"
       ],
-      "answer": 2,
-      "hint": "It was born in the dance halls of Buenos Aires.",
-      "fact": "The tango began in the 1880s in the working-class districts of Buenos Aires and Montevideo."
+      "answer": 1,
+      "hint": "It is about a rat who wants to be a chef.",
+      "fact": "Pixar's team ate at top Paris restaurants and took a cooking class to get the kitchen scenes right."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

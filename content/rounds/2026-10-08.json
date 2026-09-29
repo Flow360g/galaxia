@@ -1,106 +1,106 @@
 {
   "date": "2026-10-08",
-  "roundNumber": 20,
+  "roundNumber": 17,
   "seed": 20261008,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Which of these novels did Jane Austen write?",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these words read the same backwards?",
       "options": [
-        "Middlemarch",
-        "Jane Eyre",
-        "Persuasion",
-        "Rebecca",
-        "Emma",
-        "Mansfield Park"
+        "Level",
+        "Kayak",
+        "Banana",
+        "Llama",
+        "Salsa",
+        "Radar"
       ],
       "answers": [
-        2,
-        4,
+        0,
+        1,
         5
       ],
-      "fact": "Austen's books came out without her name. The first was credited only to 'A Lady'."
+      "fact": "Christopher Nolan's 2020 film Tenet has a palindrome for a title."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "screen",
+      "topic": "food",
       "difficulty": 1,
-      "prompt": "Which of these characters are in The Simpsons?",
+      "prompt": "Which of these are breads?",
       "options": [
-        "Kenny",
-        "Moe",
-        "Hank Hill",
-        "Apu",
-        "Milhouse",
-        "Stewie"
+        "Naan",
+        "Focaccia",
+        "Brioche",
+        "Couscous",
+        "Tofu",
+        "Polenta"
       ],
       "answers": [
+        0,
         1,
-        3,
-        4
+        2
       ],
-      "fact": "Stewie is from Family Guy, Kenny from South Park, and Hank Hill from King of the Hill."
+      "fact": "Brioche is rich with butter and eggs, which sits it halfway between bread and cake."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "How many ships sailed in the Spanish Armada?",
-      "answer": 130,
+      "topic": "misc",
+      "difficulty": 2,
+      "prompt": "How many coloured squares does a Rubik's Cube have?",
+      "answer": 54,
       "min": 0,
-      "max": 250,
-      "unit": "ships",
-      "fact": "About 130 in 1588. Storms off Scotland and Ireland sank more of them than the English navy did."
+      "max": 200,
+      "unit": "squares",
+      "fact": "Nine on each of six faces makes 54."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "misc",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "How many years of marriage does a golden wedding anniversary mark?",
-      "answer": 50,
+      "prompt": "How many degrees is each corner of a regular hexagon?",
+      "answer": 120,
       "min": 0,
-      "max": 200,
-      "unit": "years",
-      "fact": "Fifty. A silver anniversary is 25 years and a diamond one is 60."
+      "max": 500,
+      "unit": "degrees",
+      "fact": "120 degrees, which is why hexagons fit together with no gaps, as in a honeycomb."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "sport",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which country hosted the first modern Olympics, in 1896?",
+      "prompt": "What is the largest kind of shark?",
       "options": [
-        "Greece",
-        "France",
-        "Britain",
-        "USA"
+        "Whale shark",
+        "Hammerhead",
+        "Great white",
+        "Tiger shark"
       ],
       "answer": 0,
-      "hint": "It was chosen to honour the ancient Games.",
-      "fact": "The 1896 Games in Athens had 241 athletes, all of them men."
+      "hint": "It eats only tiny plankton.",
+      "fact": "A whale shark can grow to about 12 m and is completely harmless to people."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which bird is the fastest in a dive?",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Who painted Girl with a Pearl Earring?",
       "options": [
-        "Albatross",
-        "Peregrine falcon",
-        "Swift",
-        "Golden eagle"
+        "Rubens",
+        "Van Eyck",
+        "Vermeer",
+        "Rembrandt"
       ],
-      "answer": 1,
-      "hint": "It hunts other birds by dropping on them from above.",
-      "fact": "A peregrine falcon can pass 300 km/h in a dive, faster than any other animal."
+      "answer": 2,
+      "hint": "He worked in Delft and left fewer than forty paintings.",
+      "fact": "Johannes Vermeer painted it around 1665. Nobody knows who the girl was."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

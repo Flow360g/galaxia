@@ -1,6 +1,6 @@
 {
   "date": "2026-10-06",
-  "roundNumber": 18,
+  "roundNumber": 15,
   "seed": 20261006,
   "theme": "General knowledge",
   "questions": [
@@ -9,98 +9,98 @@
       "type": "cluster",
       "topic": "screen",
       "difficulty": 2,
-      "prompt": "Which of these are James Bond villains?",
+      "prompt": "Which of these are Beatles songs?",
       "options": [
-        "Blofeld",
-        "Moriarty",
-        "Hannibal",
-        "Jaws",
-        "Lex Luthor",
-        "Goldfinger"
+        "Yesterday",
+        "Let It Be",
+        "My Generation",
+        "Hey Jude",
+        "Imagine",
+        "Waterloo"
       ],
       "answers": [
         0,
-        3,
-        5
+        1,
+        3
       ],
-      "fact": "Jaws, the giant with steel teeth, changes sides at the end of Moonraker."
+      "fact": "Paul McCartney woke up with the tune of Yesterday in his head and called it Scrambled Eggs until the real words came."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
-      "difficulty": 1,
-      "prompt": "Which of these were invented in ancient China?",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "Which of these are names for a baby animal?",
       "options": [
-        "Gunpowder",
-        "Telescope",
-        "Steam engine",
-        "Thermometer",
-        "Compass",
-        "Paper"
+        "Cygnet",
+        "Boar",
+        "Leveret",
+        "Joey",
+        "Jenny",
+        "Drake"
       ],
       "answers": [
         0,
-        4,
-        5
+        2,
+        3
       ],
-      "fact": "China counts four great inventions: paper, printing, gunpowder and the compass."
+      "fact": "A leveret is a young hare. Unlike a baby rabbit, it is born with fur and its eyes open."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "science",
-      "difficulty": 3,
-      "prompt": "How fast does sound travel through air, in metres per second?",
-      "answer": 343,
+      "difficulty": 2,
+      "prompt": "What percentage of the air we breathe is oxygen?",
+      "answer": 21,
       "min": 0,
-      "max": 1000,
-      "unit": "m/s",
-      "fact": "About 343 m/s, so count the seconds between lightning and thunder and divide by three to get the distance in kilometres."
+      "max": 100,
+      "unit": "%",
+      "fact": "About 21%. Most of the rest is nitrogen, at about 78%."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "history",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Roughly how many people died when the Titanic sank?",
-      "answer": 1500,
+      "prompt": "How far is it from London to Paris in a straight line, in kilometres?",
+      "answer": 340,
       "min": 0,
-      "max": 5000,
-      "unit": "people",
-      "fact": "About 1,500 of the roughly 2,200 on board. There were lifeboats for only about half of them."
+      "max": 1000,
+      "unit": "km",
+      "fact": "About 340 km. The Eurostar covers the journey in around two and a quarter hours."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Which novel opens with the line \"Call me Ishmael\"?",
+      "topic": "nature",
+      "difficulty": 3,
+      "prompt": "What colour is a polar bear's skin?",
       "options": [
-        "Robinson Crusoe",
-        "Moby-Dick",
-        "Treasure Island",
-        "Old Man and the Sea"
+        "Pink",
+        "White",
+        "Black",
+        "Grey"
       ],
-      "answer": 1,
-      "hint": "It is about a captain hunting a whale.",
-      "fact": "Herman Melville's Moby-Dick flopped when it came out in 1851 and only became a classic after he died."
+      "answer": 2,
+      "hint": "It helps soak up heat from the sun.",
+      "fact": "A polar bear's fur is not white either. Each hair is clear and hollow, and scatters light."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "In which sport would you bowl a googly?",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which country did ABBA come from?",
       "options": [
-        "Lawn bowls",
-        "Baseball",
-        "Tenpin",
-        "Cricket"
+        "Norway",
+        "Netherlands",
+        "Denmark",
+        "Sweden"
       ],
       "answer": 3,
-      "hint": "It is a ball that spins the opposite way to the one the batter expects.",
-      "fact": "The googly was invented by an English bowler, Bernard Bosanquet, around 1900."
+      "hint": "They won Eurovision in 1974 singing Waterloo, for their home country.",
+      "fact": "ABBA's name is made from the first letters of the four members' first names."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

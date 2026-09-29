@@ -1,106 +1,106 @@
 {
   "date": "2026-11-04",
-  "roundNumber": 47,
+  "roundNumber": 44,
   "seed": 20261104,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "sport",
-      "difficulty": 2,
-      "prompt": "Which of these cities have hosted the Summer Olympics?",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "Which of these are chess pieces?",
       "options": [
-        "Barcelona",
-        "Cape Town",
-        "Sydney",
-        "Istanbul",
-        "Seoul",
-        "Toronto"
+        "Duke",
+        "Bishop",
+        "Squire",
+        "Rook",
+        "Knight",
+        "Archer"
       ],
       "answers": [
-        0,
-        2,
+        1,
+        3,
         4
       ],
-      "fact": "Triathlon made its Olympic debut at Sydney 2000, starting with a swim beside the Opera House."
+      "fact": "The knight is the only piece that can jump over others."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "science",
       "difficulty": 3,
-      "prompt": "Which of these cities stand on the Danube?",
+      "prompt": "Which of these are units of energy?",
       "options": [
-        "Warsaw",
-        "Budapest",
-        "Vienna",
-        "Belgrade",
-        "Prague",
-        "Munich"
+        "Kilowatt-hour",
+        "Newton",
+        "Joule",
+        "Calorie",
+        "Watt",
+        "Pascal"
       ],
       "answers": [
-        1,
+        0,
         2,
         3
       ],
-      "fact": "The Danube runs through or along ten countries, more than any other river on Earth."
+      "fact": "A watt is a joule every second, so a kilowatt-hour is 3.6 million joules."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "How heavy is a newborn baby, on average, in kilograms?",
-      "answer": 3.5,
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How long is the River Thames, in kilometres?",
+      "answer": 346,
       "min": 0,
-      "max": 20,
-      "unit": "kg",
-      "fact": "About 3.5 kg. Most babies lose a little weight in their first few days, then gain it back within a fortnight."
+      "max": 1000,
+      "unit": "km",
+      "fact": "About 346 km, from the Cotswolds to the North Sea."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "How many characters could a tweet have when Twitter started?",
-      "answer": 140,
+      "topic": "food",
+      "difficulty": 3,
+      "prompt": "How many litres of maple sap does it take to make one litre of maple syrup?",
+      "answer": 40,
       "min": 0,
-      "max": 500,
-      "unit": "characters",
-      "fact": "140, so a tweet would fit in a text message with room for a username."
+      "max": 100,
+      "unit": "litres",
+      "fact": "About 40. The sap is mostly water, and it is boiled for hours to thicken it."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "nature",
+      "topic": "science",
       "difficulty": 1,
-      "prompt": "Which bird lays the biggest egg?",
+      "prompt": "Who came up with evolution by natural selection?",
       "options": [
-        "Emu",
-        "Condor",
-        "Albatross",
-        "Ostrich"
+        "Galileo",
+        "Mendel",
+        "Darwin",
+        "Newton"
       ],
-      "answer": 3,
-      "hint": "It is also the biggest bird alive.",
-      "fact": "One ostrich egg holds as much as about two dozen hen's eggs."
+      "answer": 2,
+      "hint": "He sailed round the world on HMS Beagle.",
+      "fact": "Charles Darwin waited more than twenty years before publishing On the Origin of Species in 1859."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "Which pastry are profiteroles made from?",
+      "prompt": "Which Roman god matches the Greek god of war, Ares?",
       "options": [
-        "Filo",
-        "Shortcrust",
-        "Puff",
-        "Choux"
+        "Jupiter",
+        "Saturn",
+        "Mercury",
+        "Mars"
       ],
       "answer": 3,
-      "hint": "It is also used for eclairs.",
-      "fact": "Choux pastry puffs up in the oven because the water in it turns to steam."
+      "hint": "The red planet is named after him.",
+      "fact": "The month of March is named after Mars, because it was when the Roman army set out to fight."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

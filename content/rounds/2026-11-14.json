@@ -1,6 +1,6 @@
 {
   "date": "2026-11-14",
-  "roundNumber": 57,
+  "roundNumber": 54,
   "seed": 20261114,
   "theme": "General knowledge",
   "stages": [
@@ -27,101 +27,100 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "arts",
-      "difficulty": 1,
-      "prompt": "Which of these are kinds of poem?",
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "Which of these bands come from Australia?",
       "options": [
-        "Fresco",
-        "Sonata",
-        "Limerick",
-        "Sonnet",
-        "Mural",
-        "Haiku"
+        "Blur",
+        "AC/DC",
+        "INXS",
+        "Split Enz",
+        "Tame Impala",
+        "The Cure"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "AC/DC formed in Sydney in 1973 around the Young brothers, who were born in Glasgow."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "arts",
+      "difficulty": 3,
+      "prompt": "Which of these were written by Charles Dickens?",
+      "options": [
+        "Frankenstein",
+        "Dracula",
+        "Hard Times",
+        "Bleak House",
+        "Jane Eyre",
+        "Oliver Twist"
       ],
       "answers": [
         2,
         3,
         5
       ],
-      "fact": "A haiku is seventeen sounds long. A fresco is painted into wet plaster and a sonata is played, not written down as verse."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "misc",
-      "difficulty": 2,
-      "prompt": "Which of these are gods in Norse myth?",
-      "options": [
-        "Odin",
-        "Anubis",
-        "Marduk",
-        "Loki",
-        "Perun",
-        "Thor"
-      ],
-      "answers": [
-        0,
-        3,
-        5
-      ],
-      "fact": "Anubis is Egyptian, Marduk Babylonian and Perun Slavic. Every mythology has a thunder god; only one of them has Thor."
+      "fact": "Dickens published most of his novels a chapter at a time in magazines, so he could change the plot if readers hated it."
     },
     {
       "id": "q3",
       "type": "vector",
       "topic": "history",
-      "difficulty": 2,
-      "prompt": "In what year did the Titanic sink?",
-      "answer": 1912,
-      "min": 1800,
-      "max": 2000,
+      "difficulty": 1,
+      "prompt": "In what year did the Second World War end?",
+      "answer": 1945,
+      "min": 1825,
+      "max": 2025,
       "year": true,
-      "fact": "April 1912, on its first voyage, from Southampton to New York."
+      "fact": "1945: in May in Europe, and in September in the Pacific."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "screen",
-      "difficulty": 3,
-      "prompt": "How many episodes of Friends were made?",
-      "answer": 236,
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "How many calories are in one large hen's egg?",
+      "answer": 72,
       "min": 0,
-      "max": 500,
-      "unit": "episodes",
-      "route": "Ten series of about two dozen episodes each.",
-      "fact": "236, over ten series. The last one was watched by more than fifty million people in the United States."
+      "max": 200,
+      "unit": "kcal",
+      "fact": "About 72, and almost all of the fat sits in the yolk. The white is mostly water and protein."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "sport",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "In which sport would you use a foil?",
+      "prompt": "Which band recorded the album The Dark Side of the Moon?",
       "options": [
-        "Boxing",
-        "Archery",
-        "Fencing",
-        "Rowing"
+        "Pink Floyd",
+        "The Who",
+        "Led Zeppelin",
+        "Genesis"
       ],
-      "answer": 2,
-      "hint": "There are three blades in the sport, and this is the lightest.",
-      "fact": "Fencing has three weapons: foil, epee and sabre. The foil is the lightest and only counts hits to the torso."
+      "answer": 0,
+      "hint": "The cover is a prism splitting white light into a rainbow.",
+      "fact": "It stayed on the US album chart for more than fourteen years, which no record has matched."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "Which nut is marzipan made from?",
+      "topic": "misc",
+      "difficulty": 1,
+      "prompt": "In Greek myth, which god ruled the sea?",
       "options": [
-        "Peanut",
-        "Walnut",
-        "Hazelnut",
-        "Almond"
+        "Poseidon",
+        "Hades",
+        "Apollo",
+        "Zeus"
       ],
-      "answer": 3,
-      "hint": "The same nut as amaretto and frangipane.",
-      "fact": "Ground almonds and sugar, and nothing else in the traditional recipe. It is older than the sugar trade in Europe."
+      "answer": 0,
+      "hint": "His brothers took the sky and the underworld.",
+      "fact": "The three brothers drew lots for the world. Zeus got the sky, Hades the underworld, Poseidon the sea."
     },
     {
       "id": "q7",

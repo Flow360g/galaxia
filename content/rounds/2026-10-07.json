@@ -1,106 +1,106 @@
 {
   "date": "2026-10-07",
-  "roundNumber": 19,
+  "roundNumber": 16,
   "seed": 20261007,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "food",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which of these drinks are made from grapes?",
+      "prompt": "Which of these organs are part of the digestive system?",
       "options": [
-        "Cider",
-        "Champagne",
-        "Grappa",
-        "Whisky",
-        "Sake",
-        "Brandy"
-      ],
-      "answers": [
-        1,
-        2,
-        5
-      ],
-      "fact": "Grappa is made from the skins and seeds left over after the grapes have been pressed for wine."
-    },
-    {
-      "id": "q2",
-      "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these are insects?",
-      "options": [
-        "Beetle",
-        "Scorpion",
-        "Earwig",
-        "Woodlouse",
-        "Ant",
-        "Spider"
+        "Stomach",
+        "Kidney",
+        "Liver",
+        "Spleen",
+        "Lungs",
+        "Pancreas"
       ],
       "answers": [
         0,
         2,
+        5
+      ],
+      "fact": "The liver makes bile, which the gallbladder stores and squeezes into the gut to break down fat."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Which of these English words come from Arabic?",
+      "options": [
+        "Algebra",
+        "Sofa",
+        "Kindergarten",
+        "Tsunami",
+        "Coffee",
+        "Ballet"
+      ],
+      "answers": [
+        0,
+        1,
         4
       ],
-      "fact": "Insects have six legs. Spiders and scorpions have eight, and a woodlouse is a crustacean, like a crab."
+      "fact": "Algebra comes from al-jabr, a word in the title of a maths book written in Baghdad in the 800s."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "history",
-      "difficulty": 3,
-      "prompt": "In what year did Gutenberg start printing with movable type in Europe?",
-      "answer": 1440,
-      "min": 1300,
-      "max": 1500,
+      "topic": "screen",
+      "difficulty": 2,
+      "prompt": "In what year was the first Star Wars film released?",
+      "answer": 1977,
+      "min": 1825,
+      "max": 2025,
       "year": true,
-      "fact": "Around 1440 in Mainz. His Bible, finished around 1455, was the first major book printed in Europe."
+      "fact": "1977. It was later retitled Episode IV: A New Hope."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
+      "topic": "sport",
       "difficulty": 2,
-      "prompt": "How much does an adult human brain weigh, in kilograms?",
-      "answer": 1.4,
+      "prompt": "How long is the pitch at Wembley Stadium, in metres?",
+      "answer": 105,
       "min": 0,
-      "max": 5,
-      "unit": "kg",
-      "fact": "About 1.4 kg, yet it uses around a fifth of the body's energy."
+      "max": 500,
+      "unit": "m",
+      "fact": "105 m by 68 m, the size FIFA recommends for international matches."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "nature",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "What is a group of crows called?",
+      "prompt": "In Greek myth, Athena was the goddess of what?",
       "options": [
-        "A murder",
-        "A parliament",
-        "A pod",
-        "A gaggle"
+        "Love",
+        "Wisdom",
+        "The hunt",
+        "The harvest"
       ],
-      "answer": 0,
-      "hint": "It is the darkest name of the four.",
-      "fact": "A parliament is owls, a gaggle is geese on the ground, and a pod is whales or dolphins."
+      "answer": 1,
+      "hint": "Her bird was the owl.",
+      "fact": "Athens is named after her, and the Parthenon was built as her temple."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "science",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "Which organ makes insulin?",
+      "prompt": "What is the capital of Canada?",
       "options": [
-        "Spleen",
-        "Kidney",
-        "Pancreas",
-        "Liver"
+        "Montreal",
+        "Toronto",
+        "Ottawa",
+        "Vancouver"
       ],
       "answer": 2,
-      "hint": "It sits behind the stomach.",
-      "fact": "Insulin was first used to treat diabetes in 1922, on a 14-year-old boy in Toronto."
+      "hint": "It is not the biggest city. It sits on the river between Ontario and Quebec.",
+      "fact": "Queen Victoria picked Ottawa in 1857, partly as a compromise between English and French speaking Canada."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

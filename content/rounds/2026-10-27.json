@@ -1,106 +1,106 @@
 {
   "date": "2026-10-27",
-  "roundNumber": 39,
+  "roundNumber": 36,
   "seed": 20261027,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "arts",
+      "topic": "science",
       "difficulty": 2,
-      "prompt": "Which of these musicals are by Andrew Lloyd Webber?",
+      "prompt": "Which of these are the primary colours of light?",
       "options": [
-        "Evita",
-        "Starlight Express",
-        "Wicked",
-        "Cats",
-        "Chicago",
-        "Les Misérables"
+        "Green",
+        "Magenta",
+        "Blue",
+        "Red",
+        "Cyan",
+        "Yellow"
       ],
       "answers": [
         0,
-        1,
+        2,
         3
       ],
-      "fact": "Cats is based on a book of poems about cats by T. S. Eliot."
+      "fact": "Screens make every colour from red, green and blue dots. Printers use cyan, magenta and yellow ink instead."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these are Australian state capitals?",
+      "prompt": "Which of these were dinosaurs?",
       "options": [
-        "Adelaide",
-        "Darwin",
-        "Canberra",
-        "Hobart",
-        "Cairns",
-        "Perth"
+        "Triceratops",
+        "Velociraptor",
+        "Mammoth",
+        "Plesiosaur",
+        "Stegosaurus",
+        "Pterodactyl"
       ],
       "answers": [
         0,
-        3,
-        5
+        1,
+        4
       ],
-      "fact": "Canberra and Darwin are capitals of territories, not states. Canberra was built because Sydney and Melbourne would not let each other be the capital."
+      "fact": "Pterosaurs flew and plesiosaurs swam alongside the dinosaurs, but neither was a dinosaur."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "nature",
+      "topic": "geography",
       "difficulty": 2,
-      "prompt": "How heavy is a newborn elephant, in kilograms?",
-      "answer": 100,
+      "prompt": "How far is it around the Earth at the equator, in kilometres?",
+      "answer": 40075,
       "min": 0,
-      "max": 250,
-      "unit": "kg",
-      "fact": "Around 100 kg, and it can stand within an hour of being born."
+      "max": 200000,
+      "unit": "km",
+      "fact": "About 40,075 km. The metre was first defined as a ten-millionth of the distance from the North Pole to the equator, which is why the answer is so close to 40,000."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "science",
+      "topic": "screen",
       "difficulty": 2,
-      "prompt": "How many volts does a normal AA battery give?",
-      "answer": 1.5,
-      "min": 0,
-      "max": 5,
-      "unit": "volts",
-      "fact": "1.5 volts. The plug socket in an Australian or British home gives about 230."
+      "prompt": "In what year did Michael Jackson release the album Thriller?",
+      "answer": 1982,
+      "min": 1825,
+      "max": 2025,
+      "year": true,
+      "fact": "1982, and it is still thought to be the best-selling album ever made."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "Who wrote The Great Gatsby?",
+      "topic": "geography",
+      "difficulty": 1,
+      "prompt": "Which ocean lies between Africa and Australia?",
       "options": [
-        "Hemingway",
-        "Faulkner",
-        "Fitzgerald",
-        "Steinbeck"
+        "Atlantic",
+        "Pacific",
+        "Southern",
+        "Indian"
       ],
-      "answer": 2,
-      "hint": "His first names were Francis Scott, and his wife Zelda was a writer too.",
-      "fact": "The Great Gatsby sold poorly when it came out in 1925. Fitzgerald died thinking it had failed."
+      "answer": 3,
+      "hint": "It is named after a country on its northern shore.",
+      "fact": "The Indian Ocean is the warmest of the world's oceans."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "food",
       "difficulty": 2,
-      "prompt": "Which vegetable makes borscht red?",
+      "prompt": "What does \"al dente\" mean in Italian?",
       "options": [
-        "Radish",
-        "Red onion",
-        "Red pepper",
-        "Beetroot"
+        "To the tooth",
+        "Soft",
+        "With sauce",
+        "Well cooked"
       ],
-      "answer": 3,
-      "hint": "It is a root vegetable that stains everything it touches.",
-      "fact": "Borscht is a soup from Ukraine, eaten across Eastern Europe."
+      "answer": 0,
+      "hint": "It tells you the pasta should still have a little bite.",
+      "fact": "Pasta cooked al dente is firm in the middle when you bite it."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

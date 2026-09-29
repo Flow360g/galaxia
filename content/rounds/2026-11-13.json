@@ -1,6 +1,6 @@
 {
   "date": "2026-11-13",
-  "roundNumber": 56,
+  "roundNumber": 53,
   "seed": 20261113,
   "theme": "General knowledge",
   "stages": [
@@ -27,99 +27,101 @@
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "history",
+      "topic": "geography",
       "difficulty": 1,
-      "prompt": "Which of these were civilisations of the Americas?",
+      "prompt": "Which of these rivers flow through Europe?",
       "options": [
-        "Aztec",
-        "Celt",
-        "Viking",
-        "Zulu",
-        "Inca",
-        "Maya"
+        "Danube",
+        "Ganges",
+        "Rhine",
+        "Amazon",
+        "Nile",
+        "Seine"
       ],
       "answers": [
         0,
-        4,
+        2,
         5
       ],
-      "fact": "The Inca ran an empire of ten million people across the Andes without money, wheels or a written alphabet."
+      "fact": "The Danube passes through ten countries, more than any other river in the world."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "nature",
-      "difficulty": 2,
-      "prompt": "Which of these animals are reptiles?",
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "Which of these are gases at room temperature?",
       "options": [
-        "Toad",
-        "Tortoise",
-        "Snake",
-        "Frog",
-        "Crocodile",
-        "Salamander"
+        "Oxygen",
+        "Iron",
+        "Helium",
+        "Bromine",
+        "Mercury",
+        "Neon"
       ],
       "answers": [
-        1,
+        0,
         2,
-        4
+        5
       ],
-      "fact": "Frogs, salamanders and toads are amphibians: they breathe through wet skin and most of them start life in water."
+      "fact": "Mercury and bromine are the only two elements that are liquid in a warm room."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
+      "topic": "food",
       "difficulty": 3,
-      "prompt": "Roughly how many hairs are on a person's head?",
-      "answer": 100000,
+      "prompt": "How many litres of milk does it take to make one kilogram of cheese?",
+      "answer": 10,
       "min": 0,
-      "max": 250000,
-      "unit": "hairs",
-      "fact": "About 100,000, and you lose 50 to 100 of them every day."
+      "max": 25,
+      "unit": "litres",
+      "fact": "About ten litres for a hard cheese. Most of the milk drains away as whey."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "food",
-      "difficulty": 2,
-      "prompt": "How many teaspoons of sugar are in a can of cola?",
-      "answer": 9,
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "How many teeth does an adult human usually have?",
+      "answer": 32,
       "min": 0,
-      "max": 20,
-      "fact": "About nine. You cannot taste how sweet it is because the acid in it hides the sugar."
+      "max": 100,
+      "unit": "teeth",
+      "route": "Count your own: 16 along the top and 16 along the bottom.",
+      "fact": "32, counting the four wisdom teeth that many people never grow at all."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "nature",
-      "difficulty": 1,
-      "prompt": "Which is the only mammal that can truly fly?",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which part of the plant is cinnamon?",
       "options": [
-        "Sugar glider",
-        "Flying squirrel",
-        "Colugo",
-        "Bat"
+        "Leaf",
+        "Seed",
+        "Root",
+        "Bark"
       ],
       "answer": 3,
-      "hint": "The others only glide.",
-      "fact": "Bats make up about a fifth of all mammal species."
+      "hint": "It is peeled off in strips and curls up as it dries.",
+      "fact": "Cinnamon is the inner bark of a tree. The strips curl into quills as they dry out."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "misc",
-      "difficulty": 3,
-      "prompt": "Which letter does not appear in the name of any US state?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "What is the chemical symbol for gold?",
       "options": [
-        "Q",
-        "X",
-        "J",
-        "Z"
+        "Au",
+        "Gd",
+        "Ag",
+        "Go"
       ],
       "answer": 0,
-      "hint": "Arizona has one of the other three, Texas another, New Jersey the last.",
-      "fact": "Q is the only one. Z is in Arizona, X in Texas and J in New Jersey."
+      "hint": "It comes from the Latin word for gold, aurum.",
+      "fact": "Ag, silver, comes from the Latin argentum, which is also where Argentina got its name."
     },
     {
       "id": "q7",

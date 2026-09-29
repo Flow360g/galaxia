@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-16",
+  "roundNumber": 56,
+  "seed": 20261116,
+  "theme": "General knowledge",
+  "stages": [
+    {
+      "name": "Cluster Belt",
+      "after": 1,
+      "landmark": "moon"
+    },
+    {
+      "name": "Alien Contact",
+      "after": 3,
+      "landmark": "planet"
+    },
+    {
+      "name": "Open Sky",
+      "after": 5
+    },
+    {
+      "name": "Where on Earth",
+      "after": 7
+    }
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "type": "cluster",
+      "topic": "history",
+      "difficulty": 1,
+      "prompt": "Which of these were civilisations of the Americas?",
+      "options": [
+        "Aztec",
+        "Celt",
+        "Viking",
+        "Zulu",
+        "Inca",
+        "Maya"
+      ],
+      "answers": [
+        0,
+        4,
+        5
+      ],
+      "fact": "The Inca ran an empire of ten million people across the Andes without money, wheels or a written alphabet."
+    },
+    {
+      "id": "q2",
+      "type": "cluster",
+      "topic": "nature",
+      "difficulty": 2,
+      "prompt": "Which of these animals are reptiles?",
+      "options": [
+        "Toad",
+        "Tortoise",
+        "Snake",
+        "Frog",
+        "Crocodile",
+        "Salamander"
+      ],
+      "answers": [
+        1,
+        2,
+        4
+      ],
+      "fact": "Frogs, salamanders and toads are amphibians: they breathe through wet skin and most of them start life in water."
+    },
+    {
+      "id": "q3",
+      "type": "vector",
+      "topic": "science",
+      "difficulty": 3,
+      "prompt": "Roughly how many hairs are on a person's head?",
+      "answer": 100000,
+      "min": 0,
+      "max": 250000,
+      "unit": "hairs",
+      "fact": "About 100,000, and you lose 50 to 100 of them every day."
+    },
+    {
+      "id": "q4",
+      "type": "vector",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "How many teaspoons of sugar are in a can of cola?",
+      "answer": 9,
+      "min": 0,
+      "max": 20,
+      "fact": "About nine. You cannot taste how sweet it is because the acid in it hides the sugar."
+    },
+    {
+      "id": "q5",
+      "type": "mcq",
+      "topic": "nature",
+      "difficulty": 1,
+      "prompt": "Which is the only mammal that can truly fly?",
+      "options": [
+        "Sugar glider",
+        "Flying squirrel",
+        "Colugo",
+        "Bat"
+      ],
+      "answer": 3,
+      "hint": "The others only glide.",
+      "fact": "Bats make up about a fifth of all mammal species."
+    },
+    {
+      "id": "q6",
+      "type": "mcq",
+      "topic": "misc",
+      "difficulty": 3,
+      "prompt": "Which letter does not appear in the name of any US state?",
+      "options": [
+        "Q",
+        "X",
+        "J",
+        "Z"
+      ],
+      "answer": 0,
+      "hint": "Arizona has one of the other three, Texas another, New Jersey the last.",
+      "fact": "Q is the only one. Z is in Arizona, X in Texas and J in New Jersey."
+    },
+    {
+      "id": "q7",
+      "type": "earth",
+      "prompt": "Invasion confirmed. Dock at Wikiplanet Station and pull up its satellite feed."
+    },
+    {
+      "id": "q8",
+      "type": "earth",
+      "prompt": "One more landing site. Find it and call the fleet in."
+    }
+  ]
+}

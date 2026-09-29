@@ -1,107 +1,107 @@
 {
   "date": "2026-09-29",
-  "roundNumber": 11,
+  "roundNumber": 8,
   "seed": 20260929,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "geography",
+      "topic": "arts",
       "difficulty": 2,
-      "prompt": "Which of these capital cities are in Africa?",
+      "prompt": "Which of these did Leonardo da Vinci create?",
       "options": [
-        "Nairobi",
-        "Beirut",
-        "Baku",
-        "Accra",
-        "Dakar",
-        "Muscat"
+        "The Kiss",
+        "Night Watch",
+        "Mona Lisa",
+        "Vitruvian Man",
+        "Birth of Venus",
+        "Last Supper"
       ],
       "answers": [
-        0,
+        2,
         3,
-        4
+        5
       ],
-      "fact": "Dakar, the capital of Senegal, stands on the westernmost point of mainland Africa."
+      "fact": "The Last Supper is painted on a monastery wall in Milan, and began flaking within Leonardo's lifetime."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "arts",
+      "topic": "geography",
       "difficulty": 3,
-      "prompt": "Which of these characters did Shakespeare create?",
+      "prompt": "Which of these cities are further north than London?",
       "options": [
-        "Beowulf",
-        "Ophelia",
-        "Faustus",
-        "Tartuffe",
-        "Puck",
-        "Hamlet"
+        "Moscow",
+        "Paris",
+        "Oslo",
+        "Vancouver",
+        "Calgary",
+        "Dublin"
       ],
       "answers": [
-        1,
-        4,
+        0,
+        2,
         5
       ],
-      "fact": "Doctor Faustus is Christopher Marlowe's, Tartuffe is Molière's, and Beowulf is an Old English poem nobody knows the author of."
+      "fact": "Calgary only just misses. It sits about 50 kilometres further south than London."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
+      "topic": "misc",
       "difficulty": 2,
-      "prompt": "How many times a minute does a resting adult's heart beat, on average?",
-      "answer": 70,
+      "prompt": "How many minutes are there in a week?",
+      "answer": 10080,
       "min": 0,
-      "max": 200,
-      "unit": "beats",
-      "route": "Count your own pulse for 15 seconds and multiply by 4.",
-      "fact": "Anywhere from 60 to 100 is normal, and about 70 is typical. Trained athletes can sit below 50."
+      "max": 20000,
+      "unit": "minutes",
+      "route": "60 minutes an hour, times 24 hours, times 7 days = 10,080.",
+      "fact": "60 times 24 times 7 makes 10,080."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "How far is it from London to New York in a straight line, in kilometres?",
-      "answer": 5570,
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "How many litres of blood are in an adult's body?",
+      "answer": 5,
       "min": 0,
-      "max": 20000,
-      "unit": "km",
-      "fact": "About 5,570 km, roughly seven hours on a plane heading west."
+      "max": 20,
+      "unit": "litres",
+      "fact": "About five litres, and your heart pumps all of it round your body roughly once a minute."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "science",
+      "topic": "arts",
       "difficulty": 1,
-      "prompt": "Which gas do plants take in from the air to make their food?",
+      "prompt": "Which country was the painter Frida Kahlo from?",
       "options": [
-        "Oxygen",
-        "Nitrogen",
-        "Carbon dioxide",
-        "Hydrogen"
+        "Spain",
+        "Mexico",
+        "Cuba",
+        "Argentina"
       ],
-      "answer": 2,
-      "hint": "It is the gas you breathe out.",
-      "fact": "Plants use sunlight to turn it and water into sugar, and give off oxygen as they do it."
+      "answer": 1,
+      "hint": "Her house, the Blue House, is in its capital.",
+      "fact": "Frida Kahlo painted around 55 self-portraits, many from her bed after a bus crash."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "food",
-      "difficulty": 1,
-      "prompt": "Which fruit is dried to make a prune?",
+      "topic": "science",
+      "difficulty": 2,
+      "prompt": "Which part of the body makes red blood cells?",
       "options": [
-        "Date",
-        "Grape",
-        "Plum",
-        "Fig"
+        "Liver",
+        "Bone marrow",
+        "Spleen",
+        "Heart"
       ],
-      "answer": 2,
-      "hint": "It is small and purple, with a stone inside.",
-      "fact": "A dried grape is a raisin, sultana or currant, depending on the grape."
+      "answer": 1,
+      "hint": "It is inside something hard.",
+      "fact": "Bone marrow makes about two million red blood cells every second."
     },
     {
       "id": "q7",
@@ -111,7 +111,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [

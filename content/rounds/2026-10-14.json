@@ -1,6 +1,6 @@
 {
   "date": "2026-10-14",
-  "roundNumber": 26,
+  "roundNumber": 23,
   "seed": 20261014,
   "theme": "General knowledge",
   "questions": [
@@ -8,99 +8,99 @@
       "id": "q1",
       "type": "cluster",
       "topic": "screen",
-      "difficulty": 1,
-      "prompt": "Which of these TV shows are set in a hospital?",
+      "difficulty": 2,
+      "prompt": "Which of these films are set in space?",
       "options": [
-        "Scrubs",
-        "Grey's Anatomy",
-        "Mad Men",
-        "Suits",
-        "ER",
-        "The Wire"
+        "Dunkirk",
+        "Tenet",
+        "Alien",
+        "Interstellar",
+        "Inception",
+        "Gravity"
       ],
       "answers": [
-        0,
-        1,
-        4
+        2,
+        3,
+        5
       ],
-      "fact": "ER ran for fifteen seasons and made a star of George Clooney."
+      "fact": "Christopher Nolan directed Interstellar, Inception, Tenet and Dunkirk. Only one of them leaves Earth."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "history",
+      "topic": "food",
       "difficulty": 3,
-      "prompt": "Which of these were civilisations of ancient Mesopotamia?",
+      "prompt": "Which of these cocktails are made with gin?",
       "options": [
-        "Minoans",
-        "Assyria",
-        "Sumer",
-        "Carthage",
-        "Babylon",
-        "Etruscans"
+        "Daiquiri",
+        "Margarita",
+        "Mojito",
+        "Negroni",
+        "Gimlet",
+        "Tom Collins"
       ],
       "answers": [
-        1,
-        2,
-        4
+        3,
+        4,
+        5
       ],
-      "fact": "Sumer gave the world some of its earliest writing, pressed into wet clay with a reed."
+      "fact": "A Negroni is equal parts gin, Campari and sweet vermouth, stirred over ice."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "arts",
-      "difficulty": 2,
-      "prompt": "How tall is the Leaning Tower of Pisa, in metres?",
-      "answer": 56,
-      "min": 0,
-      "max": 200,
-      "unit": "m",
-      "fact": "About 56 m, leaning around four degrees. It began tilting while it was still being built."
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "In what year was the film Titanic released?",
+      "answer": 1997,
+      "min": 1825,
+      "max": 2025,
+      "year": true,
+      "fact": "December 1997. It became the first film to take more than a billion dollars at the box office."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "geography",
-      "difficulty": 2,
-      "prompt": "How far is it from Paris to Rome in a straight line, in kilometres?",
-      "answer": 1105,
+      "topic": "sport",
+      "difficulty": 3,
+      "prompt": "How long is a Formula 1 Grand Prix, in kilometres?",
+      "answer": 305,
       "min": 0,
-      "max": 5000,
+      "max": 1000,
       "unit": "km",
-      "fact": "About 1,100 km, a two-hour flight."
+      "fact": "The fewest laps that take a car past 305 km. Monaco is the exception, at about 260 km."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "screen",
-      "difficulty": 2,
-      "prompt": "Which film is set on the moon Pandora?",
+      "topic": "science",
+      "difficulty": 1,
+      "prompt": "Which vitamin does sunlight help your body make?",
       "options": [
-        "Dune",
-        "Prometheus",
-        "Interstellar",
-        "Avatar"
+        "Vitamin B12",
+        "Vitamin A",
+        "Vitamin C",
+        "Vitamin D"
       ],
       "answer": 3,
-      "hint": "Its people are tall and blue.",
-      "fact": "James Cameron waited more than ten years for film technology to catch up with his idea for Avatar."
+      "hint": "It helps you build strong bones.",
+      "fact": "Your skin makes vitamin D when sunlight hits it, which is why people in cloudy countries often run short in winter."
     },
     {
       "id": "q6",
       "type": "mcq",
-      "topic": "geography",
-      "difficulty": 3,
-      "prompt": "Which country has the longest coastline?",
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "Who was the first emperor of Rome?",
       "options": [
-        "Russia",
-        "Canada",
-        "Indonesia",
-        "Australia"
+        "Caligula",
+        "Julius Caesar",
+        "Augustus",
+        "Nero"
       ],
-      "answer": 1,
-      "hint": "Thousands of Arctic islands add to its total.",
-      "fact": "Canada's coast is about 243,000 km long, enough to go round the Earth six times."
+      "answer": 2,
+      "hint": "He was Julius Caesar's adopted son.",
+      "fact": "Julius Caesar was never emperor. Augustus took the title in 27 BC, after Caesar had been murdered."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "One more landing site. Find it and call the fleet in."
+      "prompt": "Second landing site on the feed. Name it and the fleet moves."
     }
   ],
   "stages": [

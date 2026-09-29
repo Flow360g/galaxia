@@ -1,106 +1,106 @@
 {
   "date": "2026-10-21",
-  "roundNumber": 33,
+  "roundNumber": 30,
   "seed": 20261021,
   "theme": "General knowledge",
   "questions": [
     {
       "id": "q1",
       "type": "cluster",
-      "topic": "misc",
-      "difficulty": 1,
-      "prompt": "Which of these are star signs?",
+      "topic": "food",
+      "difficulty": 2,
+      "prompt": "Which of these go into a classic basil pesto?",
       "options": [
-        "Libra",
-        "Aries",
-        "Pegasus",
-        "Orion",
-        "Ursa",
-        "Pisces"
+        "Pine nuts",
+        "Parmesan",
+        "Tomato",
+        "Oregano",
+        "Coriander",
+        "Garlic"
       ],
       "answers": [
         0,
         1,
         5
       ],
-      "fact": "Orion and Pegasus are constellations too, but the Sun never passes in front of them, so they are not signs of the zodiac."
+      "fact": "Pesto comes from Genoa and takes its name from pestare, to pound, because it was made with a pestle and mortar."
     },
     {
       "id": "q2",
       "type": "cluster",
-      "topic": "sport",
+      "topic": "nature",
       "difficulty": 2,
-      "prompt": "Which of these are Grand Slam tennis tournaments?",
+      "prompt": "Which of these are fish?",
       "options": [
-        "Wimbledon",
-        "Indian Wells",
-        "US Open",
-        "Queen's",
-        "Davis Cup",
-        "Roland Garros"
+        "Shark",
+        "Dolphin",
+        "Seahorse",
+        "Jellyfish",
+        "Eel",
+        "Starfish"
       ],
       "answers": [
         0,
         2,
-        5
+        4
       ],
-      "fact": "Wimbledon is the only Grand Slam still played on grass."
+      "fact": "A seahorse is a fish, and it is the male that carries the eggs and gives birth."
     },
     {
       "id": "q3",
       "type": "vector",
-      "topic": "science",
-      "difficulty": 1,
-      "prompt": "How many days does a human pregnancy last, on average?",
-      "answer": 280,
+      "topic": "geography",
+      "difficulty": 2,
+      "prompt": "How long is the Suez Canal, in kilometres?",
+      "answer": 193,
       "min": 0,
-      "max": 1000,
-      "unit": "days",
-      "fact": "Forty weeks, counted from the start of the last period, so a baby is really growing for about 38 of them."
+      "max": 500,
+      "unit": "km",
+      "fact": "About 193 km, joining the Mediterranean to the Red Sea with no locks at all."
     },
     {
       "id": "q4",
       "type": "vector",
-      "topic": "sport",
-      "difficulty": 3,
-      "prompt": "How long is a tennis court, in metres?",
-      "answer": 23.77,
+      "topic": "history",
+      "difficulty": 2,
+      "prompt": "How many years did Queen Victoria reign?",
+      "answer": 63,
       "min": 0,
-      "max": 50,
-      "unit": "m",
-      "fact": "78 feet from baseline to baseline, set down in the 1870s."
+      "max": 200,
+      "unit": "years",
+      "fact": "63 years, from 1837 to 1901. Elizabeth II passed her record in 2015."
     },
     {
       "id": "q5",
       "type": "mcq",
-      "topic": "arts",
-      "difficulty": 3,
-      "prompt": "Which Shakespeare play features the moneylender Shylock?",
+      "topic": "screen",
+      "difficulty": 1,
+      "prompt": "Which group was Beyoncé a member of?",
       "options": [
-        "Merchant of Venice",
-        "Macbeth",
-        "King Lear",
-        "Othello"
+        "TLC",
+        "Destiny's Child",
+        "Spice Girls",
+        "En Vogue"
       ],
-      "answer": 0,
-      "hint": "It is set in an Italian city of canals.",
-      "fact": "Shylock demands a pound of flesh as his price for an unpaid loan."
+      "answer": 1,
+      "hint": "Kelly Rowland was in it too.",
+      "fact": "Destiny's Child took its name from a passage in the Book of Isaiah."
     },
     {
       "id": "q6",
       "type": "mcq",
       "topic": "history",
       "difficulty": 2,
-      "prompt": "Which philosopher taught Alexander the Great?",
+      "prompt": "What was the capital of the Byzantine Empire?",
       "options": [
-        "Socrates",
-        "Aristotle",
-        "Pythagoras",
-        "Plato"
+        "Athens",
+        "Alexandria",
+        "Constantinople",
+        "Rome"
       ],
-      "answer": 1,
-      "hint": "He was Plato's student.",
-      "fact": "Aristotle taught the young Alexander for about three years."
+      "answer": 2,
+      "hint": "Today it is called Istanbul.",
+      "fact": "Constantinople stood for more than a thousand years until the Ottomans took it in 1453."
     },
     {
       "id": "q7",
@@ -110,7 +110,7 @@
     {
       "id": "q8",
       "type": "earth",
-      "prompt": "Second landing site on the feed. Name it and the fleet moves."
+      "prompt": "One more landing site. Find it and call the fleet in."
     }
   ],
   "stages": [
